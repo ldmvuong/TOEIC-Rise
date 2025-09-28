@@ -10,38 +10,94 @@ import {
     AliwangwangOutlined,
     ScheduleOutlined,
     BugOutlined,
+    LogoutOutlined,
+    SettingOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, Dropdown, Space, Avatar, Button } from "antd";
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { setLogoutAction } from "../redux/slices/accountSlide";
+import { logout as logoutApi } from "../api/api";
 
 const { Content, Sider } = Layout;
 
 const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined /> },
-    { label: <Link to="/admin/company">TOEIC Exams</Link>, key: "/admin/company", icon: <BankOutlined /> },
-    { label: <Link to="/admin/company">Report</Link>, key: "/admin/company", icon: <BankOutlined /> },
+    { label: <Link to="/admin/exams">TOEIC Exams</Link>, key: "/admin/exams", icon: <BankOutlined /> },
+    { label: <Link to="/admin/reports">Report</Link>, key: "/admin/reports", icon: <BankOutlined /> },
     { label: <Link to="/admin/user">User</Link>, key: "/admin/user", icon: <UserOutlined /> },
-    { label: <Link to="/admin/job">Test Result Statistics</Link>, key: "/admin/job", icon: <ScheduleOutlined /> },
-    { label: <Link to="/admin/resume">Leaner Statistics</Link>, key: "/admin/resume", icon: <AliwangwangOutlined /> },
-    { label: <Link to="/admin/permission">Chatbot Rating</Link>, key: "/admin/permission", icon: <ApiOutlined /> },
-    { label: <Link to="/admin/role">Chatbot System</Link>, key: "/admin/role", icon: <ExceptionOutlined /> },
+    { label: <Link to="/admin/statistics">Test Result Statistics</Link>, key: "/admin/statistics", icon: <ScheduleOutlined /> },
+    { label: <Link to="/admin/learners">Leaner Statistics</Link>, key: "/admin/learners", icon: <AliwangwangOutlined /> },
+    { label: <Link to="/admin/chatbot-rating">Chatbot Rating</Link>, key: "/admin/chatbot-rating", icon: <ApiOutlined /> },
+    { label: <Link to="/admin/chatbot-system">Chatbot System</Link>, key: "/admin/chatbot-system", icon: <ExceptionOutlined /> },
 ];
 
 export default function AdminLayout() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const [collapsed, setCollapsed] = useState(false);
     const [activeMenu, setActiveMenu] = useState("/admin");
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    
+    // Redux state
+    const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
+    const user = useAppSelector(state => state.account.user);
 
     useEffect(() => {
-        // Đồng bộ menu đang chọn theo URL
-        // Nếu vào /admin thì set "/admin"; các trang con set đúng key tương ứng
         const path = location.pathname.startsWith("/admin") ? location.pathname : "/admin";
         setActiveMenu(path);
     }, [location.pathname]);
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logoutApi();
+            message.success('Đăng xuất thành công!');
+        } catch (error) {
+            console.error('Logout API error:', error);
+            message.warning('Có lỗi khi đăng xuất, nhưng đã đăng xuất local');
+        } finally {
+            dispatch(setLogoutAction());
+            navigate('/');
+            setIsLoggingOut(false);
+        }
+    };
+
+    const handleMenuClick = ({ key }) => {
+        switch (key) {
+            case 'profile':
+                navigate('/profile');
+                break;
+            case 'users':
+                navigate('/admin/user');
+                break;
+            case 'logout':
+                handleLogout();
+                break;
+            default:
+                break;
+        }
+    };
+
     const itemsDropdown = [
-        { label: <Link to="/">Trang chủ</Link>, key: "home" },
-        { label: <span style={{ cursor: "not-allowed", opacity: 0.6 }}>Đăng xuất (demo)</span>, key: "logout" },
+        { 
+            label: "Trang cá nhân", 
+            key: "profile",
+            icon: <UserOutlined />
+        },
+        { 
+            label: "Quản lý người dùng", 
+            key: "users",
+            icon: <SettingOutlined />
+        },
+        { type: 'divider' },
+        { 
+            label: "Đăng xuất", 
+            key: "logout",
+            icon: <LogoutOutlined />,
+            disabled: isLoggingOut
+        },
     ];
 
     return (
@@ -69,10 +125,28 @@ export default function AdminLayout() {
                         onClick={() => setCollapsed((s) => !s)}
                         style={{ fontSize: 16, width: 64, height: 64 }}
                     />
-                    <Dropdown menu={{ items: itemsDropdown }} trigger={["click"]}>
+                    <Dropdown 
+                        menu={{ 
+                            items: itemsDropdown, 
+                            onClick: handleMenuClick 
+                        }} 
+                        trigger={["click"]}
+                    >
                         <Space style={{ cursor: "pointer", paddingRight: 8 }}>
-                            Welcome Admin
-                            <Avatar>AD</Avatar>
+                            <div style={{ textAlign: "right" }}>
+                                <div style={{ fontWeight: 600, fontSize: 14 }}>
+                                    {user?.fullName || 'Admin'}
+                                </div>
+                                <div style={{ fontSize: 12, color: "#666" }}>
+                                    {user?.email || 'admin@toeic-rise.com'}
+                                </div>
+                            </div>
+                            <Avatar 
+                                src={user?.avatar} 
+                                style={{ backgroundColor: '#1890ff' }}
+                            >
+                                {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                            </Avatar>
                         </Space>
                     </Dropdown>
                 </div>

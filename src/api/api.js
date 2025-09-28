@@ -15,6 +15,10 @@ export const resetPassword = (payload, token) => api.post(
   token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
 );
 
+export const getProfile = () => api.get("/auth/me");
+
+export const logout = () => api.get("/auth/logout");
+
 
 
 

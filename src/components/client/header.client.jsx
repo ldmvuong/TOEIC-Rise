@@ -1,11 +1,20 @@
 // Header.jsx
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useAppDispatch, useAppSelector } from "../../redux/hooks"
+import { setLogoutAction } from "../../redux/slices/accountSlide"
+import { logout as logoutApi } from "../../api/api"
 
-export default function Header({ user, onLogin, onLogout, currentPath }) {
+export default function Header({ currentPath }) {
   const [isUserOpen, setIsUserOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const userMenuRef = useRef(null)
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  
+  // Redux state
+  const isAuthenticated = useAppSelector(state => state.account.isAuthenticated)
+  const user = useAppSelector(state => state.account.user)
 
   const nav = [
     { name: "Home", href: "/" },
@@ -15,6 +24,21 @@ export default function Header({ user, onLogin, onLogout, currentPath }) {
   ]
 
   const activePath = typeof currentPath === "string" ? currentPath : "/"
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logoutApi()
+    } catch (error) {
+      console.error('Logout API error:', error)
+      // Vẫn tiếp tục logout local dù API có lỗi
+    } finally {
+      dispatch(setLogoutAction())
+      navigate('/')
+      setIsUserOpen(false)
+      setIsLoggingOut(false)
+    }
+  }
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -65,7 +89,7 @@ export default function Header({ user, onLogin, onLogout, currentPath }) {
 
           {/* User / Auth */}
           <div className="flex items-center gap-4">
-            {user ? (
+            {isAuthenticated && user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserOpen((v) => !v)}
@@ -73,30 +97,45 @@ export default function Header({ user, onLogin, onLogout, currentPath }) {
                 >
                   <div className="h-8 w-8 overflow-hidden rounded-full bg-gray-200">
                     {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                      <img src={user.avatar} alt={user.fullName} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-white bg-blue-600">
-                        {user.name?.charAt(0)?.toUpperCase() || "U"}
+                        {user.fullName?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                     )}
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  <span className="text-sm font-medium text-gray-700">{user.fullName}</span>
                 </button>
 
                 {isUserOpen && (
                   <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
-                    <a href="#" className="block px-3 py-2 text-sm hover:bg-gray-50">
+                    {user.role === 'ADMIN' && (
+                      <Link 
+                        to="/admin" 
+                        className="block px-3 py-2 text-sm hover:bg-gray-50"
+                        onClick={() => setIsUserOpen(false)}
+                      >
+                        Trang quản trị
+                      </Link>
+                    )}
+                    <Link 
+                      to="/profile" 
+                      className="block px-3 py-2 text-sm hover:bg-gray-50"
+                      onClick={() => setIsUserOpen(false)}
+                    >
                       Trang cá nhân
-                    </a>
-                    <a href="#" className="block px-3 py-2 text-sm hover:bg-gray-50">
-                      Lịch sử đề thi
-                    </a>
+                    </Link>
                     <div className="my-1 h-px bg-gray-200" />
                     <button
-                      onClick={onLogout}
-                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className={`w-full px-3 py-2 text-left text-sm ${
+                        isLoggingOut 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
                     >
-                      Đăng xuất
+                      {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
                     </button>
                   </div>
                 )}

@@ -1,29 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { notification } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import LoginTab from '../../components/auth/LoginTab'
 import RegisterTab from '../../components/auth/RegisterTab';
 import ForgotPasswordTab from '../../components/auth/ForgotPasswordTab';
 import OTPVerificationTab from '../../components/auth/OTPVerificationTab';
 import { login as loginApi } from '../../api/api';
 import { setAccessToken } from '../../api/axios-customize';
+import { setUserLoginInfo, clearError } from '../../redux/slices/accountSlide';
 
 const AuthPage = () => {
   const [currentForm, setCurrentForm] = useState('login');
   const [registerEmail, setRegisterEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
+  const user = useAppSelector(state => state.account.user);
+  const error = useAppSelector(state => state.account.error);
+  
+  // URL parameters
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const callback = params?.get("callback");
+
+  // Check authentication and redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      const redirectPath = callback || (user.role === 'ADMIN' ? '/admin' : '/');
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, user.role, callback, navigate]);
 
   // Clear error when switching tabs/forms
   useEffect(() => {
-    setErrorMessage('');
-  }, [currentForm]);
+    dispatch(clearError());
+  }, [currentForm, dispatch]);
 
   // Handle form submissions
   const handleLogin = async (formData) => {
     try {
-      setErrorMessage('');
+      dispatch(clearError());
       setSubmitting(true);
 
       const response = await loginApi({
@@ -36,35 +56,20 @@ const AuthPage = () => {
         throw new Error('Không nhận được dữ liệu phản hồi');
       }
 
-      // Lưu token và thông tin user
+      localStorage.setItem('access_token', payload.accessToken);
       setAccessToken(payload.accessToken);
-      if (payload.refreshToken) localStorage.setItem('refresh_token', payload.refreshToken);
-      localStorage.setItem('user_info', JSON.stringify({
-        userId: payload.userId,
-        email: payload.email,
-        fullName: payload.fullName,
-        role: payload.role,
-        expirationTime: payload.expirationTime,
-      }));
 
-      // Điều hướng theo role
-      const role = String(payload.role || '').toUpperCase();
-      if (role === 'ADMIN') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      dispatch(setUserLoginInfo(payload));
     } catch (err) {
-      // Ưu tiên thông điệp từ BE nếu có
-      const serverMessage = err?.message;
-      const fallback = err?.status || 'Đăng nhập thất bại';
+      const serverMessage = err?.response?.data?.message || err?.message;
+      const fallback = 'Đăng nhập thất bại';
       const msg = serverMessage || fallback;
-      setErrorMessage('');
+      
       notification.error({
         message: 'Đăng nhập thất bại',
         description: msg,
         placement: 'topRight',
-        duration: 3,
+        duration: 5,
       });
     } finally {
       setSubmitting(false);
@@ -77,9 +82,6 @@ const AuthPage = () => {
   };
 
   const handleOTPVerificationSuccess = () => {
-    // TODO: Xử lý khi verify OTP thành công
-    console.log('OTP verification successful for email:', registerEmail);
-    // Có thể chuyển về trang login hoặc dashboard
     setCurrentForm('login');
     setRegisterEmail('');
   };
@@ -91,17 +93,17 @@ const AuthPage = () => {
 
   const handleRequestOtp = (email) => {
     console.log('Request OTP:', email);
-    // Call onRequestOtp callback here
+    // TODO: Implement OTP request API
   };
 
   const handleVerifyOtp = (data) => {
     console.log('Verify OTP and reset password:', data);
-    // Call onVerifyOtp callback here
+    // TODO: Implement OTP verification API
   };
 
   const handleGoogleLogin = () => {
     console.log('Google login');
-    // Call onGoogle callback here
+    // TODO: Implement Google OAuth
   };
 
   const getFormTitle = () => {
@@ -188,11 +190,6 @@ const AuthPage = () => {
             {/* Content */}
             <div className="p-8">
               <div className="transition-all duration-300 ease-in-out">
-              {errorMessage && (
-                <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
-                  {errorMessage}
-                </div>
-              )}
                 {currentForm === 'login' && (
                   <div className="animate-fadeIn">
                     <LoginTab
