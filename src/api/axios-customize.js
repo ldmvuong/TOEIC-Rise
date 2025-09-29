@@ -1,6 +1,13 @@
 import axios from "axios";
+import { Mutex } from "async-mutex";
+import { store } from "../redux/store";
+import { setRefreshTokenAction } from "../redux/slices/accountSlide";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
+// Mutex để tránh multiple refresh token calls
+const mutex = new Mutex();
+const NO_RETRY_HEADER = "x-no-retry";
 
 // Tạo instance tối giản
 const api = axios.create({
@@ -13,12 +20,32 @@ const api = axios.create({
   },
 });
 
+// --- Refresh Token Handler
+const handleRefreshToken = async () => {
+  return await mutex.runExclusive(async () => {
+    try {
+      const res = await api.get("/auth/refresh-token");
+      if (res && res.data) {
+        return res.data.access_token;
+      }
+      return null;
+    } catch (error) {
+      console.error('Refresh token failed:', error);
+      return null;
+    }
+  });
+};
+
 // --- Helpers 
 export const setAccessToken = (token) => {
-  if (token) localStorage.setItem("access_token", token);
+  if (token) {
+    localStorage.setItem("access_token", token);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
 };
 export const clearAccessToken = () => {
   localStorage.removeItem("access_token");
+  delete api.defaults.headers.common['Authorization'];
 };
 
 // --- Interceptors ---
@@ -30,7 +57,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Trả về response object đầy đủ để có thể check status và data
+// Response interceptor với auto refresh token
 api.interceptors.response.use(
   (res) => {
     // Trả về object với status và data để có thể check cả hai
@@ -40,7 +67,42 @@ api.interceptors.response.use(
       headers: res.headers
     };
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (
+      error.response &&
+      (error.response.status === 401 ) &&
+      originalRequest.url !== "/auth/login" &&
+      originalRequest.url !== "/auth/refresh-token" &&
+      !originalRequest.headers[NO_RETRY_HEADER]
+    ) {
+      originalRequest.headers[NO_RETRY_HEADER] = "true";
+      
+      const access_token = await handleRefreshToken();
+      if (access_token) {
+        originalRequest.headers["Authorization"] = `Bearer ${access_token}`;
+        localStorage.setItem("access_token", access_token);
+        return api.request(originalRequest);
+      }
+    }
+    
+    // Handle refresh token failure
+    if (
+      error.response &&
+      error.response.status === 400 &&
+      originalRequest.url === "/auth/refresh-token"
+    ) {
+      const message = error?.response?.data?.message ?? "Có lỗi xảy ra, vui lòng login lại.";
+      store.dispatch(setRefreshTokenAction({ status: true, message }));
+    }
+    
+    // Handle 403 Forbidden
+    if (error.response && error.response.status === 403) {
+      const message = error?.response?.data?.message ?? "Không có quyền truy cập";
+      console.error('403 Forbidden:', message);
+    }
+    
     // Chuẩn hoá lỗi để FE hiển thị đúng thông điệp
     const hasResponse = !!error?.response;
     if (hasResponse) {
@@ -53,6 +115,7 @@ api.interceptors.response.use(
       };
       return Promise.reject(normalized);
     }
+    
     // Lỗi mạng / timeout
     return Promise.reject({
       statusCode: 0,

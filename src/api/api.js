@@ -19,6 +19,15 @@ export const getProfile = () => api.get("/auth/me");
 
 export const logout = () => api.get("/auth/logout");
 
+// Google OAuth
+export const loginWithGoogle = () => {
+  // Redirect to backend Google OAuth endpoint with callback URL
+  const callbackUrl = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
+  window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/auth/login/google?callback=${callbackUrl}`;
+};
+
+export const refreshToken = () => api.post("/auth/refresh-token");
+
 
 
 

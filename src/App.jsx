@@ -6,6 +6,8 @@ import HomePage from './pages/client/HomePage.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
+import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
+import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 
@@ -28,7 +30,12 @@ export default function App() {
   const router = createBrowserRouter([
     {
       path: '/',
-      element: <ClientLayout />,
+      element: (
+        <>
+          <ClientLayout />
+          <RefreshTokenHandler />
+        </>
+      ),
       errorElement: <NotFound />,
       children: [
         { index: true, element: <HomePage /> }, // Trang mặc định khi vào '/'
@@ -36,11 +43,29 @@ export default function App() {
     },
     {
       path: "/auth",
-      element: <AuthPage />,
+      element: (
+        <>
+          <AuthPage />
+          <RefreshTokenHandler />
+        </>
+      ),
+    },
+    {
+      path: "/auth/google/callback",
+      element: <GoogleCallbackHandler />,
+    },
+    {
+      path: "/oauth2/callback",
+      element: <GoogleCallbackHandler />,
     },
     {
       path: "/admin",
-      element: <AdminLayout />,
+      element: (
+        <>
+          <AdminLayout />
+          <RefreshTokenHandler />
+        </>
+      ),
       children: [
         { index: true, element: <Dashboard /> },
       ],

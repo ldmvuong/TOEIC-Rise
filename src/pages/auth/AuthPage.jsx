@@ -6,7 +6,7 @@ import LoginTab from '../../components/auth/LoginTab'
 import RegisterTab from '../../components/auth/RegisterTab';
 import ForgotPasswordTab from '../../components/auth/ForgotPasswordTab';
 import OTPVerificationTab from '../../components/auth/OTPVerificationTab';
-import { login as loginApi } from '../../api/api';
+import { login as loginApi, loginWithGoogle } from '../../api/api';
 import { setAccessToken } from '../../api/axios-customize';
 import { setUserLoginInfo, clearError } from '../../redux/slices/accountSlide';
 
@@ -102,8 +102,7 @@ const AuthPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    console.log('Google login');
-    // TODO: Implement Google OAuth
+    loginWithGoogle();
   };
 
   const getFormTitle = () => {
