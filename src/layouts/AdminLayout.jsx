@@ -12,6 +12,7 @@ import {
     BugOutlined,
     LogoutOutlined,
     SettingOutlined,
+    HomeOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -23,8 +24,8 @@ const { Content, Sider } = Layout;
 
 const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined /> },
-    { label: <Link to="/admin/exams">TOEIC Exams</Link>, key: "/admin/exams", icon: <BankOutlined /> },
-    { label: <Link to="/admin/reports">Report</Link>, key: "/admin/reports", icon: <BankOutlined /> },
+    { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined /> },
+    { label: <Link to="/admin/reports">Toeic Test</Link>, key: "/admin/tests", icon: <BankOutlined /> },
     { label: <Link to="/admin/user">User</Link>, key: "/admin/user", icon: <UserOutlined /> },
     { label: <Link to="/admin/statistics">Test Result Statistics</Link>, key: "/admin/statistics", icon: <ScheduleOutlined /> },
     { label: <Link to="/admin/learners">Leaner Statistics</Link>, key: "/admin/learners", icon: <AliwangwangOutlined /> },
@@ -69,8 +70,8 @@ export default function AdminLayout() {
             case 'profile':
                 navigate('/profile');
                 break;
-            case 'users':
-                navigate('/admin/user');
+            case 'home':
+                navigate('/');
                 break;
             case 'logout':
                 handleLogout();
@@ -87,9 +88,9 @@ export default function AdminLayout() {
             icon: <UserOutlined />
         },
         { 
-            label: "Quản lý người dùng", 
-            key: "users",
-            icon: <SettingOutlined />
+            label: "Trang người dùng", 
+            key: "home",
+            icon: <HomeOutlined />
         },
         { type: 'divider' },
         { 

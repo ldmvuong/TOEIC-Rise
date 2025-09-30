@@ -5,7 +5,9 @@ import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
+import TestSetPage from "./pages/admin/TestSet.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
+import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
 import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
 import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
@@ -17,13 +19,6 @@ export default function App() {
   const isLoading = useAppSelector((state) => state.account.isLoading);
 
   useEffect(() => {
-    if (
-      window.location.pathname === '/auth' ||
-      window.location.pathname === '/login' ||
-      window.location.pathname === '/register'
-    )
-      return;
-
     dispatch(fetchAccount());
   }, [dispatch]);
 
@@ -38,14 +33,16 @@ export default function App() {
       ),
       errorElement: <NotFound />,
       children: [
-        { index: true, element: <HomePage /> }, // Trang mặc định khi vào '/'
+        { index: true, element: <HomePage /> }
       ],
     },
     {
       path: "/auth",
       element: (
         <>
-          <AuthPage />
+          <GuestOnlyRoute>
+            <AuthPage />
+          </GuestOnlyRoute>
           <RefreshTokenHandler />
         </>
       ),
@@ -62,17 +59,24 @@ export default function App() {
       path: "/admin",
       element: (
         <>
-          <AdminLayout />
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminLayout />
+          </ProtectedRoute>
           <RefreshTokenHandler />
         </>
       ),
       children: [
         { index: true, element: <Dashboard /> },
+        {
+          path: 'test-sets',
+          element: (
+            <TestSetPage />
+          ),
+        },
       ],
     },
   ]);
 
-  // Show loading spinner while fetching account info
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

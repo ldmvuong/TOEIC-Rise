@@ -28,6 +28,16 @@ export const loginWithGoogle = () => {
 
 export const refreshToken = () => api.post("/auth/refresh-token");
 
+// Test Sets
+
+export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
+
+export const getAllTestSets = (query) => {
+    return api.get(`/admin/test-sets?${query}`);
+};
+
+
+
 
 
 
