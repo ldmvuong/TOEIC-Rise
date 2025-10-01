@@ -7,11 +7,14 @@ import dayjs from 'dayjs';
 import queryString from 'query-string';
 import { fetchTestSets } from '../../redux/slices/testsetSlide';
 import DataTable from '../../components/admin/data-table/index';
+import ModalTestSet from '../../components/admin/test-set/modal.testset';
 
 
 
 const TestSetPage = () => {
     const tableRef = useRef();
+    const [openModal, setOpenModal] = useState(false);
+    const [dataInit, setDataInit] = useState(null);
 
     const isFetching = useAppSelector(state => state.testSets.isFetching);
     const meta = useAppSelector(state => state.testSets.meta);
@@ -88,16 +91,16 @@ const TestSetPage = () => {
                     <EditOutlined
                         style={{ fontSize: 20, color: '#ffa500' }}
                         onClick={() => {
-                            // setOpenModal(true);
-                            // setDataInit(entity);
+                            setOpenModal(true);
+                            setDataInit(entity);
                         }}
                     />
 
                     <Popconfirm
                         placement="leftTop"
-                        title={"Xác nhận xóa company"}
-                        description={"Bạn có chắc chắn muốn xóa company này ?"}
-                        // onConfirm={() => handleDeleteCompany(entity.id)}
+                        title={"Xác nhận xóa test set"}
+                        description={"Bạn có chắc chắn muốn xóa test set này ?"}
+                        // onConfirm={() => handleDeleteTestSet(entity.id)}
                         okText="Xác nhận"
                         cancelText="Hủy"
                     >
@@ -159,7 +162,11 @@ const TestSetPage = () => {
         return temp;
     };
 
-
+    const reloadTable = () => {
+        if (tableRef.current) {
+            tableRef.current.reload();
+        }
+    };
 
     return (
         <div>
@@ -189,11 +196,19 @@ const TestSetPage = () => {
                         <Button
                             icon={<PlusOutlined />}
                             type="primary"
-                            // onClick={() => setOpenModal(true)}
+                            onClick={() => setOpenModal(true)}
                         >
                             Thêm mới
                         </Button>
                 )}
+            />
+            
+            <ModalTestSet
+                openModal={openModal}
+                setOpenModal={setOpenModal}
+                reloadTable={reloadTable}
+                dataInit={dataInit}
+                setDataInit={setDataInit}
             />
         </div>
     );

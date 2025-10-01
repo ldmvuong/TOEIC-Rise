@@ -30,7 +30,8 @@ export const refreshToken = () => api.post("/auth/refresh-token");
 
 // Test Sets
 
-export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
+export const createTestSet = (payload) => api.post("/admin/test-sets/create", payload);
+export const updateTestSet = (payload) => api.put("/admin/test-sets/update", payload);
 
 export const getAllTestSets = (query) => {
     return api.get(`/admin/test-sets?${query}`);
