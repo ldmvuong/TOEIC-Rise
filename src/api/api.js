@@ -37,6 +37,8 @@ export const getAllTestSets = (query) => {
     return api.get(`/admin/test-sets?${query}`);
 };
 
+export const getTestInTestSet = (id, query) => api.get(`/admin/test-sets/${id}?${query}`);
+
 
 
 

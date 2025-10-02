@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { BookOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Button, Popconfirm, Space, Tag } from "antd";
 import dayjs from 'dayjs';
 import queryString from 'query-string';
 import { fetchTestSets } from '../../redux/slices/testsetSlide';
+import { getTestInTestSet } from '../../api/api';
 import DataTable from '../../components/admin/data-table/index';
 import ModalTestSet from '../../components/admin/test-set/modal.testset';
+import DrawerTest from '../../components/admin/drawer/drawer.test';
 
 
 
@@ -15,6 +17,10 @@ const TestSetPage = () => {
     const tableRef = useRef();
     const [openModal, setOpenModal] = useState(false);
     const [dataInit, setDataInit] = useState(null);
+    const [openDrawer, setOpenDrawer] = useState(false);
+    const [testData, setTestData] = useState(null);
+    const [loadingDrawer, setLoadingDrawer] = useState(false);
+    const [currentTestSet, setCurrentTestSet] = useState(null);
 
     const isFetching = useAppSelector(state => state.testSets.isFetching);
     const meta = useAppSelector(state => state.testSets.meta);
@@ -96,7 +102,13 @@ const TestSetPage = () => {
                         }}
                     />
 
-                    <Popconfirm
+                    <BookOutlined 
+                        style={{ fontSize: 20, color: '#52c41a', cursor: 'pointer' }}
+                        onClick={() => handleShowTests(entity)}
+                        title="Xem danh sách test"
+                    />
+
+                    {/* <Popconfirm
                         placement="leftTop"
                         title={"Xác nhận xóa test set"}
                         description={"Bạn có chắc chắn muốn xóa test set này ?"}
@@ -109,7 +121,7 @@ const TestSetPage = () => {
                                 style={{ fontSize: 20, color: '#ff4d4f' }}
                             />
                         </span>
-                    </Popconfirm>
+                    </Popconfirm> */}
                 </Space>
             ),
         },
@@ -168,6 +180,46 @@ const TestSetPage = () => {
         }
     };
 
+    const handleShowTests = async (testSet) => {
+        setLoadingDrawer(true);
+        setOpenDrawer(true);
+        setTestData(null);
+        setCurrentTestSet(testSet);
+        
+        try {
+            // Gọi API với query parameters mặc định
+            const query = 'page=0&size=10&sortBy=updatedAt&direction=DESC';
+            const response = await getTestInTestSet(testSet.id, query);
+            setTestData(response.data);
+        } catch (error) {
+            console.error('Error fetching test data:', error);
+            // Có thể thêm notification error ở đây
+        } finally {
+            setLoadingDrawer(false);
+        }
+    };
+
+    const handleFetchTests = async (query) => {
+        if (!currentTestSet) return;
+        
+        setLoadingDrawer(true);
+        try {
+            const response = await getTestInTestSet(currentTestSet.id, query);
+            setTestData(response.data);
+        } catch (error) {
+            console.error('Error fetching test data:', error);
+            // Có thể thêm notification error ở đây
+        } finally {
+            setLoadingDrawer(false);
+        }
+    };
+
+    const handleCloseDrawer = () => {
+        setOpenDrawer(false);
+        setTestData(null);
+        setCurrentTestSet(null);
+    };
+
     return (
         <div>
             <DataTable
@@ -209,6 +261,15 @@ const TestSetPage = () => {
                 reloadTable={reloadTable}
                 dataInit={dataInit}
                 setDataInit={setDataInit}
+            />
+
+            <DrawerTest
+                open={openDrawer}
+                onClose={handleCloseDrawer}
+                testData={testData}
+                loading={loadingDrawer}
+                testSetName={currentTestSet?.name}
+                onFetchTests={handleFetchTests}
             />
         </div>
     );
