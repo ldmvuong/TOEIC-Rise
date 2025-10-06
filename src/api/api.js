@@ -39,6 +39,14 @@ export const getAllTestSets = (query) => {
 
 export const getTestInTestSet = (id, query) => api.get(`/admin/test-sets/${id}?${query}`);
 
+// Tests
+export const getAllTests = (query) => api.get(`/admin/tests?${query}`);
+
+export const importTests = (formData) =>
+  api.post('/admin/tests/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
 
 
 

@@ -4,10 +4,12 @@
 export const EMAIL_REGEX = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 export const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[.@#$%^&+=])(?=\S+$).{8,20}$/;
 export const TEST_SET_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/;
+export const TEST_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/; // same as backend Constant.TEST_NAME_PATTERN
 
 // Primitive validators (boolean results only)
 export const isValidEmail = (email) => EMAIL_REGEX.test(String(email || ''));
 export const isStrongPassword = (password) => PASSWORD_REGEX.test(String(password || ''));
 export const isValidTestSetName = (name) => TEST_SET_NAME_REGEX.test(String(name || ''));
+export const isValidTestName = (name) => TEST_NAME_REGEX.test(String(name || ''));
 
 

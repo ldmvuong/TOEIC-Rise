@@ -6,6 +6,7 @@ import HomePage from './pages/client/HomePage.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
+import TestPage from "./pages/admin/Test.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
 import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
@@ -71,6 +72,12 @@ export default function App() {
           path: 'test-sets',
           element: (
             <TestSetPage />
+          ),
+        },
+        {
+          path: 'tests',
+          element: (
+            <TestPage />
           ),
         },
       ],
