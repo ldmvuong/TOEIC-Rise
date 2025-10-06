@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { BookOutlined, DeleteOutlined, EditOutlined, FundViewOutlined, PlusOutlined } from "@ant-design/icons";
 import { ProFormSelect } from '@ant-design/pro-components';
@@ -13,9 +14,8 @@ import ImportTestModal from '../../components/admin/test/import.test.modal';
 
 const TestPage = () => {
     const tableRef = useRef();
-    const [openModal, setOpenModal] = useState(false);
+    const navigate = useNavigate();
     const [openImport, setOpenImport] = useState(false);
-    const [dataInit, setDataInit] = useState(null);
 
     const isFetching = useAppSelector(state => state.tests.isFetching);
     const meta = useAppSelector(state => state.tests.meta);
@@ -114,8 +114,7 @@ const TestPage = () => {
                         style={{ fontSize: 20, color: '#ffa500' }}
                         title="Xem chi tiết"
                         onClick={() => {
-                            setOpenModal(true);
-                            setDataInit(entity);
+                            navigate(`/admin/tests/${entity.id}`);
                         }}
                     />
                 </Space>

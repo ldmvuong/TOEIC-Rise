@@ -48,6 +48,10 @@ export const importTests = (formData) =>
   });
 
 
+export const getTestById = (id) => api.get(`/admin/tests/${id}`);
+
+export const updateTest = (id, payload) => api.put(`/admin/tests/${id}`, payload);
+
 
 
 
