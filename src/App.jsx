@@ -3,11 +3,13 @@ import { useEffect } from "react";
 import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
+import TestList from './pages/client/TestList.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
 import TestDetailPage from "./pages/admin/TestDetail.jsx";
 import TestPage from "./pages/admin/Test.jsx";
+import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
 import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
@@ -35,7 +37,11 @@ export default function App() {
       ),
       errorElement: <NotFound />,
       children: [
-        { index: true, element: <HomePage /> }
+        { index: true, element: <HomePage /> },
+        {
+          path: 'online-tests',
+          element: <TestList />
+        }
       ],
     },
     {
@@ -56,6 +62,20 @@ export default function App() {
     {
       path: "/oauth2/callback",
       element: <GoogleCallbackHandler />,
+    },
+    {
+      path: "/profile",
+      element: (
+        <>
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminLayout />
+          </ProtectedRoute>
+          <RefreshTokenHandler />
+        </>
+      ),
+      children: [
+        { index: true, element: <Profile /> }
+      ],
     },
     {
       path: "/admin",

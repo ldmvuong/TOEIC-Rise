@@ -26,6 +26,7 @@ const initialState = {
     fullName: '',
     avatar: null,
     email: '',
+    gender: null,
     role: '',
     hasPassword: false,
   },
@@ -49,6 +50,7 @@ export const accountSlide = createSlice({
       state.user.fullName = userData?.fullName || '';
       state.user.avatar = userData?.avatar || null;
       state.user.email = userData?.email || '';
+      state.user.gender = userData?.gender || null;
       state.user.role = userData?.role || '';
       state.user.hasPassword = userData?.hasPassword || true;
     },
@@ -62,6 +64,7 @@ export const accountSlide = createSlice({
         fullName: '',
         avatar: null,
         email: '',
+        gender: null,
         role: '',
         hasPassword: false,
       };
@@ -94,6 +97,7 @@ export const accountSlide = createSlice({
           state.user.fullName = action.payload.fullName || '';
           state.user.avatar = action.payload.avatar || null;
           state.user.email = action.payload.email || '';
+          state.user.gender = action.payload.gender || null;
           state.user.role = action.payload.role || '';
           state.user.hasPassword = action.payload.hasPassword || false;
         }
@@ -109,6 +113,7 @@ export const accountSlide = createSlice({
           fullName: '',
           avatar: null,
           email: '',
+          gender: null,
           role: '',
           hasPassword: false,
         };

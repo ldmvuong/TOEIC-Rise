@@ -53,6 +53,25 @@ export const getTestById = (id) => api.get(`/admin/tests/${id}`);
 export const updateTest = (id, payload) => api.put(`/admin/tests/${id}`, payload);
 
 
+// Profile
+
+export const getUserProfile = () => api.get("/profile");
+
+export const updateUserProfile = (payload) => api.put("/profile", payload);
+
+export const changeUserPassword = (payload) => api.put("/profile/password", payload);
+
+
+// guest access to some tests
+export const getPublicTestSets = () => {
+    return api.get("/test-sets");
+};
+
+export const getPublicTest = (query) => {
+    return api.get(`/tests?${query}`);
+};
+
+
 
 
 
