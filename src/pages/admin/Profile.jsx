@@ -1,12 +1,256 @@
-import React from 'react';
-import { Card, Descriptions, Avatar, Typography } from 'antd';
-import { UserOutlined, MailOutlined } from '@ant-design/icons';
-import { useAppSelector } from '../../redux/hooks';
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, Descriptions, Avatar, Typography, Button, Input, Select, message, Spin, Modal } from 'antd';
+import { UserOutlined, MailOutlined, EditOutlined, CameraOutlined, SaveOutlined, CloseOutlined, DeleteOutlined, LockOutlined } from '@ant-design/icons';
+import { getUserProfile, updateUserProfile, changeUserPassword } from '../../api/api';
+import { useAppDispatch } from '../../redux/hooks';
+import { fetchAccount } from '../../redux/slices/accountSlide';
+import { isStrongPassword } from '../../utils/validation';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 const Profile = () => {
-    const user = useAppSelector(state => state.account.user);
+    const dispatch = useAppDispatch();
+    const [profileData, setProfileData] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [fetchLoading, setFetchLoading] = useState(true);
+    const [formData, setFormData] = useState({
+        fullName: '',
+        gender: '',
+        avatar: null
+    });
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const fileInputRef = useRef(null);
+
+    // Password change modal state
+    const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [passwordErrors, setPasswordErrors] = useState({});
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
+    // Fetch profile data on mount
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setFetchLoading(true);
+                const response = await getUserProfile();
+                if (response && response.status === 200) {
+                    setProfileData(response.data);
+                    setFormData({
+                        fullName: response.data?.fullName || '',
+                        gender: response.data?.gender || '',
+                        avatar: null
+                    });
+                    setAvatarPreview(response.data?.avatar || null);
+                }
+            } catch (error) {
+                message.error(error?.message || 'Không thể tải thông tin profile');
+            } finally {
+                setFetchLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
+    const getGenderDisplay = (gender) => {
+        if (!gender) return 'Chưa cập nhật';
+        const genderMap = {
+            'MALE': 'Nam',
+            'FEMALE': 'Nữ',
+            'OTHER': 'Khác'
+        };
+        return genderMap[gender] || gender;
+    };
+
+    const handleEdit = () => {
+        setIsEditing(true);
+        setFormData({
+            fullName: profileData?.fullName || '',
+            gender: profileData?.gender || '',
+            avatar: null
+        });
+        setAvatarPreview(profileData?.avatar || null);
+        setAvatarFile(null);
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setFormData({
+            fullName: profileData?.fullName || '',
+            gender: profileData?.gender || '',
+            avatar: null
+        });
+        setAvatarPreview(profileData?.avatar || null);
+        setAvatarFile(null);
+    };
+
+    const handleInputChange = (field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                message.error('File ảnh không được vượt quá 5MB');
+                return;
+            }
+            setAvatarFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveAvatar = () => {
+        setAvatarFile(null);
+        setAvatarPreview(profileData?.avatar || null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleSave = async () => {
+        if (!formData.fullName.trim()) {
+            message.error('Họ và tên không được để trống');
+            return;
+        }
+        if (!formData.gender) {
+            message.error('Vui lòng chọn giới tính');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const data = new FormData();
+            data.append('fullName', formData.fullName);
+            data.append('gender', formData.gender);
+            
+            if (avatarFile) {
+                data.append('avatar', avatarFile);
+            }
+
+            const response = await updateUserProfile(data);
+            if (response && response.status === 200) {
+                message.success('Cập nhật thông tin thành công');
+                setIsEditing(false);
+                // Refresh profile data from API
+                const updatedResponse = await getUserProfile();
+                if (updatedResponse && updatedResponse.status === 200) {
+                    setProfileData(updatedResponse.data);
+                    setFormData({
+                        fullName: updatedResponse.data?.fullName || '',
+                        gender: updatedResponse.data?.gender || '',
+                        avatar: null
+                    });
+                    setAvatarPreview(updatedResponse.data?.avatar || null);
+                }
+                // Refresh Redux store
+                await dispatch(fetchAccount());
+            }
+        } catch (error) {
+            message.error(error?.message || 'Cập nhật thông tin thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Password change handlers
+    const handleOpenPasswordModal = () => {
+        setIsPasswordModalVisible(true);
+        setPasswordData({
+            oldPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        setPasswordErrors({});
+    };
+
+    const handleClosePasswordModal = () => {
+        setIsPasswordModalVisible(false);
+        setPasswordData({
+            oldPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        setPasswordErrors({});
+    };
+
+    const handlePasswordInputChange = (field, value) => {
+        setPasswordData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+        // Clear error when user starts typing
+        if (passwordErrors[field]) {
+            setPasswordErrors(prev => ({
+                ...prev,
+                [field]: ''
+            }));
+        }
+    };
+
+    const validatePasswordForm = () => {
+        const errors = {};
+        
+        if (!passwordData.oldPassword) {
+            errors.oldPassword = 'Vui lòng nhập mật khẩu cũ';
+        }
+        
+        if (!passwordData.newPassword) {
+            errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+        } else if (!isStrongPassword(passwordData.newPassword)) {
+            errors.newPassword = 'Mật khẩu phải 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+        }
+        
+        if (!passwordData.confirmPassword) {
+            errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+        } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+            errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+        }
+        
+        setPasswordErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleChangePassword = async () => {
+        if (!validatePasswordForm()) {
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const response = await changeUserPassword(passwordData);
+            if (response && response.status === 200) {
+                message.success('Đổi mật khẩu thành công');
+                handleClosePasswordModal();
+            }
+        } catch (error) {
+            message.error(error?.message || 'Đổi mật khẩu thất bại');
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
+    if (fetchLoading) {
+        return (
+            <div style={{ padding: '24px', minHeight: '100vh', background: '#f0f2f5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: '24px', minHeight: '100vh', background: '#f0f2f5' }}>
@@ -23,18 +267,63 @@ const Profile = () => {
                     paddingBottom: '24px',
                     borderBottom: '1px solid #f0f0f0'
                 }}>
-                    <Avatar 
-                        src={user?.avatar} 
-                        size={120}
-                        style={{ 
-                            backgroundColor: '#1890ff',
-                            marginBottom: '16px'
-                        }}
-                    >
-                        {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
-                    </Avatar>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <Avatar 
+                            src={avatarPreview} 
+                            size={120}
+                            style={{ 
+                                backgroundColor: '#1890ff',
+                                marginBottom: '16px'
+                            }}
+                        >
+                            {formData.fullName?.charAt(0)?.toUpperCase() || profileData?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                        </Avatar>
+                        {isEditing && (
+                            <>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handleAvatarChange}
+                                />
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '0',
+                                    right: '0',
+                                    display: 'flex',
+                                    gap: '8px'
+                                }}>
+                                    {avatarFile && (
+                                        <Button
+                                            type="primary"
+                                            danger
+                                            shape="circle"
+                                            icon={<DeleteOutlined />}
+                                            style={{
+                                                zIndex: 2,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                            }}
+                                            onClick={handleRemoveAvatar}
+                                            disabled={loading}
+                                        />
+                                    )}
+                                    <Button
+                                        type="primary"
+                                        shape="circle"
+                                        icon={<CameraOutlined />}
+                                        style={{
+                                            zIndex: 2,
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                        }}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
                     <Title level={2} style={{ marginTop: '16px', marginBottom: '0' }}>
-                        {user?.fullName || 'Administrator'}
+                        {formData.fullName || profileData?.fullName || 'Administrator'}
                     </Title>
                     <div style={{ 
                         color: '#666', 
@@ -64,49 +353,195 @@ const Profile = () => {
                             </span>
                         }
                     >
-                        {user?.email || 'admin@toeic-rise.com'}
+                        {profileData?.email || 'admin@toeic-rise.com'}
                     </Descriptions.Item>
                     
-                    <Descriptions.Item 
-                        label={
-                            <span>
-                                <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                Họ và tên
-                            </span>
-                        }
-                    >
-                        {user?.fullName || 'Administrator'}
-                    </Descriptions.Item>
+                    {isEditing ? (
+                        <Descriptions.Item 
+                            label={
+                                <span>
+                                    <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                                    Họ và tên
+                                </span>
+                            }
+                        >
+                            <Input
+                                value={formData.fullName}
+                                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                placeholder="Nhập họ và tên"
+                            />
+                        </Descriptions.Item>
+                    ) : (
+                        <Descriptions.Item 
+                            label={
+                                <span>
+                                    <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                                    Họ và tên
+                                </span>
+                            }
+                        >
+                            {profileData?.fullName || 'Administrator'}
+                        </Descriptions.Item>
+                    )}
                     
-                    <Descriptions.Item 
-                        label={
-                            <span>
-                                <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                Giới tính
-                            </span>
-                        }
-                    >
-                        {user?.gender || 'Chưa cập nhật'}
-                    </Descriptions.Item>
+                    {isEditing ? (
+                        <Descriptions.Item 
+                            label={
+                                <span>
+                                    <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                                    Giới tính
+                                </span>
+                            }
+                        >
+                            <Select
+                                style={{ width: '100%' }}
+                                value={formData.gender}
+                                onChange={(value) => handleInputChange('gender', value)}
+                                placeholder="Chọn giới tính"
+                            >
+                                <Option value="MALE">Nam</Option>
+                                <Option value="FEMALE">Nữ</Option>
+                                <Option value="OTHER">Khác</Option>
+                            </Select>
+                        </Descriptions.Item>
+                    ) : (
+                        <Descriptions.Item 
+                            label={
+                                <span>
+                                    <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                                    Giới tính
+                                </span>
+                            }
+                        >
+                            {getGenderDisplay(profileData?.gender)}
+                        </Descriptions.Item>
+                    )}
                 </Descriptions>
 
-                {/* Note Section */}
+                {/* Action Buttons */}
                 <div style={{ 
                     marginTop: '24px',
-                    padding: '16px',
-                    background: '#e6f7ff',
-                    borderRadius: '4px',
-                    border: '1px solid #91d5ff'
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    flexWrap: 'wrap'
                 }}>
-                    <div style={{ 
-                        fontSize: '14px',
-                        color: '#0050b3',
-                        textAlign: 'center'
-                    }}>
-                        💡 Tính năng cập nhật thông tin sẽ có sẵn trong phiên bản tiếp theo
+                    {isEditing ? (
+                        <>
+                            <Button
+                                type="default"
+                                icon={<CloseOutlined />}
+                                onClick={handleCancel}
+                                disabled={loading}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={handleSave}
+                                loading={loading}
+                            >
+                                Lưu thay đổi
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button
+                                type="primary"
+                                icon={<EditOutlined />}
+                                onClick={handleEdit}
+                            >
+                                Chỉnh sửa thông tin
+                            </Button>
+                            <Button
+                                icon={<LockOutlined />}
+                                onClick={handleOpenPasswordModal}
+                            >
+                                Đổi mật khẩu
+                            </Button>
+                        </>
+                    )}
+                </div>
+
+            </Card>
+
+            {/* Password Change Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LockOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                        <span>Đổi mật khẩu</span>
+                    </div>
+                }
+                open={isPasswordModalVisible}
+                onCancel={handleClosePasswordModal}
+                onOk={handleChangePassword}
+                okText="Đổi mật khẩu"
+                cancelText="Hủy"
+                confirmLoading={passwordLoading}
+                width={500}
+            >
+                <div style={{ padding: '16px 0' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                            Mật khẩu cũ <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <Input.Password
+                            size="large"
+                            placeholder="Nhập mật khẩu cũ"
+                            value={passwordData.oldPassword}
+                            onChange={(e) => handlePasswordInputChange('oldPassword', e.target.value)}
+                        />
+                        {passwordErrors.oldPassword && (
+                            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                {passwordErrors.oldPassword}
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                            Mật khẩu mới <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <Input.Password
+                            size="large"
+                            placeholder="Nhập mật khẩu mới"
+                            value={passwordData.newPassword}
+                            onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
+                        />
+                        {passwordErrors.newPassword && (
+                            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                {passwordErrors.newPassword}
+                            </div>
+                        )}
+                        <div style={{ 
+                            fontSize: '12px', 
+                            color: '#666', 
+                            marginTop: '4px' 
+                        }}>
+                            Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                            Xác nhận mật khẩu <span style={{ color: 'red' }}>*</span>
+                        </label>
+                        <Input.Password
+                            size="large"
+                            placeholder="Nhập lại mật khẩu mới"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
+                        />
+                        {passwordErrors.confirmPassword && (
+                            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                {passwordErrors.confirmPassword}
+                            </div>
+                        )}
                     </div>
                 </div>
-            </Card>
+            </Modal>
         </div>
     );
 };

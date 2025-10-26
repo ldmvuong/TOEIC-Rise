@@ -57,7 +57,11 @@ export const updateTest = (id, payload) => api.put(`/admin/tests/${id}`, payload
 
 export const getUserProfile = () => api.get("/profile");
 
-export const updateUserProfile = (payload) => api.put("/profile", payload);
+export const updateUserProfile = (formData) => {
+  return api.put("/profile", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
 
 export const changeUserPassword = (payload) => api.put("/profile/password", payload);
 
