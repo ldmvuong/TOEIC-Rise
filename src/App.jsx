@@ -4,6 +4,7 @@ import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import TestList from './pages/client/TestList.jsx';
+import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
@@ -41,6 +42,14 @@ export default function App() {
         {
           path: 'online-tests',
           element: <TestList />
+        },
+        {
+          path: 'profile',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+              <ClientProfile />
+            </ProtectedRoute>
+          )
         }
       ],
     },
@@ -64,7 +73,7 @@ export default function App() {
       element: <GoogleCallbackHandler />,
     },
     {
-      path: "/profile",
+      path: "/admin/profile",
       element: (
         <>
           <ProtectedRoute allowedRoles={['ADMIN']}>

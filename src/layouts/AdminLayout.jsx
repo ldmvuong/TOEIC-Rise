@@ -68,7 +68,7 @@ export default function AdminLayout() {
     const handleMenuClick = ({ key }) => {
         switch (key) {
             case 'profile':
-                navigate('/profile');
+                navigate('/admin/profile');
                 break;
             case 'home':
                 navigate('/');

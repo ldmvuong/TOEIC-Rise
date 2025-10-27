@@ -63,7 +63,7 @@ export const updateUserProfile = (formData) => {
   });
 };
 
-export const changeUserPassword = (payload) => api.put("/profile/password", payload);
+export const changeUserPassword = (payload) => api.put("/change-password", payload);
 
 
 // guest access to some tests

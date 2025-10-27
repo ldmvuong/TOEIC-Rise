@@ -4,7 +4,7 @@ import { UserOutlined, MailOutlined, EditOutlined, CameraOutlined, SaveOutlined,
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../../api/api';
 import { useAppDispatch } from '../../redux/hooks';
 import { fetchAccount } from '../../redux/slices/accountSlide';
-import { isStrongPassword } from '../../utils/validation';
+import { isStrongPassword, isValidFullName, validateAvatar } from '../../utils/validation';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -23,6 +23,7 @@ const Profile = () => {
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
     const fileInputRef = useRef(null);
+    const [formErrors, setFormErrors] = useState({});
 
     // Password change modal state
     const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
@@ -78,6 +79,7 @@ const Profile = () => {
         });
         setAvatarPreview(profileData?.avatar || null);
         setAvatarFile(null);
+        setFormErrors({});
     };
 
     const handleCancel = () => {
@@ -89,6 +91,11 @@ const Profile = () => {
         });
         setAvatarPreview(profileData?.avatar || null);
         setAvatarFile(null);
+        setFormErrors({});
+        // Clear file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const handleInputChange = (field, value) => {
@@ -96,15 +103,40 @@ const Profile = () => {
             ...prev,
             [field]: value
         }));
+        // Clear error when user starts typing
+        if (formErrors[field]) {
+            setFormErrors(prev => ({
+                ...prev,
+                [field]: ''
+            }));
+        }
     };
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB
-                message.error('File ảnh không được vượt quá 5MB');
+            // Validate avatar file
+            const validation = validateAvatar(file);
+            
+            if (!validation.valid) {
+                // Clear file input
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                // Display first error message
+                setFormErrors(prev => ({
+                    ...prev,
+                    avatar: validation.errors[0]
+                }));
                 return;
             }
+            
+            // Clear any previous errors
+            setFormErrors(prev => ({
+                ...prev,
+                avatar: ''
+            }));
+            
             setAvatarFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -120,15 +152,39 @@ const Profile = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+        // Clear avatar error
+        setFormErrors(prev => ({
+            ...prev,
+            avatar: ''
+        }));
     };
 
     const handleSave = async () => {
-        if (!formData.fullName.trim()) {
-            message.error('Họ và tên không được để trống');
-            return;
+        const errors = {};
+        
+        // Validate fullName
+        if (!formData.fullName || !formData.fullName.trim()) {
+            errors.fullName = 'Họ và tên không được để trống';
+        } else if (!isValidFullName(formData.fullName.trim())) {
+            errors.fullName = 'Họ và tên chỉ được chứa chữ cái và khoảng trắng';
         }
+        
+        // Validate gender
         if (!formData.gender) {
-            message.error('Vui lòng chọn giới tính');
+            errors.gender = 'Vui lòng chọn giới tính';
+        }
+        
+        // Validate avatar if file is selected
+        if (avatarFile) {
+            const validation = validateAvatar(avatarFile);
+            if (!validation.valid) {
+                errors.avatar = validation.errors[0];
+            }
+        }
+        
+        // Set errors and return if there are any
+        setFormErrors(errors);
+        if (Object.keys(errors).length > 0) {
             return;
         }
 
@@ -322,6 +378,15 @@ const Profile = () => {
                             </>
                         )}
                     </div>
+                    {isEditing && formErrors.avatar && (
+                        <div style={{ 
+                            color: 'red', 
+                            fontSize: '12px', 
+                            marginTop: '8px'
+                        }}>
+                            {formErrors.avatar}
+                        </div>
+                    )}
                     <Title level={2} style={{ marginTop: '16px', marginBottom: '0' }}>
                         {formData.fullName || profileData?.fullName || 'Administrator'}
                     </Title>
@@ -365,11 +430,19 @@ const Profile = () => {
                                 </span>
                             }
                         >
-                            <Input
-                                value={formData.fullName}
-                                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                placeholder="Nhập họ và tên"
-                            />
+                            <div>
+                                <Input
+                                    value={formData.fullName}
+                                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                    placeholder="Nhập họ và tên"
+                                    status={formErrors.fullName ? 'error' : ''}
+                                />
+                                {formErrors.fullName && (
+                                    <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                        {formErrors.fullName}
+                                    </div>
+                                )}
+                            </div>
                         </Descriptions.Item>
                     ) : (
                         <Descriptions.Item 
@@ -393,16 +466,24 @@ const Profile = () => {
                                 </span>
                             }
                         >
-                            <Select
-                                style={{ width: '100%' }}
-                                value={formData.gender}
-                                onChange={(value) => handleInputChange('gender', value)}
-                                placeholder="Chọn giới tính"
-                            >
-                                <Option value="MALE">Nam</Option>
-                                <Option value="FEMALE">Nữ</Option>
-                                <Option value="OTHER">Khác</Option>
-                            </Select>
+                            <div>
+                                <Select
+                                    style={{ width: '100%' }}
+                                    value={formData.gender}
+                                    onChange={(value) => handleInputChange('gender', value)}
+                                    placeholder="Chọn giới tính"
+                                    status={formErrors.gender ? 'error' : ''}
+                                >
+                                    <Option value="MALE">Nam</Option>
+                                    <Option value="FEMALE">Nữ</Option>
+                                    <Option value="OTHER">Khác</Option>
+                                </Select>
+                                {formErrors.gender && (
+                                    <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                        {formErrors.gender}
+                                    </div>
+                                )}
+                            </div>
                         </Descriptions.Item>
                     ) : (
                         <Descriptions.Item 
