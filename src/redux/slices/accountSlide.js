@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getProfile } from '../../api/api';
+import { clearAccessToken } from '../../api/axios-customize';
 
 // Thunk để fetch account
 export const fetchAccount = createAsyncThunk(
@@ -56,6 +57,8 @@ export const accountSlide = createSlice({
     },
     setLogoutAction: (state) => {
       localStorage.removeItem('access_token');
+      // Also clear axios default Authorization header to avoid leaking stale tokens
+      clearAccessToken();
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;

@@ -51,8 +51,24 @@ export const clearAccessToken = () => {
 // --- Interceptors ---
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
+  const url = config?.url || '';
+  const isLoginEndpoint = url === '/auth/login';
+
+  // Never attach Authorization for login only
+  if (isLoginEndpoint) {
+    if (config.headers && config.headers.Authorization) {
+      delete config.headers.Authorization;
+    }
+    return config;
+  }
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    // Ensure no stale Authorization header leaks into requests
+    if (config.headers && config.headers.Authorization) {
+      delete config.headers.Authorization;
+    }
   }
   return config;
 });

@@ -8,7 +8,7 @@ import ForgotPasswordTab from '../../components/auth/ForgotPasswordTab';
 import OTPVerificationTab from '../../components/auth/OTPVerificationTab';
 import { login as loginApi, loginWithGoogle } from '../../api/api';
 import { setAccessToken } from '../../api/axios-customize';
-import { setUserLoginInfo, clearError } from '../../redux/slices/accountSlide';
+import { setUserLoginInfo, clearError, fetchAccount } from '../../redux/slices/accountSlide';
 
 const AuthPage = () => {
   const [currentForm, setCurrentForm] = useState('login');
@@ -60,6 +60,10 @@ const AuthPage = () => {
       setAccessToken(payload.accessToken);
 
       dispatch(setUserLoginInfo(payload));
+      // Fetch full profile to ensure fields like avatar are up-to-date
+      try {
+        await dispatch(fetchAccount());
+      } catch {}
     } catch (err) {
       const serverMessage = err?.response?.data?.message || err?.message;
       const fallback = 'Đăng nhập thất bại';
