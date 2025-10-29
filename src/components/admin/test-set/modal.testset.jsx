@@ -78,7 +78,7 @@ const ModalTestSet = (props) => {
             modalProps={{
                 onCancel: () => { handleReset() },
                 afterClose: () => handleReset(),
-                destroyOnClose: true,
+                destroyOnHidden: true,
                 keyboard: false,
                 maskClosable: false,
                 okText: <>{dataInit?.id ? "Cập nhật" : "Tạo mới"}</>,

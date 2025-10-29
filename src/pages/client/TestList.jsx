@@ -126,9 +126,7 @@ const TestList = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Spin size="large" tip="Đang tải danh sách bộ đề thi..." />
-            </div>
+            <Spin size="large" fullscreen tip="Đang tải danh sách bộ đề thi..." />
         );
     }
 
@@ -277,8 +275,10 @@ const TestList = () => {
                     </div>
 
                     {loadingTests ? (
-                        <div className="flex justify-center py-12">
-                            <Spin size="large" tip="Đang tải danh sách đề thi..." />
+                        <div className="py-12">
+                            <Spin spinning tip="Đang tải danh sách đề thi...">
+                                <div className="h-8" />
+                            </Spin>
                         </div>
                     ) : tests.length > 0 ? (
                         <>

@@ -9,7 +9,7 @@ const DashboardPage = () => {
     return (
         <Row gutter={[20, 20]}>
             <Col span={24} md={8}>
-                <Card title="Card title" bordered={false}>
+                <Card title="Card title" variant="borderless">
                     <Statistic
                         title="Active Users"
                         value={112893}
@@ -18,7 +18,7 @@ const DashboardPage = () => {
                 </Card>
             </Col>
             <Col span={24} md={8}>
-                <Card title="Card title" bordered={false}>
+                <Card title="Card title" variant="borderless">
                     <Statistic
                         title="Active Users"
                         value={112893}
@@ -27,7 +27,7 @@ const DashboardPage = () => {
                 </Card>
             </Col>
             <Col span={24} md={8}>
-                <Card title="Card title" bordered={false}>
+                <Card title="Card title" variant="borderless">
                     <Statistic
                         title="Active Users"
                         value={112893}

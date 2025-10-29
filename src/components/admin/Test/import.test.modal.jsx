@@ -84,7 +84,7 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
             onCancel={onClose}
             onOk={handleSubmit}
             okButtonProps={{ loading: submitting }}
-            destroyOnClose
+            destroyOnHidden
         >
             <Form form={form} layout="vertical">
                 <Form.Item

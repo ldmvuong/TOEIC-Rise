@@ -18,7 +18,7 @@ export const fetchAccount = createAsyncThunk(
 // Initial state
 const initialState = {
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   isRefreshToken: false,
   errorRefreshToken: '',
   error: null,

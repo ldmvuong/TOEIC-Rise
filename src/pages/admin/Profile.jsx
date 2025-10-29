@@ -404,10 +404,12 @@ const Profile = () => {
                     column={1}
                     bordered
                     size="large"
-                    labelStyle={{ 
-                        fontWeight: 600,
-                        width: '200px',
-                        backgroundColor: '#fafafa'
+                    styles={{
+                        label: {
+                            fontWeight: 600,
+                            width: '200px',
+                            backgroundColor: '#fafafa'
+                        }
                     }}
                 >
                     <Descriptions.Item 
