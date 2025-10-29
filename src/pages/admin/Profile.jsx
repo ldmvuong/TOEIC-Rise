@@ -202,16 +202,16 @@ const Profile = () => {
             if (response && response.status === 200) {
                 message.success('Cập nhật thông tin thành công');
                 setIsEditing(false);
-                // Refresh profile data from API
-                const updatedResponse = await getUserProfile();
-                if (updatedResponse && updatedResponse.status === 200) {
-                    setProfileData(updatedResponse.data);
+                // Use update response to refresh local state (avoid extra GET)
+                const updated = response.data;
+                if (updated) {
+                    setProfileData(updated);
                     setFormData({
-                        fullName: updatedResponse.data?.fullName || '',
-                        gender: updatedResponse.data?.gender || '',
+                        fullName: updated?.fullName || '',
+                        gender: updated?.gender || '',
                         avatar: null
                     });
-                    setAvatarPreview(updatedResponse.data?.avatar || null);
+                    setAvatarPreview(updated?.avatar || null);
                 }
                 // Refresh Redux store
                 await dispatch(fetchAccount());

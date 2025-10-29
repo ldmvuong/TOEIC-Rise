@@ -205,16 +205,16 @@ const Profile = () => {
                 setIsEditing(false);
                 setFormErrors({}); // Clear errors
                 
-                // Refresh profile data
-                const updatedResponse = await getUserProfile();
-                if (updatedResponse && updatedResponse.status === 200) {
-                    setProfileData(updatedResponse.data);
+                // Use update response to refresh local state (avoid extra GET)
+                const updated = response.data;
+                if (updated) {
+                    setProfileData(updated);
                     setFormData({
-                        fullName: updatedResponse.data?.fullName || '',
-                        gender: updatedResponse.data?.gender || '',
+                        fullName: updated?.fullName || '',
+                        gender: updated?.gender || '',
                         avatar: null
                     });
-                    setAvatarPreview(updatedResponse.data?.avatar || null);
+                    setAvatarPreview(updated?.avatar || null);
                 }
                 
                 // Refresh Redux
