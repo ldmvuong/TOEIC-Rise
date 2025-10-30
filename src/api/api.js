@@ -28,7 +28,7 @@ export const loginWithGoogle = () => {
 
 export const refreshToken = () => api.post("/auth/refresh-token");
 
-// Test Sets
+// Admin Test Sets
 
 export const createTestSet = (payload) => api.post("/admin/test-sets/create", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets/update", payload);
@@ -39,7 +39,7 @@ export const getAllTestSets = (query) => {
 
 export const getTestInTestSet = (id, query) => api.get(`/admin/test-sets/${id}?${query}`);
 
-// Tests
+// Admin Tests
 export const getAllTests = (query) => api.get(`/admin/tests?${query}`);
 
 export const importTests = (formData) =>
@@ -75,6 +75,14 @@ export const getPublicTest = (query) => {
     return api.get(`/tests?${query}`);
 };
 
+
+// Admin users
+
+export const getAllUsers = (query) => api.get(`/admin/users?${query}`);
+
+export const createUser = (formData) => api.post("/admin/users", formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 
 

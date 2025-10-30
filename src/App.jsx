@@ -17,6 +17,7 @@ import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
 import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
+import UserPage from "./pages/admin/User.jsx";
 
 
 export default function App() {
@@ -114,6 +115,12 @@ export default function App() {
           path: 'tests/:id',
           element: (
             <TestDetailPage />
+          ),
+        },
+        {
+          path: 'users',
+          element: (
+            <UserPage />
           ),
         },
       ],
