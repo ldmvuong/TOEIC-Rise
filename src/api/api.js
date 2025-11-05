@@ -30,8 +30,8 @@ export const refreshToken = () => api.post("/auth/refresh-token");
 
 // Admin Test Sets
 
-export const createTestSet = (payload) => api.post("/admin/test-sets/create", payload);
-export const updateTestSet = (payload) => api.put("/admin/test-sets/update", payload);
+export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
+export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
 export const getAllTestSets = (query) => {
     return api.get(`/admin/test-sets?${query}`);
@@ -74,6 +74,11 @@ export const getPublicTestSets = () => {
 export const getPublicTest = (query) => {
     return api.get(`/tests?${query}`);
 };
+
+export const getPublicTestById = (id) => {
+    return api.get(`/tests/${id}`);
+};
+
 
 
 // Admin users

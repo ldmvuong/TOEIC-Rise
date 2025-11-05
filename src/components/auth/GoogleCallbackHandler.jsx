@@ -4,6 +4,7 @@ import { notification } from 'antd';
 import { useAppDispatch } from '../../redux/hooks';
 import { setUserLoginInfo } from '../../redux/slices/accountSlide';
 import { setAccessToken } from '../../api/axios-customize';
+import { sanitizeCallback } from '../../utils/callback';
 
 const GoogleCallbackHandler = () => {
   const navigate = useNavigate();
@@ -34,9 +35,9 @@ const GoogleCallbackHandler = () => {
         
         // Dispatch user info to Redux
         dispatch(setUserLoginInfo(user));
-
-
-        const redirectPath = user.role === 'ADMIN' ? '/admin' : '/';
+        const saved = sessionStorage.getItem('loginCallback');
+        if (saved) sessionStorage.removeItem('loginCallback');
+        const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
         navigate(redirectPath, { replace: true });
       } catch (err) {
         console.error('Error parsing Google callback data:', err);
@@ -70,8 +71,9 @@ const GoogleCallbackHandler = () => {
           console.log('Token in localStorage after set (fallback):', localStorage.getItem('access_token'));
           
           dispatch(setUserLoginInfo(user));
-          
-          const redirectPath = user.role === 'ADMIN' ? '/admin' : '/';
+          const saved = sessionStorage.getItem('loginCallback');
+          if (saved) sessionStorage.removeItem('loginCallback');
+          const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
           navigate(redirectPath, { replace: true });
         } catch (err) {
           console.error('Error parsing Google callback data (fallback):', err);

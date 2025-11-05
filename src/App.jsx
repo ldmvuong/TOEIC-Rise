@@ -18,6 +18,7 @@ import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
+import TestDetail from "./pages/client/TestDetail.jsx";
 
 
 export default function App() {
@@ -43,6 +44,10 @@ export default function App() {
         {
           path: 'online-tests',
           element: <TestList />
+        },
+        {
+          path: 'online-tests/:id/:slug',
+          element: <TestDetail />
         },
         {
           path: 'profile',

@@ -8,12 +8,15 @@ import TestSetCard from '../../components/card/testset.card.jsx';
 import TestCard from '../../components/card/test.card.jsx';
 import { Spin, message, Pagination, Input, Select, Button } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { toSlug } from '../../utils/slug';
 
 const TestList = () => {
     const [testSets, setTestSets] = useState([]);
     const [tests, setTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingTests, setLoadingTests] = useState(false);
+    const navigate = useNavigate();
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -120,8 +123,9 @@ const TestList = () => {
     };
 
     const handleTestClick = (test) => {
-        console.log('Test clicked:', test);
-        // TODO: Navigate to test detail or start test
+        if (!test?.id) return;
+        const slug = toSlug(test?.testName || 'test');
+        navigate(`/online-tests/${test.id}/${slug}`);
     };
 
     if (loading) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { notification } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -16,24 +16,36 @@ const AuthPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
+
   // Redux state
   const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
   const user = useAppSelector(state => state.account.user);
   const error = useAppSelector(state => state.account.error);
-  
+
   // URL parameters
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const callback = params?.get("callback");
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const callbackQueryParam = params.get("callback");
 
-  // Check authentication and redirect if already logged in
+  useEffect(() => {
+    if (callbackQueryParam) {
+      sessionStorage.setItem('loginCallback', decodeURIComponent(callbackQueryParam));
+    }
+  }, [callbackQueryParam]); // Chỉ chạy khi query param thay đổi
+
   useEffect(() => {
     if (isAuthenticated) {
-      const redirectPath = callback || (user.role === 'ADMIN' ? '/admin' : '/');
+      const savedCallback = sessionStorage.getItem('loginCallback');
+
+      if (savedCallback) {
+        sessionStorage.removeItem('loginCallback');
+      }
+
+      const redirectPath = savedCallback || (user.role === 'ADMIN' ? '/admin' : '/');
+
       navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, user.role, callback, navigate]);
+  }, [isAuthenticated, user.role, navigate]); // Bỏ 'callback' ra khỏi đây
 
   // Clear error when switching tabs/forms
   useEffect(() => {
@@ -60,15 +72,24 @@ const AuthPage = () => {
       setAccessToken(payload.accessToken);
 
       dispatch(setUserLoginInfo(payload));
-      // Fetch full profile to ensure fields like avatar are up-to-date
+      // Fire-and-forget profile fetch; redirect does not depend on it
       try {
-        await dispatch(fetchAccount());
-      } catch {}
+        dispatch(fetchAccount());
+      } catch { }
+
+      // Redirect immediately here to avoid race with effects
+      const savedCallback = sessionStorage.getItem('loginCallback');
+      if (savedCallback) {
+        sessionStorage.removeItem('loginCallback');
+      }
+      const userRole = payload?.user?.role || payload?.role || 'USER';
+      const redirectPath = savedCallback || (userRole === 'ADMIN' ? '/admin' : '/');
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       const serverMessage = err?.response?.data?.message || err?.message;
       const fallback = 'Đăng nhập thất bại';
       const msg = serverMessage || fallback;
-      
+
       notification.error({
         message: 'Đăng nhập thất bại',
         description: msg,
@@ -128,8 +149,8 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Back to Home Button */}
-      <Link 
-        to="/" 
+      <Link
+        to="/"
         className="absolute top-4 left-4 z-10 flex items-center text-gray-600 hover:text-gray-800 transition-colors"
       >
         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
