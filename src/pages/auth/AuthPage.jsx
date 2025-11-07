@@ -117,12 +117,10 @@ const AuthPage = () => {
   };
 
   const handleRequestOtp = (email) => {
-    console.log('Request OTP:', email);
     // TODO: Implement OTP request API
   };
 
   const handleVerifyOtp = (data) => {
-    console.log('Verify OTP and reset password:', data);
     // TODO: Implement OTP verification API
   };
 

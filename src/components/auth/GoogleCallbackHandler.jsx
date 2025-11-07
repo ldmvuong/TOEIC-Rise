@@ -17,21 +17,12 @@ const GoogleCallbackHandler = () => {
     const token = urlParams.get('access_token');
     const userData = urlParams.get('user_data');
 
-    console.log('Google callback params:', { success, error, token, userData });
-    console.log('Current URL:', window.location.href);
-
     if (success === 'true' && token && userData) {
       try {
         const user = JSON.parse(decodeURIComponent(userData));
-                
-        console.log('Parsed user data:', user);
-        console.log('Token to set:', token);
         
         // Set token vào localStorage và axios headers
         setAccessToken(token);
-        
-        // Verify token was set
-        console.log('Token in localStorage after set:', localStorage.getItem('access_token'));
         
         // Dispatch user info to Redux
         dispatch(setUserLoginInfo(user));
@@ -40,7 +31,6 @@ const GoogleCallbackHandler = () => {
         const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
         navigate(redirectPath, { replace: true });
       } catch (err) {
-        console.error('Error parsing Google callback data:', err);
         notification.error({
           message: 'Lỗi xử lý dữ liệu Google',
           description: 'Vui lòng thử lại',
@@ -59,16 +49,11 @@ const GoogleCallbackHandler = () => {
       navigate('/auth', { replace: true });
     } else {
       // No callback parameters, check if we have token and userData anyway
-      console.log('No success parameter, checking for token and userData...');
       if (token && userData) {
-        console.log('Found token and userData without success parameter, processing...');
         try {
           const user = JSON.parse(decodeURIComponent(userData));
-          console.log('Parsed user data (fallback):', user);
-          console.log('Token to set (fallback):', token);
           
           setAccessToken(token);
-          console.log('Token in localStorage after set (fallback):', localStorage.getItem('access_token'));
           
           dispatch(setUserLoginInfo(user));
           const saved = sessionStorage.getItem('loginCallback');
@@ -76,7 +61,6 @@ const GoogleCallbackHandler = () => {
           const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
           navigate(redirectPath, { replace: true });
         } catch (err) {
-          console.error('Error parsing Google callback data (fallback):', err);
           notification.error({
             message: 'Lỗi xử lý dữ liệu Google',
             description: 'Vui lòng thử lại',

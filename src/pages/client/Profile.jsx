@@ -56,7 +56,7 @@ const Profile = () => {
                     setAvatarPreview(response.data?.avatar || null);
                 }
             } catch (error) {
-                console.error('Error fetching profile:', error);
+                // Silent error handling
             } finally {
                 setFetchLoading(false);
             }
@@ -221,7 +221,6 @@ const Profile = () => {
                 await dispatch(fetchAccount());
             }
         } catch (error) {
-            console.error('Error updating profile:', error);
             message.error(error?.message || 'Cập nhật thông tin thất bại');
         } finally {
             setLoading(false);
@@ -270,7 +269,6 @@ const Profile = () => {
                 setPasswordErrors({});
             }
         } catch (error) {
-            console.error('Error changing password:', error);
             message.error(error?.message || 'Đổi mật khẩu thất bại');
         } finally {
             setPasswordLoading(false);

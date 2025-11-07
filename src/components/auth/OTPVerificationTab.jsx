@@ -63,15 +63,12 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
         email: email
       });
       
-      console.log('Resend OTP response:', response);
-      
       // Kiểm tra status code 200
       if (response && response.status === 200) {
         message.success('Đã gửi lại mã OTP thành công!');
         setTimeLeft(5 * 60); // Reset countdown
       }
     } catch (error) {
-      console.error('Resend OTP error:', error);
       
       // Hiển thị lỗi bằng notification
       notification.error({

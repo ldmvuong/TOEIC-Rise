@@ -39,7 +39,6 @@ const TestList = () => {
             const response = await getPublicTestSets();
             setTestSets(response.data || []);
         } catch (error) {
-            console.error('Error fetching test sets:', error);
             message.error('Không thể tải danh sách bộ đề thi');
         }
     };
@@ -63,7 +62,6 @@ const TestList = () => {
             setTotal(response.data?.meta?.total || 0);
             setCurrentPage(page);
         } catch (error) {
-            console.error('Error fetching tests:', error);
             message.error('Không thể tải danh sách đề thi');
         } finally {
             setLoadingTests(false);

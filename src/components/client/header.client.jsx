@@ -30,7 +30,6 @@ export default function Header({ currentPath }) {
     try {
       await logoutApi()
     } catch (error) {
-      console.error('Logout API error:', error)
       // Vẫn tiếp tục logout local dù API có lỗi
     } finally {
       dispatch(setLogoutAction())

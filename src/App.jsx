@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
+import DoTest from "./pages/client/DoTest.jsx";
 
 
 export default function App() {
@@ -48,6 +49,14 @@ export default function App() {
         {
           path: 'online-tests/:id/:slug',
           element: <TestDetail />
+        },
+        {
+          path: 'do-test',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+              <DoTest />
+            </ProtectedRoute>
+          )
         },
         {
           path: 'profile',

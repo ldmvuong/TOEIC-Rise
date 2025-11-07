@@ -192,8 +192,7 @@ const TestSetPage = () => {
             const response = await getTestInTestSet(testSet.id, query);
             setTestData(response.data);
         } catch (error) {
-            console.error('Error fetching test data:', error);
-            // Có thể thêm notification error ở đây
+            // Silent error handling
         } finally {
             setLoadingDrawer(false);
         }
@@ -207,8 +206,7 @@ const TestSetPage = () => {
             const response = await getTestInTestSet(currentTestSet.id, query);
             setTestData(response.data);
         } catch (error) {
-            console.error('Error fetching test data:', error);
-            // Có thể thêm notification error ở đây
+            // Silent error handling
         } finally {
             setLoadingDrawer(false);
         }

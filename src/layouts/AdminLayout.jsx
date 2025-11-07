@@ -56,7 +56,6 @@ export default function AdminLayout() {
             await logoutApi();
             message.success('Đăng xuất thành công!');
         } catch (error) {
-            console.error('Logout API error:', error);
             message.warning('Có lỗi khi đăng xuất, nhưng đã đăng xuất local');
         } finally {
             dispatch(setLogoutAction());

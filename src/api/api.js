@@ -90,6 +90,22 @@ export const createUser = (formData) => api.post("/admin/users", formData, {
 });
 
 
+// Learner
+
+export const getTestExam = (id, parts) => {
+  // Đảm bảo parts là mảng
+  const partsArray = Array.isArray(parts) ? parts : [parts];
+  
+  // Backend có thể yêu cầu format: ?parts=1,2,3 hoặc ?parts=1&parts=2&parts=3
+  // Thử format: ?parts=1,2,3 trước (phổ biến hơn)
+  return api.get(`/learner/user-tests/exam/${id}`, {
+    params: { 
+      parts: partsArray.join(',') // Format: ?parts=1,2,3
+    }
+  });
+};
+
+
 
 
 

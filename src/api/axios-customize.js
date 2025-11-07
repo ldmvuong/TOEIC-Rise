@@ -30,7 +30,6 @@ const handleRefreshToken = async () => {
       }
       return null;
     } catch (error) {
-      console.error('Refresh token failed:', error);
       return null;
     }
   });
@@ -116,7 +115,7 @@ api.interceptors.response.use(
     // Handle 403 Forbidden
     if (error.response && error.response.status === 403) {
       const message = error?.response?.data?.message ?? "Không có quyền truy cập";
-      console.error('403 Forbidden:', message);
+      // Silent error handling
     }
     
     // Chuẩn hoá lỗi để FE hiển thị đúng thông điệp
