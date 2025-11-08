@@ -106,7 +106,11 @@ export const getUserTestHistory = (testId) =>
 
 export const submitTestExam = (payload) => api.post('/learner/user-tests', payload);
 
+export const getUserTestStatisticsResult = (userTestId) =>
+  api.get(`/learner/user-tests/${userTestId}`);
 
+export const getUserTestAnswersOverall = (userTestId) =>
+  api.get(`/learner/user-tests/answers-overall/${userTestId}`);
 
 
 

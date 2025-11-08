@@ -20,6 +20,7 @@ import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
+import TestResult from "./pages/client/TestResult.jsx";
 
 
 export default function App() {
@@ -55,6 +56,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
               <DoTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'test-result/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+              <TestResult />
             </ProtectedRoute>
           )
         },

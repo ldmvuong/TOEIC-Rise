@@ -149,6 +149,18 @@ const DoTest = () => {
         fetchTest();
     }, [testId, partIds.join(','), timeLimit, mode, navigate]);
     
+    // Hàm dừng tất cả audio
+    const stopAllAudio = useCallback(() => {
+        // Tìm tất cả các audio elements trong DOM và dừng chúng
+        const audioElements = document.querySelectorAll('audio');
+        audioElements.forEach(audio => {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        });
+    }, []);
+
     // Hàm nộp bài - được tách ra để tái sử dụng
     const submitTest = useCallback(async (successMessage = 'Đã nộp bài thành công!') => {
         if (!testData || !testId || isTestSubmitted) {
@@ -159,6 +171,9 @@ const DoTest = () => {
             }
             return;
         }
+
+        // Dừng tất cả audio khi nộp bài
+        stopAllAudio();
 
         try {
             // Thu thập tất cả câu hỏi từ tất cả các part
@@ -208,15 +223,13 @@ const DoTest = () => {
                 
                 // Lưu kết quả
                 setTestResult(response.data);
-                
-                // Hiển thị thông báo
-                message.success(successMessage);
+            
             }
         } catch (error) {
             console.error('Error submitting test:', error);
             message.error(error?.response?.data?.message || error?.message || 'Không thể nộp bài. Vui lòng thử lại.');
         }
-    }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted]);
+    }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted, stopAllAudio]);
     
     // Nộp bài
     const handleSubmit = () => {
@@ -360,13 +373,27 @@ const DoTest = () => {
         });
     };
     
-    // Đóng popup kết quả và navigate về trang test detail
+    // Đóng popup kết quả và navigate về trang kết quả bài thi
     const handleCloseResultModal = () => {
-        setTestResult(null);
-        if (testId) {
-            navigate(`/online-tests/${testId}`);
+        if (testResult && testResult.userTestId) {
+            navigate(`/test-result/${testResult.userTestId}`);
         } else {
-            navigate('/online-tests');
+            // Fallback nếu không có userTestId
+            setTestResult(null);
+            if (testId) {
+                navigate(`/online-tests/${testId}`);
+            } else {
+                navigate('/online-tests');
+            }
+        }
+    };
+
+    // Navigate đến trang kết quả chi tiết
+    const handleViewDetailedResult = () => {
+        if (testResult && testResult.userTestId) {
+            navigate(`/test-result/${testResult.userTestId}`);
+        } else {
+            message.error('Không tìm thấy ID bài thi');
         }
     };
     
@@ -532,7 +559,7 @@ const DoTest = () => {
                 <Modal
                     title="Kết quả bài làm"
                     open={!!testResult}
-                    onOk={handleCloseResultModal}
+                    onOk={handleViewDetailedResult}
                     onCancel={handleCloseResultModal}
                     okText="Xem chi tiết"
                     cancelText="Đóng"

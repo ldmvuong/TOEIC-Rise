@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUserTestHistory } from '../../api/api';
 import dayjs from 'dayjs';
 import { message } from 'antd';
 
 const HistoryTestExam = ({ testId, isAuthenticated }) => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [historyData, setHistoryData] = useState([]);
 
@@ -130,8 +132,19 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
                                         </td>
                                         <td className="px-4 py-3">{formatResult(item)}</td>
                                         <td className="px-4 py-3">{formatTimeDisplay(item.timeSpent)}</td>
-                                        <td className="px-4 py-3 text-blue-600 font-medium cursor-pointer">
-                                            Xem chi tiết
+                                        <td className="px-4 py-3">
+                                            <button
+                                                onClick={() => {
+                                                    if (item.id) {
+                                                        navigate(`/test-result/${item.id}`);
+                                                    } else {
+                                                        message.error('Không tìm thấy ID bài thi');
+                                                    }
+                                                }}
+                                                className="text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                            >
+                                                Xem chi tiết
+                                            </button>
                                         </td>
                                     </tr>
                                 );
