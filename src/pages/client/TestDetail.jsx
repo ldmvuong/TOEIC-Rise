@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPublicTestById } from '../../api/api';
 import { Spin, Select, message } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
+import HistoryTestExam from '../../components/table/HistoryTestExam';
 
 const TagChip = ({ children }) => (
     <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-800 rounded-full border border-gray-200">
@@ -89,34 +90,6 @@ const TestDetail = () => {
         });
     };
 
-    // Mock result data (until API is available)
-    const resultsColumns = [
-        {
-            title: 'Ngày làm',
-            dataIndex: 'date',
-            key: 'date',
-            render: (_, row) => (
-                <div>
-                    <div className="font-medium text-gray-900">{row.date}</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                        <Tag color={row.mode === 'Full test' ? 'green' : 'orange'}>{row.mode}</Tag>
-                        {row.parts.map((p) => (
-                            <Tag key={p} color="gold" className="m-0">{p}</Tag>
-                        ))}
-                    </div>
-                </div>
-            )
-        },
-        { title: 'Kết quả', dataIndex: 'result', key: 'result' },
-        { title: 'Thời gian làm bài', dataIndex: 'time', key: 'time' },
-        { title: '', key: 'action', render: () => <span className="text-blue-600 font-medium cursor-pointer">Xem chi tiết</span> }
-    ];
-
-    const resultsData = [
-        { key: 1, date: '29/10/2025', mode: 'Luyện tập', parts: ['Part 7'], result: '1/54', time: '0:00:14' },
-        { key: 2, date: '29/10/2025', mode: 'Luyện tập', parts: ['Part 1', 'Part 2'], result: '0/31', time: '0:00:04' },
-        { key: 3, date: '26/09/2025', mode: 'Full test', parts: [], result: '6/200 (Điểm: 40)', time: '0:00:58' },
-    ];
 
     const parsedId = useMemo(() => {
         const parsed = Number(id);
@@ -172,42 +145,8 @@ const TestDetail = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left/Main */}
                     <div className="lg:col-span-2">
-                        {/* Results table (mock) */}
-                        <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-3">Kết quả làm bài của bạn</h2>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left text-gray-700 border border-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 border border-gray-200">Ngày làm</th>
-                                            <th className="px-4 py-3 border border-gray-200">Kết quả</th>
-                                            <th className="px-4 py-3 border border-gray-200">Thời gian làm bài</th>
-                                            <th className="px-4 py-3 border border-gray-200"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {[{ date: '29/10/2025', mode: 'Luyện tập', parts: ['Part 7'], result: '1/54', time: '0:00:14' },
-                                        { date: '29/10/2025', mode: 'Luyện tập', parts: ['Part 1', 'Part 2'], result: '0/31', time: '0:00:04' },
-                                        { date: '26/09/2025', mode: 'Full test', parts: [], result: '6/200 (Điểm: 40)', time: '0:00:58' }].map((row, idx) => (
-                                            <tr key={idx} className="odd:bg-white even:bg-gray-50">
-                                                <td className="px-4 py-3 border border-gray-200 align-top">
-                                                    <div className="font-medium text-gray-900">{row.date}</div>
-                                                    <div className="mt-1 flex flex-wrap gap-1">
-                                                        <span className={`text-xs px-2 py-0.5 rounded ${row.mode === 'Full test' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>{row.mode}</span>
-                                                        {row.parts.map(p => (
-                                                            <span key={p} className="text-xs px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">{p}</span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 border border-gray-200">{row.result}</td>
-                                                <td className="px-4 py-3 border border-gray-200">{row.time}</td>
-                                                <td className="px-4 py-3 border border-gray-200 text-blue-600 font-medium cursor-pointer">Xem chi tiết</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        {/* Results table */}
+                        <HistoryTestExam testId={parsedId} isAuthenticated={isAuthenticated} />
 
                         {/* Tabs */}
                         <div className="mt-6 bg-white border border-gray-200 rounded-xl">
