@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getTestExam } from '../../api/api';
+import { getTestExam, submitTestExam } from '../../api/api';
 import QuestionGroup from '../../components/exam/question.group';
 import Sidebar from '../../components/exam/sidebar';
 import NavigationButtons from '../../components/exam/NavigationButtons';
@@ -8,7 +8,7 @@ import PartInstructions from '../../components/exam/PartInstructions';
 import { useTestNavigation } from '../../hooks/useTestNavigation';
 import { useAudio } from '../../hooks/useAudio';
 import { scrollToElement } from '../../utils/scrollUtils';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 
 const DoTest = () => {
     const location = useLocation();
@@ -36,6 +36,8 @@ const DoTest = () => {
     const [showInstructions, setShowInstructions] = useState(false); // Hiển thị hướng dẫn
     const [viewedParts, setViewedParts] = useState([]); // Track các part đã xem hướng dẫn (dùng array thay vì Set)
     const [startTime, setStartTime] = useState(null); // Thời điểm bắt đầu làm bài
+    const [testResult, setTestResult] = useState(null); // Kết quả bài làm
+    const [isTestSubmitted, setIsTestSubmitted] = useState(false); // Đánh dấu đã nộp bài
     
     const isFullTest = mode === 'full';
     const hasTimeLimit = isFullTest || (timeLimit && timeLimit > 0);
@@ -147,33 +149,96 @@ const DoTest = () => {
         fetchTest();
     }, [testId, partIds.join(','), timeLimit, mode, navigate]);
     
+    // Hàm nộp bài - được tách ra để tái sử dụng
+    const submitTest = useCallback(async (successMessage = 'Đã nộp bài thành công!') => {
+        if (!testData || !testId || isTestSubmitted) {
+            if (isTestSubmitted) {
+                message.info('Bài thi đã được nộp rồi!');
+            } else {
+                message.error('Không có dữ liệu đề thi');
+            }
+            return;
+        }
+
+        try {
+            // Thu thập tất cả câu hỏi từ tất cả các part
+            const allAnswers = [];
+            
+            testData.partResponses.forEach(part => {
+                part.questionGroups.forEach(group => {
+                    group.questions.forEach(question => {
+                        // Lấy câu trả lời từ state, convert từ index (0,1,2,3) sang chữ cái (A,B,C,D)
+                        let answerValue = '';
+                        if (answers[question.id] !== undefined) {
+                            const optionIndex = answers[question.id];
+                            // Convert index sang chữ cái: 0 -> A, 1 -> B, 2 -> C, 3 -> D
+                            answerValue = String.fromCharCode(65 + optionIndex);
+                        }
+                        
+                        allAnswers.push({
+                            questionId: question.id,
+                            questionGroupId: group.id,
+                            answer: answerValue
+                        });
+                    });
+                });
+            });
+
+            // Xây dựng mảng parts - null nếu là full test, ngược lại là mảng các part name
+            const partsArray = isFullTest 
+                ? null 
+                : testData.partResponses.map(part => part.partName);
+
+            // Xây dựng payload
+            const payload = {
+                testId: parseInt(testId),
+                timeSpent: elapsedTime,
+                parts: partsArray,
+                answers: allAnswers
+            };
+
+            // Gọi API
+            const response = await submitTestExam(payload);
+            
+            // Nếu thành công (status 200), lưu kết quả và hiển thị popup
+            if (response && response.data) {
+                // Dừng timer
+                setIsTestSubmitted(true);
+                setTimeRemaining(0);
+                
+                // Lưu kết quả
+                setTestResult(response.data);
+                
+                // Hiển thị thông báo
+                message.success(successMessage);
+            }
+        } catch (error) {
+            console.error('Error submitting test:', error);
+            message.error(error?.response?.data?.message || error?.message || 'Không thể nộp bài. Vui lòng thử lại.');
+        }
+    }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted]);
+    
     // Nộp bài
     const handleSubmit = () => {
-        // TODO: Gọi API nộp bài
-        message.success('Đã nộp bài thành công!');
-        if (testId) {
-            navigate(`/online-tests/${testId}`);
-        } else {
-            navigate('/online-tests');
-        }
+        submitTest();
     };
     
     // Timer countdown - đếm ngược thời gian còn lại (nếu có giới hạn)
     useEffect(() => {
-        if (!hasTimeLimit || timeRemaining <= 0) {
+        if (!hasTimeLimit || timeRemaining <= 0 || isTestSubmitted) {
             return;
         }
         
-        const timerInterval = setInterval(() => {
+        const interval = setInterval(() => {
             setTimeRemaining(prev => {
-                if (prev <= 1) {
+                if (prev <= 1 || isTestSubmitted) {
                     // Hết thời gian - tự động nộp bài
-                    clearInterval(timerInterval);
-                    setTimeout(() => {
-                        // TODO: Gọi API nộp bài
-                        message.success('Hết thời gian! Đã tự động nộp bài.');
-                        navigate(`/online-tests/${testId}`);
-                    }, 100);
+                    clearInterval(interval);
+                    if (!isTestSubmitted) {
+                        setTimeout(() => {
+                            submitTest('Hết thời gian! Đã tự động nộp bài.');
+                        }, 100);
+                    }
                     return 0;
                 }
                 return prev - 1;
@@ -181,24 +246,26 @@ const DoTest = () => {
         }, 1000);
         
         return () => {
-            clearInterval(timerInterval);
+            clearInterval(interval);
         };
-    }, [timeRemaining, hasTimeLimit, testId, navigate]);
+    }, [timeRemaining, hasTimeLimit, submitTest, isTestSubmitted]);
     
     // Đếm thời gian làm bài (elapsed time) - luôn chạy
     useEffect(() => {
-        if (!startTime) return;
+        if (!startTime || isTestSubmitted) {
+            return;
+        }
         
-        const elapsedInterval = setInterval(() => {
+        const interval = setInterval(() => {
             const now = Date.now();
             const elapsed = Math.floor((now - startTime) / 1000);
             setElapsedTime(elapsed);
         }, 1000);
         
         return () => {
-            clearInterval(elapsedInterval);
+            clearInterval(interval);
         };
-    }, [startTime]);
+    }, [startTime, isTestSubmitted]);
     
     // Xử lý audio tự động cho Part 1-4
     // Chỉ phát audio khi không đang hiển thị instructions
@@ -291,6 +358,23 @@ const DoTest = () => {
             }
             return prev;
         });
+    };
+    
+    // Đóng popup kết quả và navigate về trang test detail
+    const handleCloseResultModal = () => {
+        setTestResult(null);
+        if (testId) {
+            navigate(`/online-tests/${testId}`);
+        } else {
+            navigate('/online-tests');
+        }
+    };
+    
+    // Format thời gian từ giây sang phút:giây
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
     
     if (loading) {
@@ -442,6 +526,56 @@ const DoTest = () => {
                     answers={answers}
                 />
             </div>
+            
+            {/* Modal hiển thị kết quả bài làm */}
+            {testResult && (
+                <Modal
+                    title="Kết quả bài làm"
+                    open={!!testResult}
+                    onOk={handleCloseResultModal}
+                    onCancel={handleCloseResultModal}
+                    okText="Xem chi tiết"
+                    cancelText="Đóng"
+                    width={600}
+                    centered
+                >
+                    <div className="py-4">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                <span className="text-gray-700 font-medium">Tổng số câu hỏi:</span>
+                                <span className="text-lg font-semibold text-blue-600">{testResult.totalQuestions}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                                <span className="text-gray-700 font-medium">Số câu đúng:</span>
+                                <span className="text-lg font-semibold text-green-600">{testResult.correctAnswers}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                <span className="text-gray-700 font-medium">Điểm số:</span>
+                                <span className="text-2xl font-bold text-purple-600">{testResult.score}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                <span className="text-gray-700 font-medium">Thời gian làm bài:</span>
+                                <span className="text-lg font-semibold text-orange-600">{formatTime(testResult.timeSpent)}</span>
+                            </div>
+                            
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="text-center">
+                                    <div className="text-3xl font-bold text-gray-800 mb-2">
+                                        {testResult.totalQuestions > 0 
+                                            ? `${Math.round((testResult.correctAnswers / testResult.totalQuestions) * 100)}%`
+                                            : '0%'
+                                        }
+                                    </div>
+                                    <div className="text-sm text-gray-600">Tỷ lệ đúng</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 };
