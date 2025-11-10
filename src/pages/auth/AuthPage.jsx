@@ -158,16 +158,16 @@ const AuthPage = () => {
       </Link>
 
       {/* Left Column - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-50 to-blue-50 p-12 flex-col justify-center">
-        <div className="max-w-md">
+      <div className="hidden lg:flex lg:w-3/5 bg-gradient-to-br from-green-50 to-blue-50 p-12 flex-col justify-center">
+        <div className="max-w-md mx-auto">
           {/* Logo */}
-          <div className="flex items-center mb-8">
+          <div className="flex items-center justify-center mb-8 lg:justify-start">
             <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mr-4">
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
                 <div className="w-4 h-4 bg-green-600 rounded-full"></div>
               </div>
             </div>
-            <div>
+            <div className="text-center lg:text-left">
               <h1 className="text-3xl font-bold text-gray-900">TOEIC RISE</h1>
               <p className="text-gray-600">Online Testing System</p>
             </div>
@@ -199,7 +199,7 @@ const AuthPage = () => {
       </div>
 
       {/* Right Column - Authentication Card */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             {/* Header */}
