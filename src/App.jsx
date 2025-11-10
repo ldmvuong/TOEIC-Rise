@@ -21,6 +21,7 @@ import UserPage from "./pages/admin/User.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
+import ExamStructure from "./pages/client/ExamStructure.jsx";
 
 
 export default function App() {
@@ -43,6 +44,10 @@ export default function App() {
       errorElement: <NotFound />,
       children: [
         { index: true, element: <HomePage /> },
+        {
+          path: 'exam-structure',
+          element: <ExamStructure />
+        },
         {
           path: 'online-tests',
           element: <TestList />

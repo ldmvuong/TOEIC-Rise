@@ -18,9 +18,9 @@ export default function Header({ currentPath }) {
 
   const nav = [
     { name: "Home", href: "/" },
-    { name: "Cấu trúc đề thi", href: "/exam-structure" },
     { name: "Đề thi online", href: "/online-tests" },
     { name: "ChatAI", href: "/chat-ai" },
+    { name: "Cấu trúc đề thi", href: "/exam-structure" },
   ]
 
   const activePath = typeof currentPath === "string" ? currentPath : "/"
