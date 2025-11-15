@@ -21,6 +21,7 @@ import UserPage from "./pages/admin/User.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
+import TestResultDetail from "./pages/client/TestResultDetail.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 
 
@@ -69,6 +70,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
               <TestResult />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'test-result-detail/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+              <TestResultDetail />
             </ProtectedRoute>
           )
         },

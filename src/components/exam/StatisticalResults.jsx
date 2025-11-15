@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircleOutlined, CloseCircleOutlined, FlagOutlined } from '@ant-design/icons';
 import { getUserTestStatisticsResult } from '../../api/api';
 import { message } from 'antd';
+import AnswerQuestion from '../client/modal/AnswerQuestion';
 
 const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [activePartTab, setActivePartTab] = useState(null);
     const [data, setData] = useState(null);
     const [hasFetched, setHasFetched] = useState(false);
+    const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+    const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
     const navigate = useNavigate();
 
     // Fetch data from API
@@ -131,10 +134,11 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 const correctCount = item.correctAnswers || 0;
                 const wrongCount = item.wrongAnswers || 0;
                 
-                // Get question positions with status
+                // Get question positions with status and userAnswerId
                 const questions = item.userAnswerOverallResponses?.map(q => ({
                     position: q.position,
-                    correct: q.correct
+                    correct: q.correct,
+                    userAnswerId: q.userAnswerId || q.id || null
                 })) || [];
 
                 return {
@@ -344,12 +348,21 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                                                                 : 'bg-red-500 text-white';
                                                             
                                                             return (
-                                                                <span
+                                                                <button
                                                                     key={qIdx}
-                                                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${bgColor}`}
+                                                                    onClick={() => {
+                                                                        if (q.userAnswerId) {
+                                                                            setSelectedQuestionId(q.userAnswerId);
+                                                                            setIsAnswerModalOpen(true);
+                                                                        }
+                                                                    }}
+                                                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${bgColor} ${
+                                                                        q.userAnswerId ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'
+                                                                    }`}
+                                                                    title={q.userAnswerId ? 'Xem chi tiết' : ''}
                                                                 >
                                                                     {q.position}
-                                                                </span>
+                                                                </button>
                                                             );
                                                         })
                                                     ) : (
@@ -381,6 +394,16 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     )}
                 </div>
             )}
+
+            {/* Answer Question Modal */}
+            <AnswerQuestion
+                open={isAnswerModalOpen}
+                onClose={() => {
+                    setIsAnswerModalOpen(false);
+                    setSelectedQuestionId(null);
+                }}
+                userAnswerId={selectedQuestionId}
+            />
         </div>
     );
 };

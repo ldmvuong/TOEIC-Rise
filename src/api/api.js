@@ -112,6 +112,12 @@ export const getUserTestStatisticsResult = (userTestId) =>
 export const getUserTestAnswersOverall = (userTestId) =>
   api.get(`/learner/user-tests/answers-overall/${userTestId}`);
 
+export const viewAnswersQuestionDetail = (userAnswerId) =>
+  api.get(`/learner/user-answers/${userAnswerId}`);
+
+
+export const viewTestResultDetails = (userTestId) =>
+  api.get(`/learner/user-tests/detail/${userTestId}`);
 
 
 

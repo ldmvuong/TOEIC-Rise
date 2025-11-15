@@ -57,7 +57,10 @@ const TestResult = () => {
 
                 {/* Answer Sheet Section */}
                 <div ref={answerSheetRef}>
-                    <AnswerSheet userTestId={userTestId} testId={testData?.id} />
+                    <AnswerSheet 
+                        userTestId={userTestId} 
+                        testId={testData?.testId}
+                    />
                 </div>
             </div>
         </div>

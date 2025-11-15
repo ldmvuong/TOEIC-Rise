@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { getUserTestAnswersOverall } from '../../api/api';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import AnswerQuestion from '../client/modal/AnswerQuestion';
 
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
     const [hasFetched, setHasFetched] = useState(false);
     const [activeView, setActiveView] = useState('answers'); // 'answers', 'detailed', 'redo'
+    const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+    const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -124,8 +127,11 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
     const handleViewDetails = () => {
         // Navigate to detailed answer view
-        setActiveView('detailed');
-        // TODO: Implement navigation to detailed answer page
+        if (userTestId) {
+            navigate(`/test-result-detail/${userTestId}`);
+        } else {
+            message.error('Không tìm thấy ID bài thi');
+        }
     };
 
     const handleRedoIncorrect = () => {
@@ -233,7 +239,13 @@ const AnswerSheet = ({ userTestId, testId }) => {
                                                         </div>
 
                                                         {/* Detail Button */}
-                                                        <button className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap">
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedQuestionId(question.userAnswerId);
+                                                                setIsAnswerModalOpen(true);
+                                                            }}
+                                                            className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
+                                                        >
                                                             Chi tiết
                                                         </button>
                                                     </div>
@@ -270,7 +282,13 @@ const AnswerSheet = ({ userTestId, testId }) => {
                                                             </div>
 
                                                             {/* Detail Button */}
-                                                            <button className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setSelectedQuestionId(question.userAnswerId);
+                                                                    setIsAnswerModalOpen(true);
+                                                                }}
+                                                                className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
+                                                            >
                                                                 Chi tiết
                                                             </button>
                                                         </div>
@@ -299,6 +317,16 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     Tính năng làm lại các câu sai đang được phát triển
                 </div>
             )}
+
+            {/* Answer Question Modal */}
+            <AnswerQuestion
+                open={isAnswerModalOpen}
+                onClose={() => {
+                    setIsAnswerModalOpen(false);
+                    setSelectedQuestionId(null);
+                }}
+                userAnswerId={selectedQuestionId}
+            />
         </div>
     );
 };
