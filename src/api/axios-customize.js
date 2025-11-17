@@ -5,6 +5,18 @@ import { setRefreshTokenAction } from "../redux/slices/accountSlide";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
+const PUBLIC_ENDPOINTS = [
+  "/auth/login",
+  "/auth/verify",
+  "/test-sets", 
+  "/tests" 
+];
+
+// Helper check URL
+const isPublicUrl = (url) => {
+  return PUBLIC_ENDPOINTS.some((endpoint) => url.startsWith(endpoint));
+};
+
 // Mutex để tránh multiple refresh token calls
 const mutex = new Mutex();
 const NO_RETRY_HEADER = "x-no-retry";
@@ -26,7 +38,7 @@ const handleRefreshToken = async () => {
     try {
       const res = await api.get("/auth/refresh-token");
       if (res && res.data) {
-        return res.data.access_token;
+        return res.data.accessToken;
       }
       return null;
     } catch (error) {
@@ -51,10 +63,9 @@ export const clearAccessToken = () => {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   const url = config?.url || '';
-  const isLoginEndpoint = url === '/auth/login';
 
-  // Never attach Authorization for login only
-  if (isLoginEndpoint) {
+  if (isPublicUrl(url)) {
+    // Xóa header Authorization nếu nó lỡ được gán từ defaults hoặc chỗ nào đó
     if (config.headers && config.headers.Authorization) {
       delete config.headers.Authorization;
     }
@@ -88,7 +99,7 @@ api.interceptors.response.use(
     if (
       error.response &&
       (error.response.status === 401 ) &&
-      originalRequest.url !== "/auth/login" &&
+      !isPublicUrl(originalRequest.url) &&
       originalRequest.url !== "/auth/refresh-token" &&
       !originalRequest.headers[NO_RETRY_HEADER]
     ) {
@@ -105,7 +116,7 @@ api.interceptors.response.use(
     // Handle refresh token failure
     if (
       error.response &&
-      error.response.status === 400 &&
+      error.response.status === 401 &&
       originalRequest.url === "/auth/refresh-token"
     ) {
       const message = error?.response?.data?.message ?? "Có lỗi xảy ra, vui lòng login lại.";
