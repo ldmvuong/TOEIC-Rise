@@ -130,10 +130,8 @@ const TestDetail = () => {
         <div className="min-h-screen bg-white">
             {/* Page header */}
             <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
-                <span className="inline-block px-2.5 py-1 text-xs rounded-full bg-gray-100 text-gray-600 border border-gray-200">#TOEIC</span>
                 <h1 className="mt-3 text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
                     {data.testName}
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500 text-white text-sm">✓</span>
                 </h1>
                 <div className="mt-4 text-gray-700">
                     <p className="mt-1 text-sm italic text-rose-600">Chú ý: để được quy đổi sang scaled score (ví dụ trên thang điểm 990 cho TOEIC hoặc 9.0 cho IELTS), vui lòng chọn chế độ làm FULL TEST.</p>
@@ -249,7 +247,11 @@ const TestDetail = () => {
                     <div className="lg:col-span-1">
                         <div className="lg:sticky lg:top-6 space-y-6">
                             <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-                                <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                        <div className="text-xs text-gray-500">Số lượt thi</div>
+                                        <div className="text-lg font-semibold text-gray-900">{learnersCount}</div>
+                                    </div>
                                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                                         <div className="text-xs text-gray-500">Thời lượng</div>
                                         <div className="text-lg font-semibold text-gray-900">120 phút</div>

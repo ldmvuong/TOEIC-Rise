@@ -40,13 +40,6 @@ const TestCard = ({ test, onClick }) => {
                     </div>
                 </div>
 
-                {/* TOEIC Tag */}
-                <div className="mb-4">
-                    <span className="inline-block px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-semibold rounded-full shadow-sm">
-                        #TOEIC
-                    </span>
-                </div>
-
                 {/* Details Button */}
                 <button className="w-full py-2 px-4 border-2 border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-md">
                     Chi tiết

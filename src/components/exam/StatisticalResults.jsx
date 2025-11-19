@@ -4,6 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, FlagOutlined } from '@ant-des
 import { getUserTestStatisticsResult } from '../../api/api';
 import { message } from 'antd';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
+import ChatQuestion from '../client/modal/ChatQuestion';
 
 const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [activePartTab, setActivePartTab] = useState(null);
@@ -11,6 +12,8 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [hasFetched, setHasFetched] = useState(false);
     const [selectedQuestionId, setSelectedQuestionId] = useState(null);
     const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+    const [chatQuestionData, setChatQuestionData] = useState(null);
     const navigate = useNavigate();
 
     // Fetch data from API
@@ -403,6 +406,24 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     setSelectedQuestionId(null);
                 }}
                 userAnswerId={selectedQuestionId}
+                onReport={() => {
+                    // TODO: Implement report functionality
+                    message.info('Tính năng báo cáo đang được phát triển');
+                }}
+                onChatAI={(questionData) => {
+                    setChatQuestionData(questionData);
+                    setIsChatModalOpen(true);
+                }}
+            />
+
+            {/* Chat Question Modal */}
+            <ChatQuestion
+                open={isChatModalOpen}
+                onClose={() => {
+                    setIsChatModalOpen(false);
+                    setChatQuestionData(null);
+                }}
+                questionData={chatQuestionData}
             />
         </div>
     );

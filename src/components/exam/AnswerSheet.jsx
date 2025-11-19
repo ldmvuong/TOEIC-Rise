@@ -3,6 +3,7 @@ import { getUserTestAnswersOverall } from '../../api/api';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
+import ChatQuestion from '../client/modal/ChatQuestion';
 
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
@@ -10,6 +11,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [activeView, setActiveView] = useState('answers'); // 'answers', 'detailed', 'redo'
     const [selectedQuestionId, setSelectedQuestionId] = useState(null);
     const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+    const [chatQuestionData, setChatQuestionData] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -326,6 +329,24 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     setSelectedQuestionId(null);
                 }}
                 userAnswerId={selectedQuestionId}
+                onReport={() => {
+                    // TODO: Implement report functionality
+                    message.info('Tính năng báo cáo đang được phát triển');
+                }}
+                onChatAI={(questionData) => {
+                    setChatQuestionData(questionData);
+                    setIsChatModalOpen(true);
+                }}
+            />
+
+            {/* Chat Question Modal */}
+            <ChatQuestion
+                open={isChatModalOpen}
+                onClose={() => {
+                    setIsChatModalOpen(false);
+                    setChatQuestionData(null);
+                }}
+                questionData={chatQuestionData}
             />
         </div>
     );
