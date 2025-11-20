@@ -3,14 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { getUserTestHistory } from '../../api/api';
 import dayjs from 'dayjs';
 import { message } from 'antd';
+import { useAppSelector } from '../../redux/hooks';
 
 const HistoryTestExam = ({ testId, isAuthenticated }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [historyData, setHistoryData] = useState([]);
+    const userRole = useAppSelector(state => state.account.user?.role);
+    const isLearner = userRole === 'LEARNER';
 
     useEffect(() => {
-        if (!isAuthenticated || !testId) {
+        if (!isAuthenticated || !isLearner || !testId) {
             return;
         }
 
@@ -28,10 +31,9 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
         };
 
         fetchHistory();
-    }, [testId, isAuthenticated]);
+    }, [testId, isAuthenticated, isLearner]);
 
-    // Don't render if user is not authenticated
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !isLearner) {
         return null;
     }
 

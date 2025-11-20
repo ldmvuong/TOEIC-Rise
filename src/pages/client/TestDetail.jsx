@@ -41,6 +41,8 @@ const TestDetail = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
+    const userRole = useAppSelector(state => state.account.user?.role);
+    const isLearner = userRole === 'LEARNER';
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('practice');
@@ -185,6 +187,7 @@ const TestDetail = () => {
                                         {/* Time limit for practice - gated by auth */}
                                         <div className="mt-6">
                                             {isAuthenticated ? (
+                                                isLearner ? (
                                                 <div className="flex flex-col md:flex-row md:items-end gap-4">
                                                     <div className="flex-1">
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">Giới hạn thời gian (tùy chọn)</label>
@@ -209,6 +212,7 @@ const TestDetail = () => {
                                                         BẮT ĐẦU LUYỆN TẬP
                                                     </button>
                                                 </div>
+                                                ) : null
                                             ) : (
                                                 <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3">
                                                     <div className="text-gray-700">Đăng nhập để đặt thời gian và lưu tiến độ luyện tập.</div>
@@ -223,12 +227,14 @@ const TestDetail = () => {
                                         <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-900 p-4 text-sm">⚠️ Sẵn sàng để bắt đầu làm full test? Để đạt được kết quả tốt nhất, bạn cần dành ra 120 phút cho bài test này.</div>
                                         <div className="mt-4 flex justify-end">
                                             {isAuthenticated ? (
+                                                isLearner ? (
                                                 <button 
                                                     onClick={handleStartFullTest}
                                                     className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                                                 >
                                                     BẮT ĐẦU THI
                                                 </button>
+                                                ) : null
                                             ) : (
                                                 <div className="w-full md:w-auto bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3">
                                                     <div className="text-gray-700">Bạn cần đăng nhập để làm full test.</div>

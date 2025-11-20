@@ -26,6 +26,7 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
+
             const file = Array.isArray(values.file)
                 ? values.file[0]?.originFileObj
                 : undefined;
@@ -37,20 +38,29 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
 
             const formData = new FormData();
             formData.append('file', file);
+
             formData.append(
                 'testRequest',
-                JSON.stringify({
-                    testName: values.testName,
-                    testSetId: values.testSet?.value,
-                }),
+                new Blob(
+                    [
+                        JSON.stringify({
+                            testName: values.testName,
+                            testSetId: values.testSet?.value,
+                        }),
+                    ],
+                    { type: 'application/json' }
+                )
             );
 
             setSubmitting(true);
+
             await importTests(formData);
+
             message.success('Import đề thi thành công');
             form.resetFields();
-            onSuccess && onSuccess();
-            onClose && onClose();
+
+            if (onSuccess) onSuccess();
+            if (onClose) onClose();
         } catch (err) {
             if (err?.errorFields) return;
             const msg = err?.message || 'Import thất bại, vui lòng thử lại';
@@ -59,6 +69,7 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
             setSubmitting(false);
         }
     };
+
 
 
     const normFile = (e) => {

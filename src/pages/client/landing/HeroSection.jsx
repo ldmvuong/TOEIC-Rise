@@ -1,8 +1,10 @@
 import { SiGooglegemini } from "react-icons/si";
 import useScrollReveal from "../../../hooks/useScrollReveal";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const [ref, isVisible] = useScrollReveal();
+  const navigate = useNavigate();
 
   return (
     <section
@@ -38,11 +40,17 @@ const HeroSection = () => {
               isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
             }`}
           >
-            <button className="transform rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-indigo-700">
-              Start Learning Free
-            </button>
-            <button className="rounded-lg border-2 border-blue-500 px-8 py-4 text-lg font-semibold text-blue-600 transition-all duration-300 hover:bg-blue-50">
+            <button
+              onClick={() => navigate('/online-tests')}
+              className="transform rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-indigo-700"
+            >
               Take Practice Test
+            </button>
+            <button
+              onClick={() => navigate('/exam-structure')}
+              className="rounded-lg border-2 border-blue-500 px-8 py-4 text-lg font-semibold text-blue-600 transition-all duration-300 hover:bg-blue-50"
+            >
+              TOEIC Exam Overview
             </button>
           </div>
         </div>

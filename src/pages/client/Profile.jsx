@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { message } from 'antd';
 import { getUserProfile, updateUserProfile, changeUserPassword } from '../../api/api';
-import { useAppDispatch } from '../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchAccount } from '../../redux/slices/accountSlide';
 import { isStrongPassword, isValidFullName, validateAvatar } from '../../utils/validation';
 
 const Profile = () => {
     const dispatch = useAppDispatch();
+    const hasPasswordInStore = useAppSelector(state => state.account.user?.hasPassword);
     
     // Profile state
     const [profileData, setProfileData] = useState(null);
@@ -283,18 +284,26 @@ const Profile = () => {
         );
     }
 
+    const hasPassword = hasPasswordInStore ?? profileData?.hasPassword ?? false;
+
     const tabs = [
         { id: 'info', name: 'Thông tin cá nhân', icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
         )},
-        { id: 'password', name: 'Đổi mật khẩu', icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a6 6 0 00-12 0v4h12z" />
-            </svg>
-        )},
     ];
+    if (hasPassword) {
+        tabs.push({
+            id: 'password',
+            name: 'Đổi mật khẩu',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a6 6 0 00-12 0v4h12z" />
+                </svg>
+            )
+        });
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -524,7 +533,7 @@ const Profile = () => {
                         )}
 
                         {/* Password Tab */}
-                        {activeTab === 'password' && (
+                        {activeTab === 'password' && hasPassword && (
                             <div className="max-w-2xl space-y-6">
 
                                 <div className="space-y-5">

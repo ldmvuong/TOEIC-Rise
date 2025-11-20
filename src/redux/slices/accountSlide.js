@@ -53,7 +53,7 @@ export const accountSlide = createSlice({
       state.user.email = userData?.email || '';
       state.user.gender = userData?.gender || null;
       state.user.role = userData?.role || '';
-      state.user.hasPassword = userData?.hasPassword || true;
+      state.user.hasPassword = userData?.hasPassword ?? false;
     },
     setLogoutAction: (state) => {
       localStorage.removeItem('access_token');

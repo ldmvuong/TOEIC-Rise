@@ -60,7 +60,7 @@ export default function App() {
         {
           path: 'do-test',
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+            <ProtectedRoute allowedRoles={['LEARNER']}>
               <DoTest />
             </ProtectedRoute>
           )
@@ -68,7 +68,7 @@ export default function App() {
         {
           path: 'test-result/:userTestId',
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+            <ProtectedRoute allowedRoles={['LEARNER']}>
               <TestResult />
             </ProtectedRoute>
           )
@@ -76,7 +76,7 @@ export default function App() {
         {
           path: 'test-result-detail/:userTestId',
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+            <ProtectedRoute allowedRoles={['LEARNER']}>
               <TestResultDetail />
             </ProtectedRoute>
           )
@@ -84,7 +84,7 @@ export default function App() {
         {
           path: 'profile',
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN']}>
+            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN', "STAFF"]}>
               <ClientProfile />
             </ProtectedRoute>
           )
@@ -114,7 +114,7 @@ export default function App() {
       path: "/admin/profile",
       element: (
         <>
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
             <AdminLayout />
           </ProtectedRoute>
           <RefreshTokenHandler />
@@ -128,7 +128,7 @@ export default function App() {
       path: "/admin",
       element: (
         <>
-          <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
             <AdminLayout />
           </ProtectedRoute>
           <RefreshTokenHandler />

@@ -578,10 +578,12 @@ const DoTest = () => {
                                 <span className="text-lg font-semibold text-green-600">{testResult.correctAnswers}</span>
                             </div>
                             
-                            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
-                                <span className="text-gray-700 font-medium">Điểm số:</span>
-                                <span className="text-2xl font-bold text-purple-600">{testResult.score}</span>
-                            </div>
+                            {testResult.score ? (
+                                <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                    <span className="text-gray-700 font-medium">Điểm số:</span>
+                                    <span className="text-2xl font-bold text-purple-600">{testResult.score}</span>
+                                </div>
+                            ) : null}
                             
                             <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
                                 <span className="text-gray-700 font-medium">Thời gian làm bài:</span>
