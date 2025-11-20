@@ -26,7 +26,10 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const file = Array.isArray(values.file) ? values.file[0]?.originFileObj : undefined;
+            const file = Array.isArray(values.file)
+                ? values.file[0]?.originFileObj
+                : undefined;
+
             if (!file) {
                 message.error('Vui lòng chọn file Excel');
                 return;
@@ -34,12 +37,13 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
 
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('testRequest', new Blob([
+            formData.append(
+                'testRequest',
                 JSON.stringify({
                     testName: values.testName,
-                    testSetId: values.testSet?.value
-                })
-            ], { type: 'application/json' }));
+                    testSetId: values.testSet?.value,
+                }),
+            );
 
             setSubmitting(true);
             await importTests(formData);
@@ -55,6 +59,7 @@ const ImportTestModal = ({ open, onClose, onSuccess }) => {
             setSubmitting(false);
         }
     };
+
 
     const normFile = (e) => {
         if (Array.isArray(e)) return e;
