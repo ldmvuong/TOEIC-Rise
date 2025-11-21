@@ -36,6 +36,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [sending, setSending] = useState(false);
     const [showTranscript, setShowTranscript] = useState(false);
+    const [showExplanation, setShowExplanation] = useState(false);
     const [isQuestionPanelVisible, setIsQuestionPanelVisible] = useState(
         typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
     );
@@ -50,6 +51,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
             setMessages([]);
             setInputMessage('');
             setShowTranscript(false);
+            setShowExplanation(false);
             setIsQuestionPanelVisible(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
             setConversationId('');
             conversationIdRef.current = '';
@@ -239,6 +241,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
         options = [],
         correctOption,
         userAnswer = '',
+        explanation,
     } = questionData || {};
 
     // Ensure options is a valid array
@@ -341,12 +344,12 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                         <div className="mb-6">
                             {/* Question Number */}
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold">
+                                <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                                     {position || ''}
                                 </div>
                                 {/* Question Content */}
                                 {questionContent && (
-                                    <div className="flex-1 text-gray-800 text-base leading-relaxed">
+                                    <div className="flex-1 text-gray-800 text-sm leading-relaxed">
                                         {parse(questionContent)}
                                     </div>
                                 )}
@@ -354,7 +357,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
 
                             {/* Options */}
                             {shouldShowOptions && (
-                                <div className="space-y-2 ml-0 lg:ml-14">
+                                <div className="space-y-1 ml-0 lg:ml-11">
                                     {Array.from({ length: maxOptions }, (_, index) => {
                                         const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                                         const option = allOptions[index];
@@ -366,14 +369,10 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                         
                                         const optionText = (option != null && typeof option === 'string') ? option : '';
 
-                                        let optionBg = 'bg-white/80 hover:bg-white text-gray-800';
-                                        if (isCorrect) optionBg = 'bg-green-50 text-green-800';
-                                        else if (isWrong) optionBg = 'bg-red-50 text-red-800';
-
                                         return (
                                             <div
                                                 key={index}
-                                                className={`flex items-center gap-3 p-3 rounded-2xl shadow-sm transition-colors ${optionBg}`}
+                                                className="flex items-center gap-2"
                                             >
                                                 <div
                                                     className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -387,7 +386,13 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                                     {optionLetter}
                                                 </div>
                                                 {optionText && (
-                                                    <span className="text-gray-800 text-sm leading-relaxed">
+                                                    <span className={`text-sm leading-tight ${
+                                                        isCorrect
+                                                            ? 'text-green-700 font-medium'
+                                                            : isWrong
+                                                            ? 'text-red-700 font-medium'
+                                                            : 'text-gray-800'
+                                                    }`}>
                                                         {parse(optionText)}
                                                     </span>
                                                 )}
@@ -399,13 +404,42 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
 
                             {/* Correct Answer Display */}
                             {correctOption && (
-                                <div className="mt-4 ml-0 lg:ml-14">
+                                <div className="mt-4 ml-0 lg:ml-11">
                                     <p className="text-sm font-semibold text-green-600">
                                         Đáp án đúng: {correctOption}
                                     </p>
                                 </div>
                             )}
                         </div>
+
+                        {/* Explanation Section (Collapsible) */}
+                        {explanation && (
+                            <div className="mb-4">
+                                <button
+                                    onClick={() => setShowExplanation(!showExplanation)}
+                                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                                >
+                                    <span className="text-sm font-medium text-gray-700">
+                                        Giải thích chi tiết đáp án
+                                    </span>
+                                    <svg
+                                        className={`w-5 h-5 text-gray-500 transition-transform ${showExplanation ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {showExplanation && (
+                                    <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                                            {explanation}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         </div>
                     </div>
                 )}

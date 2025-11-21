@@ -234,12 +234,12 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                         <div className="mb-6">
                             {/* Question Number */}
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold">
+                                <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                                     {position || ''}
                                 </div>
                                 {/* Question Content */}
                                 {questionContent && (
-                                    <div className="flex-1 text-gray-800 text-base leading-relaxed">
+                                    <div className="flex-1 text-gray-800 text-sm leading-relaxed">
                                         {questionContent}
                                     </div>
                                 )}
@@ -247,7 +247,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
 
                             {/* Options */}
                             {shouldShowOptions && (
-                                <div className="space-y-2 ml-14">
+                                <div className="space-y-1 ml-11">
                                     {Array.from({ length: maxOptions }, (_, index) => {
                                         const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                                         const option = allOptions[index];
@@ -269,13 +269,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                         return (
                                             <div
                                                 key={index}
-                                                className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
-                                                    isCorrect
-                                                        ? 'bg-green-50 border-green-300'
-                                                        : isWrong
-                                                        ? 'bg-red-50 border-red-300'
-                                                        : 'bg-white border-gray-200'
-                                                }`}
+                                                className="flex items-center gap-2"
                                             >
                                                 <div
                                                     className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -289,7 +283,15 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                                     {optionLetter}
                                                 </div>
                                                 {optionText && (
-                                                    <span className="text-gray-800 text-sm">{optionText}</span>
+                                                    <span className={`text-sm leading-tight ${
+                                                        isCorrect
+                                                            ? 'text-green-700 font-medium'
+                                                            : isWrong
+                                                            ? 'text-red-700 font-medium'
+                                                            : 'text-gray-800'
+                                                    }`}>
+                                                        {optionText}
+                                                    </span>
                                                 )}
                                             </div>
                                         );
@@ -299,7 +301,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
 
                             {/* Correct Answer Display - Only show if user hasn't answered or answered incorrectly */}
                             {correctOption && (!userAnswer || userAnswer !== correctOption) && (
-                                <div className="mt-4 ml-14">
+                                <div className="mt-4 ml-11">
                                     <p className="text-sm font-semibold text-green-600">
                                         Đáp án đúng: {correctOption}
                                     </p>
