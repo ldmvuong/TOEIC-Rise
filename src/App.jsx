@@ -54,7 +54,7 @@ export default function App() {
           element: <TestList />
         },
         {
-          path: 'online-tests/:id/:slug',
+          path: 'online-tests/:id/:slug?',
           element: <TestDetail />
         },
         {

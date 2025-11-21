@@ -4,6 +4,7 @@ import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
+import ReportQuestion from '../client/modal/ReportQuestion';
 
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
@@ -13,6 +14,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const [chatQuestionData, setChatQuestionData] = useState(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportQuestionData, setReportQuestionData] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -329,9 +332,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     setSelectedQuestionId(null);
                 }}
                 userAnswerId={selectedQuestionId}
-                onReport={() => {
-                    // TODO: Implement report functionality
-                    message.info('Tính năng báo cáo đang được phát triển');
+                onReport={(questionData) => {
+                    setReportQuestionData(questionData);
+                    setIsReportModalOpen(true);
                 }}
                 onChatAI={(questionData) => {
                     setChatQuestionData(questionData);
@@ -347,6 +350,16 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     setChatQuestionData(null);
                 }}
                 questionData={chatQuestionData}
+            />
+
+            {/* Report Question Modal */}
+            <ReportQuestion
+                open={isReportModalOpen}
+                onClose={() => {
+                    setIsReportModalOpen(false);
+                    setReportQuestionData(null);
+                }}
+                questionData={reportQuestionData}
             />
         </div>
     );

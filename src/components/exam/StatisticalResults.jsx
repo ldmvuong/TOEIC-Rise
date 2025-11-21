@@ -5,6 +5,8 @@ import { getUserTestStatisticsResult } from '../../api/api';
 import { message } from 'antd';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
+import ReportQuestion from '../client/modal/ReportQuestion';
+import { toSlug } from '../../utils/slug';
 
 const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [activePartTab, setActivePartTab] = useState(null);
@@ -14,6 +16,8 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const [chatQuestionData, setChatQuestionData] = useState(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportQuestionData, setReportQuestionData] = useState(null);
     const navigate = useNavigate();
 
     // Fetch data from API
@@ -208,8 +212,9 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     )}
                     <button 
                         onClick={() => {
-                            if (testId) {
-                                navigate(`/online-tests/${testId}`);
+                            if (testId && data?.testName) {
+                                const slug = toSlug(data.testName);
+                                navigate(`/online-tests/${testId}/${slug}`);
                             } else {
                                 navigate('/online-tests');
                             }
@@ -406,9 +411,9 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     setSelectedQuestionId(null);
                 }}
                 userAnswerId={selectedQuestionId}
-                onReport={() => {
-                    // TODO: Implement report functionality
-                    message.info('Tính năng báo cáo đang được phát triển');
+                onReport={(questionData) => {
+                    setReportQuestionData(questionData);
+                    setIsReportModalOpen(true);
                 }}
                 onChatAI={(questionData) => {
                     setChatQuestionData(questionData);
@@ -424,6 +429,16 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     setChatQuestionData(null);
                 }}
                 questionData={chatQuestionData}
+            />
+
+            {/* Report Question Modal */}
+            <ReportQuestion
+                open={isReportModalOpen}
+                onClose={() => {
+                    setIsReportModalOpen(false);
+                    setReportQuestionData(null);
+                }}
+                questionData={reportQuestionData}
             />
         </div>
     );

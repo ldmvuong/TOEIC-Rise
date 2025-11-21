@@ -119,5 +119,6 @@ export const viewAnswersQuestionDetail = (userAnswerId) =>
 export const viewTestResultDetails = (userTestId) =>
   api.get(`/learner/user-tests/detail/${userTestId}`);
 
-
+export const reportQuestionIssue = (payload) =>
+  api.post('/learner/question-reports', payload);
 

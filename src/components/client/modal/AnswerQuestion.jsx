@@ -67,6 +67,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     if (!open) return null;
 
     const {
+        questionId,
         position,
         tags = [],
         audioUrl,
@@ -116,7 +117,12 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         <div className="flex items-center gap-3">
                             {/* Report Icon */}
                             <button
-                                onClick={onReport}
+                                onClick={() => {
+                                    if (onReport && questionData) {
+                                        onReport(questionData);
+                                        onClose(); // Đóng modal AnswerQuestion
+                                    }
+                                }}
                                 className="p-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-all group shadow-sm hover:shadow-md"
                                 title="Báo cáo câu hỏi"
                             >
@@ -321,8 +327,8 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         </button>
                         {showExplanation && (
                             <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div className="text-gray-800 text-sm leading-relaxed">
-                                    {parse(explanation)}
+                                <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                                    {explanation}
                                 </div>
                             </div>
                         )}
