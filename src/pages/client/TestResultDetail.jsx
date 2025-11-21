@@ -79,11 +79,11 @@ const TestResultDetail = () => {
             <div id={`question-${question.position}`} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
                 {/* Question Header */}
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-base font-bold">
+                    <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                         {question.position}
                     </div>
                     {question.content && (
-                        <div className="flex-1 text-gray-800 text-base leading-relaxed">
+                        <div className="flex-1 text-gray-800 text-sm leading-relaxed">
                             {question.content}
                         </div>
                     )}
@@ -91,7 +91,7 @@ const TestResultDetail = () => {
 
                 {/* Options */}
                 {options.length > 0 && (
-                    <div className="space-y-2 ml-14">
+                    <div className="space-y-1 ml-11">
                         {Array.from({ length: maxOptions }, (_, index) => {
                             const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                             const option = options[index];
@@ -104,13 +104,7 @@ const TestResultDetail = () => {
                             return (
                                 <div
                                     key={index}
-                                    className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
-                                        isCorrect
-                                            ? 'bg-green-50 border-green-300'
-                                            : isWrong
-                                            ? 'bg-red-50 border-red-300'
-                                            : 'bg-white border-gray-200'
-                                    }`}
+                                    className="flex items-center gap-2"
                                 >
                                     <div
                                         className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -124,7 +118,13 @@ const TestResultDetail = () => {
                                         {optionLetter}
                                     </div>
                                     {optionText && (
-                                        <span className="text-gray-800 text-sm">{optionText}</span>
+                                        <span className={`text-sm leading-tight ${
+                                            isCorrect
+                                                ? 'text-green-700 font-medium'
+                                                : isWrong
+                                                ? 'text-red-700 font-medium'
+                                                : 'text-gray-800'
+                                        }`}>{optionText}</span>
                                     )}
                                 </div>
                             );
@@ -134,7 +134,7 @@ const TestResultDetail = () => {
 
                 {/* Correct Answer Display */}
                 {question.correctOption && (!question.userAnswer || question.userAnswer !== question.correctOption) && (
-                    <div className="mt-4 ml-14">
+                    <div className="mt-4 ml-11">
                         <p className="text-sm font-semibold text-green-600">
                             Đáp án đúng: {question.correctOption}
                         </p>
@@ -143,12 +143,12 @@ const TestResultDetail = () => {
 
                 {/* Explanation */}
                 {question.explanation && (
-                    <div className="mt-4 ml-14">
+                    <div className="mt-4 ml-11">
                         <details className="cursor-pointer">
                             <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
                                 Giải thích chi tiết đáp án
                             </summary>
-                            <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="mt-2">
                                 <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
                                     {question.explanation}
                                 </div>
@@ -160,32 +160,80 @@ const TestResultDetail = () => {
         );
     };
 
+    // Get question range text for group
+    const getQuestionRangeText = (questions) => {
+        if (!questions || questions.length === 0) return '';
+        
+        const positions = questions.map(q => q.position).filter(p => p != null);
+        if (positions.length === 0) return '';
+        
+        const minPos = Math.min(...positions);
+        const maxPos = Math.max(...positions);
+        
+        if (minPos === maxPos) {
+            return `Câu ${minPos}`;
+        } else {
+            return `Câu ${minPos}-${maxPos}`;
+        }
+    };
+
     // Render question group
     const renderQuestionGroup = (group, partNumber) => {
         const isPart6Or7 = partNumber === 6 || partNumber === 7;
+        const questionRangeText = getQuestionRangeText(group.questions);
 
         if (isPart6Or7) {
             // Layout 2 cột cho Part 6-7
             return (
                 <div key={group.id} className="mb-8">
-                    <div className="flex gap-4">
-                        {/* Cột trái: Passage (có scroll riêng) */}
-                        <div className="w-1/2 overflow-y-auto pr-4" style={{ maxHeight: '70vh' }}>
-                            {group.passage && (
-                                <div className="mb-4">
-                                    <PassageDisplay passage={group.passage} />
-                                </div>
-                            )}
-                            {group.imageUrl && (
-                                <div className="mb-4">
-                                    <ImageDisplay imageUrl={group.imageUrl} />
-                                </div>
-                            )}
+                    {/* Header hiển thị phạm vi câu hỏi */}
+                    {questionRangeText && (
+                        <div className="mb-2">
+                            <span className="text-sm font-semibold text-gray-700">
+                                {questionRangeText}
+                            </span>
                         </div>
+                    )}
+                    {/* Khung bao ngoài question group */}
+                    <div className="relative rounded-xl bg-white shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        {/* Accent bar ở trên */}
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500"></div>
+                        <div className="p-5 pt-6">
+                            <div className="flex gap-4">
+                                {/* Cột trái: Passage (có scroll riêng) */}
+                                <div className="w-[55%] overflow-y-auto pr-4" style={{ maxHeight: '70vh' }}>
+                                    {group.passage && (
+                                        <div className="mb-4">
+                                            <PassageDisplay passage={group.passage} />
+                                        </div>
+                                    )}
+                                    {group.imageUrl && (
+                                        <div className="mb-4">
+                                            <ImageDisplay imageUrl={group.imageUrl} />
+                                        </div>
+                                    )}
+                                    {/* Transcript */}
+                                    {group.transcript && (
+                                        <div className="mb-4 mt-4 pt-4 border-t border-gray-200">
+                                            <details className="cursor-pointer">
+                                                <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                    Hiện Transcript
+                                                </summary>
+                                                <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                    <div className="text-gray-800 text-sm leading-relaxed">
+                                                        {parse(group.transcript)}
+                                                    </div>
+                                                </div>
+                                            </details>
+                                        </div>
+                                    )}
+                                </div>
 
-                        {/* Cột phải: Questions (có scroll riêng) */}
-                        <div className="w-1/2 overflow-y-auto pl-4" style={{ maxHeight: '70vh' }}>
-                            {group.questions?.map((question) => renderQuestion(question, partNumber))}
+                                {/* Cột phải: Questions (có scroll riêng) */}
+                                <div className="w-[45%] overflow-y-auto pl-4" style={{ maxHeight: '70vh' }}>
+                                    {group.questions?.map((question) => renderQuestion(question, partNumber))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,26 +242,57 @@ const TestResultDetail = () => {
             // Layout 1 cột cho Part 1-5
             return (
                 <div key={group.id} className="mb-8">
-                    {/* Audio Player */}
-                    {group.audioUrl && <AudioPlayerUI audioUrl={group.audioUrl} />}
-
-                    {/* Image */}
-                    {group.imageUrl && (
-                        <div className="mb-4">
-                            <ImageDisplay imageUrl={group.imageUrl} />
+                    {/* Header hiển thị phạm vi câu hỏi */}
+                    {questionRangeText && (
+                        <div className="mb-2">
+                            <span className="text-sm font-semibold text-gray-700">
+                                {questionRangeText}
+                            </span>
                         </div>
                     )}
+                    {/* Khung bao ngoài question group */}
+                    <div className="relative rounded-xl bg-white shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        {/* Accent bar ở trên */}
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500"></div>
+                        <div className="p-5 pt-6">
+                            {/* Audio Player */}
+                            {group.audioUrl && <AudioPlayerUI audioUrl={group.audioUrl} />}
 
-                    {/* Passage (cho Part 5) */}
-                    {group.passage && (
-                        <div className="mb-4">
-                            <PassageDisplay passage={group.passage} />
+                            {/* Image */}
+                            {group.imageUrl && (
+                                <div className="mb-4">
+                                    <ImageDisplay imageUrl={group.imageUrl} />
+                                </div>
+                            )}
+
+                            {/* Passage (cho Part 5) */}
+                            {group.passage && (
+                                <div className="mb-4">
+                                    <PassageDisplay passage={group.passage} />
+                                </div>
+                            )}
+
+                            {/* Questions */}
+                            <div className="space-y-6">
+                                {group.questions?.map((question) => renderQuestion(question, partNumber))}
+                            </div>
+
+                            {/* Transcript */}
+                            {group.transcript && (
+                                <div className="mt-6 pt-6 border-t border-gray-200">
+                                    <details className="cursor-pointer">
+                                        <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
+                                            Hiện Transcript
+                                        </summary>
+                                        <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                            <div className="text-gray-800 text-sm leading-relaxed">
+                                                {parse(group.transcript)}
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                            )}
                         </div>
-                    )}
-
-                    {/* Questions */}
-                    <div className="space-y-6">
-                        {group.questions?.map((question) => renderQuestion(question, partNumber))}
                     </div>
                 </div>
             );

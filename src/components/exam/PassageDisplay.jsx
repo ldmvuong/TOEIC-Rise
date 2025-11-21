@@ -8,7 +8,7 @@ const PassageDisplay = ({ passage }) => {
 
   return (
     <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-      <div className="text-gray-800 text-base leading-relaxed">
+      <div className="text-gray-800 text-sm leading-relaxed">
         {parse(passage)}
       </div>
     </div>
