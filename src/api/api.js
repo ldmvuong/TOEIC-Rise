@@ -122,3 +122,4 @@ export const viewTestResultDetails = (userTestId) =>
 export const reportQuestionIssue = (payload) =>
   api.post('/learner/question-reports', payload);
 
+export const getHistoryTest = (query) => api.get(`/learner/analysis/result?${query}`);

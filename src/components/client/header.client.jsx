@@ -15,13 +15,21 @@ export default function Header({ currentPath }) {
   // Redux state
   const isAuthenticated = useAppSelector(state => state.account.isAuthenticated)
   const user = useAppSelector(state => state.account.user)
+  const isLearner = user?.role === 'LEARNER'
 
-  const nav = [
+  const navItems = [
     { name: "Home", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
-    { name: "ChatAI", href: "/chat-ai" },
+    { name: "ChatAI", href: "/chat-ai", roles: ['LEARNER'] },
+    { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
   ]
+
+  const nav = navItems.filter(item => {
+    if (!item.roles || item.roles.length === 0) return true
+    if (item.roles.includes('LEARNER')) return isLearner
+    return false
+  })
 
   const activePath = typeof currentPath === "string" ? currentPath : "/"
 

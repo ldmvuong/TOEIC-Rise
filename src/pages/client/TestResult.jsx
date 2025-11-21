@@ -12,6 +12,10 @@ const TestResult = () => {
     const answerSheetRef = useRef(null);
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }, []);
+
+    useEffect(() => {
         const fetchTestData = async () => {
             if (!userTestId) {
                 message.error('Không tìm thấy ID bài thi');

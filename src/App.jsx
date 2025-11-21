@@ -22,6 +22,7 @@ import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
+import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 
 
@@ -78,6 +79,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <TestResultDetail />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'statistics',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <TestAnalytics />
             </ProtectedRoute>
           )
         },
