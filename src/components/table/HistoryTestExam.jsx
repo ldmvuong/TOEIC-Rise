@@ -57,12 +57,12 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
         const correctAnswers = item.correctAnswers ?? 0;
         const totalQuestions = item.totalQuestions ?? 0;
         const result = `${correctAnswers}/${totalQuestions}`;
-        // If partNames is null, it's Full test mode - show score
-        if (item.partNames === null) {
-            const score = item.score !== null && item.score !== undefined ? item.score : 0;
-            return `${result} (Điểm: ${score})`;
+        // If parts is null, it's Full test mode - show totalScore
+        if (item.parts === null) {
+            const totalScore = item.totalScore !== null && item.totalScore !== undefined ? item.totalScore : 0;
+            return `${result} (Điểm: ${totalScore})`;
         }
-        // Practice mode - don't show score
+        // Practice mode - don't show totalScore
         return result;
     };
 
@@ -103,7 +103,7 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
                         </thead>
                         <tbody>
                             {historyData.map((item) => {
-                                const isFullTest = item.partNames === null;
+                                const isFullTest = item.parts === null;
                                 const mode = isFullTest ? 'Full test' : 'Luyện tập';
                                 // Support both createAt and createdAt field names
                                 const dateField = item.createAt || item.createdAt;
@@ -122,7 +122,7 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
                                                 >
                                                     {mode}
                                                 </span>
-                                                {item.partNames && item.partNames.map((part, idx) => (
+                                                {item.parts && item.parts.map((part, idx) => (
                                                     <span
                                                         key={idx}
                                                         className="text-xs px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200"

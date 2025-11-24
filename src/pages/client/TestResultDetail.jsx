@@ -6,6 +6,8 @@ import parse from 'html-react-parser';
 import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 import ImageDisplay from '../../components/exam/ImageDisplay';
 import PassageDisplay from '../../components/exam/PassageDisplay';
+import ChatQuestion from '../../components/client/modal/ChatQuestion';
+import ReportQuestion from '../../components/client/modal/ReportQuestion';
 
 const TestResultDetail = () => {
     const { userTestId } = useParams();
@@ -13,6 +15,10 @@ const TestResultDetail = () => {
     const [testData, setTestData] = useState(null);
     const [selectedPartIndex, setSelectedPartIndex] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+    const [chatQuestionData, setChatQuestionData] = useState(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportQuestionData, setReportQuestionData] = useState(null);
 
     useEffect(() => {
         const fetchTestData = async () => {
@@ -68,25 +74,111 @@ const TestResultDetail = () => {
         }, 200);
     };
 
+    const prepareQuestionData = (question, group, part) => {
+        if (!question) return null;
+
+        const normalizedOptions = Array.isArray(question.options)
+            ? question.options
+            : [];
+
+        return {
+            ...question,
+            questionContent: question.questionContent || question.content || '',
+            options: normalizedOptions,
+            audioUrl: question.audioUrl ?? group?.audioUrl ?? null,
+            imageUrl: question.imageUrl ?? group?.imageUrl ?? null,
+            passage: question.passage ?? group?.passage ?? null,
+            transcript: question.transcript ?? group?.transcript ?? null,
+            tags: question.tags ?? group?.tags ?? [],
+            correctOption: question.correctOption ?? question.correctAnswer ?? null,
+            userAnswer: question.userAnswer ?? question.selectedAnswer ?? '',
+            explanation: question.explanation ?? group?.explanation ?? null,
+            partName: part?.partName ?? question.partName ?? null,
+            questionId: question.questionId ?? question.id ?? null,
+            userAnswerId:
+                question.userAnswerId ??
+                question.userAnswerID ??
+                question.userAnswer?.id ??
+                question.learnerAnswerId ??
+                question.learnerAnswerID ??
+                null,
+        };
+    };
+
+    const handleOpenChatModal = (questionData) => {
+        if (!questionData) return;
+        setChatQuestionData(questionData);
+        setIsChatModalOpen(true);
+    };
+
+    const handleOpenReportModal = (questionData) => {
+        if (!questionData) return;
+        setReportQuestionData(questionData);
+        setIsReportModalOpen(true);
+    };
+
+    const handleCloseChatModal = () => {
+        setIsChatModalOpen(false);
+        setChatQuestionData(null);
+    };
+
+    const handleCloseReportModal = () => {
+        setIsReportModalOpen(false);
+        setReportQuestionData(null);
+    };
+
     // Render question with answer status
-    const renderQuestion = (question, partNumber) => {
+    const renderQuestion = (question, partNumber, group, part) => {
         const isPart2 = partNumber === 2;
         const isPart6Or7 = partNumber === 6 || partNumber === 7;
         const maxOptions = isPart2 ? 3 : 4;
         const options = question.options || [];
+        const preparedQuestion = prepareQuestionData(question, group, part);
 
         return (
             <div id={`question-${question.position}`} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
                 {/* Question Header */}
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {question.position}
-                    </div>
-                    {question.content && (
-                        <div className="flex-1 text-gray-800 text-sm leading-relaxed">
-                            {question.content}
+                <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-start md:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                            {question.position}
                         </div>
-                    )}
+                        {question.content && (
+                            <div className="flex-1 text-gray-800 text-sm leading-relaxed">
+                                {question.content}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 self-end md:self-start">
+                        <button
+                            type="button"
+                            onClick={() => handleOpenReportModal(preparedQuestion)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                            title="Báo cáo câu hỏi"
+                            aria-label="Báo cáo câu hỏi"
+                        >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    fillRule="evenodd"
+                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm.75 6.75a.75.75 0 10-1.5 0v4.5a.75.75 0 001.5 0v-4.5zm0 8.25a.75.75 0 10-1.5 0 .75.75 0 001.5 0z"
+                                    clipRule="evenodd"
+                                />
+                            </svg>
+                            <span className="sr-only">Báo cáo câu hỏi</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleOpenChatModal(preparedQuestion)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            title="Chat với AI"
+                            aria-label="Chat với AI"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span className="sr-only">Chat với AI</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Options */}
@@ -231,7 +323,7 @@ const TestResultDetail = () => {
 
                                 {/* Cột phải: Questions (có scroll riêng) */}
                                 <div className="w-[45%] overflow-y-auto pl-4" style={{ maxHeight: '70vh' }}>
-                                    {group.questions?.map((question) => renderQuestion(question, partNumber))}
+                                    {group.questions?.map((question) => renderQuestion(question, partNumber, group, selectedPart))}
                                 </div>
                             </div>
                         </div>
@@ -274,7 +366,7 @@ const TestResultDetail = () => {
 
                             {/* Questions */}
                             <div className="space-y-6">
-                                {group.questions?.map((question) => renderQuestion(question, partNumber))}
+                                {group.questions?.map((question) => renderQuestion(question, partNumber, group, selectedPart))}
                             </div>
 
                             {/* Transcript */}
@@ -320,6 +412,7 @@ const TestResultDetail = () => {
     const partNumber = selectedPart ? parseInt(selectedPart.partName.replace('Part ', '')) : null;
 
     return (
+        <>
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -434,6 +527,9 @@ const TestResultDetail = () => {
                 </div>
             </div>
         </div>
+        <ChatQuestion open={isChatModalOpen} onClose={handleCloseChatModal} questionData={chatQuestionData} />
+        <ReportQuestion open={isReportModalOpen} onClose={handleCloseReportModal} questionData={reportQuestionData} />
+        </>
     );
 };
 
