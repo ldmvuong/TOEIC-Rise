@@ -17,3 +17,13 @@ export const formatTime = (seconds) => {
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
+/**
+ * Chuyển đổi giây sang phút (làm tròn)
+ * @param {number} seconds - Thời gian tính bằng giây
+ * @returns {number} - Thời gian tính bằng phút (đã làm tròn)
+ */
+export const secondsToMinutes = (seconds) => {
+  if (!seconds || seconds <= 0) return 0;
+  return Math.round(Number(seconds) / 60);
+};
+

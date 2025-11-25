@@ -477,7 +477,7 @@ const DoTest = () => {
                     {updatedGroup && (
                         <>
                             {/* Question Group Container - thêm padding-bottom cho Part 5-7 để không bị che bởi fixed buttons */}
-                            <div className={`flex-1 ${partNumber >= 6 && partNumber <= 7 ? 'min-h-0 overflow-hidden p-6' : `overflow-y-auto p-6 ${partNumber >= 5 && partNumber <= 7 ? 'pb-20' : ''}`}`}>
+                            <div className={`flex-1 ${partNumber >= 6 && partNumber <= 7 ? 'min-h-0 overflow-hidden p-6' : `overflow-y-auto p-6 ${partNumber >= 5 && partNumber <= 7 ? 'pb-32' : ''}`}`}>
                                 <div className={partNumber >= 6 && partNumber <= 7 ? 'h-full' : 'max-w-4xl mx-auto w-full'}>
                                     <QuestionGroup
                                         questionGroup={updatedGroup}
@@ -515,8 +515,8 @@ const DoTest = () => {
                                 }
                                 
                                 return (
-                                    <div className="fixed bottom-0 bg-white border-t border-gray-200 shadow-lg z-50 py-3 px-6" style={{ left: 0, right: '15%', width: 'auto' }}>
-                                        <div className={partNumber >= 6 && partNumber <= 7 ? 'w-full' : 'max-w-4xl mx-auto'}>
+                                    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4">
+                                        <div className="pointer-events-auto bg-white/95 border border-gray-200 shadow-lg rounded-full px-4 py-2 flex items-center gap-3">
                                             <NavigationButtons
                                                 onPrevious={moveToPreviousGroup}
                                                 onNext={moveToNextGroup}

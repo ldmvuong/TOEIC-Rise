@@ -37,7 +37,7 @@ const QuestionGroup = ({
       {isTwoColumnLayout ? (
         <div className="flex gap-4 flex-1 min-h-0" style={{ height: 'calc(100% - 4rem)' }}>
           {/* Cột trái: Passage, Image (cuộn riêng) - 50% */}
-          <div className="w-1/2 overflow-y-auto pr-4" style={{ maxHeight: '100%' }}>
+          <div className="w-1/2 overflow-y-auto pr-4 pb-12" style={{ maxHeight: '100%' }}>
             {/* Passage */}
             {passage && (
               <div className="mb-6">
@@ -54,7 +54,7 @@ const QuestionGroup = ({
           </div>
 
           {/* Cột phải: Position + Flag + Content + Options (cuộn riêng) - 50% */}
-          <div className="w-1/2 overflow-y-auto pl-4 border-l border-gray-200" style={{ maxHeight: '100%' }}>
+          <div className="w-1/2 overflow-y-auto pl-4 border-l border-gray-200 pb-16" style={{ maxHeight: '100%' }}>
             <div className="space-y-6">
               {questions.map((question, index) => {
                 const isFlagged = flaggedQuestions.includes(question.id);

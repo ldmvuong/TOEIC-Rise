@@ -24,10 +24,11 @@ const Sidebar = ({
   return (
     <div className="h-full bg-white border-l border-gray-200 flex flex-col">
       <div className="p-4 space-y-4 overflow-y-auto flex-1">
-        {/* Timer - luôn hiển thị */}
+        {/* Timer */}
         <Timer 
           elapsedTime={displayElapsedTime} 
           remainingTime={hasTimeLimit ? displayRemainingTime : null} 
+          showElapsedTime={!hasTimeLimit}
         />
 
         {/* Volume Control */}

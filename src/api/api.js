@@ -123,3 +123,8 @@ export const reportQuestionIssue = (payload) =>
   api.post('/learner/question-reports', payload);
 
 export const getHistoryTest = (query) => api.get(`/learner/analysis/result?${query}`);
+
+export const getTestAnalytics = (query) => api.get(`/learner/analysis?${query}`);
+
+export const getScoreStatistics = (size = 5) =>
+  api.get(`/learner/analysis/full-test?size=${size}`);
