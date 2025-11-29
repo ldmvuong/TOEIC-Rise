@@ -30,7 +30,7 @@ export const isValidImageSize = (fileSize) => {
 };
 
 export const validateAvatar = (file) => {
-    if (!file) return { valid: true }; // No file is valid (optional)
+    if (!file) return { valid: true };
     
     const errors = [];
     

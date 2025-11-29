@@ -70,7 +70,7 @@ const ModalUser = (props) => {
       return Upload.LIST_IGNORE;
     }
     setAvatarFile(file);
-    return false; // prevent auto upload
+    return false;
   };
 
   const handleChange = (info) => {

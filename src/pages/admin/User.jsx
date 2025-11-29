@@ -2,12 +2,13 @@ import React, { useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchUsers } from "@/redux/slices/userSlide";
 import DataTable from "@/components/admin/data-table";
-import { Tag, Switch, Avatar } from "antd";
+import { Tag, Switch, Avatar, Button, Space, Modal, message } from "antd";
 import { ProFormSelect } from "@ant-design/pro-components";
 import queryString from "query-string";
 import ModalUser from "@/components/admin/user/create.user.jsx";
-import { Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import ModalUserUpdate from "@/components/admin/user/update.user.jsx";
+import { changeUserStatus } from "@/api/api";
+import { PlusOutlined, EyeOutlined } from "@ant-design/icons";
 
 const UserPage = () => {
   const tableRef = useRef();
@@ -17,11 +18,39 @@ const UserPage = () => {
   const users = useAppSelector((state) => state.users.result);
 
   const [openModal, setOpenModal] = React.useState(false);
+  const [openViewModal, setOpenViewModal] = React.useState(false);
+  const [selectedUserId, setSelectedUserId] = React.useState(null);
 
   const reloadTable = () => {
     if (tableRef.current) {
       tableRef.current.reload();
     }
+  };
+
+  const handleToggleStatus = (record) => {
+    Modal.confirm({
+      title: `Đổi trạng thái tài khoản`,
+      content: (
+        <div>
+          Bạn có chắc muốn đổi trạng thái tài khoản{" "}
+          <strong>{record.email}</strong> sang{" "}
+          <strong>{record.isActive ? "Khoá" : "Hoạt động"}</strong> không?
+        </div>
+      ),
+      okText: "Xác nhận",
+      cancelText: "Huỷ",
+      onOk: async () => {
+        try {
+          await changeUserStatus(record.userId);
+          message.success("Cập nhật trạng thái tài khoản thành công");
+          reloadTable();
+        } catch (e) {
+          message.error(
+            e?.response?.data?.message || e?.message || "Không thể đổi trạng thái tài khoản"
+          );
+        }
+      },
+    });
   };
 
   const columns = [
@@ -96,8 +125,13 @@ const UserPage = () => {
           placeholder="Trạng thái"
         />
       ),
-      render: (val) => (
-        <Switch checked={val} disabled checkedChildren="Hoạt động" unCheckedChildren="Khoá" />
+      render: (val, record) => (
+        <Switch
+          checked={val}
+          checkedChildren="Hoạt động"
+          unCheckedChildren="Khoá"
+          onChange={() => handleToggleStatus(record)}
+        />
       ),
       sorter: true,
     },
@@ -107,6 +141,25 @@ const UserPage = () => {
       width: 200,
       sorter: true,
       hideInSearch: true,
+    },
+    {
+      title: "Action",
+      key: "action",
+      width: 80,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => (
+        <Space>
+          <EyeOutlined
+            style={{ fontSize: 18, color: "#1890ff" }}
+            title="Xem chi tiết"
+            onClick={() => {
+              setSelectedUserId(record.userId);
+              setOpenViewModal(true);
+            }}
+          />
+        </Space>
+      ),
     },
   ];
 
@@ -195,6 +248,12 @@ const UserPage = () => {
       <ModalUser
         openModal={openModal}
         setOpenModal={setOpenModal}
+        reloadTable={reloadTable}
+      />
+      <ModalUserUpdate
+        openModal={openViewModal}
+        setOpenModal={setOpenViewModal}
+        userId={selectedUserId}
         reloadTable={reloadTable}
       />
     </div>

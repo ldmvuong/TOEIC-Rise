@@ -39,18 +39,19 @@ export const getAllTestSets = (query) => {
 
 export const getTestInTestSet = (id, query) => api.get(`/admin/test-sets/${id}?${query}`);
 
-// Admin Tests
-export const getAllTests = (query) => api.get(`/admin/tests?${query}`);
+// Admin/Staff Tests
+export const getAllTests = (query) => api.get(`/staff/tests?${query}`);
 
 export const importTests = (formData) =>
-  api.post('/admin/tests/import', formData, {
+  api.post('/staff/tests/import', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
+export const getTestById = (id) => api.get(`/staff/tests/${id}`);
 
-export const getTestById = (id) => api.get(`/admin/tests/${id}`);
+export const updateTest = (id, payload) => api.put(`/staff/tests/${id}`, payload);
 
-export const updateTest = (id, payload) => api.put(`/admin/tests/${id}`, payload);
+//PATCH : ADMIN
 
 
 // Profile
@@ -88,6 +89,21 @@ export const getAllUsers = (query) => api.get(`/admin/users?${query}`);
 export const createUser = (formData) => api.post("/admin/users", formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+
+export const getUserById = (id) => api.get(`/admin/users/${id}`);
+
+export const updateUser = (id, formData) =>
+  api.put(`/admin/users/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const resetUserPassword = (id, payload) =>
+  api.put(`/admin/users/${id}/reset-password`, payload);
+
+export const changeUserStatus = (id) =>
+  api.patch(`/admin/users/${id}`);
+
+
 
 
 // Learner
