@@ -13,6 +13,7 @@ import {
     LogoutOutlined,
     SettingOutlined,
     HomeOutlined,
+    FileTextOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -27,6 +28,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/reports">Báo cáo</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/statistics">Test Result Statistics</Link>, key: "/admin/statistics", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/learners">Leaner Statistics</Link>, key: "/admin/learners", icon: <AliwangwangOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/chatbot-rating">Chatbot Rating</Link>, key: "/admin/chatbot-rating", icon: <ApiOutlined />, roles: ["ADMIN"] },

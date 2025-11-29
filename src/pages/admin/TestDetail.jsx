@@ -4,7 +4,8 @@ import { getTestById } from "@/api/api";
 import SummaryHeader from "@/components/admin/test-detail/SummaryHeader";
 import PartsTabs from "@/components/admin/test-detail/PartsTabs";
 import PartDetail from "@/components/admin/test-detail/PartDetail";
-import EditTestModal from "@/components/admin/test-detail/EditTestModal";
+import EditTestNameModal from "@/components/admin/test-detail/EditTestNameModal";
+import ChangeTestStatusModal from "@/components/admin/test-detail/ChangeTestStatusModal";
 
 const TestDetailPage = () => {
     const { id } = useParams();
@@ -14,7 +15,8 @@ const TestDetailPage = () => {
     const [error, setError] = useState("");
     const [test, setTest] = useState(null);
     const [selectedPartIndex, setSelectedPartIndex] = useState(0);
-    const [openEdit, setOpenEdit] = useState(false);
+    const [openEditName, setOpenEditName] = useState(false);
+    const [openChangeStatus, setOpenChangeStatus] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -66,11 +68,21 @@ const TestDetailPage = () => {
         );
     }
 
+    const reloadTest = async () => {
+        try {
+            const res = await getTestById(id);
+            setTest(res?.data ?? null);
+        } catch (e) {
+            setError(e?.message || "Không thể tải dữ liệu");
+        }
+    };
+
     return (
         <div className="p-4 space-y-6 max-w-7xl mx-auto">
             <SummaryHeader
                 test={test}
-                onEdit={() => setOpenEdit(true)}
+                onEditName={() => setOpenEditName(true)}
+                onChangeStatus={() => setOpenChangeStatus(true)}
             />
             <PartsTabs
                 parts={test.partResponses}
@@ -78,14 +90,17 @@ const TestDetailPage = () => {
                 onSelect={setSelectedPartIndex}
             />
             <PartDetail part={selectedPart} />
-            <EditTestModal
-                open={openEdit}
-                onClose={() => setOpenEdit(false)}
+            <EditTestNameModal
+                open={openEditName}
+                onClose={() => setOpenEditName(false)}
                 test={test}
-                onSuccess={() => {
-                    // Reload detail after update
-                    window.location.reload();
-                }}
+                onSuccess={reloadTest}
+            />
+            <ChangeTestStatusModal
+                open={openChangeStatus}
+                onClose={() => setOpenChangeStatus(false)}
+                test={test}
+                onSuccess={reloadTest}
             />
         </div>
     );

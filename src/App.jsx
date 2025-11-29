@@ -18,6 +18,7 @@ import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
+import ReportPage from "./pages/admin/Report.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
@@ -155,7 +156,7 @@ export default function App() {
         {
           path: 'test-sets',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <TestSetPage />
             </ProtectedRoute>
           ),
@@ -179,8 +180,16 @@ export default function App() {
         {
           path: 'users',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <UserPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'reports',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <ReportPage />
             </ProtectedRoute>
           ),
         },

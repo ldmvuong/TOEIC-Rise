@@ -51,6 +51,11 @@ export const getTestById = (id) => api.get(`/staff/tests/${id}`);
 
 export const updateTest = (id, payload) => api.put(`/staff/tests/${id}`, payload);
 
+export const changeTestStatus = (id, status) => {
+  const params = new URLSearchParams({ status });
+  return api.patch(`/admin/tests/${id}?${params.toString()}`);
+};
+
 //PATCH : ADMIN
 
 
@@ -104,6 +109,13 @@ export const changeUserStatus = (id) =>
   api.patch(`/admin/users/${id}`);
 
 
+// Admin Staff Report
+
+export const getAllReport = (query) => api.get(`/admin/question-reports?${query}`);
+
+export const getAllReportByStaff = (query) => api.get(`/staff/question-reports?${query}`);
+
+export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 
 
 // Learner
