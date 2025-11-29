@@ -41,7 +41,8 @@ const AuthPage = () => {
         sessionStorage.removeItem('loginCallback');
       }
 
-      const redirectPath = savedCallback || (user.role === 'ADMIN' ? '/admin' : '/');
+      const isAdminLike = user.role === 'ADMIN' || user.role === 'STAFF';
+      const redirectPath = savedCallback || (isAdminLike ? '/admin' : '/');
 
       navigate(redirectPath, { replace: true });
     }
@@ -83,7 +84,8 @@ const AuthPage = () => {
         sessionStorage.removeItem('loginCallback');
       }
       const userRole = payload?.user?.role || payload?.role || 'USER';
-      const redirectPath = savedCallback || (userRole === 'ADMIN' ? '/admin' : '/');
+      const isAdminLike = userRole === 'ADMIN' || userRole === 'STAFF';
+      const redirectPath = savedCallback || (isAdminLike ? '/admin' : '/');
       navigate(redirectPath, { replace: true });
     } catch (err) {
       const serverMessage = err?.response?.data?.message || err?.message;

@@ -144,29 +144,44 @@ export default function App() {
         </>
       ),
       children: [
-        { index: true, element: <Dashboard /> },
+        { 
+          index: true, 
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <Dashboard />
+            </ProtectedRoute>
+          ) 
+        },
         {
           path: 'test-sets',
           element: (
-            <TestSetPage />
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <TestSetPage />
+            </ProtectedRoute>
           ),
         },
         {
           path: 'tests',
           element: (
-            <TestPage />
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <TestPage />
+            </ProtectedRoute>
           ),
         },
         {
           path: 'tests/:id',
           element: (
-            <TestDetailPage />
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <TestDetailPage />
+            </ProtectedRoute>
           ),
         },
         {
           path: 'users',
           element: (
-            <UserPage />
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <UserPage />
+            </ProtectedRoute>
           ),
         },
       ],

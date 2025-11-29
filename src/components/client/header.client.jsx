@@ -116,7 +116,7 @@ export default function Header({ currentPath }) {
 
                 {isUserOpen && (
                   <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
-                    {user.role === 'ADMIN' && (
+                    {(user.role === 'ADMIN' || user.role === 'STAFF') && (
                       <Link 
                         to="/admin" 
                         className="block px-3 py-2 text-sm hover:bg-gray-50"

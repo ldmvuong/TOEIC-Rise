@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     AppstoreOutlined,
     ExceptionOutlined,
@@ -23,14 +23,14 @@ import { logout as logoutApi } from "../api/api";
 const { Content, Sider } = Layout;
 
 const STATIC_MENU = [
-    { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined /> },
-    { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined /> },
-    { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined /> },
-    { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined /> },
-    { label: <Link to="/admin/statistics">Test Result Statistics</Link>, key: "/admin/statistics", icon: <ScheduleOutlined /> },
-    { label: <Link to="/admin/learners">Leaner Statistics</Link>, key: "/admin/learners", icon: <AliwangwangOutlined /> },
-    { label: <Link to="/admin/chatbot-rating">Chatbot Rating</Link>, key: "/admin/chatbot-rating", icon: <ApiOutlined /> },
-    { label: <Link to="/admin/chatbot-system">Chatbot System</Link>, key: "/admin/chatbot-system", icon: <ExceptionOutlined /> },
+    { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/statistics">Test Result Statistics</Link>, key: "/admin/statistics", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/learners">Leaner Statistics</Link>, key: "/admin/learners", icon: <AliwangwangOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/chatbot-rating">Chatbot Rating</Link>, key: "/admin/chatbot-rating", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/chatbot-system">Chatbot System</Link>, key: "/admin/chatbot-system", icon: <ExceptionOutlined />, roles: ["ADMIN"] },
 ];
 
 export default function AdminLayout() {
@@ -100,6 +100,13 @@ export default function AdminLayout() {
         },
     ];
 
+    const currentRole = user?.role;
+
+    const filteredMenu = useMemo(() => {
+        if (!currentRole) return STATIC_MENU;
+        return STATIC_MENU.filter(item => !item.roles || item.roles.includes(currentRole));
+    }, [currentRole]);
+
     return (
         <Layout style={{ minHeight: "120vh" }} className="layout-admin">
             <Sider theme="light" collapsible collapsed={collapsed} onCollapse={(v) => setCollapsed(v)}>
@@ -109,7 +116,7 @@ export default function AdminLayout() {
                 <Menu
                     selectedKeys={[activeMenu]}
                     mode="inline"
-                    items={STATIC_MENU}
+                    items={filteredMenu}
                     onClick={(e) => setActiveMenu(e.key)}
                 />
             </Sider>
