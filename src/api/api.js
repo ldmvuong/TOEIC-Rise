@@ -56,6 +56,13 @@ export const changeTestStatus = (id, status) => {
   return api.patch(`/admin/tests/${id}?${params.toString()}`);
 };
 
+export const getQuestionGroup = (id) => api.get(`/admin/question-groups/${id}`);
+
+export const updateQuestionGroup = (id, formData) =>
+  api.put(`/admin/question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
 //PATCH : ADMIN
 
 

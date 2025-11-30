@@ -11,6 +11,12 @@ export const FULLNAME_REGEX = /^[\p{L} ]+$/u; // Matches backend PROFILE_FULLNAM
 export const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB - Matches backend AVATAR_MAX_SIZE
 export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
 
+// Question Group validation constants - Matches backend
+export const QUESTION_GROUP_AUDIO_MAX_SIZE = 10 * 1024 * 1024; // 10MB
+export const QUESTION_GROUP_IMAGE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+export const QUESTION_GROUP_AUDIO_URL_REGEX = /^(https?:\/\/.*\.(mp3|wav|ogg|m4a|aac))$/i;
+export const QUESTION_GROUP_IMAGE_URL_REGEX = /^(https?:\/\/.*\.(jpg|jpeg|png|gif|bmp))$/i;
+
 // Primitive validators (boolean results only)
 export const isValidEmail = (email) => EMAIL_REGEX.test(String(email || ''));
 export const isStrongPassword = (password) => PASSWORD_REGEX.test(String(password || ''));
@@ -40,6 +46,63 @@ export const validateAvatar = (file) => {
     
     if (!isValidImageSize(file.size)) {
         errors.push('File ảnh không được vượt quá 2MB');
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+};
+
+// Question Group validators
+export const isValidQuestionGroupAudioSize = (fileSize) => {
+    return fileSize > 0 && fileSize <= QUESTION_GROUP_AUDIO_MAX_SIZE;
+};
+
+export const isValidQuestionGroupImageSize = (fileSize) => {
+    return fileSize > 0 && fileSize <= QUESTION_GROUP_IMAGE_MAX_SIZE;
+};
+
+export const isValidQuestionGroupAudioUrl = (url) => {
+    if (!url) return false;
+    return QUESTION_GROUP_AUDIO_URL_REGEX.test(url);
+};
+
+export const isValidQuestionGroupImageUrl = (url) => {
+    if (!url) return false;
+    return QUESTION_GROUP_IMAGE_URL_REGEX.test(url);
+};
+
+export const validateQuestionGroupAudio = (file) => {
+    if (!file) return { valid: true };
+    
+    const errors = [];
+    
+    if (!file.type.startsWith("audio/")) {
+        errors.push('Chỉ chấp nhận file audio');
+    }
+    
+    if (!isValidQuestionGroupAudioSize(file.size)) {
+        errors.push('File audio không được vượt quá 10MB');
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+};
+
+export const validateQuestionGroupImage = (file) => {
+    if (!file) return { valid: true };
+    
+    const errors = [];
+    
+    if (!file.type.startsWith("image/")) {
+        errors.push('Chỉ chấp nhận file hình ảnh');
+    }
+    
+    if (!isValidQuestionGroupImageSize(file.size)) {
+        errors.push('File hình ảnh không được vượt quá 5MB');
     }
     
     return {

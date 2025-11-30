@@ -36,7 +36,7 @@ const ChangeTestStatusModal = ({ open, onClose, test, onSuccess }) => {
             open={open}
             modalProps={{
                 onCancel: () => onClose?.(),
-                destroyOnClose: true,
+                destroyOnHidden: true,
                 maskClosable: false,
                 okText: "Cập nhật",
                 cancelText: "Hủy",

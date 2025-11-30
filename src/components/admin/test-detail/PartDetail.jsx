@@ -1,6 +1,9 @@
 import parse from "html-react-parser";
+import { useNavigate } from "react-router-dom";
+import { EyeOutlined } from "@ant-design/icons";
 
 const PartDetail = ({ part }) => {
+    const navigate = useNavigate();
     if (!part) {
         return (
             <div className="md:col-span-3 bg-white shadow rounded p-4">
@@ -39,7 +42,23 @@ const PartDetail = ({ part }) => {
                                             {group.passage && <span className="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Đoạn văn</span>}
                                         </div>
                                     </div>
-                                    <span className="text-xs text-gray-500">{(group.questions || []).length} câu</span>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-gray-500">{(group.questions || []).length} câu</span>
+                                        <button
+                                            onClick={() => {
+                                                // Extract part number from part.name (e.g., "Part 1" -> 1)
+                                                const partNumber = part?.name ? parseInt(part.name.replace(/[^0-9]/g, '')) : null;
+                                                navigate(`/admin/question-groups/${group.id}`, {
+                                                    state: { partNumber }
+                                                });
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors"
+                                            title="Xem chi tiết nhóm câu hỏi"
+                                        >
+                                            <EyeOutlined />
+                                            Xem chi tiết
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Media / Passage */}
