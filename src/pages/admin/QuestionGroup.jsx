@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Spin, message, Tag, Button, Form, Upload, Radio, Input } from "antd";
+import { Spin, message, Tag, Button, Form, Upload, Radio, Input, Modal } from "antd";
 import { ArrowLeftOutlined, EditOutlined, SaveOutlined, CloseOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
-import { getQuestionGroup, updateQuestionGroup } from "@/api/api";
+import { getQuestionGroup, updateQuestionGroup, updateQuestion } from "@/api/api";
 import parse from "html-react-parser";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
@@ -36,6 +36,15 @@ const QuestionGroupPage = () => {
     const [transcript, setTranscript] = useState("");
     const [passage, setPassage] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    // Question edit states
+    const [questionModalOpen, setQuestionModalOpen] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    const [savingQuestion, setSavingQuestion] = useState(false);
+    const [questionContent, setQuestionContent] = useState("");
+    const [questionOptions, setQuestionOptions] = useState(["", "", "", ""]);
+    const [questionCorrectOption, setQuestionCorrectOption] = useState("A");
+    const [questionExplanation, setQuestionExplanation] = useState("");
+    const [questionTags, setQuestionTags] = useState("");
 
     useEffect(() => {
         // Get partNumber from location state
@@ -246,7 +255,112 @@ const QuestionGroupPage = () => {
         setImageFile(null);
     };
 
+    // ===== Question edit helpers =====
+    const openQuestionModal = (question) => {
+        setEditingQuestion(question);
+        // content
+        setQuestionContent(question.content || "");
+        // options
+        const opts = Array.isArray(question.options) ? [...question.options] : [];
+        while (opts.length < 4) opts.push("");
+        setQuestionOptions(opts.slice(0, 4).map((o) => o || ""));
+        // correct option
+        setQuestionCorrectOption(question.correctOption || "A");
+        // explanation
+        setQuestionExplanation(question.explanation || "");
+        // tags: backend expects String, current field có thể là array
+        setQuestionTags(
+            Array.isArray(question.tags) ? question.tags.join("; ") : (question.tags || "")
+        );
+        setQuestionModalOpen(true);
+    };
+
+    const closeQuestionModal = () => {
+        setQuestionModalOpen(false);
+        setEditingQuestion(null);
+        setSavingQuestion(false);
+        setQuestionContent("");
+        setQuestionOptions(["", "", "", ""]);
+        setQuestionCorrectOption("A");
+        setQuestionExplanation("");
+        setQuestionTags("");
+    };
+
+    const handleQuestionOptionChange = (index, value) => {
+        setQuestionOptions((prev) => {
+            const next = [...prev];
+            next[index] = value;
+            return next;
+        });
+    };
+
+    const handleSaveQuestion = async () => {
+        if (!editingQuestion || !questionGroup?.id) return;
+
+        const partHasContent = [3, 4, 5, 7].includes(partNumber);
+        const isPart12 = partNumber === 1 || partNumber === 2;
+
+        // Basic required validations
+        if (partHasContent) {
+            const trimmedContent = (questionContent || "").trim();
+            if (!trimmedContent) {
+                message.error("Vui lòng nhập nội dung câu hỏi");
+                return;
+            }
+        }
+
+        const trimmedExplanation = (questionExplanation || "").trim();
+        if (!trimmedExplanation) {
+            message.error("Vui lòng nhập giải thích đáp án");
+            return;
+        }
+
+        const trimmedTags = (questionTags || "").trim();
+        if (!trimmedTags) {
+            message.error("Vui lòng nhập tags");
+            return;
+        }
+
+        let opts;
+        if (isPart12) {
+            // Part 1, 2: backend luôn nhận 4 giá trị null cho options
+            opts = [null, null, null, null];
+        } else {
+            opts = [...questionOptions];
+            while (opts.length < 4) opts.push("");
+            opts = opts.map((o) => (o && o.trim() !== "" ? o : null));
+        }
+
+        try {
+            setSavingQuestion(true);
+            await updateQuestion({
+                id: editingQuestion.id,
+                questionGroupId: questionGroup.id,
+                content: partHasContent ? questionContent : "",
+                options: opts,
+                correctOption: questionCorrectOption,
+                explanation: trimmedExplanation,
+                tags: trimmedTags,
+            });
+            message.success("Cập nhật câu hỏi thành công");
+
+            // reload question group
+            const res = await getQuestionGroup(id);
+            setQuestionGroup(res?.data ?? null);
+            closeQuestionModal();
+        } catch (error) {
+            message.error(
+                error?.response?.data?.message || error?.message || "Không thể cập nhật câu hỏi"
+            );
+            setSavingQuestion(false);
+        }
+    };
+
     const editorConfiguration = {
+        // CKEditor 5 v44+ requires explicit licenseKey.
+        // If you use the free GPL build, keep 'GPL'. If you have a commercial key,
+        // replace this value with the key from your CKEditor account.
+        licenseKey: "GPL",
         toolbar: [
             "heading",
             "|",
@@ -273,6 +387,7 @@ const QuestionGroupPage = () => {
     };
 
     return (
+        <>
         <div className="p-4 space-y-6 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
@@ -579,46 +694,6 @@ const QuestionGroupPage = () => {
                         </div>
                     )}
 
-                    {/* Transcript - Always required */}
-                    {shouldShowTranscript && (
-                        <div>
-                            <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                Transcript <span className="text-red-500">*</span>
-                            </div>
-                            {isEditing ? (
-                                <div className="ckeditor-wrapper" style={{ minHeight: "500px" }}>
-                                    <style>{`
-                                        .ckeditor-wrapper .ck-editor__editable {
-                                            min-height: 400px !important;
-                                        }
-                                        .ckeditor-wrapper .ck-editor {
-                                            min-height: 500px;
-                                        }
-                                    `}</style>
-                                    <CKEditor
-                                        editor={ClassicEditor}
-                                        data={transcript}
-                                        config={editorConfiguration}
-                                        onReady={(editor) => {
-                                            // Editor is ready to use
-                                        }}
-                                        onChange={(event, editor) => {
-                                            const data = editor.getData();
-                                            setTranscript(data);
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                questionGroup.transcript && (
-                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm leading-relaxed">
-                                        {parse(questionGroup.transcript)}
-                                    </div>
-                                )
-                            )}
-                        </div>
-                    )}
-
                     {/* Passage - Part 6, 7 only */}
                     {shouldShowPassage && (
                         <div>
@@ -659,6 +734,46 @@ const QuestionGroupPage = () => {
                         </div>
                     )}
 
+                    {/* Transcript - Always required */}
+                    {shouldShowTranscript && (
+                        <div>
+                            <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Transcript <span className="text-red-500">*</span>
+                            </div>
+                            {isEditing ? (
+                                <div className="ckeditor-wrapper" style={{ minHeight: "500px" }}>
+                                    <style>{`
+                                        .ckeditor-wrapper .ck-editor__editable {
+                                            min-height: 400px !important;
+                                        }
+                                        .ckeditor-wrapper .ck-editor {
+                                            min-height: 500px;
+                                        }
+                                    `}</style>
+                                    <CKEditor
+                                        editor={ClassicEditor}
+                                        data={transcript}
+                                        config={editorConfiguration}
+                                        onReady={(editor) => {
+                                            // Editor is ready to use
+                                        }}
+                                        onChange={(event, editor) => {
+                                            const data = editor.getData();
+                                            setTranscript(data);
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                questionGroup.transcript && (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm leading-relaxed">
+                                        {parse(questionGroup.transcript)}
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    )}
+
                     {!isEditing && !questionGroup.audioUrl && !questionGroup.imageUrl && !questionGroup.passage && !questionGroup.transcript && (
                         <div className="text-center text-gray-400 py-8">
                             Không có thông tin media hoặc transcript
@@ -684,29 +799,30 @@ const QuestionGroupPage = () => {
                                 className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                             >
                                 {/* Question Header */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
-                                        {question.position || idx + 1}
-                                    </span>
-                                    <div className="flex-1">
-                                        <div className="text-sm font-medium text-gray-700">
-                                            Câu hỏi {question.position || idx + 1}
-                                        </div>
-                                        {question.correctOption && (
-                                            <div className="text-xs text-green-600 font-medium mt-1">
-                                                Đáp án đúng: {question.correctOption}
+                                <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-start gap-3">
+                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
+                                            {question.position || idx + 1}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3 sm:justify-end sm:flex-1">
+                                        {question.tags && question.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1">
+                                                {question.tags.map((tag, tagIdx) => (
+                                                    <Tag key={tagIdx} color="blue" className="text-xs">
+                                                        {tag}
+                                                    </Tag>
+                                                ))}
                                             </div>
                                         )}
+                                        <Button
+                                            size="small"
+                                            type="text"
+                                            icon={<EditOutlined />}
+                                            onClick={() => openQuestionModal(question)}
+                                            title="Chỉnh sửa câu hỏi"
+                                        />
                                     </div>
-                                    {question.tags && question.tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                            {question.tags.map((tag, tagIdx) => (
-                                                <Tag key={tagIdx} color="blue" className="text-xs">
-                                                    {tag}
-                                                </Tag>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Question Content */}
@@ -718,8 +834,11 @@ const QuestionGroupPage = () => {
 
                                 {/* Options */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-                                    {question.options?.map((option, optIdx) => {
-                                        const label = String.fromCharCode(65 + optIdx); // A, B, C, D
+                                    {(partNumber === 2
+                                        ? question.options?.slice(0, 3) // Part 2 only show A, B, C
+                                        : question.options
+                                    )?.map((option, optIdx) => {
+                                        const label = String.fromCharCode(65 + optIdx); // A, B, C, D...
                                         const isCorrect = question.correctOption === label;
                                         return (
                                             <div
@@ -781,6 +900,109 @@ const QuestionGroupPage = () => {
             </div>
 
         </div>
+            {/* Question Edit Modal */}
+            <Modal
+                title={
+                    editingQuestion
+                        ? `Chỉnh sửa câu hỏi ${editingQuestion.position || ""}`
+                        : "Chỉnh sửa câu hỏi"
+                }
+                open={questionModalOpen}
+                onCancel={closeQuestionModal}
+                onOk={handleSaveQuestion}
+                confirmLoading={savingQuestion}
+                okText="Lưu"
+                cancelText="Hủy"
+                destroyOnClose
+                width={700}
+            >
+                {editingQuestion && (
+                    <div className="space-y-4">
+                        {/* Content - chỉ dùng cho part 3,4,5,7 */}
+                        {[3, 4, 5, 7].includes(partNumber) && (
+                            <div>
+                                <div className="mb-1 text-sm font-medium text-gray-700">
+                                    Nội dung câu hỏi
+                                </div>
+                                <Input.TextArea
+                                    rows={3}
+                                    value={questionContent}
+                                    onChange={(e) => setQuestionContent(e.target.value)}
+                                    placeholder="Nhập nội dung câu hỏi"
+                                />
+                            </div>
+                        )}
+
+                        {/* Options */}
+                        {(partNumber !== 1 && partNumber !== 2) && (
+                            <div>
+                                <div className="mb-1 text-sm font-medium text-gray-700">
+                                    Đáp án (A, B, C, D)
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {["A", "B", "C", "D"].map((label, idx) => (
+                                        <div key={label} className="flex items-center gap-2">
+                                            <span className="font-semibold w-5">{label}.</span>
+                                            <Input
+                                                value={questionOptions[idx] ?? ""}
+                                                onChange={(e) =>
+                                                    handleQuestionOptionChange(idx, e.target.value)
+                                                }
+                                                placeholder={`Đáp án ${label}`}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Correct option */}
+                        <div>
+                            <div className="mb-1 text-sm font-medium text-gray-700">
+                                Đáp án đúng <span className="text-red-500">*</span>
+                            </div>
+                            <Radio.Group
+                                value={questionCorrectOption}
+                                onChange={(e) => setQuestionCorrectOption(e.target.value)}
+                            >
+                                {(partNumber === 2 ? ["A", "B", "C"] : ["A", "B", "C", "D"]).map(
+                                    (opt) => (
+                                        <Radio key={opt} value={opt}>
+                                            {opt}
+                                        </Radio>
+                                    )
+                                )}
+                            </Radio.Group>
+                        </div>
+
+                        {/* Explanation */}
+                        <div>
+                            <div className="mb-1 text-sm font-medium text-gray-700">
+                                Giải thích <span className="text-red-500">*</span>
+                            </div>
+                            <Input.TextArea
+                                rows={6}
+                                value={questionExplanation}
+                                onChange={(e) => setQuestionExplanation(e.target.value)}
+                                placeholder="Nhập giải thích đáp án"
+                            />
+                        </div>
+
+                        {/* Tags */}
+                        <div>
+                            <div className="mb-1 text-sm font-medium text-gray-700">
+                                Tags <span className="text-red-500">*</span>
+                            </div>
+                            <Input
+                                value={questionTags}
+                                onChange={(e) => setQuestionTags(e.target.value)}
+                                placeholder="Ví dụ: [Part 5] Câu hỏi ngữ pháp; [Grammar] Thi"
+                            />
+                        </div>
+                    </div>
+                )}
+            </Modal>
+        </>
     );
 };
 

@@ -4,6 +4,7 @@ import { EyeOutlined } from "@ant-design/icons";
 
 const PartDetail = ({ part }) => {
     const navigate = useNavigate();
+
     if (!part) {
         return (
             <div className="md:col-span-3 bg-white shadow rounded p-4">
@@ -11,6 +12,10 @@ const PartDetail = ({ part }) => {
             </div>
         );
     }
+
+    // Extract part number from part.name (e.g. "Part 2" -> 2)
+    const partNumber = part?.name ? parseInt(part.name.replace(/[^0-9]/g, '')) : null;
+    const isPart2 = partNumber === 2;
 
     return (
         <div className="md:col-span-3 bg-white shadow rounded p-4">
@@ -92,7 +97,7 @@ const PartDetail = ({ part }) => {
                                                             <div className="text-sm mb-2">{q.content}</div>
                                                         )}
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                                                            {(q.options || []).map((opt, optIdx) => {
+                                                            {(isPart2 ? (q.options || []).slice(0, 3) : (q.options || [])).map((opt, optIdx) => {
                                                                 const label = String.fromCharCode(65 + optIdx);
                                                                 const isCorrect = q.correctOption === label;
                                                                 return (

@@ -63,7 +63,10 @@ export const updateQuestionGroup = (id, formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-//PATCH : ADMIN
+export const updateQuestion = (payload) =>
+  api.put("/admin/questions", payload);
+
+
 
 
 // Profile
