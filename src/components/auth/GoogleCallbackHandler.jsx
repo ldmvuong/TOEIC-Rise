@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notification } from 'antd';
 import { useAppDispatch } from '../../redux/hooks';
-import { setUserLoginInfo } from '../../redux/slices/accountSlide';
+import { setUserLoginInfo, fetchAccount } from '../../redux/slices/accountSlide';
 import { setAccessToken } from '../../api/axios-customize';
 import { sanitizeCallback } from '../../utils/callback';
 
@@ -24,8 +24,18 @@ const GoogleCallbackHandler = () => {
         // Set token vào localStorage và axios headers
         setAccessToken(token);
         
-        // Dispatch user info to Redux
+        // Dispatch user info to Redux (thông tin cơ bản từ callback)
         dispatch(setUserLoginInfo(user));
+        
+        // Fetch thông tin đầy đủ từ API (bao gồm avatar và các thông tin khác)
+        // Fire-and-forget: không cần đợi kết quả, redirect ngay
+        try {
+          dispatch(fetchAccount());
+        } catch (err) {
+          // Ignore error, user info đã được set từ callback
+          console.warn('Failed to fetch account details:', err);
+        }
+        
         const saved = sessionStorage.getItem('loginCallback');
         if (saved) sessionStorage.removeItem('loginCallback');
         const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
@@ -53,9 +63,21 @@ const GoogleCallbackHandler = () => {
         try {
           const user = JSON.parse(decodeURIComponent(userData));
           
+          // Set token vào localStorage và axios headers
           setAccessToken(token);
           
+          // Dispatch user info to Redux (thông tin cơ bản từ callback)
           dispatch(setUserLoginInfo(user));
+          
+          // Fetch thông tin đầy đủ từ API (bao gồm avatar và các thông tin khác)
+          // Fire-and-forget: không cần đợi kết quả, redirect ngay
+          try {
+            dispatch(fetchAccount());
+          } catch (err) {
+            // Ignore error, user info đã được set từ callback
+            console.warn('Failed to fetch account details:', err);
+          }
+          
           const saved = sessionStorage.getItem('loginCallback');
           if (saved) sessionStorage.removeItem('loginCallback');
           const redirectPath = sanitizeCallback(saved) || (user.role === 'ADMIN' ? '/admin' : '/');
