@@ -6,6 +6,7 @@ import { getQuestionGroup, updateQuestionGroup, updateQuestion } from "@/api/api
 import parse from "html-react-parser";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import TagsSelector from "@/components/admin/TagsSelector";
 import {
     validateQuestionGroupAudio,
     validateQuestionGroupImage,
@@ -44,7 +45,7 @@ const QuestionGroupPage = () => {
     const [questionOptions, setQuestionOptions] = useState(["", "", "", ""]);
     const [questionCorrectOption, setQuestionCorrectOption] = useState("A");
     const [questionExplanation, setQuestionExplanation] = useState("");
-    const [questionTags, setQuestionTags] = useState("");
+    const [questionTags, setQuestionTags] = useState([]); // Array of {id, name}
 
     useEffect(() => {
         // Get partNumber from location state
@@ -268,10 +269,23 @@ const QuestionGroupPage = () => {
         setQuestionCorrectOption(question.correctOption || "A");
         // explanation
         setQuestionExplanation(question.explanation || "");
-        // tags: backend expects String, current field có thể là array
-        setQuestionTags(
-            Array.isArray(question.tags) ? question.tags.join("; ") : (question.tags || "")
-        );
+        // tags: convert to array of objects {id, name}
+        // Backend có thể trả về array hoặc string (semicolon-separated)
+        let tagsArray = [];
+        if (Array.isArray(question.tags)) {
+            // Nếu là array, giả sử mỗi phần tử là string (tag name)
+            tagsArray = question.tags.map((tag, idx) => ({
+                id: idx, // Temporary ID, sẽ được replace khi fetch từ API
+                name: tag
+            }));
+        } else if (typeof question.tags === 'string' && question.tags.trim()) {
+            // Nếu là string, split by semicolon
+            tagsArray = question.tags.split(';').map((tag, idx) => ({
+                id: idx,
+                name: tag.trim()
+            })).filter(t => t.name);
+        }
+        setQuestionTags(tagsArray);
         setQuestionModalOpen(true);
     };
 
@@ -283,7 +297,7 @@ const QuestionGroupPage = () => {
         setQuestionOptions(["", "", "", ""]);
         setQuestionCorrectOption("A");
         setQuestionExplanation("");
-        setQuestionTags("");
+        setQuestionTags([]);
     };
 
     const handleQuestionOptionChange = (index, value) => {
@@ -315,9 +329,8 @@ const QuestionGroupPage = () => {
             return;
         }
 
-        const trimmedTags = (questionTags || "").trim();
-        if (!trimmedTags) {
-            message.error("Vui lòng nhập tags");
+        if (!questionTags || questionTags.length === 0) {
+            message.error("Vui lòng chọn ít nhất một tag");
             return;
         }
 
@@ -333,6 +346,9 @@ const QuestionGroupPage = () => {
 
         try {
             setSavingQuestion(true);
+            // Convert tags array to string format (semicolon-separated)
+            const tagsString = questionTags.map(tag => tag.name).join("; ");
+            
             await updateQuestion({
                 id: editingQuestion.id,
                 questionGroupId: questionGroup.id,
@@ -340,7 +356,7 @@ const QuestionGroupPage = () => {
                 options: opts,
                 correctOption: questionCorrectOption,
                 explanation: trimmedExplanation,
-                tags: trimmedTags,
+                tags: tagsString,
             });
             message.success("Cập nhật câu hỏi thành công");
 
@@ -925,6 +941,12 @@ const QuestionGroupPage = () => {
             >
                 {editingQuestion && (
                     <div className="space-y-4">
+                        {/* Tags - moved to top */}
+                        <TagsSelector
+                            value={questionTags}
+                            onChange={setQuestionTags}
+                        />
+
                         {/* Content - chỉ dùng cho part 3,4,5,7 */}
                         {[3, 4, 5, 7].includes(partNumber) && (
                             <div>
@@ -992,18 +1014,6 @@ const QuestionGroupPage = () => {
                                 value={questionExplanation}
                                 onChange={(e) => setQuestionExplanation(e.target.value)}
                                 placeholder="Nhập giải thích đáp án"
-                            />
-                        </div>
-
-                        {/* Tags */}
-                        <div>
-                            <div className="mb-1 text-sm font-medium text-gray-700">
-                                Tags <span className="text-red-500">*</span>
-                            </div>
-                            <Input
-                                value={questionTags}
-                                onChange={(e) => setQuestionTags(e.target.value)}
-                                placeholder="Ví dụ: [Part 5] Câu hỏi ngữ pháp; [Grammar] Thi"
                             />
                         </div>
                     </div>

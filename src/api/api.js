@@ -118,6 +118,8 @@ export const resetUserPassword = (id, payload) =>
 export const changeUserStatus = (id) =>
   api.patch(`/admin/users/${id}`);
 
+// Admin Tags
+export const getAllTags = (query) => api.get(`/admin/tags?${query}`);
 
 // Admin Staff Report
 
