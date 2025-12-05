@@ -9,7 +9,7 @@ import ReportQuestion from '../client/modal/ReportQuestion';
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
     const [hasFetched, setHasFetched] = useState(false);
-    const [activeView, setActiveView] = useState('answers'); // 'answers', 'detailed', 'redo'
+    const [activeView, setActiveView] = useState('answers'); // 'answers', 'detailed'
     const [selectedQuestionId, setSelectedQuestionId] = useState(null);
     const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
@@ -140,11 +140,6 @@ const AnswerSheet = ({ userTestId, testId }) => {
         }
     };
 
-    const handleRedoIncorrect = () => {
-        // Navigate to redo incorrect questions
-        setActiveView('redo');
-        // TODO: Implement navigation to redo page
-    };
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -171,24 +166,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     >
                         Xem chi tiết đáp án
                     </button>
-                    <button
-                        onClick={handleRedoIncorrect}
-                        className={`px-4 py-2 rounded-lg font-medium ${
-                            activeView === 'redo'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                        Làm lại các câu sai
-                    </button>
                 </div>
-                {activeView === 'redo' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-red-700">
-                            <strong>Chú ý:</strong> Khi làm lại các câu sai, điểm trung bình của bạn sẽ KHÔNG BỊ ẢNH HƯỞNG.
-                        </p>
-                    </div>
-                )}
             </div>
 
             {/* Tips Section */}
@@ -314,13 +292,6 @@ const AnswerSheet = ({ userTestId, testId }) => {
             {activeView === 'detailed' && (
                 <div className="text-center py-12 text-gray-500">
                     Tính năng xem chi tiết đáp án đang được phát triển
-                </div>
-            )}
-
-            {/* Redo View Placeholder */}
-            {activeView === 'redo' && (
-                <div className="text-center py-12 text-gray-500">
-                    Tính năng làm lại các câu sai đang được phát triển
                 </div>
             )}
 

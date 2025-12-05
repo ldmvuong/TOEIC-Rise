@@ -799,29 +799,36 @@ const QuestionGroupPage = () => {
                                 className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                             >
                                 {/* Question Header */}
-                                <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex items-start gap-3">
-                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
-                                            {question.position || idx + 1}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-3 sm:justify-end sm:flex-1">
-                                        {question.tags && question.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-1">
-                                                {question.tags.map((tag, tagIdx) => (
-                                                    <Tag key={tagIdx} color="blue" className="text-xs">
-                                                        {tag}
-                                                    </Tag>
-                                                ))}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
+                                        {question.position || idx + 1}
+                                    </span>
+                                    <div className="flex-1">
+                                        <div className="text-sm font-medium text-gray-700">
+                                            Câu hỏi {question.position || idx + 1}
+                                        </div>
+                                        {question.correctOption && (
+                                            <div className="text-xs text-green-600 font-medium mt-1">
+                                                Đáp án đúng: {question.correctOption}
                                             </div>
                                         )}
+                                    </div>
+                                    {question.tags && question.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1">
+                                            {question.tags.map((tag, tagIdx) => (
+                                                <Tag key={tagIdx} color="blue" className="text-xs">
+                                                    {tag}
+                                                </Tag>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="ml-auto">
                                         <Button
                                             size="small"
-                                            type="text"
-                                            icon={<EditOutlined />}
                                             onClick={() => openQuestionModal(question)}
-                                            title="Chỉnh sửa câu hỏi"
-                                        />
+                                        >
+                                            Chỉnh sửa
+                                        </Button>
                                     </div>
                                 </div>
 

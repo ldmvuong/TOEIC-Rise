@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getTestExam, submitTestExam } from '../../api/api';
 import QuestionGroup from '../../components/exam/question.group';
@@ -38,6 +38,12 @@ const DoTest = () => {
     const [startTime, setStartTime] = useState(null); // Thời điểm bắt đầu làm bài
     const [testResult, setTestResult] = useState(null); // Kết quả bài làm
     const [isTestSubmitted, setIsTestSubmitted] = useState(false); // Đánh dấu đã nộp bài
+    
+    // Refs để lưu interval và tránh tạo lại mỗi lần render
+    const timerIntervalRef = useRef(null);
+    const elapsedTimeIntervalRef = useRef(null);
+    const submitTestRef = useRef(null);
+    const timerInitializedRef = useRef(false);
     
     const isFullTest = mode === 'full';
     const hasTimeLimit = isFullTest || (timeLimit && timeLimit > 0);
@@ -231,6 +237,11 @@ const DoTest = () => {
         }
     }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted, stopAllAudio]);
     
+    // Cập nhật ref mỗi khi submitTest thay đổi
+    useEffect(() => {
+        submitTestRef.current = submitTest;
+    }, [submitTest]);
+    
     // Nộp bài
     const handleSubmit = () => {
         submitTest();
@@ -238,18 +249,38 @@ const DoTest = () => {
     
     // Timer countdown - đếm ngược thời gian còn lại (nếu có giới hạn)
     useEffect(() => {
-        if (!hasTimeLimit || timeRemaining <= 0 || isTestSubmitted) {
+        // Xóa interval cũ nếu có
+        if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+        }
+        timerInitializedRef.current = false;
+        
+        // Chỉ tạo interval nếu có giới hạn thời gian và chưa nộp bài
+        if (!hasTimeLimit || isTestSubmitted) {
             return;
         }
         
-        const interval = setInterval(() => {
+        // Tạo interval mới - chỉ tạo một lần, sử dụng functional update
+        timerInitializedRef.current = true;
+        timerIntervalRef.current = setInterval(() => {
             setTimeRemaining(prev => {
-                if (prev <= 1 || isTestSubmitted) {
+                // Chỉ đếm nếu thời gian còn lại > 0
+                if (prev <= 0) {
+                    return prev;
+                }
+                
+                if (prev <= 1) {
                     // Hết thời gian - tự động nộp bài
-                    clearInterval(interval);
-                    if (!isTestSubmitted) {
+                    if (timerIntervalRef.current) {
+                        clearInterval(timerIntervalRef.current);
+                        timerIntervalRef.current = null;
+                    }
+                    timerInitializedRef.current = false;
+                    // Sử dụng ref để tránh dependency
+                    if (submitTestRef.current) {
                         setTimeout(() => {
-                            submitTest('Hết thời gian! Đã tự động nộp bài.');
+                            submitTestRef.current('Hết thời gian! Đã tự động nộp bài.');
                         }, 100);
                     }
                     return 0;
@@ -259,24 +290,39 @@ const DoTest = () => {
         }, 1000);
         
         return () => {
-            clearInterval(interval);
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+            timerInitializedRef.current = false;
         };
-    }, [timeRemaining, hasTimeLimit, submitTest, isTestSubmitted]);
+    }, [hasTimeLimit, isTestSubmitted]);
     
     // Đếm thời gian làm bài (elapsed time) - luôn chạy
     useEffect(() => {
+        // Xóa interval cũ nếu có
+        if (elapsedTimeIntervalRef.current) {
+            clearInterval(elapsedTimeIntervalRef.current);
+            elapsedTimeIntervalRef.current = null;
+        }
+        
+        // Chỉ tạo interval nếu đã bắt đầu và chưa nộp bài
         if (!startTime || isTestSubmitted) {
             return;
         }
         
-        const interval = setInterval(() => {
+        // Tạo interval mới
+        elapsedTimeIntervalRef.current = setInterval(() => {
             const now = Date.now();
             const elapsed = Math.floor((now - startTime) / 1000);
             setElapsedTime(elapsed);
         }, 1000);
         
         return () => {
-            clearInterval(interval);
+            if (elapsedTimeIntervalRef.current) {
+                clearInterval(elapsedTimeIntervalRef.current);
+                elapsedTimeIntervalRef.current = null;
+            }
         };
     }, [startTime, isTestSubmitted]);
     

@@ -35,7 +35,7 @@ const TestCard = ({ test, onClick }) => {
                     <div className="flex items-center text-gray-600 text-sm pt-2 border-t border-gray-100">
                         <UserOutlined className="mr-2 text-blue-500" />
                         <span className="font-semibold">
-                            {test?.numberOfLearnerTests || 0} người đã làm
+                            {test?.numberOfLearnerTests || 0} lượt làm bài
                         </span>
                     </div>
                 </div>
