@@ -38,12 +38,16 @@ const DoTest = () => {
     const [startTime, setStartTime] = useState(null); // Thời điểm bắt đầu làm bài
     const [testResult, setTestResult] = useState(null); // Kết quả bài làm
     const [isTestSubmitted, setIsTestSubmitted] = useState(false); // Đánh dấu đã nộp bài
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false); // Hiển thị xác nhận rời khỏi trang
+    const [pendingNavigation, setPendingNavigation] = useState(null); // Lưu navigation đang chờ xác nhận
     
     // Refs để lưu interval và tránh tạo lại mỗi lần render
     const timerIntervalRef = useRef(null);
     const elapsedTimeIntervalRef = useRef(null);
     const submitTestRef = useRef(null);
     const timerInitializedRef = useRef(false);
+    const isTestSubmittedRef = useRef(false);
+    const allowNavigationRef = useRef(false); // Flag để cho phép navigation khi người dùng xác nhận rời khỏi
     
     const isFullTest = mode === 'full';
     const hasTimeLimit = isFullTest || (timeLimit && timeLimit > 0);
@@ -242,10 +246,118 @@ const DoTest = () => {
         submitTestRef.current = submitTest;
     }, [submitTest]);
     
-    // Nộp bài
+    // Nộp bài với xác nhận
     const handleSubmit = () => {
-        submitTest();
+        Modal.confirm({
+            title: 'Xác nhận nộp bài',
+            content: 'Bạn có chắc chắn muốn nộp bài? Sau khi nộp bài, bạn không thể chỉnh sửa câu trả lời.',
+            okText: 'Nộp bài',
+            cancelText: 'Tiếp tục làm bài',
+            okType: 'primary',
+            onOk: () => {
+                submitTest();
+            },
+            onCancel: () => {
+                // Không làm gì, tiếp tục làm bài
+            }
+        });
     };
+    
+    // Xử lý xác nhận rời khỏi trang
+    const handleConfirmLeave = () => {
+        setShowLeaveConfirm(false);
+        // Đánh dấu cho phép navigation
+        allowNavigationRef.current = true;
+        setPendingNavigation(null);
+        // Luôn navigate về trang danh sách đề thi khi ấn "Thoát"
+        // Sử dụng setTimeout để đảm bảo state đã được cập nhật
+        setTimeout(() => {
+            navigate('/online-tests', { replace: true });
+        }, 0);
+    };
+    
+    const handleCancelLeave = () => {
+        setShowLeaveConfirm(false);
+        setPendingNavigation(null);
+    };
+    
+    // Đóng modal xác nhận nếu đã nộp bài
+    useEffect(() => {
+        if (isTestSubmitted && showLeaveConfirm) {
+            setShowLeaveConfirm(false);
+            setPendingNavigation(null);
+        }
+    }, [isTestSubmitted, showLeaveConfirm]);
+    
+    // Cập nhật ref khi isTestSubmitted thay đổi
+    useEffect(() => {
+        isTestSubmittedRef.current = isTestSubmitted;
+    }, [isTestSubmitted]);
+    
+    // Chặn navigation trong app khi chưa nộp bài (back/forward button, programmatic navigation)
+    useEffect(() => {
+        if (isTestSubmitted || !testData) {
+            // Nếu đã nộp bài, không chặn navigation
+            return;
+        }
+        
+        // Lắng nghe popstate (back/forward button)
+        const handlePopState = (e) => {
+            // Kiểm tra lại isTestSubmitted bằng ref (luôn có giá trị mới nhất)
+            // Nếu đã nộp bài, cho phép navigation
+            if (isTestSubmittedRef.current) {
+                return;
+            }
+            
+            // Nếu đã được phép navigation (người dùng đã xác nhận rời khỏi), cho phép
+            if (allowNavigationRef.current) {
+                allowNavigationRef.current = false; // Reset flag
+                return;
+            }
+            
+            // Ngăn chặn navigation mặc định bằng cách push state lại
+            window.history.pushState(null, '', window.location.href);
+            
+            // Hiển thị modal xác nhận
+            setShowLeaveConfirm(true);
+            setPendingNavigation({
+                // Lưu thông tin để có thể sử dụng nếu cần
+                timestamp: Date.now()
+            });
+        };
+        
+        // Push một state để có thể intercept back button
+        window.history.pushState(null, '', window.location.href);
+        
+        window.addEventListener('popstate', handlePopState);
+        
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [isTestSubmitted, testData]);
+    
+    // Xử lý beforeunload event (đóng tab/trình duyệt, F5, back/forward)
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            // Nếu đã được phép navigation hoặc đã nộp bài, không chặn
+            if (allowNavigationRef.current || isTestSubmitted) {
+                return;
+            }
+            
+            if (!isTestSubmitted && testData !== null) {
+                // Hiển thị dialog mặc định của trình duyệt
+                e.preventDefault();
+                e.returnValue = ''; // Chrome yêu cầu returnValue
+                return ''; // Một số trình duyệt yêu cầu return string
+            }
+        };
+        
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isTestSubmitted, testData]);
     
     // Timer countdown - đếm ngược thời gian còn lại (nếu có giới hạn)
     useEffect(() => {
@@ -651,6 +763,20 @@ const DoTest = () => {
                     </div>
                 </Modal>
             )}
+            
+            {/* Modal xác nhận rời khỏi trang */}
+            <Modal
+                title="Xác nhận rời khỏi trang"
+                open={showLeaveConfirm}
+                onOk={handleConfirmLeave}
+                onCancel={handleCancelLeave}
+                okText="Thoát"
+                cancelText="Tiếp tục làm bài"
+                okType="danger"
+            >
+                <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
+                <p className="text-red-600 font-medium mt-2">Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.</p>
+            </Modal>
         </div>
     );
 };
