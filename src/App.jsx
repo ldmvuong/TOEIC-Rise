@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
 import ReportPage from "./pages/admin/Report.jsx";
+import ReportDetailPage from "./pages/admin/ReportDetail.jsx";
 import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
@@ -191,6 +192,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <ReportPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'reports/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <ReportDetailPage />
             </ProtectedRoute>
           ),
         },

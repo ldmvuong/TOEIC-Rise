@@ -398,7 +398,7 @@ const QuestionGroupPage = () => {
                 "tableColumn",
                 "tableRow",
                 "mergeTableCells",
-            ],
+        ],
         },
     };
 
@@ -432,32 +432,32 @@ const QuestionGroupPage = () => {
                     {/* Part 5: No edit button (no transcript, audio, image, passage to edit) */}
                     {partNumber !== 5 && (
                         <>
-                            {!isEditing ? (
-                                <Button
-                                    type="primary"
-                                    icon={<EditOutlined />}
-                                    onClick={handleEdit}
-                                >
-                                    Chỉnh sửa
-                                </Button>
-                            ) : (
-                                <div className="flex gap-2">
-                                    <Button
-                                        icon={<CloseOutlined />}
-                                        onClick={handleCancel}
-                                        disabled={submitting}
-                                    >
-                                        Hủy
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        icon={<SaveOutlined />}
-                                        onClick={handleSave}
-                                        loading={submitting}
-                                    >
-                                        Lưu
-                                    </Button>
-                                </div>
+                    {!isEditing ? (
+                        <Button
+                            type="primary"
+                            icon={<EditOutlined />}
+                            onClick={handleEdit}
+                        >
+                            Chỉnh sửa
+                        </Button>
+                    ) : (
+                        <div className="flex gap-2">
+                            <Button
+                                icon={<CloseOutlined />}
+                                onClick={handleCancel}
+                                disabled={submitting}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={handleSave}
+                                loading={submitting}
+                            >
+                                Lưu
+                            </Button>
+                        </div>
                             )}
                         </>
                     )}
@@ -476,21 +476,21 @@ const QuestionGroupPage = () => {
                                 <div className="space-y-3">
                                     {/* Toggle Mode */}
                                     {questionGroup.audioUrl ? (
-                                        <Radio.Group
-                                            value={audioMode}
-                                            onChange={(e) => {
-                                                setAudioMode(e.target.value);
-                                                if (e.target.value === "keep") {
-                                                    setAudioFile(null);
-                                                    setAudioUrl("");
-                                                }
-                                            }}
-                                            className="w-full"
-                                        >
-                                            <Radio value="keep">Giữ nguyên</Radio>
-                                            <Radio value="upload">Upload file</Radio>
-                                            <Radio value="url">Nhập URL</Radio>
-                                        </Radio.Group>
+                                    <Radio.Group
+                                        value={audioMode}
+                                        onChange={(e) => {
+                                            setAudioMode(e.target.value);
+                                            if (e.target.value === "keep") {
+                                                setAudioFile(null);
+                                                setAudioUrl("");
+                                            }
+                                        }}
+                                        className="w-full"
+                                    >
+                                        <Radio value="keep">Giữ nguyên</Radio>
+                                        <Radio value="upload">Upload file</Radio>
+                                        <Radio value="url">Nhập URL</Radio>
+                                    </Radio.Group>
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="text-sm text-gray-600 mb-2">
@@ -525,13 +525,13 @@ const QuestionGroupPage = () => {
                                                 <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-sm text-gray-700 flex-1 font-medium">{audioFile.name}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={removeAudio}
-                                                            className="text-red-500 hover:text-red-700"
-                                                        >
-                                                            <DeleteOutlined />
-                                                        </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={removeAudio}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        <DeleteOutlined />
+                                                    </button>
                                                     </div>
                                                     <div className="mt-2">
                                                         <audio controls className="w-full">
@@ -595,21 +595,21 @@ const QuestionGroupPage = () => {
                                 <div className="space-y-3">
                                     {/* Toggle Mode */}
                                     {questionGroup.imageUrl ? (
-                                        <Radio.Group
-                                            value={imageMode}
-                                            onChange={(e) => {
-                                                setImageMode(e.target.value);
-                                                if (e.target.value === "keep") {
-                                                    setImageFile(null);
-                                                    setImageUrl("");
-                                                }
-                                            }}
-                                            className="w-full"
-                                        >
-                                            <Radio value="keep">Giữ nguyên</Radio>
-                                            <Radio value="upload">Upload file</Radio>
-                                            <Radio value="url">Nhập URL</Radio>
-                                        </Radio.Group>
+                                    <Radio.Group
+                                        value={imageMode}
+                                        onChange={(e) => {
+                                            setImageMode(e.target.value);
+                                            if (e.target.value === "keep") {
+                                                setImageFile(null);
+                                                setImageUrl("");
+                                            }
+                                        }}
+                                        className="w-full"
+                                    >
+                                        <Radio value="keep">Giữ nguyên</Radio>
+                                        <Radio value="upload">Upload file</Radio>
+                                        <Radio value="url">Nhập URL</Radio>
+                                    </Radio.Group>
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="text-sm text-gray-600 mb-2">
@@ -738,7 +738,7 @@ const QuestionGroupPage = () => {
                                             const data = editor.getData();
                                             setPassage(data);
                                         }}
-                                    />
+                                />
                                 </div>
                             ) : (
                                 questionGroup.passage && (

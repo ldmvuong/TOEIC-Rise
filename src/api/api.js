@@ -129,6 +129,9 @@ export const getAllReportByStaff = (query) => api.get(`/staff/question-reports?$
 
 export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 
+export const updateQuestionReport = (id, payload) =>
+  api.put(`/admin/question-reports/${id}`, payload);
+
 
 // Learner
 

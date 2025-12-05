@@ -255,7 +255,7 @@ const DoTest = () => {
             cancelText: 'Tiếp tục làm bài',
             okType: 'primary',
             onOk: () => {
-                submitTest();
+        submitTest();
             },
             onCancel: () => {
                 // Không làm gì, tiếp tục làm bài

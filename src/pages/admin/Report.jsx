@@ -1,13 +1,16 @@
 import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/redux/hooks";
 import DataTable from "@/components/admin/data-table";
-import { Tag, Tooltip } from "antd";
+import { Tag, Tooltip, Button } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
 import { ProFormSelect } from "@ant-design/pro-components";
 import queryString from "query-string";
 import { getAllReport, getAllReportByStaff } from "@/api/api";
 
 const ReportPage = () => {
   const tableRef = useRef();
+  const navigate = useNavigate();
   const user = useAppSelector((state) => state.account.user);
   const isAdmin = user?.role === "ADMIN";
 
@@ -116,6 +119,21 @@ const ReportPage = () => {
         };
         return <Tag color={colorMap[val] || "default"}>{val}</Tag>;
       },
+    },
+    {
+      title: "Thao tác",
+      key: "actions",
+      width: 120,
+      hideInSearch: true,
+      render: (_, record) => (
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => navigate(`/admin/reports/${record.id || record.questionReportId}`)}
+        >
+          Xem
+        </Button>
+      ),
     },
   ];
 
