@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { message, Spin } from 'antd';
-import { getHistoryTest, getTestAnalytics, getScoreStatistics } from '../../api/api';
+import { message, Spin, Tooltip as AntTooltip } from 'antd';
+import { getHistoryTest, getTestAnalytics, getScoreStatistics, getTagsByPart, createMiniTest } from '../../api/api';
 import { secondsToMinutes } from '../../utils/timeUtils';
 import {
     LineChart,
@@ -334,6 +334,15 @@ const TestAnalytics = () => {
     const [scoreStatsLoading, setScoreStatsLoading] = useState(false);
     const [testLimit, setTestLimit] = useState(5);
     const [chartType, setChartType] = useState('line'); // 'line' or 'bar'
+    
+    // Mini test creation state
+    const [miniTestPartId, setMiniTestPartId] = useState(1); // Default Part 1
+    const [miniTestTags, setMiniTestTags] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]); // Array of tagIds
+    const [numberOfQuestions, setNumberOfQuestions] = useState(10);
+    const [miniTestTagsLoading, setMiniTestTagsLoading] = useState(false);
+    const [miniTestCreating, setMiniTestCreating] = useState(false);
+    const [miniTestSectionOpen, setMiniTestSectionOpen] = useState(false); // Dropdown state
 
     const effectivePageSize = historyMeta.pageSize || DEFAULT_PAGE_SIZE;
     const totalRows = historyMeta.total;
@@ -484,7 +493,83 @@ const TestAnalytics = () => {
         fetchScoreStats();
     }, [testLimit]);
 
+    // Fetch tags for mini test when part changes
+    useEffect(() => {
+        const fetchMiniTestTags = async () => {
+            setMiniTestTagsLoading(true);
+            try {
+                const response = await getTagsByPart(miniTestPartId);
+                setMiniTestTags(response?.data || []);
+                // Reset selected tags when part changes
+                setSelectedTags([]);
+            } catch (error) {
+                console.error('Error fetching tags:', error);
+                message.error('Không thể tải danh sách tag');
+                setMiniTestTags([]);
+            } finally {
+                setMiniTestTagsLoading(false);
+            }
+        };
+
+        fetchMiniTestTags();
+    }, [miniTestPartId]);
+
     const hasScoreData = Boolean(scoreStats && (scoreStats.chartData?.length ?? 0) > 0);
+
+    // Handler for tag selection
+    const handleTagToggle = (tagId) => {
+        setSelectedTags(prev => {
+            if (prev.includes(tagId)) {
+                // Remove tag if already selected
+                return prev.filter(id => id !== tagId);
+            } else {
+                // Add tag if less than 3 selected
+                if (prev.length < 3) {
+                    return [...prev, tagId];
+                } else {
+                    message.warning('Bạn chỉ có thể chọn tối đa 3 tag');
+                    return prev;
+                }
+            }
+        });
+    };
+
+    // Handler for creating mini test
+    const handleCreateMiniTest = async () => {
+        if (selectedTags.length === 0) {
+            message.error('Vui lòng chọn ít nhất 1 tag');
+            return;
+        }
+        if (numberOfQuestions < 1 || numberOfQuestions > 50) {
+            message.error('Số câu hỏi phải từ 1 đến 50');
+            return;
+        }
+
+        setMiniTestCreating(true);
+        try {
+            const payload = {
+                partId: miniTestPartId,
+                tagIds: selectedTags,
+                numberOfQuestions: numberOfQuestions
+            };
+            const response = await createMiniTest(payload);
+            if (response?.data) {
+                message.success('Tạo mini test thành công!');
+                // Navigate to the mini test page
+                const miniTestId = response.data.id || response.data.miniTestId || response.data;
+                if (miniTestId) {
+                    navigate(`/do-mini-test/${miniTestId}`);
+                } else {
+                    message.error('Không thể lấy ID của mini test');
+                }
+            }
+        } catch (error) {
+            console.error('Error creating mini test:', error);
+            message.error(error?.response?.data?.message || 'Không thể tạo mini test');
+        } finally {
+            setMiniTestCreating(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-10">
@@ -665,6 +750,161 @@ const TestAnalytics = () => {
                             </div>
                         </>
                     )}
+
+                    {/* Mini Test Creation Section */}
+                    <div className="mt-8 pt-8 border-t border-gray-200">
+                        {/* Clickable Header */}
+                        <button
+                            type="button"
+                            onClick={() => setMiniTestSectionOpen(!miniTestSectionOpen)}
+                            className="w-full flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="text-2xl">💡</div>
+                                <div className="text-left">
+                                    <h3 className="text-base font-semibold text-gray-900">
+                                        Gợi ý: Làm mini test
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                        Tạo bài test nhỏ để luyện tập theo các chủ đề bạn muốn cải thiện
+                                    </p>
+                                </div>
+                            </div>
+                            <svg
+                                className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+                                    miniTestSectionOpen ? 'rotate-180' : ''
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {/* Collapsible Content */}
+                        {miniTestSectionOpen && (
+                            <div className="mt-4 bg-white rounded-lg border border-gray-200 p-5 space-y-5">
+                            {/* Part Selection and Number of Questions - Same Row */}
+                            <div className="flex flex-col lg:flex-row lg:items-start gap-5">
+                                {/* Part Selection */}
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Chọn Part
+                                    </label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {[1, 2, 3, 4, 5, 6, 7].map((partNum) => (
+                                            <button
+                                                key={partNum}
+                                                type="button"
+                                                onClick={() => setMiniTestPartId(partNum)}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    miniTestPartId === partNum
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                Part {partNum}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Number of Questions */}
+                                <div className="lg:w-64">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Số câu hỏi (1-50)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={50}
+                                        value={numberOfQuestions}
+                                        onChange={(e) => {
+                                            const value = parseInt(e.target.value) || 1;
+                                            if (value >= 1 && value <= 50) {
+                                                setNumberOfQuestions(value);
+                                            }
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Tags Selection */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Chọn Tag (tối thiểu 1, tối đa 3)
+                                    </label>
+                                    {selectedTags.length > 0 && (
+                                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                            {selectedTags.length}/3
+                                        </span>
+                                    )}
+                                </div>
+                                {miniTestTagsLoading ? (
+                                    <div className="flex justify-center py-8">
+                                        <Spin />
+                                    </div>
+                                ) : miniTestTags.length === 0 ? (
+                                    <div className="text-sm text-gray-500 py-8 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                        Không có tag nào cho part này
+                                    </div>
+                                ) : (
+                                    <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                            {miniTestTags.map((tag) => {
+                                                const isSelected = selectedTags.includes(tag.tagId);
+                                                return (
+                                                    <AntTooltip key={tag.tagId} title={tag.tagName} placement="top">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleTagToggle(tag.tagId)}
+                                                            disabled={!isSelected && selectedTags.length >= 3}
+                                                            className={`w-full h-10 px-2 py-1.5 rounded-md text-xs text-left transition-colors truncate flex items-center ${
+                                                                isSelected
+                                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                                    : selectedTags.length >= 3
+                                                                    ? 'bg-white text-gray-400 border border-gray-200 cursor-not-allowed opacity-60'
+                                                                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm'
+                                                            }`}
+                                                        >
+                                                            <span className="truncate w-full">{tag.tagName}</span>
+                                                        </button>
+                                                    </AntTooltip>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Create Button */}
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleCreateMiniTest}
+                                    disabled={miniTestCreating || selectedTags.length === 0 || numberOfQuestions < 1 || numberOfQuestions > 50}
+                                    className={`w-full py-3 rounded-lg font-medium text-sm transition-colors ${
+                                        miniTestCreating || selectedTags.length === 0 || numberOfQuestions < 1 || numberOfQuestions > 50
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
+                                >
+                                    {miniTestCreating ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <Spin size="small" />
+                                            Đang tạo mini test...
+                                        </span>
+                                    ) : (
+                                        'Tạo mini test'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Score Statistics Section */}

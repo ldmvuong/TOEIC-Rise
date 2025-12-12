@@ -1,44 +1,15 @@
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import { useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import StatisticalResults from '../../components/exam/StatisticalResults';
 import AnswerSheet from '../../components/exam/AnswerSheet';
-import { getUserTestStatisticsResult } from '../../api/api';
 
 const TestResult = () => {
     const { userTestId } = useParams();
-    const navigate = useNavigate();
-    const [testData, setTestData] = useState(null);
     const answerSheetRef = useRef(null);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'auto' });
     }, []);
-
-    useEffect(() => {
-        const fetchTestData = async () => {
-            if (!userTestId) {
-                message.error('Không tìm thấy ID bài thi');
-                navigate('/online-tests');
-                return;
-            }
-
-            try {
-                const statsResponse = await getUserTestStatisticsResult(userTestId);
-                if (statsResponse && statsResponse.data) {
-                    setTestData({
-                        testId: statsResponse.data.testId,
-                        testName: statsResponse.data.testName
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching test data:', error);
-                message.error('Không thể tải dữ liệu bài thi');
-            }
-        };
-
-        fetchTestData();
-    }, [userTestId, navigate]);
 
     const handleViewAnswers = () => {
         // Scroll to answer sheet section
@@ -54,7 +25,6 @@ const TestResult = () => {
                 <div className="mb-6">
                     <StatisticalResults 
                         userTestId={userTestId}
-                        testId={testData?.testId}
                         onViewAnswers={handleViewAnswers}
                     />
                 </div>
@@ -62,8 +32,7 @@ const TestResult = () => {
                 {/* Answer Sheet Section */}
                 <div ref={answerSheetRef}>
                     <AnswerSheet 
-                        userTestId={userTestId} 
-                        testId={testData?.testId}
+                        userTestId={userTestId}
                     />
                 </div>
             </div>

@@ -171,3 +171,9 @@ export const getTestAnalytics = (query) => api.get(`/learner/analysis?${query}`)
 
 export const getScoreStatistics = (size = 5) =>
   api.get(`/learner/analysis/full-test?size=${size}`);
+
+export const getTagsByPart = (partId) =>
+  api.get(`/learner/mini-tests/tags?partId=${partId}`);
+
+export const createMiniTest = (payload) =>
+  api.post('/learner/mini-tests', payload);
