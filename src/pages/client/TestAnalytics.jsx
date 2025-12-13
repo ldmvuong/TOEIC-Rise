@@ -547,21 +547,19 @@ const TestAnalytics = () => {
 
         setMiniTestCreating(true);
         try {
-            const payload = {
-                partId: miniTestPartId,
-                tagIds: selectedTags,
-                numberOfQuestions: numberOfQuestions
-            };
-            const response = await createMiniTest(payload);
+            const response = await createMiniTest(miniTestPartId, selectedTags, numberOfQuestions);
             if (response?.data) {
-                message.success('Tạo mini test thành công!');
+                // Get selected tag names from miniTestTags
+                const selectedTagNames = miniTestTags
+                    .filter(tag => selectedTags.includes(tag.tagId))
+                    .map(tag => tag.tagName);
                 // Navigate to the mini test page
-                const miniTestId = response.data.id || response.data.miniTestId || response.data;
-                if (miniTestId) {
-                    navigate(`/do-mini-test/${miniTestId}`);
-                } else {
-                    message.error('Không thể lấy ID của mini test');
-                }
+                navigate('/do-mini-test', { 
+                    state: { 
+                        testData: response.data,
+                        selectedTags: selectedTagNames 
+                    } 
+                });
             }
         } catch (error) {
             console.error('Error creating mini test:', error);

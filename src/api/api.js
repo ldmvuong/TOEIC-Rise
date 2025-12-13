@@ -173,7 +173,14 @@ export const getScoreStatistics = (size = 5) =>
   api.get(`/learner/analysis/full-test?size=${size}`);
 
 export const getTagsByPart = (partId) =>
-  api.get(`/learner/mini-tests/tags?partId=${partId}`);
+  api.get('/learner/mini-tests/tags', { params: { partId } });
 
-export const createMiniTest = (payload) =>
-  api.post('/learner/mini-tests', payload);
+export const createMiniTest = (partId, tagIds, numberQuestion) => {
+  const params = new URLSearchParams();
+  params.append('partId', partId);
+  params.append('numberQuestion', numberQuestion);
+  tagIds.forEach(tagId => {
+    params.append('tagIds', tagId);
+  });
+  return api.get(`/learner/mini-tests?${params.toString()}`);
+};
