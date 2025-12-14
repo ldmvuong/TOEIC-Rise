@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 import { scrollToElement } from '../../utils/scrollUtils';
 import MiniTestSidebar from '../../components/mini-test/sidebar';
 import MiniTestQuestionGroup from '../../components/mini-test/questiongroup';
+import { submitMiniTest } from '../../api/api';
 
 const DoMiniTest = () => {
     const location = useLocation();
@@ -84,10 +85,56 @@ const DoMiniTest = () => {
     };
 
     // Handle submit test
-    const handleSubmitTest = () => {
-        // TODO: Implement submit mini test API call
-        message.info('Chức năng nộp bài đang được phát triển');
-        console.log('Submitting test with answers:', answers);
+    const handleSubmitTest = async () => {
+        // Confirm before submitting
+        Modal.confirm({
+            title: 'Xác nhận nộp bài',
+            content: 'Bạn có chắc chắn muốn nộp bài? Sau khi nộp bài, bạn không thể thay đổi câu trả lời.',
+            okText: 'Nộp bài',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    // Build userAnswerRequests array
+                    const userAnswerRequests = allQuestions.map(question => {
+                        // Get answer from state, convert from index (0,1,2,3) to letter (A,B,C,D)
+                        let answerValue = '';
+                        if (answers[question.id] !== undefined) {
+                            const optionIndex = answers[question.id];
+                            // Convert index to letter: 0 -> A, 1 -> B, 2 -> C, 3 -> D
+                            answerValue = String.fromCharCode(65 + optionIndex);
+                        }
+                        
+                        return {
+                            questionId: question.id,
+                            questionGroupId: question.groupId,
+                            answer: answerValue
+                        };
+                    });
+
+                    // Build payload
+                    const payload = {
+                        userAnswerRequests: userAnswerRequests
+                    };
+
+                    // Call API
+                    const response = await submitMiniTest(payload);
+                    
+                    // If successful, navigate to result page
+                    if (response && response.data) {
+                        navigate('/mini-test-result', { 
+                            state: { 
+                                resultData: response.data,
+                                testData: testData,
+                                selectedTags: selectedTags
+                            } 
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error submitting mini test:', error);
+                    message.error(error?.response?.data?.message || 'Không thể nộp bài. Vui lòng thử lại.');
+                }
+            }
+        });
     };
 
     // Handle audio play/pause for each group

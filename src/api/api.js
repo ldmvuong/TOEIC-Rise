@@ -184,3 +184,8 @@ export const createMiniTest = (partId, tagIds, numberQuestion) => {
   });
   return api.get(`/learner/mini-tests?${params.toString()}`);
 };
+
+export const submitMiniTest = (payload) => {
+  return api.post('/learner/mini-tests', payload);
+};
+

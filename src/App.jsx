@@ -24,6 +24,7 @@ import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
+import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
@@ -75,6 +76,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <DoMiniTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'mini-test-result',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <MiniTestResult />
             </ProtectedRoute>
           )
         },
