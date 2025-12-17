@@ -12,6 +12,7 @@ const DoMiniTest = () => {
     
     const testData = location.state?.testData;
     const selectedTags = location.state?.selectedTags || [];
+    const passedPartNumber = location.state?.partNumber; // part được truyền khi tạo bài test
     
     const [loading, setLoading] = useState(true);
     const [answers, setAnswers] = useState({}); // { questionId: selectedOptionIndex }
@@ -20,9 +21,32 @@ const DoMiniTest = () => {
     const [flaggedQuestions, setFlaggedQuestions] = useState([]); // Array of questionIds
 
     // Flatten all questions from all question groups
+    // Hỗ trợ cả cấu trúc cũ (2D array) và cấu trúc mới (1D array với index/position)
     const allQuestions = testData?.questionGroups?.reduce((acc, group) => {
-        group.questions.forEach(questionRow => {
-            questionRow.forEach(question => {
+        if (!group?.questions) return acc;
+
+        const questions = group.questions;
+
+        // Cấu trúc cũ: [[q1, q2], [q3, q4]]
+        if (Array.isArray(questions[0])) {
+            questions.forEach((row) => {
+                if (!Array.isArray(row)) return;
+                row.forEach((question) => {
+                    if (question?.id) {
+                        acc.push({
+                            ...question,
+                            groupId: group.id,
+                            groupAudioUrl: group.audioUrl,
+                            groupImageUrl: group.imageUrl,
+                            groupPassage: group.passage,
+                            groupPosition: group.position
+                        });
+                    }
+                });
+            });
+        } else {
+            // Cấu trúc mới: [q1, q2, q3]
+            questions.forEach((question) => {
                 if (question?.id) {
                     acc.push({
                         ...question,
@@ -34,7 +58,8 @@ const DoMiniTest = () => {
                     });
                 }
             });
-        });
+        }
+
         return acc;
     }, []) || [];
 
@@ -182,10 +207,19 @@ const DoMiniTest = () => {
         );
     }
 
-    // Get part number from first question's tags
-    const firstTag = allQuestions[0]?.tags?.[0] || '';
-    const partMatch = firstTag.match(/Part (\d+)/);
-    const partNumber = partMatch ? parseInt(partMatch[1]) : 1;
+    // Lấy partNumber: ưu tiên giá trị truyền qua location.state (khi tạo bài test)
+    // Nếu không có, fallback đọc từ tags như cũ
+    let partNumber = passedPartNumber ?? 1;
+    if (!passedPartNumber && allQuestions.length > 0) {
+        const firstQuestionTags = allQuestions[0]?.tags || [];
+        for (const tag of firstQuestionTags) {
+            const match = tag.match(/Part\s+(\d+)/);
+            if (match) {
+                partNumber = parseInt(match[1]);
+                break;
+            }
+        }
+    }
     const isListeningPart = partNumber >= 1 && partNumber <= 4;
 
     return (

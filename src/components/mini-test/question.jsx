@@ -3,6 +3,9 @@ import QuestionOptions from '../exam/QuestionOptions';
 const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNumber, selectedOptionIndex }) => {
     const tags = question.tags || [];
 
+    const displayIndex = question.index ?? question.position;
+    const displayPosition = partNumber === 6 ? question.position : null;
+
     // Merge selectedOptionIndex vào question object để QuestionOptions có thể sử dụng
     const questionWithSelection = {
         ...question,
@@ -10,7 +13,6 @@ const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNum
     };
 
     const handleChange = (updatedQuestion) => {
-        // Map selectedOption về selectedOptionIndex cho parent component
         const questionWithIndex = {
             ...updatedQuestion,
             selectedOptionIndex: updatedQuestion.selectedOption
@@ -34,12 +36,17 @@ const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNum
                 </div>
             )}
 
-            {/* Question Header: Number + Flag */}
+            {/* Question Header: Index + Position (2 hình tròn) + Flag */}
             <div className="flex items-start gap-3 mb-4">
                 <div className="flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
-                        {question.position}
+                        {displayIndex}
                     </span>
+                    {displayPosition && (
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold border border-gray-300">
+                            {displayPosition}
+                        </span>
+                    )}
                     {onToggleFlag && (
                         <button
                             onClick={() => onToggleFlag(question.id)}

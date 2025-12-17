@@ -557,7 +557,8 @@ const TestAnalytics = () => {
                 navigate('/do-mini-test', { 
                     state: { 
                         testData: response.data,
-                        selectedTags: selectedTagNames 
+                        selectedTags: selectedTagNames,
+                        partNumber: miniTestPartId
                     } 
                 });
             }
@@ -819,9 +820,11 @@ const TestAnalytics = () => {
                                         max={50}
                                         value={numberOfQuestions}
                                         onChange={(e) => {
-                                            const value = parseInt(e.target.value) || 1;
-                                            if (value >= 1 && value <= 50) {
-                                                setNumberOfQuestions(value);
+                                            const value = parseInt(e.target.value, 10);
+                                            if (Number.isNaN(value)) {
+                                                setNumberOfQuestions(1);
+                                            } else {
+                                                setNumberOfQuestions(Math.min(50, Math.max(1, value)));
                                             }
                                         }}
                                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"

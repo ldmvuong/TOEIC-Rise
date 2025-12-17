@@ -49,8 +49,8 @@ const MiniTestQuestionGroup = ({
                 </div>
             )}
 
-            {/* Passage (cho Part 5) */}
-            {!isListeningPart && passage && (
+            {/* Passage: chỉ hiển thị cho Part 6 và 7 */}
+            {(partNumber === 6 || partNumber === 7) && passage && (
                 <div className="mb-4">
                     <PassageDisplay passage={passage} />
                 </div>
