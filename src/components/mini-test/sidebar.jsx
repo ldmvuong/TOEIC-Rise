@@ -7,8 +7,7 @@ const MiniTestSidebar = ({
     flaggedQuestions = [],
     onToggleFlag,
     selectedTags = [],
-    onSubmitTest,
-    questionResults = {} // { questionId: 'correct' | 'wrong' }
+    onSubmitTest
 }) => {
     const isAnswered = (questionId) => answers[questionId] !== undefined;
     const isCurrent = (questionId) => currentQuestionId === questionId;
@@ -45,7 +44,6 @@ const MiniTestSidebar = ({
                         const answered = isAnswered(question.id);
                         const current = isCurrent(question.id);
                         const flagged = isFlagged(question.id);
-                        const resultStatus = questionResults[question.id]; // chỉ dùng ở trang kết quả
                         
                         return (
                             <div key={question.id} className="relative">
@@ -54,10 +52,6 @@ const MiniTestSidebar = ({
                                     className={`w-full aspect-square rounded-lg text-sm font-medium transition-colors relative ${
                                         current
                                             ? 'bg-blue-600 text-white'
-                                            : resultStatus === 'correct'
-                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
-                                            : resultStatus === 'wrong'
-                                            ? 'bg-rose-100 text-rose-700 border border-rose-300'
                                             : answered
                                             ? 'bg-green-100 text-green-700 border border-green-300'
                                             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'

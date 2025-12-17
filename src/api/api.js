@@ -132,6 +132,8 @@ export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 export const updateQuestionReport = (id, payload) =>
   api.put(`/admin/question-reports/${id}`, payload);
 
+//Admin Staff Dashboard
+export const getDashboardStatistics = () => api.get('/staff/stats/system-overview');
 
 // Learner
 
