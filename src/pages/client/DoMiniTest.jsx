@@ -119,27 +119,33 @@ const DoMiniTest = () => {
             cancelText: 'Hủy',
             onOk: async () => {
                 try {
-                    // Build userAnswerRequests array
-                    const userAnswerRequests = allQuestions.map(question => {
-                        // Get answer from state, convert from index (0,1,2,3) to letter (A,B,C,D)
-                        let answerValue = '';
-                        if (answers[question.id] !== undefined) {
-                            const optionIndex = answers[question.id];
-                            // Convert index to letter: 0 -> A, 1 -> B, 2 -> C, 3 -> D
-                            answerValue = String.fromCharCode(65 + optionIndex);
-                        }
-                        
+                    // Build questionGroups payload theo đúng thứ tự questionGroups trong đề
+                    // và đúng thứ tự câu hỏi bên trong mỗi group
+                    const questionGroups = (testData.questionGroups || []).map(group => {
+                        const rawQuestions = group.questions || [];
+                        const flatQuestions = Array.isArray(rawQuestions[0]) ? rawQuestions.flat() : rawQuestions;
+
+                        const userAnswerRequests = flatQuestions
+                            .filter(q => q && q.id)
+                            .map(q => {
+                                let answerValue = '';
+                                if (answers[q.id] !== undefined) {
+                                    const optionIndex = answers[q.id];
+                                    answerValue = String.fromCharCode(65 + optionIndex); // 0->A,1->B...
+                                }
+                                return {
+                                    questionId: q.id,
+                                    answer: answerValue
+                                };
+                            });
+
                         return {
-                            questionId: question.id,
-                            questionGroupId: question.groupId,
-                            answer: answerValue
+                            questionGroupId: group.id,
+                            userAnswerRequests
                         };
                     });
 
-                    // Build payload
-                    const payload = {
-                        userAnswerRequests: userAnswerRequests
-                    };
+                    const payload = { questionGroups };
 
                     // Call API
                     const response = await submitMiniTest(payload);
@@ -150,7 +156,8 @@ const DoMiniTest = () => {
                             state: { 
                                 resultData: response.data,
                                 testData: testData,
-                                selectedTags: selectedTags
+                                selectedTags: selectedTags,
+                                partNumber
                             } 
                         });
                     }
