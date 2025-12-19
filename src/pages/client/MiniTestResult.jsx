@@ -98,12 +98,12 @@ const MiniTestResult = () => {
     };
 
     return (
-        <div className="h-screen flex overflow-hidden bg-gray-50">
+        <div className="min-h-screen flex flex-col lg:flex-row lg:h-screen overflow-hidden bg-gray-50">
             {/* Main content */}
-            <div className="flex-1 flex flex-col overflow-y-auto px-4 pb-10" style={{ width: '85%' }}>
-                <div className="max-w-5xl mx-auto space-y-6 mt-6">
-                        {/* Header */}
-                        <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 flex flex-col overflow-y-auto px-4 pb-10 lg:min-w-0 lg:overflow-y-auto">
+                <div className="max-w-6xl mx-auto w-full space-y-6 mt-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Kết quả Mini Test</h1>
                                 {selectedTags.length > 0 && (
@@ -125,10 +125,10 @@ const MiniTestResult = () => {
                             >
                                 Quay lại thống kê
                             </button>
-                        </div>
+                    </div>
 
-                        {/* Summary */}
-                        <div className="grid gap-4 sm:grid-cols-3">
+                    {/* Summary */}
+                    <div className="grid gap-4 sm:grid-cols-3">
                             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                                 <div className="text-xs text-gray-500 mb-1">Tổng số câu</div>
                                 <div className="text-2xl font-semibold text-gray-900">{totalQuestions}</div>
@@ -141,10 +141,10 @@ const MiniTestResult = () => {
                                 <div className="text-xs text-gray-500 mb-1">Độ chính xác</div>
                                 <div className="text-2xl font-semibold text-blue-600">{accuracy}%</div>
                             </div>
-                        </div>
+                    </div>
 
-                        {/* Question groups & questions */}
-                        <div className="space-y-6 pb-8">
+                    {/* Question groups & questions */}
+                    <div className="space-y-6 pb-8">
                             {questionGroups.map((group) => (
                                 <div
                                     key={group.id}
@@ -288,9 +288,9 @@ const MiniTestResult = () => {
                                     </div>
                                 </div>
                             ))}
+                    </div>
                 </div>
             </div>
-                </div>
 
             {/* Sidebar cố định bên phải */}
             <MiniTestSidebar

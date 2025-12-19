@@ -20,18 +20,18 @@ const MiniTestSidebar = ({
     const totalPages = Math.ceil(questions.length / questionsPerPage);
 
     return (
-        <div className="h-full bg-white border-l border-gray-200 flex flex-col" style={{ width: '15%', minWidth: '250px' }}>
-            <div className="p-4 flex-1 overflow-y-auto">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Part {partNumber}</h2>
+        <div className="h-auto lg:h-full bg-white border-l border-gray-200 flex flex-col w-full lg:w-auto lg:flex-shrink-0" style={{ minWidth: '220px', maxWidth: '260px' }}>
+            <div className="p-3 flex-1 overflow-y-auto max-h-[50vh] lg:max-h-none">
+                <h2 className="text-lg font-semibold text-gray-900 mb-2 break-words">Part {partNumber}</h2>
                 
                 {/* Selected Tags */}
                 {selectedTags.length > 0 && (
-                    <div className="mb-3">
-                        <div className="flex flex-wrap gap-1.5">
+                    <div className="mb-2">
+                        <div className="flex flex-wrap gap-1">
                             {selectedTags.map((tag, index) => (
                                 <span
                                     key={index}
-                                    className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200"
+                                    className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 break-words"
                                 >
                                     {tag}
                                 </span>
@@ -40,7 +40,7 @@ const MiniTestSidebar = ({
                     </div>
                 )}
                 
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-1">
                     {questions.map((question, index) => {
                         const questionNumber = index + 1;
                         const answered = isAnswered(question.id);
@@ -72,7 +72,7 @@ const MiniTestSidebar = ({
                             <div key={question.id} className="relative">
                                 <button
                                     onClick={() => onNavigateToQuestion(question.id)}
-                                    className={`w-full aspect-square rounded-lg text-sm font-medium transition-colors relative ${buttonClasses} ${flagged ? 'ring-2 ring-amber-500 ring-offset-1' : ''}`}
+                                    className={`w-full aspect-square rounded-md text-xs font-medium transition-colors relative scale-90 ${buttonClasses} ${flagged ? 'ring-1 ring-amber-500 ring-offset-0.5' : ''}`}
                                 >
                                     {questionNumber}
                                     {flagged && (
@@ -85,44 +85,44 @@ const MiniTestSidebar = ({
                 </div>
 
                 {/* Summary */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="text-sm text-gray-600 space-y-2">
-                        <div className="flex justify-between">
-                            <span>Tổng số câu:</span>
-                            <span className="font-semibold">{questions.length}</span>
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="text-sm text-gray-600 space-y-1.5">
+                        <div className="flex justify-between items-center gap-2">
+                            <span className="whitespace-nowrap">Tổng số câu:</span>
+                            <span className="font-semibold flex-shrink-0">{questions.length}</span>
                         </div>
                         {isResultMode ? (
                             <>
-                                <div className="flex justify-between">
-                                    <span>Số câu đúng:</span>
-                                    <span className="font-semibold text-green-600">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="whitespace-nowrap">Số câu đúng:</span>
+                                    <span className="font-semibold text-green-600 flex-shrink-0">
                                         {Object.values(questionResults).filter(r => r === 'correct').length}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Số câu sai:</span>
-                                    <span className="font-semibold text-red-600">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="whitespace-nowrap">Số câu sai:</span>
+                                    <span className="font-semibold text-red-600 flex-shrink-0">
                                         {Object.values(questionResults).filter(r => r === 'wrong').length}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Chưa làm:</span>
-                                    <span className="font-semibold text-gray-400">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="whitespace-nowrap">Chưa làm:</span>
+                                    <span className="font-semibold text-gray-400 flex-shrink-0">
                                         {questions.length - Object.keys(questionResults).length}
                                     </span>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <div className="flex justify-between">
-                                    <span>Đã làm:</span>
-                                    <span className="font-semibold text-green-600">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="whitespace-nowrap">Đã làm:</span>
+                                    <span className="font-semibold text-green-600 flex-shrink-0">
                                         {Object.keys(answers).length}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Chưa làm:</span>
-                                    <span className="font-semibold text-gray-400">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="whitespace-nowrap">Chưa làm:</span>
+                                    <span className="font-semibold text-gray-400 flex-shrink-0">
                                         {questions.length - Object.keys(answers).length}
                                     </span>
                                 </div>
@@ -132,10 +132,10 @@ const MiniTestSidebar = ({
                     
                     {/* Submit Button */}
                     {onSubmitTest && (
-                        <div className="mt-4">
+                        <div className="mt-3">
                             <button
                                 onClick={onSubmitTest}
-                                className="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                className="w-full py-2 px-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                             >
                                 Nộp bài
                             </button>
