@@ -19,7 +19,7 @@ export const getProfile = () => api.get("/auth/me");
 
 export const logout = () => api.get("/auth/logout");
 
-// Google OAuth
+// Google OAuth 
 export const loginWithGoogle = () => {
   // Redirect to backend Google OAuth endpoint with callback URL
   const callbackUrl = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
@@ -135,6 +135,10 @@ export const updateQuestionReport = (id, payload) =>
 //Admin Staff Dashboard
 export const getDashboardStatistics = () => api.get('/staff/stats/system-overview');
 
+export const getAnalytics = (from, to) => {
+  const params = new URLSearchParams({ from, to });
+  return api.get(`/admin/stats/analytics?${params.toString()}`);
+};
 // Learner
 
 export const getTestExam = (id, parts) => {
