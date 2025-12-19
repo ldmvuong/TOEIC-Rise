@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     callFetchPublicFlashcards, 
     callFetchMyFlashcards, 
@@ -7,14 +8,19 @@ import {
     callRemoveFromFavourite
 } from '../../api/api';
 import { Spin, Pagination, Empty, message } from 'antd';
-import { HeartIcon, BookOpenIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, BookOpenIcon, PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import FlashcardStudyModal from '../../components/client/modal/FlashcardStudyModal';
-import FlashcardCreateModal from '../../components/client/modal/FlashcardCreateModal';
 
 const FlashcardLibrary = () => {
-    // State quản lý Tabs
-    const [activeTab, setActiveTab] = useState('public'); // public | my | favourite
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    // State quản lý Tabs - Kiểm tra state từ navigate để set tab mặc định
+    const [activeTab, setActiveTab] = useState(() => {
+        // Nếu có state từ navigate (quay lại từ trang tạo/sửa), set về tab 'my'
+        return location.state?.activeTab || 'public';
+    });
     
     // State dữ liệu
     const [dataFlashcards, setDataFlashcards] = useState([]);
@@ -28,9 +34,6 @@ const FlashcardLibrary = () => {
     // State cho Modal học
     const [isShowStudyModal, setIsShowStudyModal] = useState(false);
     const [currentDeckId, setCurrentDeckId] = useState(null);
-
-    // State cho Modal tạo mới
-    const [isShowCreateModal, setIsShowCreateModal] = useState(false);
 
     // Hàm gọi API lấy dữ liệu
     const fetchFlashcards = async () => {
@@ -69,6 +72,15 @@ const FlashcardLibrary = () => {
             setIsLoading(false);
         }
     };
+
+    // Effect để xử lý khi có state từ navigate (quay lại từ trang tạo/sửa)
+    useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+            // Xóa state để tránh set lại khi component re-render
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // Effect gọi lại khi tab hoặc phân trang thay đổi
     useEffect(() => {
@@ -115,7 +127,7 @@ const FlashcardLibrary = () => {
                 {/* Nút tạo mới chỉ hiện ở Tab 'My' */}
                 {activeTab === 'my' && (
                     <button 
-                        onClick={() => setIsShowCreateModal(true)}
+                        onClick={() => navigate('/flashcards/create')}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
                     >
                         <PlusIcon className="w-5 h-5" /> Tạo bộ thẻ mới
@@ -188,15 +200,31 @@ const FlashcardLibrary = () => {
                                             <p className="text-xs text-gray-400 mt-2">Tác giả: {item.authorFullName}</p>
                                         )}
                                         <div className={`mt-4 flex ${activeTab === 'my' ? 'justify-start' : 'justify-between'} items-center pt-4 border-t border-gray-100`}>
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleStudyFlashcard(item.id);
-                                                }}
-                                                className="text-blue-600 font-medium text-sm hover:underline"
-                                            >
-                                                Học ngay
-                                            </button>
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStudyFlashcard(item.id);
+                                                    }}
+                                                    className="text-blue-600 font-medium text-sm hover:underline"
+                                                >
+                                                    Học ngay
+                                                </button>
+                                                
+                                                {/* Nút Edit - Chỉ hiện khi ở tab 'my' */}
+                                                {activeTab === 'my' && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/flashcards/${item.id}/edit`);
+                                                        }}
+                                                        className="text-gray-500 hover:text-blue-600 transition-colors"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <PencilSquareIcon className="w-5 h-5" />
+                                                    </button>
+                                                )}
+                                            </div>
                                             
                                             {/* Chỉ hiển thị nút yêu thích ở tab Public và Favourite, không hiển thị ở tab My */}
                                             {activeTab !== 'my' && (
@@ -244,13 +272,6 @@ const FlashcardLibrary = () => {
                 isOpen={isShowStudyModal}
                 setIsOpen={setIsShowStudyModal}
                 flashcardId={currentDeckId}
-            />
-
-            {/* Modal Tạo Flashcard */}
-            <FlashcardCreateModal 
-                isOpen={isShowCreateModal}
-                setIsOpen={setIsShowCreateModal}
-                refreshList={fetchFlashcards}
             />
         </div>
     );
