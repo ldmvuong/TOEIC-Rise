@@ -7,11 +7,13 @@ const MiniTestSidebar = ({
     flaggedQuestions = [],
     onToggleFlag,
     selectedTags = [],
-    onSubmitTest
+    onSubmitTest,
+    questionResults = {} // { questionId: 'correct' | 'wrong' }
 }) => {
     const isAnswered = (questionId) => answers[questionId] !== undefined;
     const isCurrent = (questionId) => currentQuestionId === questionId;
     const isFlagged = (questionId) => flaggedQuestions.includes(questionId);
+    const isResultMode = Object.keys(questionResults).length > 0; // Check if we're in result mode
 
     // Calculate grid dimensions (6 rows x 5 columns = 30 questions per page)
     const questionsPerPage = 30;
@@ -45,17 +47,32 @@ const MiniTestSidebar = ({
                         const current = isCurrent(question.id);
                         const flagged = isFlagged(question.id);
                         
+                        // In result mode, check if answer is correct or wrong
+                        let buttonClasses = '';
+                        if (current) {
+                            buttonClasses = 'bg-blue-600 text-white';
+                        } else if (isResultMode) {
+                            // Result mode: show correct (green), wrong (red), or unanswered (gray)
+                            const result = questionResults[question.id];
+                            if (result === 'correct') {
+                                buttonClasses = 'bg-green-100 text-green-700 border border-green-300';
+                            } else if (result === 'wrong') {
+                                buttonClasses = 'bg-red-100 text-red-700 border border-red-300';
+                            } else {
+                                buttonClasses = 'bg-gray-100 text-gray-700 border border-gray-200';
+                            }
+                        } else {
+                            // Test mode: show answered (green) or unanswered (gray)
+                            buttonClasses = answered
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200';
+                        }
+                        
                         return (
                             <div key={question.id} className="relative">
                                 <button
                                     onClick={() => onNavigateToQuestion(question.id)}
-                                    className={`w-full aspect-square rounded-lg text-sm font-medium transition-colors relative ${
-                                        current
-                                            ? 'bg-blue-600 text-white'
-                                            : answered
-                                            ? 'bg-green-100 text-green-700 border border-green-300'
-                                            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
-                                    } ${flagged ? 'ring-2 ring-amber-500 ring-offset-1' : ''}`}
+                                    className={`w-full aspect-square rounded-lg text-sm font-medium transition-colors relative ${buttonClasses} ${flagged ? 'ring-2 ring-amber-500 ring-offset-1' : ''}`}
                                 >
                                     {questionNumber}
                                     {flagged && (
@@ -74,18 +91,43 @@ const MiniTestSidebar = ({
                             <span>Tổng số câu:</span>
                             <span className="font-semibold">{questions.length}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span>Đã làm:</span>
-                            <span className="font-semibold text-green-600">
-                                {Object.keys(answers).length}
-                            </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Chưa làm:</span>
-                            <span className="font-semibold text-gray-400">
-                                {questions.length - Object.keys(answers).length}
-                            </span>
-                        </div>
+                        {isResultMode ? (
+                            <>
+                                <div className="flex justify-between">
+                                    <span>Số câu đúng:</span>
+                                    <span className="font-semibold text-green-600">
+                                        {Object.values(questionResults).filter(r => r === 'correct').length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Số câu sai:</span>
+                                    <span className="font-semibold text-red-600">
+                                        {Object.values(questionResults).filter(r => r === 'wrong').length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Chưa làm:</span>
+                                    <span className="font-semibold text-gray-400">
+                                        {questions.length - Object.keys(questionResults).length}
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex justify-between">
+                                    <span>Đã làm:</span>
+                                    <span className="font-semibold text-green-600">
+                                        {Object.keys(answers).length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Chưa làm:</span>
+                                    <span className="font-semibold text-gray-400">
+                                        {questions.length - Object.keys(answers).length}
+                                    </span>
+                                </div>
+                            </>
+                        )}
                     </div>
                     
                     {/* Submit Button */}

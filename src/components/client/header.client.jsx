@@ -18,7 +18,7 @@ export default function Header({ currentPath }) {
   const isLearner = user?.role === 'LEARNER'
 
   const navItems = [
-    { name: "Home", href: "/" },
+    { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
