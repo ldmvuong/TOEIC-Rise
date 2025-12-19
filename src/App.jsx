@@ -30,6 +30,7 @@ import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
+import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
 
 
 export default function App() {
@@ -117,6 +118,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN', "STAFF"]}>
               <ClientProfile />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardLibrary />
             </ProtectedRoute>
           )
         }
