@@ -26,7 +26,7 @@ const NO_RETRY_HEADER = "x-no-retry";
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,          // nếu BE set cookie; giữ true vẫn an toàn
-  timeout: 15000,                 // tránh treo request quá lâu
+  timeout: 150000,                 // tránh treo request quá lâu
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json; charset=utf-8",

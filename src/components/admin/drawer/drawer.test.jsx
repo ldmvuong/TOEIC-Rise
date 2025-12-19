@@ -51,13 +51,13 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
     const getStatusText = (status) => {
         switch (status) {
             case 'PENDING':
-                return 'Chờ duyệt';
+                return 'Pending';
             case 'APPROVED':
-                return 'Đã duyệt';
+                return 'Approved';
             case 'REJECTED':
-                return 'Từ chối';
+                return 'Rejected';
             case 'DELETED':
-                return 'Đã xóa';
+                return 'Deleted';
             default:
                 return status;
         }
@@ -122,19 +122,19 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
 
     const getEmptyDescription = () => {
         if (searchName && searchStatus) {
-            return `Không tìm thấy test nào có tên chứa "${searchName}" với trạng thái "${getStatusText(searchStatus)}"`;
+            return `No tests found with name containing "${searchName}" and status "${getStatusText(searchStatus)}"`;
         } else if (searchName) {
-            return `Không tìm thấy test nào có tên chứa "${searchName}"`;
+            return `No tests found with name containing "${searchName}"`;
         } else if (searchStatus) {
-            return `Không có test nào với trạng thái "${getStatusText(searchStatus)}"`;
+            return `No tests with status "${getStatusText(searchStatus)}"`;
         } else {
-            return "Không có test nào trong test set này";
+            return "No tests in this test set";
         }
     };
 
     return (
         <Drawer
-            title={`Danh sách Test - ${testSetName || 'Test Set'}`}
+            title={`Test List - ${testSetName || 'Test Set'}`}
             placement="right"
             onClose={onClose}
             open={open}
@@ -146,31 +146,31 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                 </div>
             ) : testData ? (
                 <div>
-                    {/* Thông tin Test Set */}
-                    <Card title="Thông tin Test Set" style={{ marginBottom: 16 }}>
+                    {/* Test Set Information */}
+                    <Card title="Test Set Information" style={{ marginBottom: 16 }}>
                         <Row gutter={16}>
                             <Col span={12}>
-                                <p><strong>Tên:</strong> {testData.name}</p>
-                                <p><strong>Trạng thái:</strong> 
+                                <p><strong>Name:</strong> {testData.name}</p>
+                                <p><strong>Status:</strong> 
                                     <Tag color={getStatusColor(testData.status)} style={{ marginLeft: 8 }}>
                                         {getStatusText(testData.status)}
                                     </Tag>
                                 </p>
                             </Col>
                             <Col span={12}>
-                                <p><strong>Ngày tạo:</strong> {testData.createdAt ? dayjs(testData.createdAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</p>
-                                <p><strong>Cập nhật cuối:</strong> {testData.updatedAt ? dayjs(testData.updatedAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</p>
+                                <p><strong>Created At:</strong> {testData.createdAt ? dayjs(testData.createdAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</p>
+                                <p><strong>Last Updated:</strong> {testData.updatedAt ? dayjs(testData.updatedAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</p>
                             </Col>
                         </Row>
                     </Card>
 
-                    {/* Form tìm kiếm */}
-                    <Card title="Tìm kiếm và Lọc" style={{ marginBottom: 16 }}>
+                    {/* Search Form */}
+                    <Card title="Search and Filter" style={{ marginBottom: 16 }}>
                         <Form form={searchForm} layout="inline">
                             <Space.Compact style={{ width: '100%' }}>
                                 <Form.Item name="name" style={{ flex: 1 }}>
                                     <Search
-                                        placeholder="Tìm kiếm theo tên test..."
+                                        placeholder="Search by test name..."
                                         value={searchName}
                                         onChange={(e) => setSearchName(e.target.value)}
                                         onSearch={handleSearch}
@@ -180,15 +180,15 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                                 </Form.Item>
                                 <Form.Item name="status" style={{ width: 150 }}>
                                     <Select
-                                        placeholder="Trạng thái"
+                                        placeholder="Status"
                                         value={searchStatus}
                                         onChange={setSearchStatus}
                                         allowClear
                                     >
-                                        <Option value="PENDING">Chờ duyệt</Option>
-                                        <Option value="APPROVED">Đã duyệt</Option>
-                                        <Option value="REJECTED">Từ chối</Option>
-                                        <Option value="DELETED">Đã xóa</Option>
+                                        <Option value="PENDING">Pending</Option>
+                                        <Option value="APPROVED">Approved</Option>
+                                        <Option value="REJECTED">Rejected</Option>
+                                        <Option value="DELETED">Deleted</Option>
                                     </Select>
                                 </Form.Item>
                                 <Button 
@@ -196,7 +196,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                                     onClick={handleSearch}
                                     icon={<SearchOutlined />}
                                 >
-                                    Tìm kiếm
+                                    Search
                                 </Button>
                                 <Button 
                                     onClick={handleReset}
@@ -208,12 +208,12 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                         </Form>
                     </Card>
 
-                    {/* Thống kê tổng quan */}
+                    {/* Statistics Overview */}
                     <Row gutter={16} style={{ marginBottom: 24 }}>
                         <Col span={6}>
                             <Card>
                                 <Statistic
-                                    title="Tổng số test"
+                                    title="Total Tests"
                                     value={testData.testResponses?.meta?.total || 0}
                                     prefix={<FileTextOutlined />}
                                 />
@@ -222,7 +222,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                         <Col span={6}>
                             <Card>
                                 <Statistic
-                                    title="Chờ duyệt"
+                                    title="Pending"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'PENDING').length || 0}
                                     valueStyle={{ color: '#faad14' }}
                                     prefix={<ClockCircleOutlined />}
@@ -232,7 +232,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                         <Col span={6}>
                             <Card>
                                 <Statistic
-                                    title="Đã duyệt"
+                                    title="Approved"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'APPROVED').length || 0}
                                     valueStyle={{ color: '#52c41a' }}
                                     prefix={<CheckCircleOutlined />}
@@ -242,7 +242,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                         <Col span={6}>
                             <Card>
                                 <Statistic
-                                    title="Từ chối"
+                                    title="Rejected"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'REJECTED').length || 0}
                                     valueStyle={{ color: '#ff4d4f' }}
                                     prefix={<CloseCircleOutlined />}
@@ -253,13 +253,13 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
 
                     
 
-                    {/* Danh sách test */}
+                    {/* Test List */}
                     {testData.testResponses?.result && testData.testResponses.result.length > 0 ? (
                         <Card 
-                            title={`Danh sách Test (${testData.testResponses.meta?.total || 0} kết quả)`}
+                            title={`Test List (${testData.testResponses.meta?.total || 0} results)`}
                             extra={
                                 <div style={{ fontSize: '12px', color: '#666' }}>
-                                    Trang {currentPage} / {testData.testResponses.meta?.pages || 1}
+                                    Page {currentPage} / {testData.testResponses.meta?.pages || 1}
                                 </div>
                             }
                         >
@@ -286,8 +286,8 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                                             description={
                                                 <div>
                                                     <div><strong>ID:</strong> {test.id}</div>
-                                                    <div><strong>Ngày tạo:</strong> {test.createdAt ? dayjs(test.createdAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</div>
-                                                    <div><strong>Cập nhật cuối:</strong> {test.updatedAt ? dayjs(test.updatedAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</div>
+                                                    <div><strong>Created At:</strong> {test.createdAt ? dayjs(test.createdAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</div>
+                                                    <div><strong>Last Updated:</strong> {test.updatedAt ? dayjs(test.updatedAt).format('DD-MM-YYYY HH:mm:ss') : 'N/A'}</div>
                                                 </div>
                                             }
                                         />
@@ -304,7 +304,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                                     showSizeChanger
                                     showQuickJumper
                                     showTotal={(total, range) => 
-                                        `${range[0]}-${range[1]} của ${total} test`
+                                        `${range[0]}-${range[1]} of ${total} tests`
                                     }
                                     pageSizeOptions={['5', '10']}
                                     onChange={handlePageChange}
@@ -321,7 +321,7 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                 </div>
             ) : (
                 <Empty 
-                    description="Đang tải dữ liệu test set..." 
+                    description="Loading test set data..." 
                     style={{ marginTop: 50 }}
                 />
             )}

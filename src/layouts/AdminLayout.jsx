@@ -26,11 +26,11 @@ const { Content, Sider } = Layout;
 
 const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/analytics">Performance Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/analytics">Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/reports">Báo cáo</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
 ];
 
 export default function AdminLayout() {
@@ -82,18 +82,18 @@ export default function AdminLayout() {
 
     const itemsDropdown = [
         { 
-            label: "Trang cá nhân", 
+            label: "Profile", 
             key: "profile",
             icon: <UserOutlined />
         },
         { 
-            label: "Trang người dùng", 
+            label: "User Page", 
             key: "home",
             icon: <HomeOutlined />
         },
         { type: 'divider' },
         { 
-            label: "Đăng xuất", 
+            label: "Logout", 
             key: "logout",
             icon: <LogoutOutlined />,
             disabled: isLoggingOut

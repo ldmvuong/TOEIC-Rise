@@ -292,7 +292,7 @@ const AnalyticsPage = () => {
           <Row justify="space-between" align="middle">
             <Col>
               <Title level={2} style={{ margin: 0, fontSize: 24 }}>
-                Performance Analytics
+                Analytics
               </Title>
             </Col>
             <Col>

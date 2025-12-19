@@ -19,18 +19,18 @@ const ReportPage = () => {
   const [meta, setMeta] = React.useState({ page: 0, pageSize: 10, total: 0 });
 
   const reasonLabels = {
-    WRONG_ANSWER: "Đáp án sai",
-    TYPO: "Lỗi chính tả",
-    WRONG_EXPLANATION: "Giải thích sai",
-    INCORRECT_CONTENT: "Nội dung không chính xác",
-    MISSING_MEDIA: "Thiếu file đính kèm",
-    OFFENSIVE_CONTENT: "Nội dung phản cảm",
-    OTHER: "Lý do khác",
+    WRONG_ANSWER: "Wrong answer",
+    TYPO: "Typo",
+    WRONG_EXPLANATION: "Wrong explanation",
+    INCORRECT_CONTENT: "Incorrect content",
+    MISSING_MEDIA: "Missing media",
+    OFFENSIVE_CONTENT: "Offensive content",
+    OTHER: "Other reason",
   };
 
   const columns = [
     {
-      title: "STT",
+      title: "No.",
       key: "index",
       width: 60,
       align: "center",
@@ -38,19 +38,19 @@ const ReportPage = () => {
       hideInSearch: true,
     },
     {
-      title: "Tên Test",
+      title: "Test Name",
       dataIndex: "testName",
       width: 200,
       hideInSearch: true,
     },
     {
-      title: "Người báo cáo",
+      title: "Reporter",
       dataIndex: "reporterName",
       width: 200,
       hideInSearch: true,
     },
     {
-      title: "Người xử lý",
+      title: "Handler",
       key: "resolverName",
       width: 200,
       render: (text, record) => {
@@ -58,12 +58,12 @@ const ReportPage = () => {
         if (resolverName != null && String(resolverName).trim() !== "") {
           return <span style={{ color: "#374151" }}>{resolverName}</span>;
         }
-        return <Tag color="default">Chưa xử lý</Tag>;
+        return <Tag color="default">Unhandled</Tag>;
       },
       hideInSearch: true,
     },
     {
-      title: "Lý do",
+      title: "Reason",
       dataIndex: "reasons",
       width: 300,
       render: (reasons) => {
@@ -92,7 +92,7 @@ const ReportPage = () => {
       hideInSearch: true,
     },
     {
-      title: "Trạng thái",
+      title: "Status",
       dataIndex: "status",
       width: 140,
       renderFormItem: () =>
@@ -107,7 +107,7 @@ const ReportPage = () => {
               RESOLVED: "RESOLVED",
               REJECTED: "REJECTED",
             }}
-            placeholder="Chọn trạng thái"
+            placeholder="Select status"
           />
         ) : null,
       render: (val) => {
@@ -121,7 +121,7 @@ const ReportPage = () => {
       },
     },
     {
-      title: "Thao tác",
+      title: "Action",
       key: "actions",
       width: 120,
       hideInSearch: true,
@@ -131,7 +131,7 @@ const ReportPage = () => {
           icon={<EyeOutlined />}
           onClick={() => navigate(`/admin/reports/${record.id || record.questionReportId}`)}
         >
-          Xem
+          View
         </Button>
       ),
     },
@@ -156,7 +156,7 @@ const ReportPage = () => {
     <div>
       <DataTable
         actionRef={tableRef}
-        headerTitle="Quản lý Báo cáo"
+        headerTitle="Report Management"
         rowKey="id"
         loading={loading}
         columns={columns}
@@ -186,7 +186,7 @@ const ReportPage = () => {
           pageSize: meta.pageSize,
           total: meta.total,
           showSizeChanger: true,
-          showTotal: (total, range) => <div>{range[0]}-{range[1]} trên {total} rows</div>,
+          showTotal: (total, range) => <div>{range[0]}-{range[1]} of {total} rows</div>,
         }}
         scroll={{ x: true }}
         rowSelection={false}

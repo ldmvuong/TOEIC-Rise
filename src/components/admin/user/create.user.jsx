@@ -10,7 +10,7 @@ import {
   validateAvatar
 } from "@/utils/validation";
 import { ConfigProvider } from 'antd';
-import viVN from 'antd/es/locale/vi_VN';
+import enUS from 'antd/es/locale/en_US';
 
 const ModalUser = (props) => {
   const { openModal, setOpenModal, reloadTable } = props;
@@ -38,13 +38,13 @@ const ModalUser = (props) => {
 
     try {
       await createUser(formData);
-      message.success("Thêm mới user thành công");
+      message.success("User created successfully");
       handleReset();
       reloadTable && reloadTable();
     } catch (e) {
       notification.error({ 
-        message: "Có lỗi xảy ra", 
-        description: e?.response?.data?.message || e?.message || 'Không rõ nguyên nhân!' 
+        message: "An error occurred", 
+        description: e?.response?.data?.message || e?.message || 'Unknown error!' 
       })
     }
   };
@@ -106,9 +106,9 @@ const ModalUser = (props) => {
   return (
     <>
       {openModal && (
-        <ConfigProvider locale={viVN}>
+        <ConfigProvider locale={enUS}>
           <ModalForm
-            title={'Tạo mới User'}
+            title={'Create New User'}
             open={openModal}
             modalProps={{
               onCancel: handleReset,
@@ -123,6 +123,12 @@ const ModalUser = (props) => {
             form={form}
             onFinish={submitUser}
             initialValues={{ gender: 'MALE', role: 'LEARNER' }}
+            submitter={{
+              searchConfig: {
+                submitText: "Confirm",
+                resetText: "Cancel",
+              },
+            }}
           >
             <Row gutter={16}>
               <Col span={24}>
@@ -154,19 +160,19 @@ const ModalUser = (props) => {
 
               <Col span={12}>
                 <ProFormText
-                  label="Họ tên"
+                  label="Full Name"
                   name="fullName"
                   fieldProps={{ id: 'user_fullName' }}
                   rules={[
-                    { required: true, message: 'Không được bỏ trống' },
+                    { required: true, message: 'Cannot be empty' },
                     {
                       validator: (_, value) =>
                         value && !isValidFullName(value)
-                          ? Promise.reject("Họ tên chỉ gồm chữ cái và khoảng trắng!")
+                          ? Promise.reject("Full name must contain only letters and spaces!")
                           : Promise.resolve(),
                     },
                   ]}
-                  placeholder="Nhập họ tên"
+                  placeholder="Enter full name"
                 />
               </Col>
               <Col span={12}>
@@ -175,15 +181,15 @@ const ModalUser = (props) => {
                   name="email"
                   fieldProps={{ id: 'user_email', autoComplete: 'email' }}
                   rules={[
-                    { required: true, message: "Không được bỏ trống" },
+                    { required: true, message: "Cannot be empty" },
                     {
                       validator: (_, value) =>
                         value && !isValidEmail(value)
-                          ? Promise.reject("Email không hợp lệ!")
+                          ? Promise.reject("Invalid email!")
                           : Promise.resolve(),
                     },
                   ]}
-                  placeholder="Nhập email"
+                  placeholder="Enter email"
                 />
               </Col>
 
@@ -193,56 +199,56 @@ const ModalUser = (props) => {
                   name="password"
                   fieldProps={{ id: 'user_password', autoComplete: 'new-password' }}
                   rules={[
-                    { required: true, message: "Không được bỏ trống" },
+                    { required: true, message: "Cannot be empty" },
                     {
                       validator: (_, value) =>
                         value && !isStrongPassword(value)
-                          ? Promise.reject("Mật khẩu 8-20 ký tự, có hoa/thường/số/ký tự đặc biệt!")
+                          ? Promise.reject("Password must be 8-20 characters with uppercase, lowercase, number, and special character!")
                           : Promise.resolve(),
                     },
                   ]}
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Enter password"
                 />
               </Col>
               <Col span={12}>
                 <ProFormText.Password
-                  label="Xác nhận Password"
+                  label="Confirm Password"
                   name="confirmPassword"
                   fieldProps={{ id: 'user_confirmPassword', autoComplete: 'new-password' }}
                   dependencies={["password"]}
                   rules={[
-                    { required: true, message: "Không được bỏ trống" },
+                    { required: true, message: "Cannot be empty" },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue("password") === value) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error("Mật khẩu xác nhận không khớp!"));
+                        return Promise.reject(new Error("Passwords do not match!"));
                       },
                     }),
                   ]}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Re-enter password"
                 />
               </Col>
 
               <Col span={12}>
                 <ProFormSelect
-                  label="Giới Tính"
+                  label="Gender"
                   name="gender"
-                  valueEnum={{ MALE: 'Nam', FEMALE: 'Nữ', OTHER: 'Khác' }}
+                  valueEnum={{ MALE: 'Male', FEMALE: 'Female', OTHER: 'Other' }}
                   fieldProps={{ id: 'user_gender' }}
-                  rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
-                  placeholder="Chọn giới tính"
+                  rules={[{ required: true, message: 'Please select gender!' }]}
+                  placeholder="Select gender"
                 />
               </Col>
               <Col span={12}>
                 <ProFormSelect
-                  label="Vai trò"
+                  label="Role"
                   name="role"
                   valueEnum={{ ADMIN: 'ADMIN', LEARNER: 'LEARNER', STAFF: 'STAFF' }}
                   fieldProps={{ id: 'user_role' }}
-                  rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
-                  placeholder="Chọn vai trò"
+                  rules={[{ required: true, message: 'Please select role!' }]}
+                  placeholder="Select role"
                 />
               </Col>
             </Row>

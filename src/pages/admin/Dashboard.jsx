@@ -63,29 +63,6 @@ const StatCard = ({ title, value, icon, color }) => {
   );
 };
 
-const GroupCard = ({ title, subtitle, children }) => {
-  return (
-    <Card
-      title={
-        <Space direction="vertical" size={0}>
-          <Title level={4} style={{ margin: 0, fontSize: 18 }}>
-            {title}
-          </Title>
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            {subtitle}
-          </Text>
-        </Space>
-      }
-      variant="outlined"
-      style={{
-        height: "100%",
-        borderRadius: 8,
-      }}
-    >
-      <Row gutter={[16, 16]}>{children}</Row>
-    </Card>
-  );
-};
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
@@ -99,7 +76,7 @@ const DashboardPage = () => {
         setStats(res?.data || {});
       } catch (error) {
         console.error(error);
-        message.error("Không thể tải System Overview. Vui lòng thử lại.");
+        message.error("Failed to load System Overview. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -119,98 +96,104 @@ const DashboardPage = () => {
   return (
     <div style={{ padding: 24 }}>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          {/* Nhóm A: User Ecosystem */}
-          <GroupCard
-            title="User Ecosystem"
-            subtitle="Hệ sinh thái người dùng"
-          >
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Total Accounts"
-                  value={stats?.totalAccounts || 0}
-                  icon={<IdcardOutlined />}
-                  color="#595959"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Learners"
-                  value={stats?.totalLearners || 0}
-                  icon={<UserOutlined />}
-                  color="#1890ff"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Staff / Admins"
-                  value={stats?.totalStaffs || 0}
-                  icon={<SafetyCertificateOutlined />}
-                  color="#722ed1"
-                />
-              </Col>
-          </GroupCard>
+        {/* Hàng 1: User Ecosystem */}
+        <div>
+          <Title level={4} style={{ marginBottom: 16, fontSize: 18 }}>
+            User Ecosystem
+          </Title>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Total Accounts"
+                value={stats?.totalAccounts || 0}
+                icon={<IdcardOutlined />}
+                color="#595959"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Learners"
+                value={stats?.totalLearners || 0}
+                icon={<UserOutlined />}
+                color="#1890ff"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Staff / Admins"
+                value={stats?.totalStaffs || 0}
+                icon={<SafetyCertificateOutlined />}
+                color="#722ed1"
+              />
+            </Col>
+          </Row>
+        </div>
 
-          {/* Nhóm B: Content Repository */}
-          <GroupCard
-            title="Content Repository"
-            subtitle="Kho tài nguyên"
-          >
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Test Sets"
-                  value={stats?.totalTestSets || 0}
-                  icon={<FolderOpenOutlined />}
-                  color="#faad14"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Total Tests"
-                  value={stats?.totalTests || 0}
-                  icon={<FileTextOutlined />}
-                  color="#fa8c16"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Flashcards"
-                  value={stats?.totalFlashcards || 0}
-                  icon={<ThunderboltOutlined />}
-                  color="#52c41a"
-                />
-              </Col>
-          </GroupCard>
+        {/* Hàng 2: Content Repository */}
+        <div>
+          <Title level={4} style={{ marginBottom: 16, fontSize: 18 }}>
+            Content Repository
+          </Title>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Test Sets"
+                value={stats?.totalTestSets || 0}
+                icon={<FolderOpenOutlined />}
+                color="#faad14"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Total Tests"
+                value={stats?.totalTests || 0}
+                icon={<FileTextOutlined />}
+                color="#fa8c16"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Flashcards"
+                value={stats?.totalFlashcards || 0}
+                icon={<ThunderboltOutlined />}
+                color="#52c41a"
+              />
+            </Col>
+          </Row>
+        </div>
 
-          {/* Nhóm C: Lifetime Engagement */}
-          <GroupCard
-            title="Lifetime Engagement"
-            subtitle="Tương tác trọn đời"
-          >
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Lifetime Submissions"
-                  value={stats?.totalSubmissions || 0}
-                  icon={<TrophyOutlined />}
-                  color="#f5222d"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Total AI Chats"
-                  value={stats?.totalConversations || 0}
-                  icon={<MessageOutlined />}
-                  color="#eb2f96"
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <StatCard
-                  title="Total Reports"
-                  value={stats?.totalReports || 0}
-                  icon={<FlagOutlined />}
-                  color="#fa541c"
-                />
-              </Col>
-          </GroupCard>
+        {/* Hàng 3: Lifetime Engagement */}
+        <div>
+          <Title level={4} style={{ marginBottom: 16, fontSize: 18 }}>
+            Lifetime Engagement
+          </Title>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Lifetime Submissions"
+                value={stats?.totalSubmissions || 0}
+                icon={<TrophyOutlined />}
+                color="#f5222d"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Total AI Chats"
+                value={stats?.totalConversations || 0}
+                icon={<MessageOutlined />}
+                color="#eb2f96"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <StatCard
+                title="Total Reports"
+                value={stats?.totalReports || 0}
+                icon={<FlagOutlined />}
+                color="#fa541c"
+              />
+            </Col>
+          </Row>
+        </div>
       </Space>
     </div>
   );

@@ -29,24 +29,24 @@ const UserPage = () => {
 
   const handleToggleStatus = (record) => {
     Modal.confirm({
-      title: `Đổi trạng thái tài khoản`,
+      title: `Change Account Status`,
       content: (
         <div>
-          Bạn có chắc muốn đổi trạng thái tài khoản{" "}
-          <strong>{record.email}</strong> sang{" "}
-          <strong>{record.isActive ? "Khoá" : "Hoạt động"}</strong> không?
+          Are you sure you want to change the account status of{" "}
+          <strong>{record.email}</strong> to{" "}
+          <strong>{record.isActive ? "Inactive" : "Active"}</strong>?
         </div>
       ),
-      okText: "Xác nhận",
-      cancelText: "Huỷ",
+      okText: "Confirm",
+      cancelText: "Cancel",
       onOk: async () => {
         try {
           await changeUserStatus(record.userId);
-          message.success("Cập nhật trạng thái tài khoản thành công");
+          message.success("Account status updated successfully");
           reloadTable();
         } catch (e) {
           message.error(
-            e?.response?.data?.message || e?.message || "Không thể đổi trạng thái tài khoản"
+            e?.response?.data?.message || e?.message || "Cannot change account status"
           );
         }
       },
@@ -75,7 +75,7 @@ const UserPage = () => {
       hideInSearch: true,
     },
     {
-      title: "Họ tên",
+      title: "Full Name",
       dataIndex: "fullName",
       sorter: true,
       width: 200,
@@ -101,7 +101,7 @@ const UserPage = () => {
             LEARNER: "LEARNER",
             STAFF: "STAFF",
           }}
-          placeholder="Chọn role"
+          placeholder="Select role"
         />
       ),
       render: (val) => (
@@ -110,7 +110,7 @@ const UserPage = () => {
       sorter: true,
     },
     {
-      title: "Kích hoạt",
+      title: "Status",
       dataIndex: "isActive",
       align: "center",
       width: 130,
@@ -119,24 +119,24 @@ const UserPage = () => {
           mode="single"
           allowClear
           valueEnum={{
-            true: "Hoạt động",
-            false: "Khoá",
+            true: "Active",
+            false: "Inactive",
           }}
-          placeholder="Trạng thái"
+          placeholder="Status"
         />
       ),
       render: (val, record) => (
         <Switch
           checked={val}
-          checkedChildren="Hoạt động"
-          unCheckedChildren="Khoá"
+          checkedChildren="Active"
+          unCheckedChildren="Inactive"
           onChange={() => handleToggleStatus(record)}
         />
       ),
       sorter: true,
     },
     {
-      title: "Cập nhật",
+      title: "Last Updated",
       dataIndex: "updatedAt",
       width: 200,
       sorter: true,
@@ -152,7 +152,7 @@ const UserPage = () => {
         <Space>
           <EyeOutlined
             style={{ fontSize: 18, color: "#1890ff" }}
-            title="Xem chi tiết"
+            title="View details"
             onClick={() => {
               setSelectedUserId(record.userId);
               setOpenViewModal(true);
@@ -219,7 +219,7 @@ const UserPage = () => {
     <div>
       <DataTable
         actionRef={tableRef}
-        headerTitle="Quản lý User"
+        headerTitle="User Management"
         rowKey="userId"
         loading={isFetching}
         columns={columns}
@@ -234,14 +234,14 @@ const UserPage = () => {
           total: meta.total,
           showSizeChanger: true,
           showTotal: (total, range) => (
-            <div>{range[0]}-{range[1]} trên {total} rows</div>
+            <div>{range[0]}-{range[1]} of {total} rows</div>
           )
         }}
         scroll={{ x: true }}
         rowSelection={false}
         toolBarRender={() => ([
           <Button key="add" type="primary" icon={<PlusOutlined />} onClick={() => setOpenModal(true)}>
-            Thêm mới
+            Add New
           </Button>
         ])}
       />

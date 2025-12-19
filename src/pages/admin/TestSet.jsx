@@ -57,7 +57,7 @@ const TestSetPage = () => {
                         IN_USE: 'IN_USE',
                         DELETED: 'DELETED',
                     }}
-                    placeholder="Chọn trạng thái"
+                    placeholder="Select status"
                 />
             ),
             render: (dom, entity) => (
@@ -105,16 +105,16 @@ const TestSetPage = () => {
                     <BookOutlined 
                         style={{ fontSize: 20, color: '#52c41a', cursor: 'pointer' }}
                         onClick={() => handleShowTests(entity)}
-                        title="Xem danh sách test"
+                        title="View test list"
                     />
 
                     {/* <Popconfirm
                         placement="leftTop"
-                        title={"Xác nhận xóa test set"}
-                        description={"Bạn có chắc chắn muốn xóa test set này ?"}
+                        title={"Confirm delete test set"}
+                        description={"Are you sure you want to delete this test set?"}
                         // onConfirm={() => handleDeleteTestSet(entity.id)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
+                        okText="Confirm"
+                        cancelText="Cancel"
                     >
                         <span style={{ cursor: "pointer", margin: "0 10px" }}>
                             <DeleteOutlined
@@ -238,7 +238,7 @@ const TestSetPage = () => {
                     showSizeChanger: true,
                     total: meta.total,
                     showTotal: (total, range) => (
-                        <div>{range[0]}-{range[1]} trên {total} rows</div>
+                        <div>{range[0]}-{range[1]} of {total} rows</div>
                     )
                 }}
                 rowSelection={false}
@@ -248,7 +248,7 @@ const TestSetPage = () => {
                             type="primary"
                             onClick={() => setOpenModal(true)}
                         >
-                            Thêm mới
+                            Add New
                         </Button>
                 )}
             />

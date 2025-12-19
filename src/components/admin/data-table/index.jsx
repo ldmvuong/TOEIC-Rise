@@ -1,5 +1,5 @@
 import { ProTable } from '@ant-design/pro-components';
-import vi_VN from 'antd/locale/vi_VN';
+import en_US from 'antd/locale/en_US';
 import { ConfigProvider } from 'antd';
 
 const DataTable = (props) => {
@@ -24,7 +24,7 @@ const DataTable = (props) => {
   } = props;
 
   return (
-    <ConfigProvider locale={vi_VN}>
+    <ConfigProvider locale={en_US}>
       <ProTable
         columns={columns}
         defaultData={defaultData}

@@ -34,14 +34,14 @@ const ModalTestSet = (props) => {
             try {
                 const res = await updateTestSet(testSet);
                 if (res.data) {
-                    message.success("Cập nhật test set thành công");
+                    message.success("Test set updated successfully");
                     handleReset();
                     reloadTable();
                 }
             } catch (error) {
                 notification.error({
-                    message: 'Cập nhật test set thất bại',
-                    description: error?.message || 'Không thể cập nhật test set'
+                    message: 'Failed to update test set',
+                    description: error?.message || 'Unable to update test set'
                 });
             }
         } else {
@@ -52,14 +52,14 @@ const ModalTestSet = (props) => {
             try {
                 const res = await createTestSet(testSet);
                 if (res.data) {
-                    message.success("Thêm mới test set thành công");
+                    message.success("Test set created successfully");
                     handleReset();
                     reloadTable();
                 } 
             } catch (error) {
                 notification.error({
-                    message: 'Thêm mới test set thất bại',
-                    description: error?.message || 'Không thể tạo test set'
+                    message: 'Failed to create test set',
+                    description: error?.message || 'Unable to create test set'
                 });
             }
         }
@@ -73,7 +73,7 @@ const ModalTestSet = (props) => {
 
     return (
         <ModalForm
-            title={<>{dataInit?.id ? "Cập nhật Test Set" : "Tạo mới Test Set"}</>}
+            title={<>{dataInit?.id ? "Update Test Set" : "Create Test Set"}</>}
             open={openModal}
             modalProps={{
                 onCancel: () => { handleReset() },
@@ -81,8 +81,8 @@ const ModalTestSet = (props) => {
                 destroyOnHidden: true,
                 keyboard: false,
                 maskClosable: false,
-                okText: <>{dataInit?.id ? "Cập nhật" : "Tạo mới"}</>,
-                cancelText: "Hủy"
+                okText: <>{dataInit?.id ? "Update" : "Create"}</>,
+                cancelText: "Cancel"
             }}
             scrollToFirstError={true}
             preserve={false}
@@ -93,29 +93,29 @@ const ModalTestSet = (props) => {
             <Row gutter={16}>
                 <Col lg={24} md={24} sm={24} xs={24}>
                     <ProFormText
-                        label="Tên Test Set"
+                        label="Test Set Name"
                         name="testName"
                         rules={[
-                            { required: true, message: 'Vui lòng không bỏ trống tên test set' },
+                            { required: true, message: 'Please enter test set name' },
                             { 
                                 pattern: TEST_SET_NAME_REGEX, 
-                                message: 'Tên test set chỉ được chứa chữ cái, số, dấu cách và dấu ngoặc đơn' 
+                                message: 'Test set name can only contain letters, numbers, spaces and parentheses' 
                             },    
                         ]}
-                        placeholder="Nhập tên test set (ví dụ: ETS TOEIC 2024)"
+                        placeholder="Enter test set name (e.g., ETS TOEIC 2024)"
                     />
                 </Col>
                 {dataInit?.id && (
                     <Col lg={24} md={24} sm={24} xs={24}>
                         <ProFormSelect
                             name="status"
-                            label="Trạng thái"
+                            label="Status"
                             valueEnum={{
                                 'IN USE': 'IN USE',
                                 'DELETED': 'DELETED',
                             }}
-                            placeholder="Chọn trạng thái"
-                            rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
+                            placeholder="Select status"
+                            rules={[{ required: true, message: 'Please select status!' }]}
                         />
                     </Col>
                 )}

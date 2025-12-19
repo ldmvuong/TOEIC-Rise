@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ModalForm, ProFormText, ProFormSelect } from "@ant-design/pro-components";
 import { Col, Form, Row, Upload, message, notification, ConfigProvider, Spin, Modal, Tag, Switch } from "antd";
 import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
-import viVN from "antd/es/locale/vi_VN";
+import enUS from "antd/es/locale/en_US";
 import { getUserById, updateUser, resetUserPassword } from "@/api/api";
 import { isValidFullName, isStrongPassword, validateAvatar } from "@/utils/validation";
 import dayjs from "dayjs";
@@ -40,8 +40,8 @@ const ModalUserUpdate = (props) => {
         }
       } catch (e) {
         notification.error({
-          message: "Không lấy được thông tin user",
-          description: e?.response?.data?.message || e?.message || "Không rõ nguyên nhân!",
+          message: "Failed to fetch user information",
+          description: e?.response?.data?.message || e?.message || "Unknown error!",
         });
       } finally {
         setLoadingUser(false);
@@ -86,13 +86,13 @@ const ModalUserUpdate = (props) => {
       try {
         const formData = buildFormData();
         await updateUser(userId, formData);
-        message.success("Cập nhật user thành công");
+        message.success("User updated successfully");
         handleReset();
         reloadTable && reloadTable();
       } catch (e) {
         notification.error({
-          message: "Có lỗi xảy ra",
-          description: e?.response?.data?.message || e?.message || "Không rõ nguyên nhân!",
+          message: "An error occurred",
+          description: e?.response?.data?.message || e?.message || "Unknown error!",
         });
         throw e;
       }
@@ -104,7 +104,7 @@ const ModalUserUpdate = (props) => {
           password: newPassword,
           confirmPassword: confirmNewPassword,
         });
-        message.success("Đổi mật khẩu user thành công");
+        message.success("User password changed successfully");
         setChangingPassword(false);
         form.setFieldsValue({
           newPassword: undefined,
@@ -121,21 +121,21 @@ const ModalUserUpdate = (props) => {
 
     if (changingPassword) {
       if (!newPassword) {
-        message.error("Vui lòng nhập mật khẩu mới");
+        message.error("Please enter new password");
         return;
       }
 
       return new Promise((resolve, reject) => {
         Modal.confirm({
-          title: "Xác nhận đổi mật khẩu",
+          title: "Confirm Password Change",
           content: (
             <div>
-              Bạn chuẩn bị đặt lại mật khẩu cho tài khoản{" "}
-              <strong>{user?.email || "này"}</strong>. Bạn chắc chắn chứ?
+              You are about to reset the password for account{" "}
+              <strong>{user?.email || "this"}</strong>. Are you sure?
             </div>
           ),
-          okText: "Đổi mật khẩu",
-          cancelText: "Huỷ",
+          okText: "Change Password",
+          cancelText: "Cancel",
           onOk: async () => {
             try {
               await doResetPassword();
@@ -223,9 +223,9 @@ const ModalUserUpdate = (props) => {
   return (
     <>
       {openModal && (
-        <ConfigProvider locale={viVN}>
+        <ConfigProvider locale={enUS}>
           <ModalForm
-            title={"Cập nhật User"}
+            title={"Update User"}
             open={openModal}
             modalProps={{
               onCancel: handleReset,
@@ -241,8 +241,8 @@ const ModalUserUpdate = (props) => {
             onFinish={submitUser}
             submitter={{
               searchConfig: {
-                submitText: changingPassword ? "Đổi mật khẩu" : "Lưu thay đổi",
-                resetText: "Hủy",
+                submitText: changingPassword ? "Change Password" : "Save Changes",
+                resetText: "Cancel",
               },
             }}
           >
@@ -274,11 +274,11 @@ const ModalUserUpdate = (props) => {
                         </Tag>
                       </Col>
                       <Col span={12} style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 12, color: "#888" }}>Ngày tham gia</div>
+                        <div style={{ fontSize: 12, color: "#888" }}>Joined Date</div>
                         <div style={{ fontSize: 14 }}>{createdAt}</div>
                       </Col>
                       <Col span={12} style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 12, color: "#888" }}>Cập nhật lần cuối</div>
+                        <div style={{ fontSize: 12, color: "#888" }}>Last Updated</div>
                         <div style={{ fontSize: 14 }}>{updatedAt}</div>
                       </Col>
                     </Row>
@@ -314,50 +314,50 @@ const ModalUserUpdate = (props) => {
 
                   <Col span={12}>
                     <ProFormText
-                      label="Họ tên"
+                      label="Full Name"
                       name="fullName"
                       fieldProps={{ id: "user_fullName" }}
                       rules={[
-                        { required: true, message: "Không được bỏ trống" },
+                        { required: true, message: "Cannot be empty" },
                         {
                           validator: (_, value) =>
                             value && !isValidFullName(value)
-                              ? Promise.reject("Họ tên chỉ gồm chữ cái và khoảng trắng!")
+                              ? Promise.reject("Full name must contain only letters and spaces!")
                               : Promise.resolve(),
                         },
                       ]}
-                      placeholder="Nhập họ tên"
+                      placeholder="Enter full name"
                     />
                   </Col>
                   <Col span={12}>
                     <ProFormSelect
-                      label="Giới Tính"
+                      label="Gender"
                       name="gender"
-                      valueEnum={{ MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác" }}
+                      valueEnum={{ MALE: "Male", FEMALE: "Female", OTHER: "Other" }}
                       fieldProps={{ id: "user_gender" }}
-                      rules={[{ required: true, message: "Vui lòng chọn giới tính!" }]}
-                      placeholder="Chọn giới tính"
+                      rules={[{ required: true, message: "Please select gender!" }]}
+                      placeholder="Select gender"
                     />
                   </Col>
                   <Col span={12}>
                     <ProFormSelect
-                      label="Vai trò"
+                      label="Role"
                       name="role"
                       valueEnum={{ ADMIN: "ADMIN", LEARNER: "LEARNER", STAFF: "STAFF" }}
                       fieldProps={{ id: "user_role" }}
-                      rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
-                      placeholder="Chọn vai trò"
+                      rules={[{ required: true, message: "Please select role!" }]}
+                      placeholder="Select role"
                     />
                   </Col>
 
                   <Col span={12}>
                     <ProFormSelect
-                      label="Trạng thái"
+                      label="Status"
                       name="isActive"
-                      valueEnum={{ true: "Hoạt động", false: "Khoá" }}
+                      valueEnum={{ true: "Active", false: "Inactive" }}
                       fieldProps={{ id: "user_isActive" }}
-                      rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
-                      placeholder="Chọn trạng thái"
+                      rules={[{ required: true, message: "Please select status!" }]}
+                      placeholder="Select status"
                     />
                   </Col>
 
@@ -381,7 +381,7 @@ const ModalUserUpdate = (props) => {
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontWeight: 600 }}>Đổi mật khẩu</span>
+                          <span style={{ fontWeight: 600 }}>Change Password</span>
                         </div>
                         <Switch
                           checked={changingPassword}
@@ -394,8 +394,8 @@ const ModalUserUpdate = (props) => {
                               });
                             }
                           }}
-                          checkedChildren="Bật"
-                          unCheckedChildren="Tắt"
+                          checkedChildren="On"
+                          unCheckedChildren="Off"
                         />
                       </div>
                     </div>
@@ -405,7 +405,7 @@ const ModalUserUpdate = (props) => {
                     <>
                       <Col span={12}>
                         <ProFormText.Password
-                          label="Mật khẩu mới"
+                          label="New Password"
                           name="newPassword"
                           fieldProps={{ autoComplete: "new-password" }}
                           rules={[
@@ -414,19 +414,19 @@ const ModalUserUpdate = (props) => {
                                 if (!value) return Promise.resolve();
                                 if (!isStrongPassword(value)) {
                                   return Promise.reject(
-                                    "Mật khẩu 8-20 ký tự, có hoa/thường/số/ký tự đặc biệt!"
+                                    "Password must be 8-20 characters with uppercase, lowercase, number, and special character!"
                                   );
                                 }
                                 return Promise.resolve();
                               },
                             },
                           ]}
-                          placeholder="Nhập mật khẩu mới (tuỳ chọn)"
+                          placeholder="Enter new password (optional)"
                         />
                       </Col>
                       <Col span={12}>
                         <ProFormText.Password
-                          label="Xác nhận mật khẩu mới"
+                          label="Confirm New Password"
                           name="confirmNewPassword"
                           fieldProps={{ autoComplete: "new-password" }}
                           dependencies={["newPassword"]}
@@ -436,13 +436,13 @@ const ModalUserUpdate = (props) => {
                                 const pwd = getFieldValue("newPassword");
                                 if (!pwd && !value) return Promise.resolve();
                                 if (pwd && value !== pwd) {
-                                  return Promise.reject("Mật khẩu xác nhận không khớp!");
+                                  return Promise.reject("Passwords do not match!");
                                 }
                                 return Promise.resolve();
                               },
                             }),
                           ]}
-                          placeholder="Nhập lại mật khẩu mới"
+                          placeholder="Re-enter new password"
                         />
                       </Col>
                     </>
@@ -452,7 +452,7 @@ const ModalUserUpdate = (props) => {
             )}
           </ModalForm>
 
-          <ConfigProvider locale={viVN}>
+          <ConfigProvider locale={enUS}>
             <Modal
               open={previewOpen}
               title={previewTitle}
