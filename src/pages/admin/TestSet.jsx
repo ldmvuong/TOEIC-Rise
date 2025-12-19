@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { BookOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { ProFormSelect } from '@ant-design/pro-components';
@@ -14,13 +15,17 @@ import DrawerTest from '../../components/admin/drawer/drawer.test';
 
 
 const TestSetPage = () => {
+    const location = useLocation();
     const tableRef = useRef();
+    const drawerRef = useRef();
+    const formRef = useRef();
     const [openModal, setOpenModal] = useState(false);
     const [dataInit, setDataInit] = useState(null);
     const [openDrawer, setOpenDrawer] = useState(false);
     const [testData, setTestData] = useState(null);
     const [loadingDrawer, setLoadingDrawer] = useState(false);
     const [currentTestSet, setCurrentTestSet] = useState(null);
+    const [initialParams, setInitialParams] = useState({});
 
     const isFetching = useAppSelector(state => state.testSets.isFetching);
     const meta = useAppSelector(state => state.testSets.meta);
@@ -205,6 +210,17 @@ const TestSetPage = () => {
         try {
             const response = await getTestInTestSet(currentTestSet.id, query);
             setTestData(response.data);
+            
+            // Cập nhật currentTestSet từ response data nếu có thông tin test set mới
+            if (response.data && (response.data.name || response.data.status)) {
+                setCurrentTestSet(prev => ({
+                    ...prev,
+                    name: response.data.name || prev.name,
+                    status: response.data.status || prev.status,
+                    createdAt: response.data.createdAt || prev.createdAt,
+                    updatedAt: response.data.updatedAt || prev.updatedAt
+                }));
+            }
         } catch (error) {
             // Silent error handling
         } finally {
@@ -218,15 +234,33 @@ const TestSetPage = () => {
         setCurrentTestSet(null);
     };
 
+    const reloadDrawer = async () => {
+        if (openDrawer && currentTestSet) {
+            // Cập nhật thông tin test set từ table data (đã được reload bởi reloadTable)
+            const updatedTestSet = testSets.find(ts => ts.id === currentTestSet.id);
+            if (updatedTestSet) {
+                setCurrentTestSet(updatedTestSet);
+            }
+            
+            // Reload danh sách test với query hiện tại (giữ nguyên filter/pagination)
+            // Điều này sẽ tự động cập nhật testData và currentTestSet từ response
+            if (drawerRef.current && drawerRef.current.reload) {
+                drawerRef.current.reload();
+            }
+        }
+    };
+
     return (
         <div>
             <DataTable
                 actionRef={tableRef}
+                formRef={formRef}
                 headerTitle="Test Sets"
                 rowKey="id"
                 loading={isFetching}
                 columns={columns}
                 dataSource={testSets}
+                params={initialParams}
                 request={async (params, sort, filter) => {
                     const query = buildQuery(params, sort, filter);
                     dispatch(fetchTestSets({ query }));
@@ -259,15 +293,24 @@ const TestSetPage = () => {
                 reloadTable={reloadTable}
                 dataInit={dataInit}
                 setDataInit={setDataInit}
+                onUpdateSuccess={reloadDrawer}
             />
 
             <DrawerTest
+                ref={drawerRef}
                 open={openDrawer}
                 onClose={handleCloseDrawer}
                 testData={testData}
                 loading={loadingDrawer}
                 testSetName={currentTestSet?.name}
+                testSetId={currentTestSet?.id}
                 onFetchTests={handleFetchTests}
+                onEditTestSet={() => {
+                    if (currentTestSet) {
+                        setOpenModal(true);
+                        setDataInit(currentTestSet);
+                    }
+                }}
             />
         </div>
     );

@@ -8,7 +8,7 @@ const PartDetail = ({ part }) => {
     if (!part) {
         return (
             <div className="md:col-span-3 bg-white shadow rounded p-4">
-                <div className="text-gray-500">Chưa có dữ liệu part.</div>
+                <div className="text-gray-500">No part data available.</div>
             </div>
         );
     }
@@ -22,7 +22,7 @@ const PartDetail = ({ part }) => {
             <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="text-lg font-semibold">{part.name}</div>
-                    <div className="text-sm text-gray-500">{part.questionGroups?.length || 0} nhóm</div>
+                    <div className="text-sm text-gray-500">{part.questionGroups?.length || 0} groups</div>
                 </div>
 
                 <div className="space-y-4">
@@ -40,15 +40,15 @@ const PartDetail = ({ part }) => {
                                 {/* Header */}
                                 <div className="px-4 py-3 border-b bg-gray-50/60 flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-sm font-medium">Câu hỏi {range ? `(${range})` : ''}</span>
+                                        <span className="text-sm font-medium">Question {range ? `(${range})` : ''}</span>
                                         <div className="flex items-center gap-1">
                                             {group.audioUrl && <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Audio</span>}
-                                            {group.imageUrl && <span className="text-[10px] px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">Hình</span>}
-                                            {group.passage && <span className="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Đoạn văn</span>}
+                                            {group.imageUrl && <span className="text-[10px] px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">Image</span>}
+                                            {group.passage && <span className="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Passage</span>}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-500">{(group.questions || []).length} câu</span>
+                                        <span className="text-xs text-gray-500">{(group.questions || []).length} questions</span>
                                         <button
                                             onClick={() => {
                                                 // Extract part number from part.name (e.g., "Part 1" -> 1)
@@ -58,10 +58,10 @@ const PartDetail = ({ part }) => {
                                                 });
                                             }}
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors"
-                                            title="Xem chi tiết nhóm câu hỏi"
+                                            title="View question group details"
                                         >
                                             <EyeOutlined />
-                                            Xem chi tiết
+                                            View details
                                         </button>
                                     </div>
                                 </div>

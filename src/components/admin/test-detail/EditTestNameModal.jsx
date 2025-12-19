@@ -22,39 +22,39 @@ const EditTestNameModal = ({ open, onClose, test, onSuccess }) => {
             await updateTest(test.id, {
                 name: values.name,
             });
-            message.success("Cập nhật tên test thành công");
+            message.success("Test name updated successfully");
             onClose?.();
             onSuccess?.();
         } catch (error) {
             notification.error({
-                message: "Cập nhật tên test thất bại",
-                description: error?.response?.data?.message || error?.message || "Không thể cập nhật tên test",
+                message: "Failed to update test name",
+                description: error?.response?.data?.message || error?.message || "Unable to update test name",
             });
         }
     };
 
     return (
         <ModalForm
-            title="Đổi tên Test"
+            title="Edit Test Name"
             open={open}
             modalProps={{
                 onCancel: () => onClose?.(),
                 destroyOnHidden: true,
                 maskClosable: false,
-                okText: "Cập nhật",
-                cancelText: "Hủy",
+                okText: "Update",
+                cancelText: "Cancel",
             }}
             form={form}
             onFinish={handleFinish}
         >
             <ProFormText
-                label="Tên Test"
+                label="Test Name"
                 name="name"
                 rules={[
-                    { required: true, message: "Vui lòng nhập tên test" },
-                    { pattern: TEST_NAME_REGEX, message: "Tên test không hợp lệ" },
+                    { required: true, message: "Please enter test name" },
+                    { pattern: TEST_NAME_REGEX, message: "Invalid test name" },
                 ]}
-                placeholder="Nhập tên test"
+                placeholder="Enter test name"
             />
         </ModalForm>
     );

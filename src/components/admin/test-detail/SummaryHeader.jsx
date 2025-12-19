@@ -31,7 +31,7 @@ const SummaryHeader = ({ test, onEditName, onChangeStatus }) => {
                         <button
                             onClick={onEditName}
                             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
-                            title="Đổi tên"
+                            title="Edit name"
                         >
                             <EditOutlined className="text-sm" />
                         </button>
@@ -45,7 +45,7 @@ const SummaryHeader = ({ test, onEditName, onChangeStatus }) => {
                                 <button
                                     onClick={onChangeStatus}
                                     className="p-1 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded transition"
-                                    title="Đổi trạng thái"
+                                    title="Change status"
                                 >
                                     <SwapOutlined className="text-xs" />
                                 </button>
@@ -58,8 +58,8 @@ const SummaryHeader = ({ test, onEditName, onChangeStatus }) => {
                 <div className="md:col-span-4">
                     <div className="flex items-center justify-end">
                         <div className="text-sm text-gray-600 leading-tight text-right">
-                            <div>Tạo: {test.createdAt ? dayjs(test.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}</div>
-                            <div>Cập nhật: {test.updatedAt ? dayjs(test.updatedAt).format('DD-MM-YYYY HH:mm:ss') : '-'}</div>
+                            <div>Created: {test.createdAt ? dayjs(test.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}</div>
+                            <div>Updated: {test.updatedAt ? dayjs(test.updatedAt).format('DD-MM-YYYY HH:mm:ss') : '-'}</div>
                         </div>
                     </div>
                 </div>

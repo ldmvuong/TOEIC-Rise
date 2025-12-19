@@ -30,7 +30,7 @@ const TestDetailPage = () => {
                 setSelectedPartIndex(0);
             } catch (e) {
                 if (!isMounted) return;
-                setError(e?.message || "Không thể tải dữ liệu");
+                setError(e?.message || "Unable to load data");
             } finally {
                 if (isMounted) setIsLoading(false);
             }
@@ -57,14 +57,14 @@ const TestDetailPage = () => {
         return (
             <div className="p-4">
                 <div className="text-red-600 mb-3">{error}</div>
-                <button className="px-3 py-2 bg-gray-200 rounded" onClick={() => navigate(-1)}>Quay lại</button>
+                <button className="px-3 py-2 bg-gray-200 rounded" onClick={() => navigate(-1)}>Go back</button>
             </div>
         );
     }
 
     if (!test) {
         return (
-            <div className="p-4">Không có dữ liệu</div>
+            <div className="p-4">No data</div>
         );
     }
 
@@ -73,7 +73,7 @@ const TestDetailPage = () => {
             const res = await getTestById(id);
             setTest(res?.data ?? null);
         } catch (e) {
-            setError(e?.message || "Không thể tải dữ liệu");
+            setError(e?.message || "Unable to load data");
         }
     };
 

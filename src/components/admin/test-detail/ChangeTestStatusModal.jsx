@@ -19,42 +19,42 @@ const ChangeTestStatusModal = ({ open, onClose, test, onSuccess }) => {
     const handleFinish = async (values) => {
         try {
             await changeTestStatus(test.id, values.status);
-            message.success("Đổi trạng thái test thành công");
+            message.success("Test status changed successfully");
             onClose?.();
             onSuccess?.();
         } catch (error) {
             notification.error({
-                message: "Đổi trạng thái test thất bại",
-                description: error?.response?.data?.message || error?.message || "Không thể đổi trạng thái test",
+                message: "Failed to change test status",
+                description: error?.response?.data?.message || error?.message || "Unable to change test status",
             });
         }
     };
 
     return (
         <ModalForm
-            title="Đổi trạng thái Test"
+            title="Change Test Status"
             open={open}
             modalProps={{
                 onCancel: () => onClose?.(),
                 destroyOnHidden: true,
                 maskClosable: false,
-                okText: "Cập nhật",
-                cancelText: "Hủy",
+                okText: "Update",
+                cancelText: "Cancel",
             }}
             form={form}
             onFinish={handleFinish}
         >
             <ProFormSelect
                 name="status"
-                label="Trạng thái"
+                label="Status"
                 valueEnum={{
                     PENDING: "PENDING",
                     APPROVED: "APPROVED",
                     REJECTED: "REJECTED",
                     DELETED: "DELETED",
                 }}
-                rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-                placeholder="Chọn trạng thái"
+                rules={[{ required: true, message: "Please select status" }]}
+                placeholder="Select status"
             />
         </ModalForm>
     );

@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useRef, useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "@/redux/hooks";
 import DataTable from "@/components/admin/data-table";
 import { Tag, Tooltip, Button } from "antd";
@@ -9,7 +9,9 @@ import queryString from "query-string";
 import { getAllReport, getAllReportByStaff } from "@/api/api";
 
 const ReportPage = () => {
+  const location = useLocation();
   const tableRef = useRef();
+  const formRef = useRef();
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.account.user);
   const isAdmin = user?.role === "ADMIN";
@@ -17,6 +19,7 @@ const ReportPage = () => {
   const [reports, setReports] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [meta, setMeta] = React.useState({ page: 0, pageSize: 10, total: 0 });
+  const [initialParams, setInitialParams] = useState({});
 
   const reasonLabels = {
     WRONG_ANSWER: "Wrong answer",
@@ -152,15 +155,44 @@ const ReportPage = () => {
     return queryString.stringify(q);
   };
 
+  // Read query params from URL and set initial form values
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const status = searchParams.get('status');
+    
+    if (status && isAdmin) {
+      const params = { status: status };
+      setInitialParams(params);
+      
+      // Set form values using formRef
+      if (formRef.current) {
+        setTimeout(() => {
+          formRef.current.setFieldsValue(params);
+          // Trigger table reload with the status filter
+          if (tableRef.current) {
+            tableRef.current.reload();
+          }
+        }, 100);
+      }
+    } else {
+      setInitialParams({});
+      if (formRef.current) {
+        formRef.current.resetFields();
+      }
+    }
+  }, [location.search, isAdmin]);
+
   return (
     <div>
       <DataTable
         actionRef={tableRef}
+        formRef={formRef}
         headerTitle="Report Management"
         rowKey="id"
         loading={loading}
         columns={columns}
         dataSource={reports}
+        params={initialParams}
         request={async (params, sort) => {
           setLoading(true);
           try {

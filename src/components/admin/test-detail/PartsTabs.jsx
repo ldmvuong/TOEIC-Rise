@@ -2,7 +2,7 @@ const PartsTabs = ({ parts, selectedIndex, onSelect }) => {
     if (!parts || parts.length === 0) {
         return (
             <div className="bg-white shadow rounded p-3">
-                <div className="text-sm text-gray-500">Chưa có dữ liệu part.</div>
+                <div className="text-sm text-gray-500">No part data available.</div>
             </div>
         );
     }

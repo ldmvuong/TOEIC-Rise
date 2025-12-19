@@ -21,6 +21,7 @@ const DataTable = (props) => {
     actionRef,
     dateFormatter = 'string',
     rowSelection,
+    formRef,
   } = props;
 
   return (
@@ -42,6 +43,7 @@ const DataTable = (props) => {
         toolBarRender={toolBarRender}
         headerTitle={headerTitle}
         actionRef={actionRef}
+        formRef={formRef}
         dateFormatter={dateFormatter}
         rowSelection={rowSelection}
       />

@@ -1,23 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     Drawer, List, Avatar, Spin, Empty, Tag, Card, Statistic, Row, Col, 
     Input, Select, Pagination, Button, Space, Form 
 } from 'antd';
 import { 
     FileTextOutlined, CheckCircleOutlined, ClockCircleOutlined, 
-    SearchOutlined, ReloadOutlined, CloseCircleOutlined 
+    SearchOutlined, ReloadOutlined, CloseCircleOutlined, EditOutlined, EyeOutlined, PlusOutlined 
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import ImportTestModal from '../Test/import.test.modal';
 
 const { Search } = Input;
 const { Option } = Select;
 
-const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTests }) => {
+const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, onFetchTests, onEditTestSet, testSetId }, ref) => {
+    const navigate = useNavigate();
     const [searchForm] = Form.useForm();
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [searchName, setSearchName] = useState('');
     const [searchStatus, setSearchStatus] = useState('');
+    const [openImportModal, setOpenImportModal] = useState(false);
+
+    // Build query string
+    const buildQuery = (page, size, name, status) => {
+        let query = `page=${page - 1}&size=${size}&sortBy=updatedAt&direction=DESC`;
+        
+        if (name) {
+            query += `&name=${encodeURIComponent(name)}`;
+        }
+        
+        if (status) {
+            query += `&status=${status}`;
+        }
+        
+        return query;
+    };
+
+    // Expose reload function to parent
+    useImperativeHandle(ref, () => ({
+        reload: () => {
+            if (onFetchTests) {
+                const query = buildQuery(currentPage, pageSize, searchName, searchStatus);
+                onFetchTests(query);
+            }
+        }
+    }), [currentPage, pageSize, searchName, searchStatus, onFetchTests]);
     const getStatusColor = (status) => {
         switch (status) {
             case 'PENDING':
@@ -93,21 +122,6 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
         }
     };
 
-    // Build query string
-    const buildQuery = (page, size, name, status) => {
-        let query = `page=${page - 1}&size=${size}&sortBy=updatedAt&direction=DESC`;
-        
-        if (name) {
-            query += `&name=${encodeURIComponent(name)}`;
-        }
-        
-        if (status) {
-            query += `&status=${status}`;
-        }
-        
-        return query;
-    };
-
     // Handle reset
     const handleReset = () => {
         setSearchName('');
@@ -147,7 +161,32 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
             ) : testData ? (
                 <div>
                     {/* Test Set Information */}
-                    <Card title="Test Set Information" style={{ marginBottom: 16 }}>
+                    <Card 
+                        title="Test Set Information" 
+                        style={{ marginBottom: 16 }}
+                        extra={
+                            <Space>
+                                {testSetId && (
+                                    <Button
+                                        type="primary"
+                                        icon={<PlusOutlined />}
+                                        onClick={() => setOpenImportModal(true)}
+                                        title="Import test"
+                                    >
+                                        Import Test
+                                    </Button>
+                                )}
+                                {onEditTestSet && (
+                                    <Button
+                                        type="primary"
+                                        icon={<EditOutlined />}
+                                        onClick={onEditTestSet}
+                                        shape="circle"
+                                    />
+                                )}
+                            </Space>
+                        }
+                    >
                         <Row gutter={16}>
                             <Col span={12}>
                                 <p><strong>Name:</strong> {testData.name}</p>
@@ -267,7 +306,17 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                                 itemLayout="horizontal"
                                 dataSource={testData.testResponses.result}
                                 renderItem={(test) => (
-                                    <List.Item>
+                                    <List.Item
+                                        actions={[
+                                            <Button
+                                                key="view"
+                                                type="text"
+                                                icon={<EyeOutlined />}
+                                                onClick={() => navigate(`/admin/tests/${test.id}`)}
+                                                title="View test details"
+                                            />
+                                        ]}
+                                    >
                                         <List.Item.Meta
                                             avatar={
                                                 <Avatar 
@@ -325,8 +374,24 @@ const DrawerTest = ({ open, onClose, testData, loading, testSetName, onFetchTest
                     style={{ marginTop: 50 }}
                 />
             )}
+            
+            <ImportTestModal
+                open={openImportModal}
+                onClose={() => setOpenImportModal(false)}
+                onSuccess={() => {
+                    // Reload danh sách test sau khi import thành công
+                    if (onFetchTests) {
+                        const query = buildQuery(currentPage, pageSize, searchName, searchStatus);
+                        onFetchTests(query);
+                    }
+                }}
+                defaultTestSetId={testSetId}
+                defaultTestSetName={testSetName}
+            />
         </Drawer>
     );
-};
+});
+
+DrawerTest.displayName = 'DrawerTest';
 
 export default DrawerTest;

@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchUsers } from "@/redux/slices/userSlide";
 import DataTable from "@/components/admin/data-table";
@@ -11,6 +12,7 @@ import { changeUserStatus } from "@/api/api";
 import { PlusOutlined, EyeOutlined } from "@ant-design/icons";
 
 const UserPage = () => {
+  const location = useLocation();
   const tableRef = useRef();
   const dispatch = useAppDispatch();
   const isFetching = useAppSelector((state) => state.users.isFetching);
@@ -20,6 +22,35 @@ const UserPage = () => {
   const [openModal, setOpenModal] = React.useState(false);
   const [openViewModal, setOpenViewModal] = React.useState(false);
   const [selectedUserId, setSelectedUserId] = React.useState(null);
+  const [initialParams, setInitialParams] = useState({});
+  const formRef = React.useRef();
+
+  // Read query params from URL and set initial form values
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const role = searchParams.get('role');
+    
+    if (role) {
+      const params = { role: role };
+      setInitialParams(params);
+      
+      // Set form values using formRef
+      if (formRef.current) {
+        setTimeout(() => {
+          formRef.current.setFieldsValue(params);
+          // Trigger table reload with the role filter
+          if (tableRef.current) {
+            tableRef.current.reload();
+          }
+        }, 100);
+      }
+    } else {
+      setInitialParams({});
+      if (formRef.current) {
+        formRef.current.resetFields();
+      }
+    }
+  }, [location.search]);
 
   const reloadTable = () => {
     if (tableRef.current) {
@@ -219,11 +250,13 @@ const UserPage = () => {
     <div>
       <DataTable
         actionRef={tableRef}
+        formRef={formRef}
         headerTitle="User Management"
         rowKey="userId"
         loading={isFetching}
         columns={columns}
         dataSource={users}
+        params={initialParams}
         request={async (params, sort) => {
           const query = buildQuery(params, sort);
           await dispatch(fetchUsers({ query }));

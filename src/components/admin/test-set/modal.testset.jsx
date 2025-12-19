@@ -5,7 +5,7 @@ import { createTestSet, updateTestSet } from "@/api/api";
 import { TEST_SET_NAME_REGEX } from "@/utils/validation";
 
 const ModalTestSet = (props) => {
-    const { openModal, setOpenModal, reloadTable, dataInit, setDataInit } = props;
+    const { openModal, setOpenModal, reloadTable, dataInit, setDataInit, onUpdateSuccess } = props;
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -37,6 +37,13 @@ const ModalTestSet = (props) => {
                     message.success("Test set updated successfully");
                     handleReset();
                     reloadTable();
+                    // Reload drawer if it's open and showing this test set
+                    if (onUpdateSuccess) {
+                        // Wait a bit for table to reload first
+                        setTimeout(() => {
+                            onUpdateSuccess();
+                        }, 300);
+                    }
                 }
             } catch (error) {
                 notification.error({

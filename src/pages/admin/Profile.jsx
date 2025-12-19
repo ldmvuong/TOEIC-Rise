@@ -51,7 +51,7 @@ const Profile = () => {
                     setAvatarPreview(response.data?.avatar || null);
                 }
             } catch (error) {
-                message.error(error?.message || 'Không thể tải thông tin profile');
+                message.error(error?.message || 'Unable to load profile information');
             } finally {
                 setFetchLoading(false);
             }
@@ -61,11 +61,11 @@ const Profile = () => {
     }, []);
 
     const getGenderDisplay = (gender) => {
-        if (!gender) return 'Chưa cập nhật';
+        if (!gender) return 'Not updated';
         const genderMap = {
-            'MALE': 'Nam',
-            'FEMALE': 'Nữ',
-            'OTHER': 'Khác'
+            'MALE': 'Male',
+            'FEMALE': 'Female',
+            'OTHER': 'Other'
         };
         return genderMap[gender] || gender;
     };
@@ -164,14 +164,14 @@ const Profile = () => {
         
         // Validate fullName
         if (!formData.fullName || !formData.fullName.trim()) {
-            errors.fullName = 'Họ và tên không được để trống';
+            errors.fullName = 'Full name cannot be empty';
         } else if (!isValidFullName(formData.fullName.trim())) {
-            errors.fullName = 'Họ và tên chỉ được chứa chữ cái và khoảng trắng';
+            errors.fullName = 'Full name can only contain letters and spaces';
         }
         
         // Validate gender
         if (!formData.gender) {
-            errors.gender = 'Vui lòng chọn giới tính';
+            errors.gender = 'Please select gender';
         }
         
         // Validate avatar if file is selected
@@ -200,7 +200,7 @@ const Profile = () => {
 
             const response = await updateUserProfile(data);
             if (response && response.status === 200) {
-                message.success('Cập nhật thông tin thành công');
+                message.success('Profile updated successfully');
                 setIsEditing(false);
                 // Use update response to refresh local state (avoid extra GET)
                 const updated = response.data;
@@ -217,7 +217,7 @@ const Profile = () => {
                 await dispatch(fetchAccount());
             }
         } catch (error) {
-            message.error(error?.message || 'Cập nhật thông tin thất bại');
+            message.error(error?.message || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
@@ -262,19 +262,19 @@ const Profile = () => {
         const errors = {};
         
         if (!passwordData.oldPassword) {
-            errors.oldPassword = 'Vui lòng nhập mật khẩu cũ';
+            errors.oldPassword = 'Please enter old password';
         }
         
         if (!passwordData.newPassword) {
-            errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+            errors.newPassword = 'Please enter new password';
         } else if (!isStrongPassword(passwordData.newPassword)) {
-            errors.newPassword = 'Mật khẩu phải 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+            errors.newPassword = 'Password must be 8-20 characters, include lowercase, uppercase, number, special characters (.@#$%^&+=) and no spaces';
         }
         
         if (!passwordData.confirmPassword) {
-            errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+            errors.confirmPassword = 'Please confirm password';
         } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-            errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+            errors.confirmPassword = 'Password confirmation does not match';
         }
         
         setPasswordErrors(errors);
@@ -290,11 +290,11 @@ const Profile = () => {
         try {
             const response = await changeUserPassword(passwordData);
             if (response && response.status === 200) {
-                message.success('Đổi mật khẩu thành công');
+                message.success('Password changed successfully');
                 handleClosePasswordModal();
             }
         } catch (error) {
-            message.error(error?.message || 'Đổi mật khẩu thất bại');
+            message.error(error?.message || 'Failed to change password');
         } finally {
             setPasswordLoading(false);
         }
@@ -395,7 +395,7 @@ const Profile = () => {
                         fontSize: '16px',
                         marginTop: '8px'
                     }}>
-                        Thông tin cá nhân
+                        Personal Information
                     </div>
                 </div>
 
@@ -428,7 +428,7 @@ const Profile = () => {
                             label={
                                 <span>
                                     <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                    Họ và tên
+                                    Full Name
                                 </span>
                             }
                         >
@@ -436,7 +436,7 @@ const Profile = () => {
                                 <Input
                                     value={formData.fullName}
                                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                    placeholder="Nhập họ và tên"
+                                    placeholder="Enter full name"
                                     status={formErrors.fullName ? 'error' : ''}
                                 />
                                 {formErrors.fullName && (
@@ -451,7 +451,7 @@ const Profile = () => {
                             label={
                                 <span>
                                     <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                    Họ và tên
+                                    Full Name
                                 </span>
                             }
                         >
@@ -464,7 +464,7 @@ const Profile = () => {
                             label={
                                 <span>
                                     <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                    Giới tính
+                                    Gender
                                 </span>
                             }
                         >
@@ -473,12 +473,12 @@ const Profile = () => {
                                     style={{ width: '100%' }}
                                     value={formData.gender}
                                     onChange={(value) => handleInputChange('gender', value)}
-                                    placeholder="Chọn giới tính"
+                                    placeholder="Select gender"
                                     status={formErrors.gender ? 'error' : ''}
                                 >
-                                    <Option value="MALE">Nam</Option>
-                                    <Option value="FEMALE">Nữ</Option>
-                                    <Option value="OTHER">Khác</Option>
+                                    <Option value="MALE">Male</Option>
+                                    <Option value="FEMALE">Female</Option>
+                                    <Option value="OTHER">Other</Option>
                                 </Select>
                                 {formErrors.gender && (
                                     <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -492,7 +492,7 @@ const Profile = () => {
                             label={
                                 <span>
                                     <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                    Giới tính
+                                    Gender
                                 </span>
                             }
                         >
@@ -517,7 +517,7 @@ const Profile = () => {
                                 onClick={handleCancel}
                                 disabled={loading}
                             >
-                                Hủy
+                                Cancel
                             </Button>
                             <Button
                                 type="primary"
@@ -525,7 +525,7 @@ const Profile = () => {
                                 onClick={handleSave}
                                 loading={loading}
                             >
-                                Lưu thay đổi
+                                Save Changes
                             </Button>
                         </>
                     ) : (
@@ -535,13 +535,13 @@ const Profile = () => {
                                 icon={<EditOutlined />}
                                 onClick={handleEdit}
                             >
-                                Chỉnh sửa thông tin
+                                Edit Profile
                             </Button>
                             <Button
                                 icon={<LockOutlined />}
                                 onClick={handleOpenPasswordModal}
                             >
-                                Đổi mật khẩu
+                                Change Password
                             </Button>
                         </>
                     )}
@@ -554,25 +554,25 @@ const Profile = () => {
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <LockOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
-                        <span>Đổi mật khẩu</span>
+                        <span>Change Password</span>
                     </div>
                 }
                 open={isPasswordModalVisible}
                 onCancel={handleClosePasswordModal}
                 onOk={handleChangePassword}
-                okText="Đổi mật khẩu"
-                cancelText="Hủy"
+                okText="Change Password"
+                cancelText="Cancel"
                 confirmLoading={passwordLoading}
                 width={500}
             >
                 <div style={{ padding: '16px 0' }}>
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                            Mật khẩu cũ <span style={{ color: 'red' }}>*</span>
+                            Old Password <span style={{ color: 'red' }}>*</span>
                         </label>
                         <Input.Password
                             size="large"
-                            placeholder="Nhập mật khẩu cũ"
+                            placeholder="Enter old password"
                             value={passwordData.oldPassword}
                             onChange={(e) => handlePasswordInputChange('oldPassword', e.target.value)}
                         />
@@ -585,11 +585,11 @@ const Profile = () => {
 
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                            Mật khẩu mới <span style={{ color: 'red' }}>*</span>
+                            New Password <span style={{ color: 'red' }}>*</span>
                         </label>
                         <Input.Password
                             size="large"
-                            placeholder="Nhập mật khẩu mới"
+                            placeholder="Enter new password"
                             value={passwordData.newPassword}
                             onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
                         />
@@ -603,17 +603,17 @@ const Profile = () => {
                             color: '#666', 
                             marginTop: '4px' 
                         }}>
-                            Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng
+                            Password must be 8-20 characters, include lowercase, uppercase, number, special characters (.@#$%^&+=) and no spaces
                         </div>
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                            Xác nhận mật khẩu <span style={{ color: 'red' }}>*</span>
+                            Confirm Password <span style={{ color: 'red' }}>*</span>
                         </label>
                         <Input.Password
                             size="large"
-                            placeholder="Nhập lại mật khẩu mới"
+                            placeholder="Re-enter new password"
                             value={passwordData.confirmPassword}
                             onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
                         />

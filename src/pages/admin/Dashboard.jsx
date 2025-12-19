@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   Col,
@@ -9,6 +10,7 @@ import {
   Skeleton,
   message,
   Divider,
+  Tooltip,
 } from "antd";
 import {
   IdcardOutlined,
@@ -31,14 +33,16 @@ const formatter = (value) => (
   <CountUp end={Number(value || 0)} separator="," duration={1.5} />
 );
 
-const StatCard = ({ title, value, icon, color }) => {
-  return (
+const StatCard = ({ title, value, icon, color, onClick, tooltip }) => {
+  const cardContent = (
     <Card
       variant="outlined"
       hoverable
+      onClick={onClick}
       style={{
         height: "100%",
         borderRadius: 8,
+        cursor: onClick ? "pointer" : "default",
       }}
     >
       <Statistic
@@ -61,10 +65,21 @@ const StatCard = ({ title, value, icon, color }) => {
       />
     </Card>
   );
+
+  if (tooltip) {
+    return (
+      <Tooltip title={tooltip}>
+        {cardContent}
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };
 
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,6 +123,8 @@ const DashboardPage = () => {
                 value={stats?.totalAccounts || 0}
                 icon={<IdcardOutlined />}
                 color="#595959"
+                onClick={() => navigate("/admin/users")}
+                tooltip="Click to view all users"
               />
             </Col>
             <Col xs={24} sm={12} md={8}>
@@ -116,6 +133,8 @@ const DashboardPage = () => {
                 value={stats?.totalLearners || 0}
                 icon={<UserOutlined />}
                 color="#1890ff"
+                onClick={() => navigate("/admin/users?role=LEARNER")}
+                tooltip="Click to view learners"
               />
             </Col>
             <Col xs={24} sm={12} md={8}>
@@ -124,6 +143,8 @@ const DashboardPage = () => {
                 value={stats?.totalStaffs || 0}
                 icon={<SafetyCertificateOutlined />}
                 color="#722ed1"
+                onClick={() => navigate("/admin/users?role=STAFF")}
+                tooltip="Click to view staff and admins"
               />
             </Col>
           </Row>
@@ -141,6 +162,8 @@ const DashboardPage = () => {
                 value={stats?.totalTestSets || 0}
                 icon={<FolderOpenOutlined />}
                 color="#faad14"
+                onClick={() => navigate("/admin/test-sets")}
+                tooltip="Click to view test sets"
               />
             </Col>
             <Col xs={24} sm={12} md={8}>
@@ -149,6 +172,8 @@ const DashboardPage = () => {
                 value={stats?.totalTests || 0}
                 icon={<FileTextOutlined />}
                 color="#fa8c16"
+                onClick={() => navigate("/admin/tests")}
+                tooltip="Click to view tests"
               />
             </Col>
             <Col xs={24} sm={12} md={8}>
@@ -190,6 +215,8 @@ const DashboardPage = () => {
                 value={stats?.totalReports || 0}
                 icon={<FlagOutlined />}
                 color="#fa541c"
+                onClick={() => navigate("/admin/reports")}
+                tooltip="Click to view reports"
               />
             </Col>
           </Row>
