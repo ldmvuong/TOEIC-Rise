@@ -6,6 +6,11 @@ import { secondsToMinutes } from '../../utils/timeUtils';
 import {
     LineChart,
     BarChart,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
+    Radar,
     Line,
     Bar,
     XAxis,
@@ -306,6 +311,129 @@ const ScoreChart = ({ data, chartType }) => {
                         />
                     </BarChart>
                 )}
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
+// Radar Chart Component for Part Analysis
+const PartRadarChart = ({ data, loading }) => {
+    if (loading) {
+        return (
+            <div className="h-96 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
+                <Spin />
+            </div>
+        );
+    }
+
+    if (!data || !data.examList || data.examList.length === 0) {
+        return (
+            <div className="h-96 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400">
+                Chưa có dữ liệu để phân tích
+            </div>
+        );
+    }
+
+    // Calculate average correct percent for each part
+    const calculatePartStats = () => {
+        const partStats = {};
+        const partCounts = {};
+
+        data.examList.forEach(exam => {
+            if (exam.userAnswersByPart) {
+                Object.keys(exam.userAnswersByPart).forEach(partName => {
+                    const partData = exam.userAnswersByPart[partName];
+                    const totalItem = partData.find(item => item.tag === 'Total');
+                    
+                    if (totalItem && totalItem.correctPercent != null) {
+                        if (!partStats[partName]) {
+                            partStats[partName] = 0;
+                            partCounts[partName] = 0;
+                        }
+                        partStats[partName] += totalItem.correctPercent;
+                        partCounts[partName]++;
+                    }
+                });
+            }
+        });
+
+        // Calculate averages
+        const result = [];
+        Object.keys(partStats).forEach(partName => {
+            if (partCounts[partName] > 0) {
+                result.push({
+                    part: partName,
+                    value: Math.round((partStats[partName] / partCounts[partName]) * 100) / 100
+                });
+            }
+        });
+
+        // Sort by part number
+        result.sort((a, b) => {
+            const aNum = parseInt(a.part.replace('Part ', ''));
+            const bNum = parseInt(b.part.replace('Part ', ''));
+            return aNum - bNum;
+        });
+
+        return result;
+    };
+
+    const chartData = calculatePartStats();
+
+    if (chartData.length === 0) {
+        return (
+            <div className="h-96 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400">
+                Chưa có dữ liệu để phân tích
+            </div>
+        );
+    }
+
+    // Transform data for RadarChart
+    const radarData = chartData.map(item => ({
+        part: item.part,
+        value: item.value,
+        fullMark: 100
+    }));
+
+    const CustomTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                    <p className="font-semibold text-gray-900 mb-1">{payload[0].payload.part}</p>
+                    <p className="text-sm text-gray-600">
+                        Độ chính xác: <span className="font-semibold text-blue-600">{payload[0].value.toFixed(2)}%</span>
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div className="w-full rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tổng quan theo Part</h3>
+            <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={radarData}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis 
+                        dataKey="part" 
+                        tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }}
+                    />
+                    <PolarRadiusAxis 
+                        angle={90} 
+                        domain={[0, 100]}
+                        tick={{ fontSize: 11, fill: '#9ca3af' }}
+                    />
+                    <Radar
+                        name="Độ chính xác"
+                        dataKey="value"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.6}
+                        strokeWidth={2}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                </RadarChart>
             </ResponsiveContainer>
         </div>
     );
@@ -631,6 +759,11 @@ const TestAnalytics = () => {
                         />
                     </div>
                     )}
+
+                    {/* Radar Chart - Tổng quan theo Part */}
+                    <div className="mt-8">
+                        <PartRadarChart data={analyticsData} loading={analyticsLoading} />
+                    </div>
 
                     <div className="flex gap-3 mt-8 mb-6">
                         <button
