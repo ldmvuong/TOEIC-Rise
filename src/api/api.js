@@ -130,7 +130,7 @@ export const getAllReportByStaff = (query) => api.get(`/staff/question-reports?$
 export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 
 export const updateQuestionReport = (id, payload) =>
-  api.put(`/admin/question-reports/${id}`, payload);
+  api.put(`/staff/question-reports/${id}`, payload);
 
 //Admin Staff Dashboard
 export const getDashboardStatistics = () => api.get('/staff/stats/system-overview');
@@ -197,48 +197,38 @@ export const submitMiniTest = (payload) => {
 
 // === FLASHCARD APIs ===
 
-// 1. Lấy danh sách Flashcard công khai (Cộng đồng)
 export const callFetchPublicFlashcards = (query) => {
-    // query format: ?page=0&size=10&name=abc&sortBy=favouriteCount...
     return api.get(`/learner/flashcards/public?${query}`);
 };
 
-// 2. Lấy danh sách Flashcard của tôi
 export const callFetchMyFlashcards = (query) => {
     return api.get(`/learner/flashcards/my?${query}`);
 };
 
-// 3. Lấy danh sách Flashcard yêu thích
 export const callFetchFavouriteFlashcards = (query) => {
     return api.get(`/learner/flashcards/favourite?${query}`);
 };
 
-// 4. Lấy chi tiết Flashcard (bao gồm các từ vựng để học)
 export const callFetchFlashcardDetail = (id) => {
     return api.get(`/learner/flashcards/${id}`);
 };
 
-// 5. Tạo mới Flashcard
 export const callCreateFlashcard = (data) => {
     return api.post('/learner/flashcards', data);
 };
 
-// 6. Cập nhật Flashcard
 export const callUpdateFlashcard = (id, data) => {
     return api.put(`/learner/flashcards/${id}`, data);
 };
 
-// 7. Xóa Flashcard
 export const callDeleteFlashcard = (id) => {
     return api.delete(`/learner/flashcards/${id}`);
 };
 
-// 8. Thêm vào yêu thích
 export const callAddToFavourite = (id) => {
     return api.post(`/learner/flashcards/favourite/${id}`);
 };
 
-// 9. Xóa khỏi yêu thích
 export const callRemoveFromFavourite = (id) => {
     return api.delete(`/learner/flashcards/favourite/${id}`);
 };
