@@ -31,7 +31,9 @@ import TestResultDetail from "./pages/client/TestResultDetail.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
-import FlashcardSavePage from "./pages/client/FlashcardSavePage.jsx";
+import FlashcardCreatePage from "./pages/client/FlashcardCreatePage.jsx";
+import FlashcardViewPage from "./pages/client/FlashcardViewPage.jsx";
+import FlashcardEditPage from "./pages/client/FlashcardEditPage.jsx";
 
 
 export default function App() {
@@ -134,7 +136,15 @@ export default function App() {
           path: 'flashcards/create',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
-              <FlashcardSavePage />
+              <FlashcardCreatePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardViewPage />
             </ProtectedRoute>
           )
         },
@@ -142,7 +152,7 @@ export default function App() {
           path: 'flashcards/:id/edit',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
-              <FlashcardSavePage />
+              <FlashcardEditPage />
             </ProtectedRoute>
           )
         }

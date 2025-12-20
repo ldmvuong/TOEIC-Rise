@@ -99,15 +99,13 @@ const FlashcardLibrary = () => {
             {/* --- HEADER & TABS --- */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-blue-800 mb-4 md:mb-0">Thư viện Flashcard</h1>
-                {/* Nút tạo mới chỉ hiện ở Tab 'My' */}
-                {activeTab === 'my' && (
-                    <button 
-                        onClick={() => navigate('/flashcards/create')}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
-                    >
-                        <PlusIcon className="w-5 h-5" /> Tạo bộ thẻ mới
-                    </button>
-                )}
+                {/* Nút tạo mới hiện ở tất cả các tab */}
+                <button 
+                    onClick={() => navigate('/flashcards/create')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+                >
+                    <PlusIcon className="w-5 h-5" /> Tạo bộ thẻ mới
+                </button>
             </div>
 
             {/* Tab Navigation */}
