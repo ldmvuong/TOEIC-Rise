@@ -3,14 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     callFetchPublicFlashcards, 
     callFetchMyFlashcards, 
-    callFetchFavouriteFlashcards,
-    callAddToFavourite,
-    callRemoveFromFavourite
+    callFetchFavouriteFlashcards
 } from '../../api/api';
 import { Spin, Pagination, Empty, message } from 'antd';
-import { HeartIcon, BookOpenIcon, PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
-import FlashcardStudyModal from '../../components/client/modal/FlashcardStudyModal';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import FlashcardCard from '../../components/card/flashcard.card';
 
 const FlashcardLibrary = () => {
     const navigate = useNavigate();
@@ -31,10 +28,6 @@ const FlashcardLibrary = () => {
     const [pageSize, setPageSize] = useState(8);
     const [total, setTotal] = useState(0);
 
-    // State cho Modal học
-    const [isShowStudyModal, setIsShowStudyModal] = useState(false);
-    const [currentDeckId, setCurrentDeckId] = useState(null);
-
     // Hàm gọi API lấy dữ liệu
     const fetchFlashcards = async () => {
         setIsLoading(true);
@@ -51,19 +44,21 @@ const FlashcardLibrary = () => {
             }
 
             if (res && res.data) {
-                // Cấu trúc response: { meta: { total, page, pageSize, pages }, result: [...] }
+                // Cấu trúc response mới: { meta: { total, page, pageSize, pages }, result: [...] }
                 const responseData = res.data;
-                const flashcards = responseData.result || responseData.content || responseData || [];
+                const flashcards = responseData.result || [];
                 const meta = responseData.meta || {};
                 
-                // Sử dụng field 'favourite' từ API, nếu ở tab favourite thì tất cả đều là favourite
-                const flashcardsWithFavourite = flashcards.map(item => ({
+                // Xử lý các field optional: favourite, favouriteCount
+                // Nếu ở tab favourite thì tất cả đều là favourite
+                const flashcardsProcessed = flashcards.map(item => ({
                     ...item,
-                    favourite: activeTab === 'favourite' ? true : (item.favourite || false)
+                    favourite: activeTab === 'favourite' ? true : (item.favourite ?? false),
+                    favouriteCount: item.favouriteCount ?? 0
                 }));
                 
-                setDataFlashcards(flashcardsWithFavourite);
-                setTotal(meta.total || responseData.totalElements || responseData.total || 0);
+                setDataFlashcards(flashcardsProcessed);
+                setTotal(meta.total || 0);
             }
         } catch (error) {
             console.error(error);
@@ -94,29 +89,9 @@ const FlashcardLibrary = () => {
         setDataFlashcards([]);
     };
 
-    // Xử lý Yêu thích/Bỏ yêu thích
-    const handleToggleFavourite = async (item, e) => {
-        e.stopPropagation(); // Ngăn event bubble lên card
-        try {
-            const isCurrentlyFavourite = item.favourite || activeTab === 'favourite';
-            
-            if (isCurrentlyFavourite) {
-                await callRemoveFromFavourite(item.id);
-                message.success("Đã xóa khỏi yêu thích");
-            } else {
-                await callAddToFavourite(item.id);
-                message.success("Đã thêm vào yêu thích");
-            }
-            fetchFlashcards(); // Load lại data để cập nhật UI
-        } catch (error) {
-            message.error(error?.message || "Có lỗi xảy ra");
-        }
-    };
-
-    // Xử lý mở modal học
-    const handleStudyFlashcard = (id) => {
-        setCurrentDeckId(id);
-        setIsShowStudyModal(true);
+    // Callback để refresh data sau khi toggle favourite
+    const handleFavouriteChange = () => {
+        fetchFlashcards();
     };
 
     return (
@@ -166,82 +141,12 @@ const FlashcardLibrary = () => {
                     {dataFlashcards.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {dataFlashcards.map((item) => (
-                                <div 
-                                    key={item.id} 
-                                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col overflow-hidden group cursor-pointer"
-                                    onClick={() => handleStudyFlashcard(item.id)}
-                                >
-                                    <div className="h-32 bg-gradient-to-r from-blue-400 to-indigo-500 p-4 flex justify-center items-center">
-                                        <BookOpenIcon className="w-12 h-12 text-white opacity-80" />
-                                    </div>
-                                    <div className="p-4 flex-1 flex flex-col">
-                                        <div className="flex items-start justify-between gap-2 mb-2">
-                                            <h3 className="font-semibold text-lg text-gray-800 line-clamp-1 flex-1">{item.name}</h3>
-                                            {item.accessType && (
-                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
-                                                    item.accessType === 'PUBLIC' 
-                                                        ? 'bg-green-100 text-green-700' 
-                                                        : 'bg-gray-100 text-gray-700'
-                                                }`}>
-                                                    {item.accessType === 'PUBLIC' ? 'Public' : 'Private'}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                                            <span>{item.itemCount || item.itemsCount || 0} từ vựng</span>
-                                            {item.favouriteCount > 0 && (
-                                                <span className="flex items-center gap-1">
-                                                    <HeartSolid className="w-4 h-4 text-red-400" />
-                                                    {item.favouriteCount}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {item.authorFullName && activeTab !== 'my' && (
-                                            <p className="text-xs text-gray-400 mt-2">Tác giả: {item.authorFullName}</p>
-                                        )}
-                                        <div className={`mt-4 flex ${activeTab === 'my' ? 'justify-start' : 'justify-between'} items-center pt-4 border-t border-gray-100`}>
-                                            <div className="flex items-center gap-3">
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleStudyFlashcard(item.id);
-                                                    }}
-                                                    className="text-blue-600 font-medium text-sm hover:underline"
-                                                >
-                                                    Học ngay
-                                                </button>
-                                                
-                                                {/* Nút Edit - Chỉ hiện khi ở tab 'my' */}
-                                                {activeTab === 'my' && (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigate(`/flashcards/${item.id}/edit`);
-                                                        }}
-                                                        className="text-gray-500 hover:text-blue-600 transition-colors"
-                                                        title="Chỉnh sửa"
-                                                    >
-                                                        <PencilSquareIcon className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            
-                                            {/* Chỉ hiển thị nút yêu thích ở tab Public và Favourite, không hiển thị ở tab My */}
-                                            {activeTab !== 'my' && (
-                                                <button 
-                                                    onClick={(e) => handleToggleFavourite(item, e)}
-                                                    className="transition-colors"
-                                                >
-                                                    {(item.favourite || activeTab === 'favourite') ? (
-                                                        <HeartSolid className="w-6 h-6 text-red-500" />
-                                                    ) : (
-                                                        <HeartIcon className="w-6 h-6 text-gray-400 hover:text-red-500" />
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <FlashcardCard
+                                    key={item.id}
+                                    item={item}
+                                    activeTab={activeTab}
+                                    onFavouriteChange={handleFavouriteChange}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -266,13 +171,6 @@ const FlashcardLibrary = () => {
                     )}
                 </>
             )}
-
-            {/* Modal Học Flashcard */}
-            <FlashcardStudyModal 
-                isOpen={isShowStudyModal}
-                setIsOpen={setIsShowStudyModal}
-                flashcardId={currentDeckId}
-            />
         </div>
     );
 };
