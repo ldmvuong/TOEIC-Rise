@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
     FileTextOutlined, CheckCircleOutlined, ClockCircleOutlined, 
-    SearchOutlined, ReloadOutlined, CloseCircleOutlined, EditOutlined, EyeOutlined, PlusOutlined 
+    SearchOutlined, ReloadOutlined, CloseCircleOutlined, EditOutlined, EyeOutlined, PlusOutlined, DeleteOutlined 
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import ImportTestModal from '../Test/import.test.modal';
@@ -248,9 +248,9 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                     </Card>
 
                     {/* Statistics Overview */}
-                    <Row gutter={16} style={{ marginBottom: 24 }}>
-                        <Col span={6}>
-                            <Card>
+                    <Row gutter={16} style={{ marginBottom: 24, display: 'flex' }}>
+                        <Col flex={1}>
+                            <Card style={{ width: '100%' }}>
                                 <Statistic
                                     title="Total Tests"
                                     value={testData.testResponses?.meta?.total || 0}
@@ -258,8 +258,8 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                                 />
                             </Card>
                         </Col>
-                        <Col span={6}>
-                            <Card>
+                        <Col flex={1}>
+                            <Card style={{ width: '100%' }}>
                                 <Statistic
                                     title="Pending"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'PENDING').length || 0}
@@ -268,8 +268,8 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                                 />
                             </Card>
                         </Col>
-                        <Col span={6}>
-                            <Card>
+                        <Col flex={1}>
+                            <Card style={{ width: '100%' }}>
                                 <Statistic
                                     title="Approved"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'APPROVED').length || 0}
@@ -278,13 +278,23 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                                 />
                             </Card>
                         </Col>
-                        <Col span={6}>
-                            <Card>
+                        <Col flex={1}>
+                            <Card style={{ width: '100%' }}>
                                 <Statistic
                                     title="Rejected"
                                     value={testData.testResponses?.result?.filter(test => test.status === 'REJECTED').length || 0}
                                     valueStyle={{ color: '#ff4d4f' }}
                                     prefix={<CloseCircleOutlined />}
+                                />
+                            </Card>
+                        </Col>
+                        <Col flex={1}>
+                            <Card style={{ width: '100%' }}>
+                                <Statistic
+                                    title="Delete"
+                                    value={testData.testResponses?.result?.filter(test => test.status === 'DELETED').length || 0}
+                                    valueStyle={{ color: '#ff4d4f' }}
+                                    prefix={<DeleteOutlined />}
                                 />
                             </Card>
                         </Col>
