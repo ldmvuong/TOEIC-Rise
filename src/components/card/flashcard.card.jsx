@@ -15,12 +15,18 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
     // Xử lý Yêu thích/Bỏ yêu thích
     const handleToggleFavourite = async (e) => {
         e.stopPropagation(); // Ngăn event bubble lên card
+        e.preventDefault(); // Ngăn default behavior
+        
+        // Lấy id từ data attribute hoặc từ item để đảm bảo đúng item được click
+        const flashcardId = e.currentTarget.dataset.id || item.id;
+        const currentFavouriteStatus = e.currentTarget.dataset.favourite === 'true' || (item.favourite ?? false);
+        
         try {
-            if (isFavourite) {
-                await callRemoveFromFavourite(item.id);
+            if (currentFavouriteStatus) {
+                await callRemoveFromFavourite(flashcardId);
                 message.success("Đã xóa khỏi yêu thích");
             } else {
-                await callAddToFavourite(item.id);
+                await callAddToFavourite(flashcardId);
                 message.success("Đã thêm vào yêu thích");
             }
             
@@ -51,6 +57,8 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
                 {/* Favourite button - góc phải trên cùng */}
                 <button 
                     onClick={handleToggleFavourite}
+                    data-id={item.id}
+                    data-favourite={isFavourite}
                     className="absolute top-2 right-2 p-1.5 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-all z-10"
                     title={isFavourite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
                 >

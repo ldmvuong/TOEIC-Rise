@@ -23,6 +23,7 @@ const FlashcardViewPage = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [flashcardData, setFlashcardData] = useState(null);
+    const [isNotFound, setIsNotFound] = useState(false); // Lỗi 404 - không tìm thấy hoặc không có quyền
     
     // State từ API
     const [isOwner, setIsOwner] = useState(false); // Quyền sở hữu - API sẽ trả về field này
@@ -40,19 +41,26 @@ const FlashcardViewPage = () => {
 
     const fetchFlashcardData = async () => {
         setIsLoading(true);
+        setIsNotFound(false);
         try {
             const res = await callFetchFlashcardDetail(id);
             if (res && res.data) {
                 const data = res.data;
                 setFlashcardData(data);
                 // Xử lý các field từ API
-                setIsOwner(true); // Tạm thời set true để test - sau này sẽ dùng: data.isOwner ?? false
-                setIsFavourite(data.favourite ?? false); // Đã lưu/chưa lưu, mặc định false
+                setIsOwner(data.isOwner ?? false);
+                setIsFavourite(data.isFavourite ?? false);
             }
         } catch (error) {
             console.error(error);
-            message.error("Không thể tải thông tin bộ thẻ!");
-            navigate('/flashcards');
+            // Nếu là lỗi 404 (không tìm thấy hoặc không có quyền truy cập)
+            if (error?.statusCode === 404) {
+                setIsNotFound(true);
+            } else {
+                // Các lỗi khác vẫn hiển thị message và navigate
+                message.error(error?.message || "Không thể tải thông tin bộ thẻ!");
+                navigate('/flashcards');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -99,6 +107,36 @@ const FlashcardViewPage = () => {
         );
     }
 
+    // Hiển thị UI 404 custom khi không tìm thấy hoặc không có quyền truy cập
+    if (isNotFound) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+                <Card className="max-w-md w-full shadow-lg rounded-xl border-gray-200">
+                    <div className="text-center py-8">
+                        <div className="mb-6">
+                            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <LockOutlined className="text-4xl text-gray-400" />
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            Không tìm thấy
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                            Bộ thẻ này không tồn tại hoặc bạn không có quyền truy cập.
+                        </p>
+                        <Button
+                            type="primary"
+                            onClick={() => navigate('/flashcards')}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            Quay lại thư viện
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
     if (!flashcardData) {
         return null;
     }
@@ -129,7 +167,7 @@ const FlashcardViewPage = () => {
                                     size="small"
                                     className={`${
                                         isFavourite 
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                            ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
                                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
