@@ -150,10 +150,10 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
       setOtpToken('');
       setFormData({ email: '', newPassword: '', confirmNewPassword: '' });
       setErrors({});
-      setStep(1);
+      // Chuyển về trang login ngay lập tức
       setTimeout(() => {
         if (onSwitchToLogin) onSwitchToLogin();
-      }, 2000);
+      }, 1500);
     } catch (err) {
       notification.error({
         message: 'Đổi mật khẩu thất bại',
