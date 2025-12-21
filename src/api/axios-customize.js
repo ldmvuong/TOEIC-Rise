@@ -9,6 +9,9 @@ const PUBLIC_ENDPOINTS = [
   "/auth/login",
   "/auth/refresh-token",
   "/auth/verify",
+  "/auth/forgot-password",
+  "/auth/verify-otp",
+  "/auth/reset-password",
   "/test-sets", 
   "/tests" 
 ];
@@ -66,8 +69,12 @@ api.interceptors.request.use((config) => {
   const url = config?.url || '';
 
   if (isPublicUrl(url)) {
-    // Xóa header Authorization nếu nó lỡ được gán từ defaults hoặc chỗ nào đó
-    if (config.headers && config.headers.Authorization) {
+    // Nếu Authorization header đã được set trong config.headers (như OTP token cho reset-password), giữ nguyên
+    // Chỉ xóa nếu nó đến từ defaults.headers.common (access token)
+    const hasCustomAuth = config.headers && config.headers.Authorization && 
+                         config.headers.Authorization.startsWith('Bearer ');
+    if (!hasCustomAuth && config.headers && config.headers.Authorization) {
+      // Xóa Authorization từ defaults nếu không phải là custom auth
       delete config.headers.Authorization;
     }
     return config;
