@@ -160,8 +160,9 @@ const EmptyChart = () => {
 const AnalyticsPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState(getDefaultDateRange);
-  const [preset, setPreset] = useState("30 ngày qua");
+  // Mặc định: Last 7 Days
+  const [dateRange, setDateRange] = useState(() => getPresetDates("7 ngày qua"));
+  const [preset, setPreset] = useState("7 ngày qua");
 
   // Fetch analytics data
   const fetchAnalytics = async (from, to) => {
@@ -267,6 +268,14 @@ const AnalyticsPage = () => {
         },
       ]
     : [];
+
+  // Mỗi khoảng điểm một màu riêng cho biểu đồ cột
+  const scoreDistColors = [
+    CHART_COLORS.danger,    // 0-200
+    CHART_COLORS.orange,    // 200-450
+    CHART_COLORS.accent,    // 450-750
+    CHART_COLORS.secondary, // 750-990
+  ];
 
   // Check if score distribution has any data
   const hasScoreDistData = scoreDistData.length > 0 && scoreDistData.some((item) => item.value > 0);
@@ -453,16 +462,15 @@ const AnalyticsPage = () => {
               }}
             >
               {hasTestModeData ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart
+                    margin={{ top: 16, right: 32, bottom: 16, left: 32 }}
+                  >
                     <Pie
                       data={testModeData}
-                      cx="50%"
+                      cx="45%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -483,6 +491,13 @@ const AnalyticsPage = () => {
                         border: "1px solid #e8e8e8",
                         borderRadius: 8,
                       }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={32}
+                      formatter={(value, entry) =>
+                        `${value} (${(entry?.payload?.value || 0).toFixed(1)}%)`
+                      }
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -507,19 +522,18 @@ const AnalyticsPage = () => {
               }}
             >
               {hasRegSourceData ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart
+                    margin={{ top: 16, right: 32, bottom: 16, left: 32 }}
+                  >
                     <Pie
                       data={regSourceData}
-                      cx="50%"
+                      cx="45%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={58}
+                      outerRadius={78}
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
                     >
                       {regSourceData.map((entry, index) => (
                         <Cell
@@ -537,6 +551,13 @@ const AnalyticsPage = () => {
                         border: "1px solid #e8e8e8",
                         borderRadius: 8,
                       }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={32}
+                      formatter={(value, entry) =>
+                        `${value} (${(entry?.payload?.value || 0).toFixed(1)}%)`
+                      }
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -562,12 +583,21 @@ const AnalyticsPage = () => {
             >
               {hasScoreDistData ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={scoreDistData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart
+                    data={scoreDistData}
+                    margin={{ top: 20, right: 20, left: 12, bottom: 36 }}
+                    barCategoryGap="25%"
+                    barGap={6}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e8e8e8" />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "#666" }}
+                      tick={{ fontSize: 11, fill: "#555" }}
                       stroke="#d9d9d9"
+                      interval={0} // luôn hiển thị đầy đủ các nhãn
+                      tickMargin={12}
+                      angle={-25}
+                      textAnchor="end"
                     />
                     <YAxis
                       tick={{ fontSize: 11, fill: "#666" }}
@@ -583,9 +613,15 @@ const AnalyticsPage = () => {
                     />
                     <Bar
                       dataKey="value"
-                      fill={CHART_COLORS.purple}
                       radius={[8, 8, 0, 0]}
-                    />
+                    >
+                      {scoreDistData.map((entry, index) => (
+                        <Cell
+                          key={`score-dist-${entry.name}-${index}`}
+                          fill={scoreDistColors[index % scoreDistColors.length]}
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
