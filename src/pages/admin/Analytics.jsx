@@ -268,14 +268,6 @@ const AnalyticsPage = () => {
       ]
     : [];
 
-  // Colors for each score range
-  const scoreDistColors = [
-    CHART_COLORS.danger,    // 0-200: red
-    CHART_COLORS.orange,     // 200-450: orange
-    CHART_COLORS.accent,     // 450-750: yellow/gold
-    CHART_COLORS.secondary,  // 750-990: green
-  ];
-
   // Check if score distribution has any data
   const hasScoreDistData = scoreDistData.length > 0 && scoreDistData.some((item) => item.value > 0);
 
@@ -591,15 +583,9 @@ const AnalyticsPage = () => {
                     />
                     <Bar
                       dataKey="value"
+                      fill={CHART_COLORS.purple}
                       radius={[8, 8, 0, 0]}
-                    >
-                      {scoreDistData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={scoreDistColors[index] || CHART_COLORS.purple}
-                        />
-                      ))}
-                    </Bar>
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

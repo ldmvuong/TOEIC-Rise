@@ -629,7 +629,6 @@ const ReportDetailPage = () => {
         reasons,
         partName,
         questionId,
-        questionPosition,
         questionContent,
         questionOptions = [],
         questionCorrectOption,
@@ -1183,11 +1182,11 @@ const ReportDetailPage = () => {
                             {/* Question Header */}
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
-                                    {questionPosition || questionId || 1}
+                                    {questionId || 1}
                                 </span>
                                 <div className="flex-1">
                                     <div className="text-sm font-medium text-gray-700">
-                                        Question {questionPosition || questionId || 1}
+                                        Question {questionId || 1}
                                     </div>
                                     {questionCorrectOption && (
                                         <div className="text-xs text-green-600 font-medium mt-1">
@@ -1292,8 +1291,8 @@ const ReportDetailPage = () => {
                             {/* Modal-like Header */}
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {report?.questionPosition || report?.questionId
-                                        ? `Edit Question ${report.questionPosition || report.questionId}`
+                                    {report?.questionId
+                                        ? `Edit Question ${report.questionId}`
                                         : "Edit Question"}
                                 </h3>
                             </div>
