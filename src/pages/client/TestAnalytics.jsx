@@ -461,7 +461,8 @@ const TestAnalytics = () => {
     const [scoreStats, setScoreStats] = useState(null);
     const [scoreStatsLoading, setScoreStatsLoading] = useState(false);
     const [testLimit, setTestLimit] = useState(5);
-    const [chartType, setChartType] = useState('line'); // 'line' or 'bar'
+    // Mặc định dùng biểu đồ cột
+    const [chartType, setChartType] = useState('bar'); // 'line' or 'bar'
     
     // Mini test creation state
     const [miniTestPartId, setMiniTestPartId] = useState(1); // Default Part 1

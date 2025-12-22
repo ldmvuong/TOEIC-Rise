@@ -22,7 +22,7 @@ const FlashcardCreatePage = () => {
     const [description, setDescription] = useState('');
     const [isPublic, setIsPublic] = useState(true);
     const [items, setItems] = useState([
-        { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }
+        { vocabulary: '', definition: '' }
     ]);
 
     // --- STATE VALIDATION ---
@@ -53,7 +53,7 @@ const FlashcardCreatePage = () => {
     };
 
     const handleAddItem = () => {
-        setItems([...items, { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }]);
+        setItems([...items, { vocabulary: '', definition: '' }]);
         setErrors({
             ...errors,
             items: [...errors.items, { vocabulary: '', definition: '' }]
@@ -127,9 +127,7 @@ const FlashcardCreatePage = () => {
             accessType: isPublic ? "PUBLIC" : "PRIVATE",
             items: validItems.map(item => ({
                 vocabulary: item.vocabulary.trim(),
-                definition: item.definition.trim(),
-                pronunciation: item.pronunciation.trim(),
-                audioUrl: item.audioUrl.trim()
+                definition: item.definition.trim()
             }))
         };
 
@@ -268,22 +266,6 @@ const FlashcardCreatePage = () => {
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
                                         )}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            placeholder="/Phiên âm/ (Optional)" 
-                                            size="small"
-                                            value={item.pronunciation}
-                                            onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
-                                            className="w-1/2"
-                                        />
-                                        <Input 
-                                            placeholder="Audio URL (Optional)" 
-                                            size="small"
-                                            value={item.audioUrl}
-                                            onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
-                                            className="w-1/2"
-                                        />
-                                    </div>
                                 </div>
 
                                 {/* Cột Định nghĩa */}
@@ -300,9 +282,6 @@ const FlashcardCreatePage = () => {
                                         {errors.items[index]?.definition && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].definition}</div>
                                         )}
-                                    </div>
-                                    <div className="text-xs text-gray-400 italic pt-2">
-                                        * Gợi ý: Có thể nhập câu ví dụ vào phần định nghĩa nếu cần.
                                     </div>
                                 </div>
                             </div>
