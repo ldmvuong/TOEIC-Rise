@@ -131,11 +131,11 @@ const TagsSelector = ({ value = [], onChange }) => {
 
             {/* Selected Tags Section */}
             <div>
-                <div className="text-xs text-gray-500 mb-1.5">Tags đã chọn:</div>
+                <div className="text-xs text-gray-500 mb-1.5">Selected Tags:</div>
                 <div className="min-h-[70px] p-3 border border-gray-200 rounded-lg bg-gray-50/50">
                     {value.length === 0 ? (
                         <div className="text-xs text-gray-400 text-center py-4">
-                            Chưa có tag nào được chọn
+                            No tags selected
                         </div>
                     ) : (
                         <div className="flex flex-wrap gap-1.5">
@@ -157,9 +157,9 @@ const TagsSelector = ({ value = [], onChange }) => {
 
             {/* Search Section */}
             <div className="relative" ref={dropdownRef}>
-                <div className="text-xs text-gray-500 mb-1.5">Tìm kiếm và thêm tag:</div>
+                <div className="text-xs text-gray-500 mb-1.5">Search and add tag:</div>
                 <Input
-                    placeholder="Nhập tên tag để tìm kiếm..."
+                    placeholder="Enter tag name to search..."
                     value={searchText}
                     onChange={handleSearchChange}
                     onFocus={handleSearchFocus}
@@ -179,8 +179,8 @@ const TagsSelector = ({ value = [], onChange }) => {
                                         description={
                                             <span className="text-xs text-gray-500">
                                                 {debouncedSearch.trim()
-                                                    ? 'Không tìm thấy tag nào'
-                                                    : 'Nhập từ khóa để tìm kiếm'}
+                                                    ? 'No tags found'
+                                                    : 'Enter keyword to search'}
                                             </span>
                                         }
                                         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -247,7 +247,7 @@ const TagsSelector = ({ value = [], onChange }) => {
             {/* Validation message */}
             {value.length === 0 && (
                 <div className="text-xs text-red-500 mt-1">
-                    Vui lòng chọn ít nhất một tag
+                    Please select at least one tag
                 </div>
             )}
         </div>

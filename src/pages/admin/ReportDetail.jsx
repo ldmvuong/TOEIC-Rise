@@ -51,7 +51,8 @@ const ReportDetailPage = () => {
     const [questionValidationError, setQuestionValidationError] = useState("");
 
     // Resolve form
-    const [status, setStatus] = useState("RESOLVED");
+    const [status, setStatus] = useState(null); // For Resolve Report section (not from DB, required)
+    const [displayStatus, setDisplayStatus] = useState("RESOLVED"); // For Resolver section (from DB, display only)
     const [resolvedNote, setResolvedNote] = useState("");
 
     // Edit flags
@@ -101,8 +102,9 @@ const ReportDetailPage = () => {
                 const data = res?.data ?? null;
                 setReport(data);
                 if (data) {
-                    setStatus(data.status || "RESOLVED");
-                    setResolvedNote(data.resolvedNote || "");
+                    setDisplayStatus(data.status || "RESOLVED"); // For display in Resolver section
+                    setStatus(null); // Always null, not from DB, must be selected
+                    setResolvedNote(""); // Always keep empty, not from DB
                     setGroupAudioUrl(data.questionGroupAudioUrl || "");
                     setGroupImageUrl(data.questionGroupImageUrl || "");
                     setGroupPassage(data.questionGroupPassage || "");
@@ -461,6 +463,10 @@ const ReportDetailPage = () => {
         if (!id || !report) return;
         
         setValidationError("");
+        if (!status) {
+            setValidationError("Please select Status");
+            return;
+        }
         if (!resolvedNote.trim()) {
             setValidationError("Please enter Note (resolvedNote)");
             return;
@@ -559,6 +565,7 @@ const ReportDetailPage = () => {
             
             // Update form states with new data
             if (data) {
+                setDisplayStatus(data.status || "RESOLVED"); // Update display status from DB
                 setGroupAudioUrl(data.questionGroupAudioUrl || "");
                 setGroupImageUrl(data.questionGroupImageUrl || "");
                 setGroupPassage(data.questionGroupPassage || "");
@@ -590,6 +597,9 @@ const ReportDetailPage = () => {
             setPreparedImageMode("keep");
             setPreparedAudioUrl("");
             setPreparedImageUrl("");
+            // Reset Resolve Report form (not from DB)
+            setStatus(null); // Reset to null (must be selected)
+            setResolvedNote(""); // Keep empty (not from DB)
         } catch (err) {
             setValidationError(err?.response?.data?.message || err?.message || "Unable to update report");
         }
@@ -629,6 +639,7 @@ const ReportDetailPage = () => {
         reasons,
         partName,
         questionId,
+        questionPosition,
         questionContent,
         questionOptions = [],
         questionCorrectOption,
@@ -639,6 +650,71 @@ const ReportDetailPage = () => {
         questionGroupPassage,
         questionGroupTranscript,
     } = report;
+
+    // Helper functions to get display values (prioritize prepared data over DB data)
+    const getDisplayAudioUrl = () => {
+        if (groupSaved && preparedGroupUpdate?.audioUrl) {
+            return preparedGroupUpdate.audioUrl;
+        }
+        return questionGroupAudioUrl;
+    };
+
+    const getDisplayImageUrl = () => {
+        if (groupSaved && preparedGroupUpdate?.imageUrl) {
+            return preparedGroupUpdate.imageUrl;
+        }
+        return questionGroupImageUrl;
+    };
+
+    const getDisplayPassage = () => {
+        if (groupSaved && preparedGroupUpdate?.passage !== undefined) {
+            return preparedGroupUpdate.passage;
+        }
+        return questionGroupPassage;
+    };
+
+    const getDisplayTranscript = () => {
+        if (groupSaved && preparedGroupUpdate?.transcript !== undefined) {
+            return preparedGroupUpdate.transcript;
+        }
+        return questionGroupTranscript;
+    };
+
+    const getDisplayQuestionContent = () => {
+        if (questionSaved && preparedQuestionUpdate?.content !== undefined) {
+            return preparedQuestionUpdate.content;
+        }
+        return questionContent;
+    };
+
+    const getDisplayQuestionOptions = () => {
+        if (questionSaved && preparedQuestionUpdate?.options) {
+            return preparedQuestionUpdate.options;
+        }
+        return questionOptions;
+    };
+
+    const getDisplayQuestionCorrectOption = () => {
+        if (questionSaved && preparedQuestionUpdate?.correctOption) {
+            return preparedQuestionUpdate.correctOption;
+        }
+        return questionCorrectOption;
+    };
+
+    const getDisplayQuestionExplanation = () => {
+        if (questionSaved && preparedQuestionUpdate?.explanation !== undefined) {
+            return preparedQuestionUpdate.explanation;
+        }
+        return questionExplanation;
+    };
+
+    const getDisplayQuestionTags = () => {
+        if (questionSaved && preparedQuestionUpdate?.tags) {
+            // Parse tags string back to array
+            return preparedQuestionUpdate.tags.split("; ").filter(t => t.trim());
+        }
+        return questionTags;
+    };
 
     return (
         <div className="p-4 space-y-6 max-w-7xl mx-auto">
@@ -684,7 +760,9 @@ const ReportDetailPage = () => {
                             </Descriptions.Item>
                             <Descriptions.Item label="Description">
                                 {description ? (
-                                    <div className="whitespace-pre-line text-gray-700">{description}</div>
+                                    <div className="whitespace-pre-line text-gray-700 max-h-40 overflow-y-auto break-words">
+                                        {description}
+                                    </div>
                                 ) : (
                                     "-"
                                 )}
@@ -705,15 +783,20 @@ const ReportDetailPage = () => {
                             <Descriptions.Item label="Email">
                                 {resolverEmail || <Tag>Not assigned</Tag>}
                             </Descriptions.Item>
-                        <Descriptions.Item label="Note">
-                            {report.resolvedNote ? (
-                                <div className="whitespace-pre-line text-gray-700">
-                                    {report.resolvedNote}
-                                </div>
-                            ) : (
-                                "-"
-                            )}
-                        </Descriptions.Item>
+                            <Descriptions.Item label="Status">
+                                <Tag color={statusColor[displayStatus] || "default"}>
+                                    {displayStatus || "-"}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Note">
+                                {report.resolvedNote ? (
+                                    <div className="whitespace-pre-line text-gray-700 max-h-40 overflow-y-auto break-words">
+                                        {report.resolvedNote}
+                                    </div>
+                                ) : (
+                                    "-"
+                                )}
+                            </Descriptions.Item>
                         </Descriptions>
                     </div>
                 </div>
@@ -729,7 +812,7 @@ const ReportDetailPage = () => {
                         <Alert type="error" message={validationError} closable onClose={() => setValidationError("")} />
                     )}
                     <div>
-                        <div className="text-sm font-medium text-gray-700 mb-2">Status</div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">Status <span className="text-red-500">*</span></div>
                         <Radio.Group value={status} onChange={(e) => setStatus(e.target.value)}>
                             <Radio value="RESOLVED">RESOLVED</Radio>
                             <Radio value="REJECTED">REJECTED</Radio>
@@ -790,6 +873,14 @@ const ReportDetailPage = () => {
                     )}
                 </div>
                 <div className="p-6 space-y-6">
+                    {groupSaved && (
+                        <Alert
+                            type="warning"
+                            message="You have edited this section. Please save the report to update the changes."
+                            showIcon
+                            closable={false}
+                        />
+                    )}
                     {groupValidationError && (
                         <Alert type="error" message={groupValidationError} closable onClose={() => setGroupValidationError("")} />
                     )}
@@ -802,9 +893,9 @@ const ReportDetailPage = () => {
                                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                                         Audio
                                     </div>
-                                    {questionGroupAudioUrl ? (
+                                    {getDisplayAudioUrl() ? (
                                         <audio controls className="w-full">
-                                            <source src={questionGroupAudioUrl} type="audio/mpeg" />
+                                            <source src={getDisplayAudioUrl()} type="audio/mpeg" />
                                             Your browser does not support the audio element.
                                         </audio>
                                     ) : (
@@ -822,10 +913,10 @@ const ReportDetailPage = () => {
                                         <span className="w-2 h-2 rounded-full bg-purple-500"></span>
                                         Image
                                     </div>
-                                    {questionGroupImageUrl ? (
+                                    {getDisplayImageUrl() ? (
                                         <div className="w-full flex justify-center bg-gray-50 rounded-lg p-4">
                                             <img
-                                                src={questionGroupImageUrl}
+                                                src={getDisplayImageUrl()}
                                                 alt="Question group"
                                                 className="max-h-96 object-contain rounded-lg border border-gray-200"
                                             />
@@ -841,9 +932,9 @@ const ReportDetailPage = () => {
                                         <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                                         Passage
                                     </div>
-                                    {questionGroupPassage ? (
+                                    {getDisplayPassage() ? (
                                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm leading-relaxed">
-                                            {parse(questionGroupPassage)}
+                                            {parse(getDisplayPassage())}
                                         </div>
                                     ) : (
                                         <div className="text-center text-gray-400 py-4">
@@ -860,9 +951,9 @@ const ReportDetailPage = () => {
                                         <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                                         Transcript <span className="text-red-500">*</span>
                                     </div>
-                                    {questionGroupTranscript ? (
+                                    {getDisplayTranscript() ? (
                                         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm leading-relaxed">
-                                            {parse(questionGroupTranscript)}
+                                            {parse(getDisplayTranscript())}
                                         </div>
                                     ) : (
                                         <div className="text-center text-gray-400 py-4">
@@ -872,7 +963,7 @@ const ReportDetailPage = () => {
                                 </div>
                             )}
 
-                            {!questionGroupAudioUrl && !questionGroupImageUrl && !questionGroupPassage && !questionGroupTranscript && (
+                            {!getDisplayAudioUrl() && !getDisplayImageUrl() && !getDisplayPassage() && !getDisplayTranscript() && (
                                 <div className="text-center text-gray-400 py-8">
                                     No media or transcript information
                                 </div>
@@ -1170,10 +1261,19 @@ const ReportDetailPage = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h2 className="text-lg font-semibold text-gray-900">
-                        Question (1)
+                        Question ({questionPosition || questionId || 1})
                     </h2>
                 </div>
                 <div className="p-6">
+                    {questionSaved && (
+                        <Alert
+                            type="warning"
+                            message="You have edited this section. Please save the report to update the changes."
+                            showIcon
+                            closable={false}
+                            className="mb-4"
+                        />
+                    )}
                     {questionValidationError && (
                         <Alert type="error" message={questionValidationError} closable onClose={() => setQuestionValidationError("")} className="mb-4" />
                     )}
@@ -1182,21 +1282,21 @@ const ReportDetailPage = () => {
                             {/* Question Header */}
                             <div className="flex items-center gap-3 mb-4">
                                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
-                                    {questionId || 1}
+                                    {questionPosition || questionId || 1}
                                 </span>
                                 <div className="flex-1">
                                     <div className="text-sm font-medium text-gray-700">
-                                        Question {questionId || 1}
+                                        Question {questionPosition || questionId || 1}
                                     </div>
-                                    {questionCorrectOption && (
+                                    {getDisplayQuestionCorrectOption() && (
                                         <div className="text-xs text-green-600 font-medium mt-1">
-                                            Correct answer: {questionCorrectOption}
+                                            Correct answer: {getDisplayQuestionCorrectOption()}
                                         </div>
                                     )}
                                 </div>
-                                {Array.isArray(questionTags) && questionTags.length > 0 && (
+                                {Array.isArray(getDisplayQuestionTags()) && getDisplayQuestionTags().length > 0 && (
                                     <div className="flex flex-wrap gap-1">
-                                        {questionTags.map((tag, tagIdx) => (
+                                        {getDisplayQuestionTags().map((tag, tagIdx) => (
                                             <Tag key={tagIdx} color="blue" className="text-xs">
                                                 {tag}
                                             </Tag>
@@ -1214,16 +1314,16 @@ const ReportDetailPage = () => {
                             </div>
 
                             {/* Question Content */}
-                            {questionContent && (
+                            {getDisplayQuestionContent() && (
                                 <div className="mb-4 text-sm text-gray-800">
-                                    {parse(questionContent)}
+                                    {parse(getDisplayQuestionContent())}
                                 </div>
                             )}
 
                             {/* Options */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                 {(() => {
-                                    const opts = Array.isArray(questionOptions) ? questionOptions : [];
+                                    const opts = Array.isArray(getDisplayQuestionOptions()) ? getDisplayQuestionOptions() : [];
                                     const displayOptions = partNumber === 2 
                                         ? opts.slice(0, 3) // Part 2 only show A, B, C
                                         : opts.slice(0, 4); // Other parts show A, B, C, D
@@ -1236,7 +1336,7 @@ const ReportDetailPage = () => {
                                     
                                     return displayOptions.map((option, optIdx) => {
                                         const label = String.fromCharCode(65 + optIdx); // A, B, C, D...
-                                        const isCorrect = questionCorrectOption === label;
+                                        const isCorrect = getDisplayQuestionCorrectOption() === label;
                                         return (
                                             <div
                                                 key={optIdx}
@@ -1273,14 +1373,14 @@ const ReportDetailPage = () => {
                             </div>
 
                             {/* Explanation */}
-                            {questionExplanation && (
+                            {getDisplayQuestionExplanation() && (
                                 <details className="mt-4 cursor-pointer">
                                     <summary className="text-sm font-medium text-gray-700 hover:text-gray-900 select-none">
                                         Detailed explanation
                                     </summary>
                                     <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
                                         <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">
-                                            {questionExplanation}
+                                            {getDisplayQuestionExplanation()}
                                         </div>
                                     </div>
                                 </details>
@@ -1291,8 +1391,8 @@ const ReportDetailPage = () => {
                             {/* Modal-like Header */}
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {report?.questionId
-                                        ? `Edit Question ${report.questionId}`
+                                    {report?.questionPosition || report?.questionId
+                                        ? `Edit Question ${report.questionPosition || report.questionId}`
                                         : "Edit Question"}
                                 </h3>
                             </div>
@@ -1309,7 +1409,7 @@ const ReportDetailPage = () => {
                                 {partNumber && [3, 4, 5, 7].includes(partNumber) && (
                                     <div>
                                         <div className="mb-1 text-sm font-medium text-gray-700">
-                                            Nội dung câu hỏi <span className="text-red-500">*</span>
+                                            Question Content <span className="text-red-500">*</span>
                                         </div>
                                         <Input.TextArea
                                             rows={2}
@@ -1324,7 +1424,7 @@ const ReportDetailPage = () => {
                                 {(partNumber !== 1 && partNumber !== 2) && (
                                     <div>
                                         <div className="mb-1 text-sm font-medium text-gray-700">
-                                            Đáp án (A, B, C, D)
+                                            Options (A, B, C, D)
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {["A", "B", "C", "D"].map((label, idx) => (
@@ -1348,7 +1448,7 @@ const ReportDetailPage = () => {
                                 {/* Correct option */}
                                 <div>
                                     <div className="mb-1 text-sm font-medium text-gray-700">
-                                        Đáp án đúng <span className="text-red-500">*</span>
+                                        Correct Answer <span className="text-red-500">*</span>
                                     </div>
                                     <Radio.Group
                                         value={qCorrect}
@@ -1381,14 +1481,14 @@ const ReportDetailPage = () => {
                             {/* Modal-like Footer */}
                             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
                                 <Button onClick={closeQuestionEdit} disabled={savingQuestion}>
-                                    Hủy
+                                    Cancel
                                 </Button>
                                 <Button 
                                     type="primary" 
                                     onClick={handleSaveQuestion}
                                     loading={savingQuestion}
                                 >
-                                    Lưu
+                                    Save
                                 </Button>
                             </div>
                         </div>
