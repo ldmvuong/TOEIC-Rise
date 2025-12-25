@@ -114,21 +114,21 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
             }
         ]);
 
-        const formData = new FormData();
-        formData.append('message', userMessage.content);
-        formData.append('userAnswerId', resolvedUserAnswerId);
-        if (conversationIdRef.current) {
-            formData.append('conversationId', conversationIdRef.current);
-        }
+        const requestBody = {
+            message: userMessage.content,
+            userAnswerId: resolvedUserAnswerId,
+            ...(conversationIdRef.current && { conversationId: conversationIdRef.current })
+        };
 
         let aggregatedContent = '';
 
         try {
             const response = await fetch(`${backendUrl}/learner/chatbot/chat-about-question`, {
                 method: 'POST',
-                body: formData,
+                body: JSON.stringify(requestBody),
                 credentials: 'include',
                 headers: {
+                    'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     Accept: 'text/event-stream, application/json'
                 }
@@ -143,29 +143,46 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
             let buffer = '';
 
             const processBuffer = () => {
-                const findBoundary = () => {
-                    const doubleNewLine = buffer.indexOf('\n\n');
-                    const doubleCarriage = buffer.indexOf('\r\n\r\n');
-                    if (doubleNewLine === -1 && doubleCarriage === -1) return null;
-                    if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
-                    if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
-                    return doubleNewLine < doubleCarriage
-                        ? { index: doubleNewLine, length: 2 }
-                        : { index: doubleCarriage, length: 4 };
-                };
+                    const findBoundary = () => {
+                        const doubleNewLine = buffer.indexOf('\n\n');
+                        const doubleCarriage = buffer.indexOf('\r\n\r\n');
+                        if (doubleNewLine === -1 && doubleCarriage === -1) return null;
+                        if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
+                        if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
+                        return doubleNewLine < doubleCarriage
+                            ? { index: doubleNewLine, length: 2 }
+                            : { index: doubleCarriage, length: 4 };
+                    };
 
-                let boundary;
-                // eslint-disable-next-line no-cond-assign
-                while ((boundary = findBoundary()) !== null) {
-                    const rawEvent = buffer.slice(0, boundary.index).trim();
-                    buffer = buffer.slice(boundary.index + boundary.length);
+                    let boundary;
+                    // eslint-disable-next-line no-cond-assign
+                    while ((boundary = findBoundary()) !== null) {
+                        const rawEvent = buffer.slice(0, boundary.index).trim();
+                        buffer = buffer.slice(boundary.index + boundary.length);
 
-                    if (!rawEvent.startsWith('data:')) continue;
-                    const payloadStr = rawEvent.replace(/^data:\s*/, '');
-                    if (!payloadStr || payloadStr === '[DONE]') continue;
+                        // Parse proper SSE format (can have multiple lines like id: and data:)
+                        const eventLines = rawEvent.split('\n');
+                        let eventData = null;
+                        let eventId = null;
 
+                        for (const line of eventLines) {
+                            const trimmedLine = line.trim();
+                            if (trimmedLine.startsWith('data:')) {
+                                eventData = trimmedLine.replace(/^data:\s*/, '');
+                            } else if (trimmedLine.startsWith('id:')) {
+                                eventId = trimmedLine.replace(/^id:\s*/, '');
+                            }
+                        }
+
+                        if (!eventData || eventData === '[DONE]') {
+                            continue;
+                        }
                     try {
-                        const payload = JSON.parse(payloadStr);
+                        const sseEvent = JSON.parse(eventData);
+                        
+                        // Extract the actual data from the SSE wrapper
+                        const payload = sseEvent.data || sseEvent;
+                        
                         if (payload.conversationId && !conversationIdRef.current) {
                             conversationIdRef.current = payload.conversationId;
                             setConversationId(payload.conversationId);
@@ -188,6 +205,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                         }
                     } catch (err) {
                         console.error('Không parse được dữ liệu AI:', err);
+                        console.error('Raw payload that failed:', eventData);
                     }
                 }
             };
@@ -201,8 +219,11 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                     break;
                 }
                 const { value, done } = readResult;
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
+                if (done) {
+                    break;
+                }
+                const chunk = decoder.decode(value, { stream: true });
+                buffer += chunk;
                 processBuffer();
             }
 
