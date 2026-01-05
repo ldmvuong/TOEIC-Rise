@@ -79,15 +79,10 @@ const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTe
 
             formData.append(
                 'testRequest',
-                new Blob(
-                    [
-                        JSON.stringify({
-                            testName: values.testName,
-                            testSetId: values.testSet?.value || defaultTestSetId,
-                        }),
-                    ],
-                    { type: 'application/json' }
-                )
+                JSON.stringify({
+                    testName: values.testName,
+                    testSetId: values.testSet?.value || defaultTestSetId,
+                })
             );
 
             setSubmitting(true);
