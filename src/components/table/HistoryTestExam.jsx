@@ -103,7 +103,7 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
                         </thead>
                         <tbody>
                             {historyData.map((item) => {
-                                const isFullTest = item.parts && item.parts.length > 0 === false;
+                                const isFullTest = item.parts === null;
                                 const mode = isFullTest ? 'Full test' : 'Luyện tập';
                                 // Support both createAt and createdAt field names
                                 const dateField = item.createAt || item.createdAt;
