@@ -1,4 +1,4 @@
-import api  from './axios-customize'
+import api from "./axios-customize";
 
 // Auth
 
@@ -6,23 +6,27 @@ export const register = (payload) => api.post("/auth/register", payload);
 export const verifyUser = (payload) => api.post("/auth/verify", payload);
 export const resendOTP = (payload) => api.post("/auth/resend", payload);
 export const login = (payload) => api.post("/auth/login", payload);
-export const forgotPassword = (payload) => api.post("/auth/forgot-password", payload);
+export const forgotPassword = (payload) =>
+  api.post("/auth/forgot-password", payload);
 export const verifyOTP = (payload) => api.post("/auth/verify-otp", payload);
 // Reset password requires OTP token in Authorization header
-export const resetPassword = (payload, token) => api.post(
-  "/auth/reset-password",
-  payload,
-  token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-);
+export const resetPassword = (payload, token) =>
+  api.post(
+    "/auth/reset-password",
+    payload,
+    token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  );
 
 export const getProfile = () => api.get("/auth/me");
 
 export const logout = () => api.get("/auth/logout");
 
-// Google OAuth 
+// Google OAuth
 export const loginWithGoogle = () => {
   // Redirect to backend Google OAuth endpoint with callback URL
-  const callbackUrl = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
+  const callbackUrl = encodeURIComponent(
+    `${window.location.origin}/auth/google/callback`,
+  );
   window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/auth/login/google?callback=${callbackUrl}`;
 };
 
@@ -34,40 +38,38 @@ export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
 export const getAllTestSets = (query) => {
-    return api.get(`/admin/test-sets?${query}`);
+  return api.get(`/staff/test-sets?${query}`);
 };
 
-export const getTestInTestSet = (id, query) => api.get(`/admin/test-sets/${id}?${query}`);
+export const getTestInTestSet = (id, query) =>
+  api.get(`/admin/test-sets/${id}?${query}`);
 
 // Admin/Staff Tests
 export const getAllTests = (query) => api.get(`/staff/tests?${query}`);
 
 export const importTests = (formData) =>
-  api.post('/staff/tests/import', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+  api.post("/staff/tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 
 export const getTestById = (id) => api.get(`/staff/tests/${id}`);
 
-export const updateTest = (id, payload) => api.put(`/staff/tests/${id}`, payload);
+export const updateTest = (id, payload) =>
+  api.put(`/staff/tests/${id}`, payload);
 
 export const changeTestStatus = (id, status) => {
   const params = new URLSearchParams({ status });
   return api.patch(`/admin/tests/${id}?${params.toString()}`);
 };
 
-export const getQuestionGroup = (id) => api.get(`/admin/question-groups/${id}`);
+export const getQuestionGroup = (id) => api.get(`/staff/question-groups/${id}`);
 
 export const updateQuestionGroup = (id, formData) =>
-  api.put(`/admin/question-groups/${id}`, formData, {
+  api.put(`/staff/question-groups/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const updateQuestion = (payload) =>
-  api.put("/admin/questions", payload);
-
-
-
+export const updateQuestion = (payload) => api.put("/staff/questions", payload);
 
 // Profile
 
@@ -75,35 +77,34 @@ export const getUserProfile = () => api.get("/profile");
 
 export const updateUserProfile = (formData) => {
   return api.put("/profile", formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { "Content-Type": "multipart/form-data" },
   });
 };
 
-export const changeUserPassword = (payload) => api.put("/change-password", payload);
-
+export const changeUserPassword = (payload) =>
+  api.put("/change-password", payload);
 
 // guest access to some tests
 export const getPublicTestSets = () => {
-    return api.get("/test-sets");
+  return api.get("/test-sets");
 };
 
 export const getPublicTest = (query) => {
-    return api.get(`/tests?${query}`);
+  return api.get(`/tests?${query}`);
 };
 
 export const getPublicTestById = (id) => {
-    return api.get(`/tests/${id}`);
+  return api.get(`/tests/${id}`);
 };
-
-
 
 // Admin users
 
 export const getAllUsers = (query) => api.get(`/admin/users?${query}`);
 
-export const createUser = (formData) => api.post("/admin/users", formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const createUser = (formData) =>
+  api.post("/admin/users", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
 export const getUserById = (id) => api.get(`/admin/users/${id}`);
 
@@ -115,17 +116,18 @@ export const updateUser = (id, formData) =>
 export const resetUserPassword = (id, payload) =>
   api.put(`/admin/users/${id}/reset-password`, payload);
 
-export const changeUserStatus = (id) =>
-  api.patch(`/admin/users/${id}`);
+export const changeUserStatus = (id) => api.patch(`/admin/users/${id}`);
 
-// Admin Tags
-export const getAllTags = (query) => api.get(`/admin/tags?${query}`);
+// Staff Tags
+export const getAllTags = (query) => api.get(`/staff/tags?${query}`);
 
 // Admin Staff Report
 
-export const getAllReport = (query) => api.get(`/admin/question-reports?${query}`);
+export const getAllReport = (query) =>
+  api.get(`/admin/question-reports?${query}`);
 
-export const getAllReportByStaff = (query) => api.get(`/staff/question-reports?${query}`);
+export const getAllReportByStaff = (query) =>
+  api.get(`/staff/question-reports?${query}`);
 
 export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 
@@ -133,7 +135,8 @@ export const updateQuestionReport = (id, payload) =>
   api.put(`/staff/question-reports/${id}`, payload);
 
 //Admin Staff Dashboard
-export const getDashboardStatistics = () => api.get('/staff/stats/system-overview');
+export const getDashboardStatistics = () =>
+  api.get("/staff/stats/system-overview");
 
 export const getAnalytics = (from, to) => {
   const params = new URLSearchParams({ from, to });
@@ -144,16 +147,17 @@ export const getAnalytics = (from, to) => {
 export const getTestExam = (id, parts) => {
   const partsArray = Array.isArray(parts) ? parts : [parts];
   return api.get(`/learner/user-tests/exam/${id}`, {
-    params: { 
-      parts: partsArray.join(',') // Format: ?parts=1,2,3
-    }
+    params: {
+      parts: partsArray.join(","), // Format: ?parts=1,2,3
+    },
   });
 };
 
 export const getUserTestHistory = (testId) =>
   api.get(`/learner/user-tests/view-histories/${testId}`);
 
-export const submitTestExam = (payload) => api.post('/learner/user-tests', payload);
+export const submitTestExam = (payload) =>
+  api.post("/learner/user-tests", payload);
 
 export const getUserTestStatisticsResult = (userTestId) =>
   api.get(`/learner/user-tests/${userTestId}`);
@@ -164,72 +168,72 @@ export const getUserTestAnswersOverall = (userTestId) =>
 export const viewAnswersQuestionDetail = (userAnswerId) =>
   api.get(`/learner/user-answers/${userAnswerId}`);
 
-
 export const viewTestResultDetails = (userTestId) =>
   api.get(`/learner/user-tests/detail/${userTestId}`);
 
 export const reportQuestionIssue = (payload) =>
-  api.post('/learner/question-reports', payload);
+  api.post("/learner/question-reports", payload);
 
-export const getHistoryTest = (query) => api.get(`/learner/analysis/result?${query}`);
+export const getHistoryTest = (query) =>
+  api.get(`/learner/analysis/result?${query}`);
 
-export const getTestAnalytics = (query) => api.get(`/learner/analysis?${query}`);
+export const getTestAnalytics = (query) =>
+  api.get(`/learner/analysis?${query}`);
 
 export const getScoreStatistics = (size = 5) =>
   api.get(`/learner/analysis/full-test?size=${size}`);
 
 export const getTagsByPart = (partId) =>
-  api.get('/learner/mini-tests/tags', { params: { partId } });
+  api.get("/learner/mini-tests/tags", { params: { partId } });
 
 export const createMiniTest = (partId, tagIds, numberQuestion) => {
   const params = new URLSearchParams();
-  params.append('partId', partId);
-  params.append('numberQuestion', numberQuestion);
-  tagIds.forEach(tagId => {
-    params.append('tagIds', tagId);
+  params.append("partId", partId);
+  params.append("numberQuestion", numberQuestion);
+  tagIds.forEach((tagId) => {
+    params.append("tagIds", tagId);
   });
   return api.get(`/learner/mini-tests?${params.toString()}`);
 };
 
 export const submitMiniTest = (payload) => {
-  return api.post('/learner/mini-tests', payload);
+  return api.post("/learner/mini-tests", payload);
 };
 
 // === FLASHCARD APIs ===
 
 export const callFetchPublicFlashcards = (query) => {
-    return api.get(`/learner/flashcards/public?${query}`);
+  return api.get(`/learner/flashcards/public?${query}`);
 };
 
 export const callFetchMyFlashcards = (query) => {
-    return api.get(`/learner/flashcards/my?${query}`);
+  return api.get(`/learner/flashcards/my?${query}`);
 };
 
 export const callFetchFavouriteFlashcards = (query) => {
-    return api.get(`/learner/flashcards/favourite?${query}`);
+  return api.get(`/learner/flashcards/favourite?${query}`);
 };
 
 export const callFetchFlashcardDetail = (id) => {
-    return api.get(`/learner/flashcards/${id}`);
+  return api.get(`/learner/flashcards/${id}`);
 };
 
 export const callCreateFlashcard = (data) => {
-    return api.post('/learner/flashcards', data);
+  return api.post("/learner/flashcards", data);
 };
 
 export const callUpdateFlashcard = (id, data) => {
-    return api.put(`/learner/flashcards/${id}`, data);
+  return api.put(`/learner/flashcards/${id}`, data);
 };
 
 export const callDeleteFlashcard = (id) => {
-    return api.delete(`/learner/flashcards/${id}`);
+  return api.delete(`/learner/flashcards/${id}`);
 };
 
 export const callAddToFavourite = (id) => {
-    return api.post(`/learner/flashcards/favourite/${id}`);
+  return api.post(`/learner/flashcards/favourite/${id}`);
 };
 
 export const callRemoveFromFavourite = (id) => {
-    return api.delete(`/learner/flashcards/favourite/${id}`);
+  return api.delete(`/learner/flashcards/favourite/${id}`);
 };
-
