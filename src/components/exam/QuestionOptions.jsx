@@ -3,7 +3,7 @@ import OptionItem from './OptionItem';
 /**
  * Component hiển thị các options cho một câu hỏi
  */
-const QuestionOptions = ({ question, onChange, partNumber }) => {
+const QuestionOptions = ({ question, onChange, partNumber, disableDictionary = false }) => {
   const handleOptionChange = (optionIndex) => {
     const updatedQuestion = {
       ...question,
@@ -29,6 +29,7 @@ const QuestionOptions = ({ question, onChange, partNumber }) => {
             optionLabel={optionLabel}
             isSelected={isSelected}
             onChange={handleOptionChange}
+            disableDictionary={disableDictionary}
           />
         );
       })}

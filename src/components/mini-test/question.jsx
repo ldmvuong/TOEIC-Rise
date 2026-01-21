@@ -1,4 +1,5 @@
 import QuestionOptions from '../exam/QuestionOptions';
+import DictionaryText from '../shared/DictionaryText';
 
 const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNumber, selectedOptionIndex }) => {
     const tags = question.tags || [];
@@ -71,9 +72,9 @@ const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNum
                 </div>
                 {/* Question Content */}
                 {question.content && (
-                    <div className="flex-1 text-gray-800 text-base leading-relaxed">
+                    <DictionaryText className="flex-1 text-gray-800 text-base leading-relaxed">
                         {question.content}
-                    </div>
+                    </DictionaryText>
                 )}
             </div>
 

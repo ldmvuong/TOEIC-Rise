@@ -645,6 +645,7 @@ const DoTest = () => {
                                         onToggleFlag={handleToggleFlag}
                                         partName={currentPart?.partName || ''}
                                         isListeningPart={isListeningPart()}
+                                        disableDictionary={isFullTest}
                                     />
                                 </div>
                             </div>

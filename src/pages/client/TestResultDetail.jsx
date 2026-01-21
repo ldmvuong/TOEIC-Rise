@@ -8,6 +8,7 @@ import ImageDisplay from '../../components/exam/ImageDisplay';
 import PassageDisplay from '../../components/exam/PassageDisplay';
 import ChatQuestion from '../../components/client/modal/ChatQuestion';
 import ReportQuestion from '../../components/client/modal/ReportQuestion';
+import DictionaryText from '../../components/shared/DictionaryText';
 
 const TestResultDetail = () => {
     const { userTestId } = useParams();
@@ -144,9 +145,9 @@ const TestResultDetail = () => {
                             {question.position}
                         </div>
                         {question.content && (
-                            <div className="flex-1 text-gray-800 text-sm leading-relaxed">
+                            <DictionaryText className="flex-1 text-gray-800 text-sm leading-relaxed">
                                 {question.content}
-                            </div>
+                            </DictionaryText>
                         )}
                     </div>
                     <div className="flex items-center gap-2 self-end md:self-start">
@@ -210,13 +211,15 @@ const TestResultDetail = () => {
                                         {optionLetter}
                                     </div>
                                     {optionText && (
-                                        <span className={`text-sm leading-tight ${
+                                        <DictionaryText className={`text-sm leading-tight ${
                                             isCorrect
                                                 ? 'text-green-700 font-medium'
                                                 : isWrong
                                                 ? 'text-red-700 font-medium'
                                                 : 'text-gray-800'
-                                        }`}>{optionText}</span>
+                                        }`}>
+                                            {optionText}
+                                        </DictionaryText>
                                     )}
                                 </div>
                             );

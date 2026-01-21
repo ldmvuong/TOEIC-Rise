@@ -1,7 +1,9 @@
+import DictionaryText from '../shared/DictionaryText';
+
 /**
  * Component hiển thị một option (A, B, C, D) cho câu hỏi
  */
-const OptionItem = ({ option, optionIndex, optionLabel, isSelected, onChange }) => {
+const OptionItem = ({ option, optionIndex, optionLabel, isSelected, onChange, disableDictionary = false }) => {
   // Vẫn hiển thị option ngay cả khi nội dung là null (Part 1, Part 2)
   const optionText = option || '';
 
@@ -21,7 +23,9 @@ const OptionItem = ({ option, optionIndex, optionLabel, isSelected, onChange }) 
       />
       <span className="text-sm font-medium text-gray-700">{optionLabel}.</span>
       {optionText && (
-        <span className="text-sm text-gray-800">{optionText}</span>
+        <DictionaryText className="text-sm text-gray-800" disableDictionary={disableDictionary}>
+          {optionText}
+        </DictionaryText>
       )}
     </label>
   );

@@ -5,6 +5,7 @@ import ImageDisplay from './ImageDisplay';
 import PassageDisplay from './PassageDisplay';
 import QuestionContent from './QuestionContent';
 import QuestionOptions from './QuestionOptions';
+import DictionaryText from '../shared/DictionaryText';
 
 const QuestionGroup = ({ 
   questionGroup, 
@@ -13,7 +14,8 @@ const QuestionGroup = ({
   flaggedQuestions = [],
   onToggleFlag,
   partName = '',
-  isListeningPart = false
+  isListeningPart = false,
+  disableDictionary = false
 }) => {
   const { audioUrl, imageUrl, passage, questions = [] } = questionGroup || {};
 
@@ -41,7 +43,7 @@ const QuestionGroup = ({
             {/* Passage */}
             {passage && (
               <div className="mb-6">
-                <PassageDisplay passage={passage} />
+                <PassageDisplay passage={passage} disableDictionary={disableDictionary} />
               </div>
             )}
 
@@ -82,9 +84,9 @@ const QuestionGroup = ({
                       )}
                       {/* Content của câu hỏi - nằm cùng hàng */}
                       {question.content && (
-                        <div className="flex-1 text-gray-800 text-base leading-relaxed">
+                        <DictionaryText className="flex-1 text-gray-800 text-base leading-relaxed" disableDictionary={disableDictionary}>
                           {question.content}
-                        </div>
+                        </DictionaryText>
                       )}
                     </div>
                     {/* Options */}
@@ -92,6 +94,7 @@ const QuestionGroup = ({
                       question={question}
                       onChange={(updatedQuestion) => handleQuestionChange(updatedQuestion, index)}
                       partNumber={partNumber}
+                      disableDictionary={disableDictionary}
                     />
                   </div>
                 );
@@ -115,7 +118,7 @@ const QuestionGroup = ({
           {/* Passage (cho Part 5) */}
           {!isListeningPart && passage && (
             <div className="mb-4">
-              <PassageDisplay passage={passage} />
+              <PassageDisplay passage={passage} disableDictionary={disableDictionary} />
             </div>
           )}
 
@@ -132,6 +135,7 @@ const QuestionGroup = ({
                   onToggleFlag={() => onToggleFlag && onToggleFlag(question.id)}
                   partNumber={partNumber}
                   isListeningPart={isListeningPart}
+                  disableDictionary={disableDictionary}
                 />
               );
             })}
