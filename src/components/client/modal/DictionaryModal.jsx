@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Modal, Spin, message } from 'antd';
 
+const API_BASE_URL = 'https://dict.minhqnd.com';
+
 /**
  * Modal component to display dictionary definition for a word
  * @param {boolean} open - Whether the modal is open
@@ -33,7 +35,7 @@ const DictionaryModal = ({ open, onClose, word }) => {
 
         try {
             const response = await fetch(
-                `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase().trim())}`
+                `${API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(word.toLowerCase().trim())}`
             );
 
             if (!response.ok) {
@@ -47,19 +49,18 @@ const DictionaryModal = ({ open, onClose, word }) => {
 
             const data = await response.json();
             
-            // API returns an array, get the first entry
-            if (Array.isArray(data) && data.length > 0) {
-                setDictionaryData(data[0]);
+            if (data.exists && data.results && data.results.length > 0) {
+                setDictionaryData(data);
                 
-                // Find audio URL from phonetics array
-                const phoneticsWithAudio = data[0].phonetics?.find(p => p.audio);
-                if (phoneticsWithAudio?.audio) {
+                // Get audio URL from the first result
+                const firstResult = data.results[0];
+                if (firstResult.audio) {
                     // Handle relative URLs
-                    const audio = phoneticsWithAudio.audio;
-                    setAudioUrl(audio.startsWith('http') ? audio : `https:${audio}`);
+                    const audio = firstResult.audio;
+                    setAudioUrl(audio.startsWith('http') ? audio : `${API_BASE_URL}${audio}`);
                 }
             } else {
-                setError('No dictionary data found');
+                setError('Word not found in dictionary');
             }
         } catch (err) {
             console.error('Error fetching dictionary data:', err);
@@ -110,7 +111,7 @@ const DictionaryModal = ({ open, onClose, word }) => {
                     </div>
                 ) : dictionaryData ? (
                     <div>
-                        {/* Word and Phonetic */}
+                        {/* Word and Audio */}
                         <div className="mb-6">
                             <div className="flex items-center gap-3 mb-2">
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -129,51 +130,133 @@ const DictionaryModal = ({ open, onClose, word }) => {
                                 )}
                                 <audio ref={audioRef} src={audioUrl} preload="none" />
                             </div>
-                            {dictionaryData.phonetic && (
-                                <div className="text-gray-600 text-lg">
-                                    {dictionaryData.phonetic}
-                                </div>
-                            )}
                         </div>
 
-                        {/* Meanings */}
-                        {dictionaryData.meanings && dictionaryData.meanings.length > 0 && (
+                        {/* Results */}
+                        {dictionaryData.results && dictionaryData.results.length > 0 && (
                             <div className="space-y-6">
-                                {dictionaryData.meanings.map((meaning, index) => (
-                                    <div key={index} className="border-l-4 border-blue-500 pl-4">
-                                        <div className="text-sm font-semibold text-blue-600 mb-3 uppercase">
-                                            {meaning.partOfSpeech}
-                                        </div>
-                                        <div className="space-y-3">
-                                            {meaning.definitions && meaning.definitions.length > 0 && (
-                                                <ul className="list-none space-y-3">
-                                                    {meaning.definitions.map((def, defIndex) => (
-                                                        <li key={defIndex} className="text-gray-800">
-                                                            <div className="mb-1">
-                                                                <span className="text-gray-700">{def.definition}</span>
+                                {dictionaryData.results.map((result, resultIndex) => (
+                                    <div key={resultIndex}>
+                                        {/* Language and Pronunciations */}
+                                        {result.lang_name && (
+                                            <div className="mb-4">
+                                                <div className="text-sm font-semibold text-blue-600 mb-2">
+                                                    {result.lang_name}
+                                                </div>
+                                                {result.pronunciations && result.pronunciations.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        {result.pronunciations.map((pron, pronIndex) => (
+                                                            <span 
+                                                                key={pronIndex}
+                                                                className="text-gray-600 text-sm bg-gray-50 px-2 py-1 rounded"
+                                                            >
+                                                                /{pron.ipa}/
+                                                                {pron.region && (
+                                                                    <span className="text-gray-400 text-xs ml-1">
+                                                                        ({pron.region})
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Meanings grouped by part of speech */}
+                                        {result.meanings && result.meanings.length > 0 && (
+                                            <div className="space-y-6">
+                                                {(() => {
+                                                    // Group meanings by pos
+                                                    const groupedByPos = result.meanings.reduce((acc, meaning) => {
+                                                        const pos = meaning.pos || 'Khác';
+                                                        if (!acc[pos]) {
+                                                            acc[pos] = [];
+                                                        }
+                                                        acc[pos].push(meaning);
+                                                        return acc;
+                                                    }, {});
+
+                                                    return Object.entries(groupedByPos).map(([pos, meanings]) => (
+                                                        <div key={pos} className="border-l-4 border-blue-500 pl-4">
+                                                            <div className="text-sm font-semibold text-blue-600 mb-3">
+                                                                {pos}
                                                             </div>
-                                                            {def.example && (
-                                                                <div className="text-gray-500 text-sm italic mt-1 pl-4 border-l-2 border-gray-200">
-                                                                    "{def.example}"
+                                                            <ul className="list-none space-y-3">
+                                                                {meanings.map((meaning, meaningIndex) => (
+                                                                    <li key={meaningIndex} className="text-gray-800">
+                                                                        <div className="mb-1">
+                                                                            <span className="text-gray-700">{meaning.definition}</span>
+                                                                            {meaning.source && (
+                                                                                <span className="text-gray-400 text-xs ml-2">
+                                                                                    ({meaning.source})
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {meaning.example && (
+                                                                            <div className="text-gray-500 text-sm italic mt-1 pl-4 border-l-2 border-gray-200">
+                                                                                "{meaning.example}"
+                                                                            </div>
+                                                                        )}
+                                                                        {meaning.links && meaning.links.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                                {meaning.links.map((link, linkIndex) => (
+                                                                                    <span
+                                                                                        key={linkIndex}
+                                                                                        className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded"
+                                                                                    >
+                                                                                        {link}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    ));
+                                                })()}
+                                            </div>
+                                        )}
+
+                                        {/* Relations (Synonyms/Antonyms) */}
+                                        {result.relations && result.relations.length > 0 && (
+                                            <div className="mt-6 pt-6 border-t border-gray-200">
+                                                <div className="space-y-3">
+                                                    {(() => {
+                                                        // Group relations by relation_type
+                                                        const groupedByType = result.relations.reduce((acc, relation) => {
+                                                            const type = relation.relation_type || 'Khác';
+                                                            if (!acc[type]) {
+                                                                acc[type] = [];
+                                                            }
+                                                            acc[type].push(relation.related_word);
+                                                            return acc;
+                                                        }, {});
+
+                                                        return Object.entries(groupedByType).map(([type, words]) => (
+                                                            <div key={type}>
+                                                                <div className="text-sm font-semibold text-gray-700 mb-2">
+                                                                    {type}:
                                                                 </div>
-                                                            )}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {words.map((word, wordIndex) => (
+                                                                        <span
+                                                                            key={wordIndex}
+                                                                            className="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
+                                                                        >
+                                                                            {word}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ));
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
-                            </div>
-                        )}
-
-                        {/* Origin */}
-                        {dictionaryData.origin && (
-                            <div className="mt-6 pt-6 border-t border-gray-200">
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-semibold">Origin: </span>
-                                    {dictionaryData.origin}
-                                </div>
                             </div>
                         )}
                     </div>
