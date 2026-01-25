@@ -34,8 +34,13 @@ const DictionaryModal = ({ open, onClose, word }) => {
         setError(null);
 
         try {
+            const params = new URLSearchParams({
+                word: word.toLowerCase().trim(),
+                lang : 'en',
+            });
+            
             const response = await fetch(
-                `${API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(word.toLowerCase().trim())}`
+                `${API_BASE_URL}/api/v1/lookup?${params.toString()}`
             );
 
             if (!response.ok) {
@@ -150,7 +155,7 @@ const DictionaryModal = ({ open, onClose, word }) => {
                                                                 key={pronIndex}
                                                                 className="text-gray-600 text-sm bg-gray-50 px-2 py-1 rounded"
                                                             >
-                                                                /{pron.ipa}/
+                                                                {pron.ipa}
                                                                 {pron.region && (
                                                                     <span className="text-gray-400 text-xs ml-1">
                                                                         ({pron.region})
