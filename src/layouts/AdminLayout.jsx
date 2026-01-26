@@ -15,6 +15,7 @@ import {
     HomeOutlined,
     FileTextOutlined,
     BarChartOutlined,
+    TagOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
 ];
 
 export default function AdminLayout() {
