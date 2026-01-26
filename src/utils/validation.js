@@ -6,7 +6,7 @@ export const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[.@#$%^&+=
 export const TEST_SET_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/;
 export const TEST_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/; // same as backend Constant.TEST_NAME_PATTERN
 export const FULLNAME_REGEX = /^[\p{L} ]+$/u; // Matches backend PROFILE_FULLNAME_PATTERN = "^[\\p{L} ]+$"
-
+export const TAG_NAME_REGEX = /^[\p{L}0-9 ().,\[\]':-]{1,50}$/u;
 // Avatar validation constants
 export const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB - Matches backend AVATAR_MAX_SIZE
 export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
@@ -23,6 +23,7 @@ export const isStrongPassword = (password) => PASSWORD_REGEX.test(String(passwor
 export const isValidTestSetName = (name) => TEST_SET_NAME_REGEX.test(String(name || ''));
 export const isValidTestName = (name) => TEST_NAME_REGEX.test(String(name || ''));
 export const isValidFullName = (name) => FULLNAME_REGEX.test(String(name || ''));
+export const isValidTagName = (name) => TAG_NAME_REGEX.test(String(name || ''));
 
 // Avatar validators
 export const isValidImageExtension = (filename) => {

@@ -1,9 +1,11 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useAppSelector } from "@/redux/hooks";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import { getTagDashboard } from "@/api/api";
-import { Tag } from "antd";
+import { Tag, Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import ModalTag from "@/components/admin/tag/create.tag.jsx";
 
 const TagsPage = () => {
   const tableRef = useRef();
@@ -14,6 +16,7 @@ const TagsPage = () => {
   const [tags, setTags] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [meta, setMeta] = React.useState({ page: 0, pageSize: 10, total: 0 });
+  const [openModal, setOpenModal] = useState(false);
 
   const columns = [
     {
@@ -109,6 +112,12 @@ const TagsPage = () => {
     return temp;
   };
 
+  const reloadTable = () => {
+    if (tableRef.current) {
+      tableRef.current.reload();
+    }
+  };
+
   return (
     <div>
       <DataTable
@@ -152,6 +161,21 @@ const TagsPage = () => {
         }}
         scroll={{ x: true }}
         rowSelection={false}
+        toolBarRender={() => [
+          <Button
+            key="add"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setOpenModal(true)}
+          >
+            Create New Tag
+          </Button>,
+        ]}
+      />
+      <ModalTag
+        openModal={openModal}
+        setOpenModal={setOpenModal}
+        reloadTable={reloadTable}
       />
     </div>
   );

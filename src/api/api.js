@@ -121,6 +121,7 @@ export const changeUserStatus = (id) => api.patch(`/admin/users/${id}`);
 // Staff Tags
 export const getAllTags = (query) => api.get(`/staff/tags?${query}`);
 export const getTagDashboard = (query) => api.get(`/staff/tags/dashboard?${query}`);
+export const createTag = (payload) => api.post(`/staff/tags`, payload);
 
 // Admin Staff Report
 
