@@ -3,9 +3,10 @@ import { useAppSelector } from "@/redux/hooks";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import { getTagDashboard } from "@/api/api";
-import { Tag, Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Tag, Button, Space } from "antd";
+import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import ModalTag from "@/components/admin/tag/create.tag.jsx";
+import ModalTagUpdate from "@/components/admin/tag/update.tag.jsx";
 
 const TagsPage = () => {
   const tableRef = useRef();
@@ -17,6 +18,8 @@ const TagsPage = () => {
   const [loading, setLoading] = React.useState(false);
   const [meta, setMeta] = React.useState({ page: 0, pageSize: 10, total: 0 });
   const [openModal, setOpenModal] = useState(false);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [selectedTag, setSelectedTag] = useState(null);
 
   const columns = [
     {
@@ -67,6 +70,27 @@ const TagsPage = () => {
         const color = rate >= 70 ? "green" : rate >= 50 ? "orange" : "red";
         return <Tag color={color}>{percentage}%</Tag>;
       },
+    },
+    {
+      title: "Action",
+      key: "action",
+      width: 100,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setSelectedTag(record);
+              setOpenUpdateModal(true);
+            }}
+          >
+            Edit
+          </Button>
+        </Space>
+      ),
     },
   ];
 
@@ -176,6 +200,12 @@ const TagsPage = () => {
         openModal={openModal}
         setOpenModal={setOpenModal}
         reloadTable={reloadTable}
+      />
+      <ModalTagUpdate
+        openModal={openUpdateModal}
+        setOpenModal={setOpenUpdateModal}
+        reloadTable={reloadTable}
+        tagData={selectedTag}
       />
     </div>
   );

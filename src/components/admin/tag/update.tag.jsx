@@ -1,31 +1,43 @@
 import { ModalForm, ProFormText } from "@ant-design/pro-components";
 import { Form, message, notification } from "antd";
-import { createTag } from "@/api/api";
+import { useEffect } from "react";
+import { updateTag } from "@/api/api";
 import { TAG_NAME_REGEX } from "@/utils/validation";
 import { ConfigProvider } from 'antd';
 import enUS from 'antd/es/locale/en_US';
 
-const ModalTag = (props) => {
-  const { openModal, setOpenModal, reloadTable } = props;
+const ModalTagUpdate = (props) => {
+  const { openModal, setOpenModal, reloadTable, tagData } = props;
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    if (openModal && tagData) {
+      form.setFieldsValue({
+        name: tagData.name || "",
+      });
+    } else if (!openModal) {
+      form.resetFields();
+    }
+  }, [openModal, tagData, form]);
+
   const submitTag = async (valuesForm) => {
+    if (!tagData?.id) return;
+
     const { name } = valuesForm;
 
     const payload = {
       name: name.trim(),
     };
 
-
     try {
-      await createTag(payload);
-      message.success("Tag created successfully");
+      await updateTag(tagData.id, payload);
+      message.success("Tag updated successfully");
       handleReset();
       reloadTable && reloadTable();
     } catch (e) {
       const errorMessage = e?.response?.data?.message || e?.message || 'Unknown error!';
       notification.error({ 
-        message: "Failed to create tag", 
+        message: "Failed to update tag", 
         description: errorMessage
       });
     }
@@ -41,7 +53,7 @@ const ModalTag = (props) => {
       {openModal && (
         <ConfigProvider locale={enUS}>
           <ModalForm
-            title="Create New Tag"
+            title="Update Tag"
             open={openModal}
             modalProps={{
               onCancel: handleReset,
@@ -57,7 +69,7 @@ const ModalTag = (props) => {
             onFinish={submitTag}
             submitter={{
               searchConfig: {
-                submitText: "Create",
+                submitText: "Update",
                 resetText: "Cancel",
               },
             }}
@@ -70,12 +82,12 @@ const ModalTag = (props) => {
                 { whitespace: true, message: 'Tag name cannot be blank' },
                 {
                   pattern: TAG_NAME_REGEX,
-                  message: 'Tag name can only contain letters, numbers, spaces, and characters: ().,\'[]:- (1-10 characters)'
+                  message: 'Tag name can only contain letters, numbers, spaces, and characters: ().,\'[]:- (1-100 characters)'
                 },
               ]}
               placeholder="Enter tag name"
               fieldProps={{
-                id: 'tag_name',
+                id: 'tag_name_update',
                 maxLength: 100,
                 showCount: true
               }}
@@ -87,4 +99,4 @@ const ModalTag = (props) => {
   );
 };
 
-export default ModalTag;
+export default ModalTagUpdate;
