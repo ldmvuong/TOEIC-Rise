@@ -6,6 +6,7 @@ import parse from 'html-react-parser';
 import AudioPlayerUI from './AudioPlayerUI';
 import ImageDisplay from '../../exam/ImageDisplay';
 import PassageDisplay from '../../exam/PassageDisplay';
+import DictionaryText from '../../shared/DictionaryText';
 
 /**
  * Modal component to display detailed answer for a question
@@ -221,9 +222,9 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         </button>
                         {showTranscript && (
                             <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div className="text-gray-800 text-sm leading-relaxed">
+                                <DictionaryText className="text-gray-800 text-sm leading-relaxed">
                                     {parse(transcript)}
-                                </div>
+                                </DictionaryText>
                             </div>
                         )}
                     </div>
@@ -238,9 +239,9 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         </div>
                         {/* Question Content */}
                         {questionContent && (
-                            <div className="flex-1 text-gray-800 text-sm leading-relaxed">
+                            <DictionaryText className="flex-1 text-gray-800 text-sm leading-relaxed">
                                 {questionContent}
-                            </div>
+                            </DictionaryText>
                         )}
                     </div>
 
@@ -282,13 +283,15 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                             {optionLetter}
                                         </div>
                                         {optionText && (
-                                            <span className={`text-sm leading-tight ${
+                                            <DictionaryText className={`text-sm leading-tight ${
                                                 isCorrect
                                                     ? 'text-green-700 font-medium'
                                                     : isWrong
                                                     ? 'text-red-700 font-medium'
                                                     : 'text-gray-800'
-                                            }`}>{optionText}</span>
+                                            }`}>
+                                                {optionText}
+                                            </DictionaryText>
                                         )}
                                     </div>
                                 );

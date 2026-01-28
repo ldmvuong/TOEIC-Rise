@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import parse from 'html-react-parser';
 import useDictionary from '../../hooks/useDictionary';
 import DictionaryModal from '../client/modal/DictionaryModal';
 
 /**
- * Component hiển thị passage (đoạn văn)
+ * Reusable component that wraps text content with dictionary functionality
+ * @param {string} children - The text content to display
+ * @param {string} className - Additional CSS classes
+ * @param {object} style - Inline styles
+ * @param {boolean} disableDictionary - If true, disables dictionary functionality
  */
-const PassageDisplay = ({ passage, disableDictionary = false }) => {
+const DictionaryText = ({ children, className = '', style = {}, disableDictionary = false }) => {
   const [isDictionaryModalOpen, setIsDictionaryModalOpen] = useState(false);
   const { selectedWord, iconPosition, showIcon, containerRef, handleDoubleClick, hideIcon } = useDictionary();
-
-  if (!passage) return null;
 
   const handleDictionaryIconClick = () => {
     if (selectedWord) {
@@ -19,28 +20,26 @@ const PassageDisplay = ({ passage, disableDictionary = false }) => {
     }
   };
 
-  // If dictionary is disabled, render without dictionary functionality
+  if (!children) return null;
+
+  // If dictionary is disabled, just render children without dictionary functionality
   if (disableDictionary) {
     return (
-      <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-        <div className="text-gray-800 text-sm leading-relaxed">
-          {parse(passage)}
-        </div>
+      <div className={className} style={style}>
+        {children}
       </div>
     );
   }
 
   return (
     <>
-      <div 
+      <div
         ref={containerRef}
-        className="mb-6 p-4 bg-white rounded-lg border border-gray-200 relative"
+        className={`relative ${className}`}
+        style={{ userSelect: 'text', ...style }}
         onDoubleClick={handleDoubleClick}
-        style={{ userSelect: 'text' }}
       >
-        <div className="text-gray-800 text-sm leading-relaxed">
-          {parse(passage)}
-        </div>
+        {children}
         
         {/* Dictionary Icon */}
         {showIcon && (
@@ -71,5 +70,4 @@ const PassageDisplay = ({ passage, disableDictionary = false }) => {
   );
 };
 
-export default PassageDisplay;
-
+export default DictionaryText;

@@ -4,6 +4,7 @@ import parse from 'html-react-parser';
 import AudioPlayerUI from './AudioPlayerUI';
 import ImageDisplay from '../../exam/ImageDisplay';
 import PassageDisplay from '../../exam/PassageDisplay';
+import DictionaryText from '../../shared/DictionaryText';
 import { reportQuestionIssue } from '../../../api/api';
 
 const { TextArea } = Input;
@@ -222,9 +223,9 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                 </button>
                                 {showTranscript && (
                                     <div className="mt-2 p-4 bg-white rounded-lg border border-gray-200">
-                                        <div className="text-gray-800 text-sm leading-relaxed">
+                                        <DictionaryText className="text-gray-800 text-sm leading-relaxed">
                                             {parse(transcript)}
-                                        </div>
+                                        </DictionaryText>
                                     </div>
                                 )}
                             </div>
@@ -239,9 +240,9 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                 </div>
                                 {/* Question Content */}
                                 {questionContent && (
-                                    <div className="flex-1 text-gray-800 text-sm leading-relaxed">
+                                    <DictionaryText className="flex-1 text-gray-800 text-sm leading-relaxed">
                                         {questionContent}
-                                    </div>
+                                    </DictionaryText>
                                 )}
                             </div>
 
@@ -283,7 +284,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                                     {optionLetter}
                                                 </div>
                                                 {optionText && (
-                                                    <span className={`text-sm leading-tight ${
+                                                    <DictionaryText className={`text-sm leading-tight ${
                                                         isCorrect
                                                             ? 'text-green-700 font-medium'
                                                             : isWrong
@@ -291,7 +292,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                                             : 'text-gray-800'
                                                     }`}>
                                                         {optionText}
-                                                    </span>
+                                                    </DictionaryText>
                                                 )}
                                             </div>
                                         );
