@@ -205,6 +205,19 @@ const MiniTestResult = () => {
                                                     id={`result-question-${q.id}`}
                                                     className="rounded-lg border border-gray-200 bg-white p-4 space-y-3 scroll-mt-4"
                                                 >
+                                                    {/* Tags of question */}
+                                                    {(q.tags || []).length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                            {q.tags.map((tag, tagIdx) => (
+                                                                <span
+                                                                    key={tagIdx}
+                                                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                                                                >
+                                                                    {tag}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                     {/* Question header: index + position */}
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex items-center gap-2">
