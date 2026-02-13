@@ -120,9 +120,11 @@ export const changeUserStatus = (id) => api.patch(`/admin/users/${id}`);
 
 // Staff Tags
 export const getAllTags = (query) => api.get(`/staff/tags?${query}`);
-export const getTagDashboard = (query) => api.get(`/staff/tags/dashboard?${query}`);
+export const getTagDashboard = (query) =>
+  api.get(`/staff/tags/dashboard?${query}`);
 export const createTag = (payload) => api.post(`/staff/tags`, payload);
-export const updateTag = (tagId, payload) => api.put(`/staff/tags/${tagId}`, payload);
+export const updateTag = (tagId, payload) =>
+  api.put(`/staff/tags/${tagId}`, payload);
 
 // Admin Staff Report
 
@@ -136,6 +138,102 @@ export const getReportById = (id) => api.get(`/staff/question-reports/${id}`);
 
 export const updateQuestionReport = (id, payload) =>
   api.put(`/staff/question-reports/${id}`, payload);
+
+export const generateExplanationStream = (
+  payload,
+  { onChunk, onDone, onError },
+) => {
+  const backendUrl =
+    api?.defaults?.baseURL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    window.location.origin;
+  const token = localStorage.getItem("access_token");
+
+  const formData = new FormData();
+  formData.append("passage", payload.passage ?? "");
+  formData.append("transcript", payload.transcript ?? "");
+  formData.append("content", payload.content ?? "");
+  if (Array.isArray(payload.options)) {
+    payload.options.forEach((option, index) => {
+      formData.append(`options[${index}]`, option);
+    });
+  }
+  formData.append("correctOption", payload.correctOption);
+
+  fetch(`${backendUrl}/staff/chatbot/generate-explanation`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: "text/event-stream, application/json",
+    },
+    body: formData,
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        onError?.(
+          new Error(response.statusText || "Generate explanation failed"),
+        );
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      const processBuffer = () => {
+        const findBoundary = () => {
+          const doubleNewLine = buffer.indexOf("\n\n");
+          const doubleCarriage = buffer.indexOf("\r\n\r\n");
+          if (doubleNewLine === -1 && doubleCarriage === -1) return null;
+          if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
+          if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
+          return doubleNewLine < doubleCarriage
+            ? { index: doubleNewLine, length: 2 }
+            : { index: doubleCarriage, length: 4 };
+        };
+        let boundary;
+        while ((boundary = findBoundary()) !== null) {
+          const rawEvent = buffer.slice(0, boundary.index).trim();
+          buffer = buffer.slice(boundary.index + boundary.length);
+          if (!rawEvent.startsWith("data:")) continue;
+          const payloadStr = rawEvent.replace(/^data:\s*/, "");
+          if (!payloadStr || payloadStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(payloadStr);
+            if (parsed.content) {
+              onChunk?.(parsed.content);
+            }
+          } catch (err) {
+            console.error("Parse AI stream chunk:", err);
+          }
+        }
+      };
+
+      try {
+        while (true) {
+          let readResult;
+          try {
+            readResult = await reader.read();
+          } catch (readError) {
+            console.warn("Stream closed unexpectedly:", readError);
+            break;
+          }
+          const { value, done } = readResult;
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          processBuffer();
+        }
+        buffer += decoder.decode();
+        processBuffer();
+      } finally {
+        reader.releaseLock();
+      }
+      onDone?.();
+    })
+    .catch((err) => {
+      onError?.(err);
+    });
+};
 
 //Admin Staff Dashboard
 export const getDashboardStatistics = () =>

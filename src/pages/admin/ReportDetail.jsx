@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/redux/hooks";
-import { getReportById, updateQuestionReport, updateQuestionGroup, getQuestionGroup } from "@/api/api";
+import { getReportById, updateQuestionReport, updateQuestionGroup, getQuestionGroup, generateExplanationStream } from "@/api/api";
 import api from "@/api/axios-customize";
-import { Spin, Tag, Button, Descriptions, Alert, Input, Radio, Upload } from "antd";
+import { Spin, Tag, Button, Descriptions, Alert, Input, Radio, Upload, Modal, message } from "antd";
 import { ArrowLeftOutlined, EditOutlined, SaveOutlined, CloseOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
 import parse from "html-react-parser";
+import { marked } from "marked";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import TagsSelector from "@/components/admin/TagsSelector";
@@ -91,6 +92,11 @@ const ReportDetailPage = () => {
     const [qCorrect, setQCorrect] = useState("A");
     const [qExplanation, setQExplanation] = useState("");
     const [questionTagsState, setQuestionTagsState] = useState([]);
+
+    // Generate explanation (staff/chatbot)
+    const [generateExplanationModalOpen, setGenerateExplanationModalOpen] = useState(false);
+    const [generatingExplanation, setGeneratingExplanation] = useState(false);
+    const [generatedExplanationText, setGeneratedExplanationText] = useState("");
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -714,6 +720,48 @@ const ReportDetailPage = () => {
             return preparedQuestionUpdate.tags.split("; ").filter(t => t.trim());
         }
         return questionTags;
+    };
+
+    const handleGenerateExplanation = () => {
+        let correctOpt = isEditingQuestion ? qCorrect : getDisplayQuestionCorrectOption();
+        const opts = isEditingQuestion ? qOptions : getDisplayQuestionOptions();
+        const optionsList = Array.isArray(opts) ? opts.map((o) => (o != null ? String(o) : "")) : [];
+        const content = isEditingQuestion ? (qContent ?? "") : (getDisplayQuestionContent() ?? "");
+        const payload = {
+            passage: groupPassage ?? report?.questionGroupPassage ?? "",
+            transcript: groupTranscript ?? report?.questionGroupTranscript ?? "",
+            content,
+            options: optionsList,
+            correctOption: correctOpt.trim(),
+        };
+        setGeneratedExplanationText("");
+        setGenerateExplanationModalOpen(true);
+        setGeneratingExplanation(true);
+        generateExplanationStream(payload, {
+            onChunk: (text) => setGeneratedExplanationText((prev) => prev + text),
+            onDone: () => setGeneratingExplanation(false),
+            onError: (err) => {
+                setGeneratingExplanation(false);
+                message.error(err?.message || "Failed to generate explanation");
+            },
+        });
+    };
+
+    const handleUseGeneratedExplanation = () => {
+        setQExplanation(generatedExplanationText);
+        setPreparedQuestionUpdate({
+            id: report?.questionId,
+            questionGroupId: report?.questionGroupId,
+            content: getDisplayQuestionContent(),
+            options: getDisplayQuestionOptions(),
+            correctOption: getDisplayQuestionCorrectOption(),
+            explanation: generatedExplanationText,
+            tags: (getDisplayQuestionTags() || []).join("; "),
+        });
+        setQuestionSaved(true);
+        setGenerateExplanationModalOpen(false);
+        setGeneratedExplanationText("");
+        message.success("Explanation applied. Save the report to persist.");
     };
 
     return (
@@ -1466,8 +1514,19 @@ const ReportDetailPage = () => {
 
                                 {/* Explanation */}
                                 <div>
-                                    <div className="mb-1 text-sm font-medium text-gray-700">
-                                        Giải thích <span className="text-red-500">*</span>
+                                    <div className="mb-1 flex items-center justify-between gap-2">
+                                        <span className="text-sm font-medium text-gray-700">
+                                            Giải thích <span className="text-red-500">*</span>
+                                        </span>
+                                        <Button
+                                            size="small"
+                                            type="default"
+                                            onClick={handleGenerateExplanation}
+                                            loading={generatingExplanation}
+                                            disabled={generatingExplanation}
+                                        >
+                                            Generate explanation
+                                        </Button>
                                     </div>
                                     <Input.TextArea
                                         rows={8}
@@ -1495,6 +1554,54 @@ const ReportDetailPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Generate explanation modal (staff/chatbot) */}
+            <Modal
+                title="Generate explanation"
+                open={generateExplanationModalOpen}
+                onCancel={() => {
+                    if (!generatingExplanation) {
+                        setGenerateExplanationModalOpen(false);
+                        setGeneratedExplanationText("");
+                    }
+                }}
+                footer={[
+                    <Button
+                        key="cancel"
+                        onClick={() => {
+                            setGenerateExplanationModalOpen(false);
+                            setGeneratedExplanationText("");
+                        }}
+                        disabled={generatingExplanation}
+                    >
+                        Cancel
+                    </Button>,
+                    <Button
+                        key="use"
+                        type="primary"
+                        onClick={handleUseGeneratedExplanation}
+                        disabled={generatingExplanation || !generatedExplanationText.trim()}
+                    >
+                        Use this explanation
+                    </Button>,
+                ]}
+                width={640}
+                destroyOnClose
+            >
+                <div className="min-h-[200px]">
+                    {generatingExplanation && !generatedExplanationText ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Spin size="small" />
+                            <span>Generating...</span>
+                        </div>
+                    ) : null}
+                    {generatedExplanationText ? (
+                        <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-800 max-h-[60vh] overflow-y-auto prose prose-sm max-w-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:mt-0.5 [&_strong]:font-semibold [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:rounded">
+                            {parse(marked.parse(generatedExplanationText, { breaks: true, gfm: true }) ?? "")}
+                        </div>
+                    ) : null}
+                </div>
+            </Modal>
         </div>
     );
 };
