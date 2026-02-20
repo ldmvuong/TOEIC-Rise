@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Spin, message, Tag, Button, Form, Upload, Radio, Input, Modal } from "antd";
 import { ArrowLeftOutlined, EditOutlined, SaveOutlined, CloseOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
-import { getQuestionGroup, updateQuestionGroup, updateQuestion } from "@/api/api";
+import { getQuestionGroup, updateQuestionGroup, updateQuestion, generateExplanationStream } from "@/api/api";
 import parse from "html-react-parser";
+import { marked } from "marked";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import TagsSelector from "@/components/admin/TagsSelector";
@@ -46,6 +47,10 @@ const QuestionGroupPage = () => {
     const [questionCorrectOption, setQuestionCorrectOption] = useState("A");
     const [questionExplanation, setQuestionExplanation] = useState("");
     const [questionTags, setQuestionTags] = useState([]); // Array of {id, name}
+    // Generate explanation (staff chatbot)
+    const [generateExplanationModalOpen, setGenerateExplanationModalOpen] = useState(false);
+    const [generatingExplanation, setGeneratingExplanation] = useState(false);
+    const [generatedExplanationText, setGeneratedExplanationText] = useState("");
 
     useEffect(() => {
         // Get partNumber from location state
@@ -370,6 +375,35 @@ const QuestionGroupPage = () => {
             );
             setSavingQuestion(false);
         }
+    };
+
+    const handleGenerateExplanation = () => {
+        const optionsList = Array.isArray(questionOptions) ? questionOptions.map((o) => (o != null ? String(o) : "")) : [];
+        const payload = {
+            passage: passage ?? "",
+            transcript: transcript ?? "",
+            content: questionContent ?? "",
+            options: optionsList,
+            correctOption: questionCorrectOption,
+        };
+        setGeneratedExplanationText("");
+        setGenerateExplanationModalOpen(true);
+        setGeneratingExplanation(true);
+        generateExplanationStream(payload, {
+            onChunk: (text) => setGeneratedExplanationText((prev) => prev + text),
+            onDone: () => setGeneratingExplanation(false),
+            onError: (err) => {
+                setGeneratingExplanation(false);
+                message.error(err?.message || "Không thể tạo giải thích");
+            },
+        });
+    };
+
+    const handleUseGeneratedExplanation = () => {
+        setQuestionExplanation(generatedExplanationText);
+        setGenerateExplanationModalOpen(false);
+        setGeneratedExplanationText("");
+        message.success("Đã áp dụng giải thích. Nhấn Lưu để cập nhật câu hỏi.");
     };
 
     const editorConfiguration = {
@@ -1006,8 +1040,19 @@ const QuestionGroupPage = () => {
 
                         {/* Explanation */}
                         <div>
-                            <div className="mb-1 text-sm font-medium text-gray-700">
-                                Giải thích <span className="text-red-500">*</span>
+                            <div className="mb-1 flex items-center justify-between gap-2">
+                                <span className="text-sm font-medium text-gray-700">
+                                    Giải thích <span className="text-red-500">*</span>
+                                </span>
+                                <Button
+                                    size="small"
+                                    type="default"
+                                    onClick={handleGenerateExplanation}
+                                    loading={generatingExplanation}
+                                    disabled={generatingExplanation}
+                                >
+                                    Generate explanation
+                                </Button>
                             </div>
                             <Input.TextArea
                                 rows={6}
@@ -1018,6 +1063,54 @@ const QuestionGroupPage = () => {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Generate explanation modal */}
+            <Modal
+                title="Generate explanation"
+                open={generateExplanationModalOpen}
+                onCancel={() => {
+                    if (!generatingExplanation) {
+                        setGenerateExplanationModalOpen(false);
+                        setGeneratedExplanationText("");
+                    }
+                }}
+                footer={[
+                    <Button
+                        key="cancel"
+                        onClick={() => {
+                            setGenerateExplanationModalOpen(false);
+                            setGeneratedExplanationText("");
+                        }}
+                        disabled={generatingExplanation}
+                    >
+                        Cancel
+                    </Button>,
+                    <Button
+                        key="use"
+                        type="primary"
+                        onClick={handleUseGeneratedExplanation}
+                        disabled={generatingExplanation || !generatedExplanationText.trim()}
+                    >
+                        Use this explanation
+                    </Button>,
+                ]}
+                width={640}
+                destroyOnClose
+            >
+                <div className="min-h-[200px]">
+                    {generatingExplanation && !generatedExplanationText ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Spin size="small" />
+                            <span>Generating...</span>
+                        </div>
+                    ) : null}
+                    {generatedExplanationText ? (
+                        <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-800 max-h-[60vh] overflow-y-auto prose prose-sm max-w-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:mt-0.5 [&_strong]:font-semibold [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:rounded">
+                            {parse(marked.parse(generatedExplanationText, { breaks: true, gfm: true }) ?? "")}
+                        </div>
+                    ) : null}
+                </div>
             </Modal>
         </>
     );
