@@ -35,6 +35,10 @@ import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
 import FlashcardCreatePage from "./pages/client/FlashcardCreatePage.jsx";
 import FlashcardViewPage from "./pages/client/FlashcardViewPage.jsx";
 import FlashcardEditPage from "./pages/client/FlashcardEditPage.jsx";
+import SystemPromptsChatbot from "./pages/admin/SystemPromptsChatbot.jsx";
+import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
+import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
+import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 
 
 export default function App() {
@@ -280,6 +284,38 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <TagsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/chatbot',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SystemPromptsChatbot />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/q-and-a',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SystemPromptsQAndA />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/explanation',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SystemPromptsExplanation />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/:type/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SystemPromptDetailPage />
             </ProtectedRoute>
           ),
         },
