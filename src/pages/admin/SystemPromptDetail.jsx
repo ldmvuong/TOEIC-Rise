@@ -139,18 +139,8 @@ const SystemPromptDetailPage = () => {
         isActive: !!values.isActive,
       });
 
-      // Update local state instead of refetching
-      setPrompt((prev) =>
-        prev
-          ? {
-              ...prev,
-              content: trimmed,
-              isActive: !!values.isActive,
-            }
-          : prev
-      );
-      setIsEditing(false);
       message.success("System prompt updated successfully");
+      navigate(-1);
     } catch (err) {
       if (err?.errorFields) {
         // Form validation error
