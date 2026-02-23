@@ -126,6 +126,14 @@ export const createTag = (payload) => api.post(`/staff/tags`, payload);
 export const updateTag = (tagId, payload) =>
   api.put(`/staff/tags/${tagId}`, payload);
 
+// Staff System Prompts
+export const getSystemPrompts = (query) =>
+  api.get(`/staff/system-prompts?${query}`);
+export const getSystemPromptDetail = (featureType, id) =>
+  api.get(`/staff/system-prompts/${featureType}/${id}`);
+export const createSystemPrompt = (featureType, payload) =>
+  api.post(`/staff/system-prompts/${featureType}`, payload);
+
 // Admin Staff Report
 
 export const getAllReport = (query) =>

@@ -7,6 +7,7 @@ export const TEST_SET_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/;
 export const TEST_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/; // same as backend Constant.TEST_NAME_PATTERN
 export const FULLNAME_REGEX = /^[\p{L} ]+$/u; // Matches backend PROFILE_FULLNAME_PATTERN = "^[\\p{L} ]+$"
 export const TAG_NAME_REGEX = /^[\p{L}0-9 ().,\[\]':-]{1,100}$/u;
+export const SYSTEM_PROMPT_CONTENT_REGEX = /^[\p{L}0-9 !#%&*()\[\]_+;:'",.<>?\/{}\-\n\r\u2013]{20,}$/u;
 // Avatar validation constants
 export const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB - Matches backend AVATAR_MAX_SIZE
 export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
