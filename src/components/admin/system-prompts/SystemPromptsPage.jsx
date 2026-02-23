@@ -1,8 +1,8 @@
 import React, { useRef, useState, useMemo } from "react";
 import DataTable from "@/components/admin/data-table";
-import { Tag, Button, Modal, Form, Input, message, notification } from "antd";
+import { Tag, Button, Modal, Form, Input, Switch, message, notification } from "antd";
 import queryString from "query-string";
-import { getSystemPrompts, createSystemPrompt } from "@/api/api";
+import { getSystemPrompts, createSystemPrompt, changeSystemPromptActive } from "@/api/api";
 import { useNavigate } from "react-router-dom";
 import { SYSTEM_PROMPT_CONTENT_REGEX } from "@/utils/validation";
 
@@ -17,6 +17,7 @@ const SystemPromptsPage = ({ featureType, title }) => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   const routeType = useMemo(() => {
     switch (featureType) {
@@ -66,12 +67,42 @@ const SystemPromptsPage = ({ featureType, title }) => {
     {
       title: "Active",
       dataIndex: "isActive",
-      width: 100,
+      width: 120,
       align: "center",
       sorter: true,
-      render: (val) => (
-        <Tag color={val ? "green" : "red"}>{val ? "Active" : "Inactive"}</Tag>
-      ),
+      render: (val, record) => {
+        const isToggling = togglingId === record.id;
+        return (
+          <Switch
+            checked={!!val}
+            checkedChildren="Active"
+            unCheckedChildren="Inactive"
+            loading={isToggling}
+            disabled={isToggling}
+            onChange={async () => {
+              setTogglingId(record.id);
+              try {
+                await changeSystemPromptActive(featureType, record.id);
+                message.success("Status updated");
+                if (tableRef.current) {
+                  tableRef.current.reload();
+                }
+              } catch (err) {
+                const desc =
+                  err?.message ||
+                  err?.data?.message ||
+                  "Failed to change status";
+                notification.error({
+                  message: "Failed to change status",
+                  description: desc,
+                });
+              } finally {
+                setTogglingId(null);
+              }
+            }}
+          />
+        );
+      },
     },
     {
       title: "Updated At",

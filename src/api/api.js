@@ -133,6 +133,10 @@ export const getSystemPromptDetail = (featureType, id) =>
   api.get(`/staff/system-prompts/${featureType}/${id}`);
 export const createSystemPrompt = (featureType, payload) =>
   api.post(`/staff/system-prompts/${featureType}`, payload);
+export const updateSystemPrompt = (featureType, id, payload) =>
+  api.put(`/staff/system-prompts/${featureType}/${id}`, payload);
+export const changeSystemPromptActive = (featureType, id) =>
+  api.patch(`/staff/system-prompts/${featureType}/${id}`);
 
 // Admin Staff Report
 
