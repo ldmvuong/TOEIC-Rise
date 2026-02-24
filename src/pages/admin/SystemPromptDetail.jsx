@@ -16,6 +16,7 @@ import {
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { SYSTEM_PROMPT_CONTENT_REGEX } from "@/utils/validation";
 import SystemPromptTestModal from "@/components/admin/system-prompts/SystemPromptTestModal";
+import SystemPromptQAndATestModal from "@/components/admin/system-prompts/SystemPromptQAndATestModal";
 
 const typeToEnumMap = {
   chatbot: "CHATBOT",
@@ -40,6 +41,7 @@ const SystemPromptDetailPage = () => {
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
   const [testModalOpen, setTestModalOpen] = useState(false);
+  const [qnaTestModalOpen, setQnaTestModalOpen] = useState(false);
 
   const featureTypeEnum = useMemo(() => {
     if (!type) return null;
@@ -215,6 +217,11 @@ const SystemPromptDetailPage = () => {
               Test Chatbot
             </Button>
           )}
+          {featureTypeEnum === "Q_AND_A" && (
+            <Button onClick={() => setQnaTestModalOpen(true)}>
+              Test Q&A
+            </Button>
+          )}
           <Button type="primary" onClick={handleStartEdit}>
             Edit
           </Button>
@@ -251,6 +258,14 @@ const SystemPromptDetailPage = () => {
         <SystemPromptTestModal
           open={testModalOpen}
           onClose={() => setTestModalOpen(false)}
+          systemPromptContent={prompt.content || ""}
+        />
+      )}
+
+      {featureTypeEnum === "Q_AND_A" && (
+        <SystemPromptQAndATestModal
+          open={qnaTestModalOpen}
+          onClose={() => setQnaTestModalOpen(false)}
           systemPromptContent={prompt.content || ""}
         />
       )}
