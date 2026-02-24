@@ -17,6 +17,7 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import { SYSTEM_PROMPT_CONTENT_REGEX } from "@/utils/validation";
 import SystemPromptTestModal from "@/components/admin/system-prompts/SystemPromptTestModal";
 import SystemPromptQAndATestModal from "@/components/admin/system-prompts/SystemPromptQAndATestModal";
+import SystemPromptExplanationTestModal from "@/components/admin/system-prompts/SystemPromptExplanationTestModal";
 
 const typeToEnumMap = {
   chatbot: "CHATBOT",
@@ -42,6 +43,7 @@ const SystemPromptDetailPage = () => {
   const [form] = Form.useForm();
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [qnaTestModalOpen, setQnaTestModalOpen] = useState(false);
+  const [explainTestModalOpen, setExplainTestModalOpen] = useState(false);
 
   const featureTypeEnum = useMemo(() => {
     if (!type) return null;
@@ -222,6 +224,11 @@ const SystemPromptDetailPage = () => {
               Test Q&A
             </Button>
           )}
+          {featureTypeEnum === "EXPLANATION_GENERATION" && (
+            <Button onClick={() => setExplainTestModalOpen(true)}>
+              Test Explanation
+            </Button>
+          )}
           <Button type="primary" onClick={handleStartEdit}>
             Edit
           </Button>
@@ -266,6 +273,14 @@ const SystemPromptDetailPage = () => {
         <SystemPromptQAndATestModal
           open={qnaTestModalOpen}
           onClose={() => setQnaTestModalOpen(false)}
+          systemPromptContent={prompt.content || ""}
+        />
+      )}
+
+      {featureTypeEnum === "EXPLANATION_GENERATION" && (
+        <SystemPromptExplanationTestModal
+          open={explainTestModalOpen}
+          onClose={() => setExplainTestModalOpen(false)}
           systemPromptContent={prompt.content || ""}
         />
       )}

@@ -118,7 +118,7 @@ const SystemPromptQAndATestModal = ({
 
     try {
       const response = await fetch(
-        `${backendUrl}/staff/chatbot/testing-q-and-a-system-prompt`,
+        `${backendUrl}/staff/chatbot/testing-system-prompt-q-and-a`,
         {
           method: "POST",
           body: formData,

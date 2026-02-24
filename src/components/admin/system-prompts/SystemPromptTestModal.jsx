@@ -96,7 +96,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
 
     try {
       const response = await fetch(
-        `${backendUrl}/staff/chatbot/testing-chatbot-system-prompt`,
+        `${backendUrl}/staff/chatbot/testing-system-prompt-chatbot`,
         {
           method: "POST",
           body: formData,
