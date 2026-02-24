@@ -15,6 +15,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { SYSTEM_PROMPT_CONTENT_REGEX } from "@/utils/validation";
+import SystemPromptTestModal from "@/components/admin/system-prompts/SystemPromptTestModal";
 
 const typeToEnumMap = {
   chatbot: "CHATBOT",
@@ -38,6 +39,7 @@ const SystemPromptDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
+  const [testModalOpen, setTestModalOpen] = useState(false);
 
   const featureTypeEnum = useMemo(() => {
     if (!type) return null;
@@ -208,6 +210,11 @@ const SystemPromptDetailPage = () => {
           <Tag color={isActive ? "green" : "red"}>
             {isActive ? "Active" : "Inactive"}
           </Tag>
+          {featureTypeEnum === "CHATBOT" && (
+            <Button onClick={() => setTestModalOpen(true)}>
+              Test Chatbot
+            </Button>
+          )}
           <Button type="primary" onClick={handleStartEdit}>
             Edit
           </Button>
@@ -239,6 +246,14 @@ const SystemPromptDetailPage = () => {
           </Descriptions>
         </div>
       </div>
+
+      {featureTypeEnum === "CHATBOT" && (
+        <SystemPromptTestModal
+          open={testModalOpen}
+          onClose={() => setTestModalOpen(false)}
+          systemPromptContent={prompt.content || ""}
+        />
+      )}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
