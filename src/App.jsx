@@ -29,6 +29,7 @@ import DoMiniTest from "./pages/client/DoMiniTest.jsx";
 import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
+import RedoWrong from "./pages/client/RedoWrong.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
@@ -110,6 +111,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <TestResultDetail />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'redo-wrong/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <RedoWrong />
             </ProtectedRoute>
           )
         },

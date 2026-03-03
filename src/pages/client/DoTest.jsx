@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getTestExam, submitTestExam } from '../../api/api';
+import { getTestExam, submitTestExam, submitWrongAnswerExam } from '../../api/api';
 import QuestionGroup from '../../components/exam/question.group';
 import Sidebar from '../../components/exam/sidebar';
 import NavigationButtons from '../../components/exam/NavigationButtons';
@@ -19,6 +19,7 @@ const DoTest = () => {
     const searchParams = new URLSearchParams(location.search);
     
     const preloadedTestData = state.preloadedTestData || null;
+    const wrongUserTestId = state.wrongUserTestId || null;
     const testId = state.testId || preloadedTestData?.id || searchParams.get('testId');
     const mode = state.mode || searchParams.get('mode') || 'practice';
     const partIds = state.parts || (searchParams.get('parts') ? searchParams.get('parts').split(',').map(id => parseInt(id.trim())) : [1, 2, 3, 4, 5, 6, 7]);
@@ -52,6 +53,7 @@ const DoTest = () => {
     const allowNavigationRef = useRef(false); // Flag để cho phép navigation khi người dùng xác nhận rời khỏi
     
     const isFullTest = mode === 'full';
+    const isRedoWrongMode = mode === 'wrong';
     const hasTimeLimit = isFullTest || (timeLimitMinutes && timeLimitMinutes > 0);
     
     // Xác định part hiện tại có phải phần nghe (1-4) không
@@ -249,24 +251,38 @@ const DoTest = () => {
                 answers: allAnswers
             };
 
-            // Gọi API
-            const response = await submitTestExam(payload);
-            
-            // Nếu thành công (status 200), lưu kết quả và hiển thị popup
-            if (response && response.data) {
-                // Dừng timer
-                setIsTestSubmitted(true);
-                setTimeRemaining(0);
+            // Gọi API theo mode
+            if (isRedoWrongMode && wrongUserTestId) {
+                const response = await submitWrongAnswerExam(wrongUserTestId, payload);
+                if (response && response.data) {
+                    setIsTestSubmitted(true);
+                    setTimeRemaining(0);
+                    // Điều hướng sang trang RedoWrong với dữ liệu chi tiết
+                    navigate(`/redo-wrong/${wrongUserTestId}`, {
+                        replace: true,
+                        state: {
+                            redoResult: response.data,
+                        },
+                    });
+                }
+            } else {
+                const response = await submitTestExam(payload);
                 
-                // Lưu kết quả
-                setTestResult(response.data);
-            
+                // Nếu thành công (status 200), lưu kết quả và hiển thị popup
+                if (response && response.data) {
+                    // Dừng timer
+                    setIsTestSubmitted(true);
+                    setTimeRemaining(0);
+                    
+                    // Lưu kết quả
+                    setTestResult(response.data);
+                }
             }
         } catch (error) {
             console.error('Error submitting test:', error);
             message.error(error?.response?.data?.message || error?.message || 'Không thể nộp bài. Vui lòng thử lại.');
         }
-    }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted, stopAllAudio]);
+    }, [testData, testId, answers, isFullTest, elapsedTime, isTestSubmitted, stopAllAudio, isRedoWrongMode, wrongUserTestId, navigate]);
     
     // Cập nhật ref mỗi khi submitTest thay đổi
     useEffect(() => {

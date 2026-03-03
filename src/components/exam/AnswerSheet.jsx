@@ -161,7 +161,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 state: {
                     mode: 'wrong',
                     testId: wrongExam.id,
-                    preloadedTestData: wrongExam
+                    preloadedTestData: wrongExam,
+                    wrongUserTestId: userTestId
                 }
             });
         } catch (error) {

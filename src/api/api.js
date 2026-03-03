@@ -290,6 +290,9 @@ export const reportQuestionIssue = (payload) =>
 export const getWrongAnswerExam = (userTestId) =>
   api.get(`/learner/user-tests/${userTestId}/wrong-answer`);
 
+export const submitWrongAnswerExam = (userTestId, payload) =>
+  api.post(`/learner/user-tests/${userTestId}/wrong-answer`, payload);
+
 export const getHistoryTest = (query) =>
   api.get(`/learner/analysis/result?${query}`);
 
