@@ -287,6 +287,9 @@ export const viewTestResultDetails = (userTestId) =>
 export const reportQuestionIssue = (payload) =>
   api.post("/learner/question-reports", payload);
 
+export const getWrongAnswerExam = (userTestId) =>
+  api.get(`/learner/user-tests/${userTestId}/wrong-answer`);
+
 export const getHistoryTest = (query) =>
   api.get(`/learner/analysis/result?${query}`);
 

@@ -18,10 +18,12 @@ const DoTest = () => {
     const state = location.state || {};
     const searchParams = new URLSearchParams(location.search);
     
-    const testId = state.testId || searchParams.get('testId');
+    const preloadedTestData = state.preloadedTestData || null;
+    const testId = state.testId || preloadedTestData?.id || searchParams.get('testId');
     const mode = state.mode || searchParams.get('mode') || 'practice';
     const partIds = state.parts || (searchParams.get('parts') ? searchParams.get('parts').split(',').map(id => parseInt(id.trim())) : [1, 2, 3, 4, 5, 6, 7]);
     const timeLimit = state.timeLimit || searchParams.get('timeLimit');
+    const timeLimitMinutes = timeLimit !== undefined && timeLimit !== null && timeLimit !== '' ? Number(timeLimit) : null;
     
     // State
     const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ const DoTest = () => {
     const allowNavigationRef = useRef(false); // Flag để cho phép navigation khi người dùng xác nhận rời khỏi
     
     const isFullTest = mode === 'full';
-    const hasTimeLimit = isFullTest || (timeLimit && timeLimit > 0);
+    const hasTimeLimit = isFullTest || (timeLimitMinutes && timeLimitMinutes > 0);
     
     // Xác định part hiện tại có phải phần nghe (1-4) không
     const isListeningPart = () => {
@@ -116,6 +118,31 @@ const DoTest = () => {
     // Gọi API lấy đề thi - chỉ gọi khi có testId và partIds
     useEffect(() => {
         const fetchTest = async () => {
+            // Nếu đã có dữ liệu preload (ví dụ: làm lại câu sai), không gọi API getTestExam
+            if (preloadedTestData) {
+                setLoading(true);
+                setTestData(preloadedTestData);
+                
+                // Nếu có giới hạn thời gian (phút), set countdown để Sidebar hiển thị
+                if (isFullTest) {
+                    setTimeRemaining(120 * 60);
+                } else if (timeLimitMinutes && timeLimitMinutes > 0) {
+                    setTimeRemaining(timeLimitMinutes * 60);
+                } else {
+                    setTimeRemaining(0);
+                }
+                
+                setStartTime(Date.now());
+                setCurrentPartIndex(0);
+                setCurrentQuestionGroupIndex(0);
+                setAnswers({});
+                setFlaggedQuestions([]);
+                setIsTestSubmitted(false);
+                setTestResult(null);
+                setLoading(false);
+                return;
+            }
+
             if (!testId) {
                 message.error('Thiếu thông tin đề thi');
                 navigate('/online-tests');
@@ -140,8 +167,8 @@ const DoTest = () => {
                     // mode chỉ dùng cho frontend logic, không gửi lên API
                     if (isFullTest) {
                         setTimeRemaining(120 * 60); // 120 phút
-                    } else if (timeLimit) {
-                        setTimeRemaining(parseInt(timeLimit) * 60);
+                    } else if (timeLimitMinutes && timeLimitMinutes > 0) {
+                        setTimeRemaining(timeLimitMinutes * 60);
                     }
                     
                     // Bắt đầu đếm thời gian làm bài
@@ -157,7 +184,7 @@ const DoTest = () => {
         };
         
         fetchTest();
-    }, [testId, partIds.join(','), timeLimit, mode, navigate]);
+    }, [testId, partIds.join(','), timeLimitMinutes, mode, navigate, preloadedTestData, isFullTest]);
     
     // Hàm dừng tất cả audio
     const stopAllAudio = useCallback(() => {
