@@ -350,3 +350,20 @@ export const callAddToFavourite = (id) => {
 export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
 };
+
+export const callFetchFlashcardsForPopup = (params = {}) => {
+  const { name, page = 0, size = 10, sortBy = "name", direction = "DESC" } = params;
+  return api.get("/learner/flashcards/popup", {
+    params: {
+      name,
+      page,
+      size,
+      sortBy,
+      direction,
+    },
+  });
+};
+
+export const callAddFlashcardItemToPopup = (payload) => {
+  return api.post("/learner/flashcards/popup", payload);
+};
