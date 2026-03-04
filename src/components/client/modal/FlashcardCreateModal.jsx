@@ -9,10 +9,13 @@ import {
 } from '@ant-design/icons';
 import { callCreateFlashcard } from '../../../api/api';
 
+const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
+
 const { TextArea } = Input;
 
 const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isLookupLoading, setIsLookupLoading] = useState(false);
 
     // --- STATE QUẢN LÝ DỮ LIỆU ---
     const [name, setName] = useState('');
@@ -40,6 +43,79 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         const newItems = [...items];
         newItems[index][field] = value;
         setItems(newItems);
+    };
+
+    // Tra cứu từ điển cho một item dựa trên vocabulary
+    const handleLookupFromDictionary = async (index) => {
+        const vocab = items[index]?.vocabulary?.trim();
+        if (!vocab) {
+            message.warning('Vui lòng nhập từ vựng trước khi tra cứu.');
+            return;
+        }
+
+        try {
+            setIsLookupLoading(true);
+
+            const response = await fetch(
+                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}&def_lang=en`
+            );
+
+            if (!response.ok) {
+                // Silent fail on API error
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!data?.exists || !Array.isArray(data.results) || data.results.length === 0) {
+                // Silent fail when no results
+                return;
+            }
+
+            const firstResult = data.results[0];
+
+            // Lấy pronunciation từ pronunciations (nếu có)
+            const pronunciation =
+                Array.isArray(firstResult.pronunciations) && firstResult.pronunciations.length > 0
+                    ? firstResult.pronunciations[0].ipa || ''
+                    : '';
+
+            // Lấy định nghĩa đầu tiên
+            const firstMeaning =
+                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
+                    ? firstResult.meanings[0]
+                    : null;
+
+            // Lấy audio URL nếu có
+            const audioPath = firstResult.audio || '';
+            const audioUrl =
+                audioPath && typeof audioPath === 'string'
+                    ? (audioPath.startsWith('http') ? audioPath : `${DICT_API_BASE_URL}${audioPath}`)
+                    : '';
+
+            setItems((prevItems) => {
+                const newItems = [...prevItems];
+                const current = { ...newItems[index] };
+
+                if (firstMeaning?.definition && !current.definition) {
+                    current.definition = firstMeaning.definition;
+                }
+                if (pronunciation) {
+                    current.pronunciation = pronunciation;
+                }
+                if (audioUrl) {
+                    current.audioUrl = audioUrl;
+                }
+
+                newItems[index] = current;
+                return newItems;
+            });
+        } catch (error) {
+            console.error('Error looking up dictionary:', error);
+            // Silent fail on error, no user-facing message
+        } finally {
+            setIsLookupLoading(false);
+        }
     };
 
     // 3. Thêm dòng mới
@@ -204,14 +280,24 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                 {/* Inputs Grid */}
                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
                                     {/* Cột 1: Vocabulary (4 phần) */}
-                                    <div className="md:col-span-4">
+                                    <div className="md:col-span-4 flex flex-col gap-1">
                                         <Input 
                                             placeholder="Từ vựng (English)" 
                                             className="font-semibold text-blue-900"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
-                                            status={!item.vocabulary && items.length > 1 ? "warning" : ""}
+                                            onBlur={() => handleLookupFromDictionary(index)}
+                                            status={!item.vocabulary && items.length > 1 ? 'warning' : ''}
                                         />
+                                        <Button
+                                            type="link"
+                                            size="small"
+                                            onClick={() => handleLookupFromDictionary(index)}
+                                            loading={isLookupLoading}
+                                            className="px-0 text-xs"
+                                        >
+                                            Gợi ý từ điển
+                                        </Button>
                                     </div>
 
                                     {/* Cột 2: Pronunciation (3 phần) */}

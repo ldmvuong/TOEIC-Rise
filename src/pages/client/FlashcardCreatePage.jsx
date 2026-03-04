@@ -11,11 +11,14 @@ import {
 } from '@ant-design/icons';
 import { callCreateFlashcard } from '../../api/api';
 
+const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
+
 const { TextArea } = Input;
 
 const FlashcardCreatePage = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLookupLoading, setIsLookupLoading] = useState(false);
 
     // --- STATE DỮ LIỆU ---
     const [name, setName] = useState('');
@@ -42,6 +45,57 @@ const FlashcardCreatePage = () => {
             const newErrors = { ...errors };
             newErrors.items[index] = { ...newErrors.items[index], [field]: '' };
             setErrors(newErrors);
+        }
+    };
+
+    const handleLookupFromDictionary = async (index) => {
+        const vocab = items[index]?.vocabulary?.trim();
+        if (!vocab) {
+            message.warning('Vui lòng nhập từ vựng trước khi tra cứu.');
+            return;
+        }
+
+        try {
+            setIsLookupLoading(true);
+
+            const response = await fetch(
+                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}&def_lang=en`
+            );
+
+            if (!response.ok) {
+                // Silent fail on API error
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!data?.exists || !Array.isArray(data.results) || data.results.length === 0) {
+                // Silent fail when no results
+                return;
+            }
+
+            const firstResult = data.results[0];
+            const firstMeaning =
+                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
+                    ? firstResult.meanings[0]
+                    : null;
+
+            setItems((prevItems) => {
+                const newItems = [...prevItems];
+                const current = { ...newItems[index] };
+
+                if (firstMeaning?.definition && !current.definition) {
+                    current.definition = firstMeaning.definition;
+                }
+
+                newItems[index] = current;
+                return newItems;
+            });
+        } catch (error) {
+            console.error('Error looking up dictionary:', error);
+            // Silent fail on error, no user-facing message
+        } finally {
+            setIsLookupLoading(false);
         }
     };
 
@@ -261,6 +315,7 @@ const FlashcardCreatePage = () => {
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
+                                            onBlur={() => handleLookupFromDictionary(index)}
                                         />
                                         {errors.items[index]?.vocabulary && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
