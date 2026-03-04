@@ -51,7 +51,6 @@ const FlashcardCreatePage = () => {
     const handleLookupFromDictionary = async (index) => {
         const vocab = items[index]?.vocabulary?.trim();
         if (!vocab) {
-            message.warning('Vui lòng nhập từ vựng trước khi tra cứu.');
             return;
         }
 
@@ -337,6 +336,34 @@ const FlashcardCreatePage = () => {
                                         {errors.items[index]?.definition && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].definition}</div>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* Pronunciation */}
+                                <div className="space-y-3">
+                                    <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.pronunciation ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
+                                        <label className="text-xs text-gray-400 uppercase font-semibold">Phiên âm (Pronunciation)</label>
+                                        <Input 
+                                            variant="borderless" 
+                                            className="text-lg text-gray-800 px-0 py-1"
+                                            value={item.pronunciation}
+                                            onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
+                                            readOnly={true}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Audio URL */}
+                                <div className="space-y-3">
+                                    <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.audioUrl ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
+                                        <label className="text-xs text-gray-400 uppercase font-semibold">URL Âm thanh (Audio URL)</label>
+                                        <Input 
+                                            variant="borderless" 
+                                            className="text-lg text-gray-800 px-0 py-1"
+                                            value={item.audioUrl}
+                                            onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
+                                            readOnly={true}
+                                        />
                                     </div>
                                 </div>
                             </div>

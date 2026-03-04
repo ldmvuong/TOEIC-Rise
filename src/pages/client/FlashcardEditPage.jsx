@@ -15,6 +15,7 @@ import {
 } from '../../api/api';
 
 const { TextArea } = Input;
+const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
 
 const FlashcardEditPage = () => {
     const { id } = useParams();
@@ -24,6 +25,7 @@ const FlashcardEditPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isNotFound, setIsNotFound] = useState(false); // Lỗi 404 - không tìm thấy hoặc không có quyền
     const [isOwner, setIsOwner] = useState(false); // Quyền sở hữu - từ API
+    const [isLookupLoading, setIsLookupLoading] = useState(false);
 
     // --- STATE DỮ LIỆU ---
     const [name, setName] = useState('');
@@ -113,6 +115,74 @@ const FlashcardEditPage = () => {
             const newErrors = { ...errors };
             newErrors.items[index] = { ...newErrors.items[index], [field]: '' };
             setErrors(newErrors);
+        }
+    };
+
+    const handleLookupFromDictionary = async (index) => {
+        const vocab = items[index]?.vocabulary?.trim();
+        if (!vocab) {
+            return;
+        }
+
+        try {
+            setIsLookupLoading(true);
+
+            const response = await fetch(
+                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}&def_lang=en`
+            );
+
+            if (!response.ok) {
+                // Silent fail on API error
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!data?.exists || !Array.isArray(data.results) || data.results.length === 0) {
+                // Silent fail when no results
+                return;
+            }
+
+            const firstResult = data.results[0];
+
+            const pronunciation =
+                Array.isArray(firstResult.pronunciations) && firstResult.pronunciations.length > 0
+                    ? firstResult.pronunciations[0].ipa || ''
+                    : '';
+
+            const firstMeaning =
+                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
+                    ? firstResult.meanings[0]
+                    : null;
+
+            const audioPath = firstResult.audio || '';
+            const audioUrl =
+                audioPath && typeof audioPath === 'string'
+                    ? (audioPath.startsWith('http') ? audioPath : `${DICT_API_BASE_URL}${audioPath}`)
+                    : '';
+
+            setItems((prevItems) => {
+                const newItems = [...prevItems];
+                const current = { ...newItems[index] };
+
+                if (firstMeaning?.definition && !current.definition) {
+                    current.definition = firstMeaning.definition;
+                }
+                if (pronunciation) {
+                    current.pronunciation = pronunciation;
+                }
+                if (audioUrl) {
+                    current.audioUrl = audioUrl;
+                }
+
+                newItems[index] = current;
+                return newItems;
+            });
+        } catch (error) {
+            console.error('Error looking up dictionary:', error);
+            // Silent fail on error, no user-facing message
+        } finally {
+            setIsLookupLoading(false);
         }
     };
 
@@ -372,6 +442,7 @@ const FlashcardEditPage = () => {
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
+                                            onBlur={() => handleLookupFromDictionary(index)}
                                         />
                                         {errors.items[index]?.vocabulary && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
@@ -384,6 +455,7 @@ const FlashcardEditPage = () => {
                                             value={item.pronunciation}
                                             onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
                                             className="w-1/2"
+                                            readOnly={true}
                                         />
                                         <Input 
                                             placeholder="Audio URL (Optional)" 
@@ -391,6 +463,7 @@ const FlashcardEditPage = () => {
                                             value={item.audioUrl}
                                             onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
                                             className="w-1/2"
+                                            readOnly={true}
                                         />
                                     </div>
                                 </div>
