@@ -10,6 +10,7 @@ import {
     LockOutlined 
 } from '@ant-design/icons';
 import { callCreateFlashcard } from '../../api/api';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
 
@@ -338,6 +339,13 @@ const FlashcardCreatePage = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Nếu có audioUrl thì hiển thị player xem trước */}
+                                {item.audioUrl && (
+                                    <div className="md:col-span-2 mt-2 max-w-md">
+                                        <AudioPlayerUI audioUrl={item.audioUrl} />
+                                    </div>
+                                )}
 
                                 {/* Pronunciation */}
                                 <div className="space-y-3">

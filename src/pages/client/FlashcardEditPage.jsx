@@ -13,6 +13,7 @@ import {
     callFetchFlashcardDetail, 
     callUpdateFlashcard 
 } from '../../api/api';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const { TextArea } = Input;
 const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
@@ -487,6 +488,13 @@ const FlashcardEditPage = () => {
                                         * Gợi ý: Có thể nhập câu ví dụ vào phần định nghĩa nếu cần.
                                     </div>
                                 </div>
+
+                                {/* Nếu có audioUrl thì hiển thị player xem trước */}
+                                {item.audioUrl && (
+                                    <div className="md:col-span-2 mt-2 max-w-md">
+                                        <AudioPlayerUI audioUrl={item.audioUrl} />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

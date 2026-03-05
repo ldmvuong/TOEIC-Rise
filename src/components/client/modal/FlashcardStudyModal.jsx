@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { callFetchFlashcardDetail } from '../../../api/api';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import AudioPlayerUI from './AudioPlayerUI';
 import './FlashcardStudy.css';
 
 const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
@@ -112,13 +113,19 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                                     </p>
                                     
                                     {currentItem?.pronunciation && (
-                                        <div className="bg-white px-3 py-1 rounded-full text-sm text-gray-600 border border-gray-200 mb-4">
+                                        <div className="bg-white px-3 py-1 rounded-full text-sm text-gray-600 border border-gray-200 mb-3">
                                             /{currentItem?.pronunciation}/
                                         </div>
                                     )}
 
+                                    {currentItem?.audioUrl && (
+                                        <div className="w-full max-w-md mb-3">
+                                            <AudioPlayerUI audioUrl={currentItem.audioUrl} />
+                                        </div>
+                                    )}
+
                                     {currentItem?.example && (
-                                        <div className="mt-4 text-center px-4">
+                                        <div className="mt-2 text-center px-4">
                                             <p className="text-sm font-semibold text-gray-500 mb-2">Ví dụ:</p>
                                             <p className="text-gray-700 italic">"{currentItem?.example}"</p>
                                         </div>
