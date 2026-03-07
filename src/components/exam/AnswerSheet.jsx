@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getUserTestAnswersOverall, getWrongAnswerExam } from '../../api/api';
-import { message } from 'antd';
+import { getUserTestAnswersOverall, getWrongAnswerExam, getDoWrongAnswer } from '../../api/api';
+import { message, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
@@ -17,6 +17,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reportQuestionData, setReportQuestionData] = useState(null);
     const [isRedoWrongLoading, setIsRedoWrongLoading] = useState(false);
+    const [showRedoWrongChoiceModal, setShowRedoWrongChoiceModal] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -157,6 +158,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 return;
             }
 
+            setShowRedoWrongChoiceModal(false);
             navigate('/do-test', {
                 state: {
                     mode: 'wrong',
@@ -171,6 +173,42 @@ const AnswerSheet = ({ userTestId, testId }) => {
         } finally {
             setIsRedoWrongLoading(false);
         }
+    };
+
+    const handleFixOneByOne = async () => {
+        if (!userTestId) {
+            message.error('Không tìm thấy ID bài thi');
+            return;
+        }
+
+        setIsRedoWrongLoading(true);
+        try {
+            const res = await getDoWrongAnswer(userTestId);
+            const data = res?.data;
+
+            if (!data?.partResponses?.length) {
+                message.info('Bạn không có câu sai để sửa từng câu.');
+                return;
+            }
+
+            setShowRedoWrongChoiceModal(false);
+            navigate(`/fix-wrong-one-by-one/${userTestId}`, {
+                state: { fixOneByOneData: data }
+            });
+        } catch (error) {
+            console.error('Error fetching do-wrong-answer:', error);
+            message.error(error?.response?.data?.message || 'Không thể tải danh sách câu sai');
+        } finally {
+            setIsRedoWrongLoading(false);
+        }
+    };
+
+    const openRedoWrongModal = () => {
+        if (!userTestId) {
+            message.error('Không tìm thấy ID bài thi');
+            return;
+        }
+        setShowRedoWrongChoiceModal(true);
     };
 
 
@@ -200,7 +238,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
               Xem chi tiết đáp án
             </button>
             <button
-              onClick={handleRedoWrongAnswers}
+              onClick={openRedoWrongModal}
               disabled={isRedoWrongLoading}
               className={`px-4 py-2 rounded-lg font-medium ${
                 activeView === "detailed"
@@ -208,7 +246,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {isRedoWrongLoading ? "Đang tải..." : "Làm lại các câu sai"}
+              {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
             </button>
           </div>
         </div>
@@ -389,6 +427,35 @@ const AnswerSheet = ({ userTestId, testId }) => {
           }}
           questionData={reportQuestionData}
         />
+
+        {/* Modal chọn chế độ làm lại câu sai */}
+        <Modal
+          title="Làm lại câu sai"
+          open={showRedoWrongChoiceModal}
+          onCancel={() => setShowRedoWrongChoiceModal(false)}
+          footer={null}
+          centered
+          width={420}
+        >
+          <div className="py-2 space-y-3">
+            <button
+              type="button"
+              onClick={handleFixOneByOne}
+              disabled={isRedoWrongLoading}
+              className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRedoWrongAnswers}
+              disabled={isRedoWrongLoading}
+              className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              Làm lại toàn bộ câu sai
+            </button>
+          </div>
+        </Modal>
       </div>
     );
 };

@@ -30,6 +30,7 @@ import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
 import RedoWrong from "./pages/client/RedoWrong.jsx";
+import FixWrongOneByOne from "./pages/client/FixWrongOneByOne.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
@@ -119,6 +120,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <RedoWrong />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'fix-wrong-one-by-one/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FixWrongOneByOne />
             </ProtectedRoute>
           )
         },
