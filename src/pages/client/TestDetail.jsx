@@ -4,6 +4,7 @@ import { getPublicTestById } from '../../api/api';
 import { Spin, Select, message } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
 import HistoryTestExam from '../../components/table/HistoryTestExam';
+import TestCommentSection from '../../components/client/TestCommentSection';
 
 const TagChip = ({ children }) => (
     <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-800 rounded-full border border-gray-200">
@@ -148,6 +149,8 @@ const TestDetail = () => {
                         {/* Results table */}
                         <HistoryTestExam testId={parsedId} isAuthenticated={isAuthenticated} />
 
+                        
+
                         {/* Tabs */}
                         <div className="mt-6 bg-white border border-gray-200 rounded-xl">
                                 <div className="px-5 pt-4">
@@ -247,6 +250,9 @@ const TestDetail = () => {
 
                             </div>
                         </div>
+
+                        {/* Comment Section - đặt dưới cùng */}
+                        <TestCommentSection testId={parsedId} isAuthenticated={isAuthenticated} />
                     </div>
 
                     {/* Right/Sidebar */}

@@ -350,3 +350,25 @@ export const callAddToFavourite = (id) => {
 export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
 };
+
+// Comment APIs
+
+export const callFetchComments = (testId, page = 0, size = 10) => {
+  return api.get(`/learner/comments/test/${testId}?page=${page}&size=${size}`);
+};
+
+export const callCreateComment = (payload) => {
+  return api.post("/learner/comments", payload);
+};
+
+export const callUpdateComment = (commentId, payload) => {
+  return api.put(`/learner/comments/${commentId}`, payload);
+};
+
+export const callDeleteComment = (commentId) => {
+  return api.delete(`/learner/comments/${commentId}`);
+};
+
+export const callFetchReplies = (commentId, page = 0, size = 5) => {
+  return api.get(`/learner/comments/${commentId}/replies?page=${page}&size=${size}`);
+};
