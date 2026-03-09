@@ -10,8 +10,10 @@ import {
     callFetchReplies,
 } from '../../api/api';
 import { formatDateFull } from '../../utils/dateUtils';
+import { CharCount } from '../../utils/charCountUtils';
 
-const MAX_COMMENT_LENGTH = 2000;
+const MAX_COMMENT_LENGTH = 500;
+const MAX_PREVIEW_LENGTH = 100;
 
 const DefaultAvatar = ({ name, className = 'w-9 h-9' }) => (
     <div
@@ -24,6 +26,7 @@ const DefaultAvatar = ({ name, className = 'w-9 h-9' }) => (
 const CommentItem = ({
     comment,
     isReply = false,
+    rootId,
     onEdit,
     onDelete,
     onReply,
@@ -38,6 +41,7 @@ const CommentItem = ({
     const [isEditing, setIsEditing] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const isOwner = comment.owner ?? comment.isOwner ?? false;
     const edited = comment.edited ?? comment.isEdited ?? false;
@@ -52,7 +56,7 @@ const CommentItem = ({
         if (!replyContent.trim()) return;
         setSubmittingReply(true);
         try {
-            await onReply(comment.id, replyContent.trim());
+            await onReply(rootId ?? comment.id, replyContent.trim());
             setReplyContent('');
             setShowReplyInput(false);
         } finally {
@@ -69,6 +73,7 @@ const CommentItem = ({
         try {
             await onEdit(comment.id, editContent.trim());
             setIsEditing(false);
+            setIsExpanded(false);
         } catch {
             // error handled in parent
         }
@@ -146,6 +151,7 @@ const CommentItem = ({
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             autoFocus
                         />
+                        <CharCount value={editContent} max={MAX_COMMENT_LENGTH} />
                         <div className="mt-2 flex gap-2">
                             <button
                                 onClick={handleEdit}
@@ -162,11 +168,30 @@ const CommentItem = ({
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">{comment.content}</p>
-                )}
+                ) : (() => {
+                    const content = comment.content ?? '';
+                    const shouldTruncate = content.length > MAX_PREVIEW_LENGTH;
+                    const displayContent =
+                        shouldTruncate && !isExpanded
+                            ? `${content.slice(0, MAX_PREVIEW_LENGTH)}...`
+                            : content;
+                    return (
+                        <div className="mt-1">
+                            <p className="text-gray-700 whitespace-pre-wrap break-words">{displayContent}</p>
+                            {shouldTruncate && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsExpanded((v) => !v)}
+                                    className="mt-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                >
+                                    {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                </button>
+                            )}
+                        </div>
+                    );
+                })()}
 
-                {!isReply && isAuthenticated && !isEditing && (
+                {isAuthenticated && !isEditing && (
                     <button
                         type="button"
                         onClick={() => setShowReplyInput(!showReplyInput)}
@@ -177,22 +202,25 @@ const CommentItem = ({
                 )}
 
                 {showReplyInput && isAuthenticated && (
-                    <div className="mt-3 flex gap-2">
-                        <textarea
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            maxLength={MAX_COMMENT_LENGTH}
-                            placeholder="Viết trả lời..."
-                            rows={2}
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <button
-                            onClick={handleSubmitReply}
-                            disabled={!replyContent.trim() || submittingReply}
-                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 self-end"
-                        >
-                            {submittingReply ? 'Đang gửi...' : 'Gửi'}
-                        </button>
+                    <div className="mt-3">
+                        <div className="flex gap-2">
+                            <textarea
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                maxLength={MAX_COMMENT_LENGTH}
+                                placeholder="Viết trả lời..."
+                                rows={2}
+                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <button
+                                onClick={handleSubmitReply}
+                                disabled={!replyContent.trim() || submittingReply}
+                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 self-end"
+                            >
+                                {submittingReply ? 'Đang gửi...' : 'Gửi'}
+                            </button>
+                        </div>
+                        <CharCount value={replyContent} max={MAX_COMMENT_LENGTH} />
                     </div>
                 )}
 
@@ -204,6 +232,7 @@ const CommentItem = ({
                                 key={reply.id}
                                 comment={reply}
                                 isReply
+                                rootId={comment.id}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onReply={onReply}
@@ -288,7 +317,6 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
     const handleUpdateComment = async (commentId, content) => {
         try {
             await callUpdateComment(commentId, { content });
-            message.success('Đã cập nhật bình luận');
             setComments((prev) =>
                 prev.map((c) => {
                     if (c.id === commentId) return { ...c, content, edited: true };
@@ -400,6 +428,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                     rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                <CharCount value={newCommentContent} max={MAX_COMMENT_LENGTH} />
                 <button
                     onClick={handleCreateComment}
                     disabled={!newCommentContent.trim() || submitting}
