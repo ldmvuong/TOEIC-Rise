@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Switch, Button, message, Card, Tooltip } from 'antd';
 import { 
@@ -26,7 +26,7 @@ const FlashcardCreatePage = () => {
     const [description, setDescription] = useState('');
     const [isPublic, setIsPublic] = useState(true);
     const [items, setItems] = useState([
-        { vocabulary: '', definition: '' }
+        { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }
     ]);
 
     // --- STATE VALIDATION ---
@@ -34,6 +34,17 @@ const FlashcardCreatePage = () => {
         name: '',
         items: [{ vocabulary: '', definition: '' }]
     });
+
+    // Debounce timers for dictionary lookup (per item index)
+    const lookupTimeoutsRef = useRef({});
+
+    useEffect(() => {
+        return () => {
+            // Cleanup timers on unmount
+            Object.values(lookupTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+            lookupTimeoutsRef.current = {};
+        };
+    }, []);
 
     // --- CÁC HÀM XỬ LÝ FORM ---
     const handleItemChange = (index, field, value) => {
@@ -47,10 +58,15 @@ const FlashcardCreatePage = () => {
             newErrors.items[index] = { ...newErrors.items[index], [field]: '' };
             setErrors(newErrors);
         }
+
+        // Auto lookup when user pauses typing (only for vocabulary field)
+        if (field === 'vocabulary') {
+            scheduleLookup(index, value);
+        }
     };
 
-    const handleLookupFromDictionary = async (index) => {
-        const vocab = items[index]?.vocabulary?.trim();
+    const handleLookupFromDictionary = async (index, vocabOverride) => {
+        const vocab = (vocabOverride ?? items[index]?.vocabulary ?? '').trim();
         if (!vocab) {
             return;
         }
@@ -75,17 +91,33 @@ const FlashcardCreatePage = () => {
             }
 
             const firstResult = data.results[0];
+            const pronunciation =
+                Array.isArray(firstResult.pronunciations) && firstResult.pronunciations.length > 0
+                    ? firstResult.pronunciations[0]?.ipa || ''
+                    : '';
+
             const firstMeaning =
                 Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
                     ? firstResult.meanings[0]
                     : null;
 
+            const audioPath = firstResult.audio || '';
+            const audioUrl =
+                audioPath && typeof audioPath === 'string'
+                    ? (audioPath.startsWith('http') ? audioPath : `${DICT_API_BASE_URL}${audioPath}`)
+                    : '';
+
             setItems((prevItems) => {
                 const newItems = [...prevItems];
                 const current = { ...newItems[index] };
 
-                if (firstMeaning?.definition && !current.definition) {
-                    current.definition = firstMeaning.definition;
+                // Update fields from dictionary
+                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
+                if (pronunciation) {
+                    current.pronunciation = pronunciation;
+                }
+                if (audioUrl) {
+                    current.audioUrl = audioUrl;
                 }
 
                 newItems[index] = current;
@@ -99,6 +131,26 @@ const FlashcardCreatePage = () => {
         }
     };
 
+    const scheduleLookup = (index, vocabValue) => {
+        // Clear existing timer
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) clearTimeout(existing);
+
+        // Schedule after 3 seconds
+        lookupTimeoutsRef.current[index] = setTimeout(() => {
+            handleLookupFromDictionary(index, vocabValue);
+        }, 3000);
+    };
+
+    const flushLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
+        }
+        handleLookupFromDictionary(index, vocabValue);
+    };
+
     const handleNameChange = (value) => {
         setName(value);
         if (errors.name) {
@@ -107,7 +159,7 @@ const FlashcardCreatePage = () => {
     };
 
     const handleAddItem = () => {
-        setItems([...items, { vocabulary: '', definition: '' }]);
+        setItems([...items, { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }]);
         setErrors({
             ...errors,
             items: [...errors.items, { vocabulary: '', definition: '' }]
@@ -117,6 +169,12 @@ const FlashcardCreatePage = () => {
     const handleRemoveItem = (index) => {
         if (items.length === 1) {
             return;
+        }
+        // Clear pending lookup timer for this index
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
         }
         const newItems = items.filter((_, i) => i !== index);
         const newErrors = { ...errors };
@@ -181,7 +239,9 @@ const FlashcardCreatePage = () => {
             accessType: isPublic ? "PUBLIC" : "PRIVATE",
             items: validItems.map(item => ({
                 vocabulary: item.vocabulary.trim(),
-                definition: item.definition.trim()
+                definition: item.definition.trim(),
+                pronunciation: (item.pronunciation || '').trim(),
+                audioUrl: (item.audioUrl || '').trim(),
             }))
         };
 
@@ -315,7 +375,7 @@ const FlashcardCreatePage = () => {
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
-                                            onBlur={() => handleLookupFromDictionary(index)}
+                                            onBlur={(e) => flushLookup(index, e.target.value)}
                                         />
                                         {errors.items[index]?.vocabulary && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
@@ -356,20 +416,6 @@ const FlashcardCreatePage = () => {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Audio URL */}
-                                <div className="space-y-3">
-                                    <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.audioUrl ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
-                                        <label className="text-xs text-gray-400 uppercase font-semibold">URL Âm thanh (Audio URL)</label>
-                                        <Input 
-                                            variant="borderless" 
-                                            className="text-lg text-gray-800 px-0 py-1"
-                                            value={item.audioUrl}
-                                            onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
-                                            readOnly={true}
-                                        />
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     ))}

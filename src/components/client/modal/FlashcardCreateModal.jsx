@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Input, Switch, message, Button, Tooltip } from 'antd';
 import { 
     PlusOutlined, 
@@ -27,6 +27,16 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }
     ]);
 
+    // Debounce timers for dictionary lookup (per item index)
+    const lookupTimeoutsRef = useRef({});
+
+    useEffect(() => {
+        return () => {
+            Object.values(lookupTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+            lookupTimeoutsRef.current = {};
+        };
+    }, []);
+
     // --- ACTIONS ---
 
     // 1. Reset form khi đóng modal
@@ -43,11 +53,15 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         const newItems = [...items];
         newItems[index][field] = value;
         setItems(newItems);
+
+        if (field === 'vocabulary') {
+            scheduleLookup(index, value);
+        }
     };
 
     // Tra cứu từ điển cho một item dựa trên vocabulary
-    const handleLookupFromDictionary = async (index) => {
-        const vocab = items[index]?.vocabulary?.trim();
+    const handleLookupFromDictionary = async (index, vocabOverride) => {
+        const vocab = (vocabOverride ?? items[index]?.vocabulary ?? '').trim();
         if (!vocab) {
             message.warning('Vui lòng nhập từ vựng trước khi tra cứu.');
             return;
@@ -97,9 +111,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                 const newItems = [...prevItems];
                 const current = { ...newItems[index] };
 
-                if (firstMeaning?.definition && !current.definition) {
-                    current.definition = firstMeaning.definition;
-                }
+                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
                 if (pronunciation) {
                     current.pronunciation = pronunciation;
                 }
@@ -118,6 +130,23 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         }
     };
 
+    const scheduleLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) clearTimeout(existing);
+        lookupTimeoutsRef.current[index] = setTimeout(() => {
+            handleLookupFromDictionary(index, vocabValue);
+        }, 3000);
+    };
+
+    const flushLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
+        }
+        handleLookupFromDictionary(index, vocabValue);
+    };
+
     // 3. Thêm dòng mới
     const handleAddItem = () => {
         setItems([...items, { vocabulary: '', definition: '', pronunciation: '', audioUrl: '' }]);
@@ -128,6 +157,11 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         if (items.length === 1) {
             message.warning("Cần ít nhất 1 từ vựng trong bộ thẻ!");
             return;
+        }
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
         }
         const newItems = items.filter((_, i) => i !== index);
         setItems(newItems);
@@ -286,7 +320,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                             className="font-semibold text-blue-900"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
-                                            onBlur={() => handleLookupFromDictionary(index)}
+                                            onBlur={(e) => flushLookup(index, e.target.value)}
                                             status={!item.vocabulary && items.length > 1 ? 'warning' : ''}
                                         />
                                         <Button

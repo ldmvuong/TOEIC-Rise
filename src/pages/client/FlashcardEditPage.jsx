@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Input, Switch, Button, message, Spin, Card, Tooltip } from 'antd';
 import { 
@@ -41,6 +41,16 @@ const FlashcardEditPage = () => {
         name: '',
         items: []
     });
+
+    // Debounce timers for dictionary lookup (per item index)
+    const lookupTimeoutsRef = useRef({});
+
+    useEffect(() => {
+        return () => {
+            Object.values(lookupTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+            lookupTimeoutsRef.current = {};
+        };
+    }, []);
 
     // --- FETCH DATA ---
     useEffect(() => {
@@ -117,10 +127,14 @@ const FlashcardEditPage = () => {
             newErrors.items[index] = { ...newErrors.items[index], [field]: '' };
             setErrors(newErrors);
         }
+
+        if (field === 'vocabulary') {
+            scheduleLookup(index, value);
+        }
     };
 
-    const handleLookupFromDictionary = async (index) => {
-        const vocab = items[index]?.vocabulary?.trim();
+    const handleLookupFromDictionary = async (index, vocabOverride) => {
+        const vocab = (vocabOverride ?? items[index]?.vocabulary ?? '').trim();
         if (!vocab) {
             return;
         }
@@ -166,9 +180,7 @@ const FlashcardEditPage = () => {
                 const newItems = [...prevItems];
                 const current = { ...newItems[index] };
 
-                if (firstMeaning?.definition && !current.definition) {
-                    current.definition = firstMeaning.definition;
-                }
+                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
                 if (pronunciation) {
                     current.pronunciation = pronunciation;
                 }
@@ -185,6 +197,23 @@ const FlashcardEditPage = () => {
         } finally {
             setIsLookupLoading(false);
         }
+    };
+
+    const scheduleLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) clearTimeout(existing);
+        lookupTimeoutsRef.current[index] = setTimeout(() => {
+            handleLookupFromDictionary(index, vocabValue);
+        }, 3000);
+    };
+
+    const flushLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
+        }
+        handleLookupFromDictionary(index, vocabValue);
     };
 
     const handleNameChange = (value) => {
@@ -205,6 +234,11 @@ const FlashcardEditPage = () => {
     const handleRemoveItem = (index) => {
         if (items.length === 1) {
             return;
+        }
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
         }
         const newItems = items.filter((_, i) => i !== index);
         const newErrors = { ...errors };
@@ -443,27 +477,21 @@ const FlashcardEditPage = () => {
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
-                                            onBlur={() => handleLookupFromDictionary(index)}
+                                            onBlur={(e) => flushLookup(index, e.target.value)}
                                         />
                                         {errors.items[index]?.vocabulary && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
                                         )}
                                     </div>
-                                    <div className="flex gap-2 items-center flex-wrap">
-                                        {item.pronunciation && (
-                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs text-gray-700 bg-gray-50 border border-gray-200">
+                                    {/* Pronunciation (display-only, only if exists) */}
+                                    {item.pronunciation && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-gray-400 uppercase font-semibold">Phiên âm (Pronunciation)</label>
+                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm text-gray-700 bg-gray-50 border border-gray-200 w-fit">
                                                 /{item.pronunciation}/
                                             </div>
-                                        )}
-                                        <Input 
-                                            placeholder="Audio URL (Optional)" 
-                                            size="small"
-                                            value={item.audioUrl}
-                                            onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
-                                            className="w-full md:w-1/2"
-                                            readOnly={true}
-                                        />
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Cột Định nghĩa */}
