@@ -134,10 +134,12 @@ const FlashcardCreatePage = () => {
                     ? firstResult.pronunciations[0]?.ipa || ''
                     : '';
 
-            const firstMeaning =
-                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
-                    ? firstResult.meanings[0]
-                    : null;
+            const allDefinitions = Array.isArray(firstResult.meanings)
+                ? firstResult.meanings
+                    .map((m) => m?.definition?.trim())
+                    .filter(Boolean)
+                : [];
+            const combinedDefinition = allDefinitions.join('; ');
 
             const audioPath = firstResult.audio || '';
             const audioUrl =
@@ -153,7 +155,7 @@ const FlashcardCreatePage = () => {
                 if (latestSeq !== seq || !stillSameVocab) return prevItems;
 
                 // Update fields from dictionary
-                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
+                current.definition = combinedDefinition || '';
                 current.pronunciation = pronunciation || '';
                 current.audioUrl = audioUrl || '';
 

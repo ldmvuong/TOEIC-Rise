@@ -94,11 +94,13 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                     ? firstResult.pronunciations[0].ipa || ''
                     : '';
 
-            // Lấy định nghĩa đầu tiên
-            const firstMeaning =
-                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
-                    ? firstResult.meanings[0]
-                    : null;
+            // Lấy tất cả định nghĩa và gộp lại
+            const allDefinitions = Array.isArray(firstResult.meanings)
+                ? firstResult.meanings
+                    .map((m) => m?.definition?.trim())
+                    .filter(Boolean)
+                : [];
+            const combinedDefinition = allDefinitions.join('; ');
 
             // Lấy audio URL nếu có
             const audioPath = firstResult.audio || '';
@@ -111,7 +113,9 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                 const newItems = [...prevItems];
                 const current = { ...newItems[index] };
 
-                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
+                if (combinedDefinition && !current.definition) {
+                    current.definition = combinedDefinition;
+                }
                 if (pronunciation) {
                     current.pronunciation = pronunciation;
                 }

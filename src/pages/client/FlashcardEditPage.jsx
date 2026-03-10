@@ -201,10 +201,12 @@ const FlashcardEditPage = () => {
                     ? firstResult.pronunciations[0].ipa || ''
                     : '';
 
-            const firstMeaning =
-                Array.isArray(firstResult.meanings) && firstResult.meanings.length > 0
-                    ? firstResult.meanings[0]
-                    : null;
+            const allDefinitions = Array.isArray(firstResult.meanings)
+                ? firstResult.meanings
+                    .map((m) => m?.definition?.trim())
+                    .filter(Boolean)
+                : [];
+            const combinedDefinition = allDefinitions.join('; ');
 
             const audioPath = firstResult.audio || '';
             const audioUrl =
@@ -219,7 +221,7 @@ const FlashcardEditPage = () => {
                 const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
                 if (latestSeq !== seq || !stillSameVocab) return prevItems;
 
-                if (firstMeaning?.definition) current.definition = firstMeaning.definition;
+                current.definition = combinedDefinition || '';
                 current.pronunciation = pronunciation || '';
                 current.audioUrl = audioUrl || '';
 
