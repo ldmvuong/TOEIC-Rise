@@ -37,6 +37,8 @@ const FlashcardCreatePage = () => {
 
     // Debounce timers for dictionary lookup (per item index)
     const lookupTimeoutsRef = useRef({});
+    // Track latest lookup request per item to avoid race conditions
+    const lookupSeqRef = useRef({});
 
     useEffect(() => {
         return () => {
@@ -73,20 +75,56 @@ const FlashcardCreatePage = () => {
 
         try {
             setIsLookupLoading(true);
+            // bump sequence for this index
+            const seq = (lookupSeqRef.current[index] ?? 0) + 1;
+            lookupSeqRef.current[index] = seq;
 
             const response = await fetch(
                 `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}`
             );
 
             if (!response.ok) {
+                // If not found, clear suggestion fields so UI hides pronunciation/audio
+                if (response.status === 404) {
+                    setItems((prevItems) => {
+                        const newItems = [...prevItems];
+                        const current = { ...newItems[index] };
+                        const latestSeq = lookupSeqRef.current[index];
+                        const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                        if (latestSeq !== seq || !stillSameVocab) return prevItems;
+                        current.definition = '';
+                        current.pronunciation = '';
+                        current.audioUrl = '';
+                        newItems[index] = current;
+                        return newItems;
+                    });
+                }
                 // Silent fail on API error
                 return;
             }
 
             const data = await response.json();
 
+            // If word does not exist, clear suggestion fields
+            if (data?.exists === false) {
+                setItems((prevItems) => {
+                    const newItems = [...prevItems];
+                    const current = { ...newItems[index] };
+                    // only apply if still latest request AND vocab hasn't changed
+                    const latestSeq = lookupSeqRef.current[index];
+                    const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                    if (latestSeq !== seq || !stillSameVocab) return prevItems;
+                    current.definition = '';
+                    current.pronunciation = '';
+                    current.audioUrl = '';
+                    newItems[index] = current;
+                    return newItems;
+                });
+                return;
+            }
+
             if (!data?.exists || !Array.isArray(data.results) || data.results.length === 0) {
-                // Silent fail when no results
+                // Silent fail when no results / unexpected response shape
                 return;
             }
 
@@ -110,15 +148,14 @@ const FlashcardCreatePage = () => {
             setItems((prevItems) => {
                 const newItems = [...prevItems];
                 const current = { ...newItems[index] };
+                const latestSeq = lookupSeqRef.current[index];
+                const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                if (latestSeq !== seq || !stillSameVocab) return prevItems;
 
                 // Update fields from dictionary
                 if (firstMeaning?.definition) current.definition = firstMeaning.definition;
-                if (pronunciation) {
-                    current.pronunciation = pronunciation;
-                }
-                if (audioUrl) {
-                    current.audioUrl = audioUrl;
-                }
+                current.pronunciation = pronunciation || '';
+                current.audioUrl = audioUrl || '';
 
                 newItems[index] = current;
                 return newItems;
