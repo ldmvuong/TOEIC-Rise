@@ -76,7 +76,7 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       // 1. Tra cứu từ điển để lấy definition, pronunciation, audioUrl
       const vocab = word.trim().toLowerCase();
       const response = await fetch(
-        `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab)}&def_lang=en`,
+        `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab)}`,
       );
 
       if (!response.ok) {

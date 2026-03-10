@@ -129,7 +129,7 @@ const FlashcardEditPage = () => {
             setIsLookupLoading(true);
 
             const response = await fetch(
-                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}&def_lang=en`
+                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}`
             );
 
             if (!response.ok) {
