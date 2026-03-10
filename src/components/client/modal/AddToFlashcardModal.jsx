@@ -80,7 +80,26 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       );
 
       if (!response.ok) {
-        message.error('Không thể tra cứu từ điển để thêm từ vào flashcard.');
+        // Nếu 404: vẫn cho phép thêm từ với định nghĩa / audio / pronunciation rỗng
+        if (response.status === 404) {
+          const payload = {
+            flashcardId: flashcard.id,
+            vocabulary: word,
+            definition: '',
+            audioUrl: '',
+            pronunciation: '',
+          };
+
+          const res = await callAddFlashcardItemToPopup(payload);
+          if (res && res.status >= 200 && res.status < 300) {
+            message.success(`Đã thêm "${word}" vào "${flashcard.name}".`);
+            onClose?.();
+          } else {
+            message.error('Không thể thêm từ vào flashcard.');
+          }
+        } else {
+          message.error('Không thể tra cứu từ điển để thêm từ vào flashcard.');
+        }
         return;
       }
 
