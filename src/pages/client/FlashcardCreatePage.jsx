@@ -347,19 +347,15 @@ const FlashcardCreatePage = () => {
                                     </div>
                                 )}
 
-                                {/* Pronunciation */}
-                                <div className="space-y-3">
-                                    <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.pronunciation ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
+                                {/* Pronunciation (display-only, only if exists) */}
+                                {item.pronunciation && (
+                                    <div className="space-y-2">
                                         <label className="text-xs text-gray-400 uppercase font-semibold">Phiên âm (Pronunciation)</label>
-                                        <Input 
-                                            variant="borderless" 
-                                            className="text-lg text-gray-800 px-0 py-1"
-                                            value={item.pronunciation}
-                                            onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
-                                            readOnly={true}
-                                        />
+                                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm text-gray-700 bg-gray-50 border border-gray-200 w-fit">
+                                            /{item.pronunciation}/
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Audio URL */}
                                 <div className="space-y-3">

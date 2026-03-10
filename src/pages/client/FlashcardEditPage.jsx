@@ -449,21 +449,18 @@ const FlashcardEditPage = () => {
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
                                         )}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            placeholder="/Phiên âm/ (Optional)" 
-                                            size="small"
-                                            value={item.pronunciation}
-                                            onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
-                                            className="w-1/2"
-                                            readOnly={true}
-                                        />
+                                    <div className="flex gap-2 items-center flex-wrap">
+                                        {item.pronunciation && (
+                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs text-gray-700 bg-gray-50 border border-gray-200">
+                                                /{item.pronunciation}/
+                                            </div>
+                                        )}
                                         <Input 
                                             placeholder="Audio URL (Optional)" 
                                             size="small"
                                             value={item.audioUrl}
                                             onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
-                                            className="w-1/2"
+                                            className="w-full md:w-1/2"
                                             readOnly={true}
                                         />
                                     </div>
