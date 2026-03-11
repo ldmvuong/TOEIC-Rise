@@ -59,6 +59,45 @@ const FixWrongOneByOne = () => {
   const currentPart = current?.part;
   const isAnswered = currentQuestion && userAnswers[currentQuestion.id] !== undefined;
 
+  const buildRedoResultFromFixing = () => {
+    const cloned = fixOneByOneData ? JSON.parse(JSON.stringify(fixOneByOneData)) : null;
+    if (!cloned?.partResponses?.length) return null;
+
+    let total = 0;
+    let correct = 0;
+
+    for (const part of cloned.partResponses) {
+      for (const group of part.questionGroups || []) {
+        for (const q of group.questions || []) {
+          total += 1;
+          const correctOption = q.correctOption ?? q.correctAnswer ?? q.correct_option ?? null;
+          const picked = userAnswers[q.id];
+
+          if (picked !== undefined) {
+            q.userAnswer = picked;
+          } else if (q.userAnswer == null) {
+            q.userAnswer = '';
+          }
+
+          if (q.correctOption == null && correctOption != null) {
+            q.correctOption = correctOption;
+          }
+
+          if (q.userAnswer && q.correctOption && q.userAnswer === q.correctOption) {
+            correct += 1;
+          }
+        }
+      }
+    }
+
+    return {
+      totalQuestions: total,
+      correctAnswers: correct,
+      timeSpent: 0,
+      learnerTestPartsResponse: cloned,
+    };
+  };
+
   const handleSelectOption = (optionLetter) => {
     if (!currentQuestion || isAnswered) return;
     setUserAnswers((prev) => ({ ...prev, [currentQuestion.id]: optionLetter }));
@@ -66,7 +105,15 @@ const FixWrongOneByOne = () => {
 
   const handleNext = () => {
     if (isLast) {
-      navigate(`/test-result/${userTestId}`);
+      const redoResult = buildRedoResultFromFixing();
+      if (!redoResult) {
+        navigate(`/test-result/${userTestId}`, { replace: true });
+        return;
+      }
+      navigate(`/redo-wrong/${userTestId}`, {
+        replace: true,
+        state: { redoResult },
+      });
       return;
     }
     setCurrentQuestionIndex((i) => i + 1);
