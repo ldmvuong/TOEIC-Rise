@@ -385,3 +385,115 @@ export const callRemoveFromFavourite = (id) => {
 export const evaluateFlashcardSentence = (payload) => {
   return api.post("/learner/flashcards/sentence", payload);
 };
+
+// Stream đánh giá câu (Flux<ChatResponse>)
+// payload: { sentence: string, keyword: string }
+export const evaluateFlashcardSentenceStream = (
+  payload,
+  { onChunk, onDone, onError },
+) => {
+  const backendUrl =
+    api?.defaults?.baseURL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    window.location.origin;
+  const token = localStorage.getItem("access_token");
+
+  fetch(`${backendUrl}/learner/flashcards/sentence`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "text/event-stream, application/json",
+    },
+    body: JSON.stringify(payload ?? {}),
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        onError?.(
+          new Error(response.statusText || "Evaluate sentence failed"),
+        );
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      const tryEmitJson = (raw) => {
+        const trimmed = (raw ?? "").trim();
+        if (!trimmed) return;
+
+        // SSE event format: data: {...}
+        if (trimmed.startsWith("data:")) {
+          const payloadStr = trimmed.replace(/^data:\s*/, "");
+          if (!payloadStr || payloadStr === "[DONE]") return;
+          try {
+            const parsed = JSON.parse(payloadStr);
+            if (parsed?.content) onChunk?.(parsed.content);
+          } catch (err) {
+            console.error("Parse sentence evaluation SSE chunk:", err);
+          }
+          return;
+        }
+
+        // Non-SSE: raw JSON object per chunk
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed?.content) onChunk?.(parsed.content);
+          } catch (err) {
+            console.error("Parse sentence evaluation JSON chunk:", err);
+          }
+        }
+      };
+
+      const processBuffer = () => {
+        const findBoundary = () => {
+          const doubleNewLine = buffer.indexOf("\n\n");
+          const doubleCarriage = buffer.indexOf("\r\n\r\n");
+          if (doubleNewLine === -1 && doubleCarriage === -1) return null;
+          if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
+          if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
+          return doubleNewLine < doubleCarriage
+            ? { index: doubleNewLine, length: 2 }
+            : { index: doubleCarriage, length: 4 };
+        };
+
+        let boundary;
+        while ((boundary = findBoundary()) !== null) {
+          const rawEvent = buffer.slice(0, boundary.index);
+          buffer = buffer.slice(boundary.index + boundary.length);
+          tryEmitJson(rawEvent);
+        }
+      };
+
+      try {
+        while (true) {
+          let readResult;
+          try {
+            readResult = await reader.read();
+          } catch (readError) {
+            console.warn("Sentence evaluation stream closed:", readError);
+            break;
+          }
+          const { value, done } = readResult;
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          processBuffer();
+        }
+        buffer += decoder.decode();
+        processBuffer();
+        // flush last buffer (in case BE doesn't end with \n\n)
+        tryEmitJson(buffer);
+        buffer = "";
+      } finally {
+        reader.releaseLock();
+      }
+
+      onDone?.();
+    })
+    .catch((err) => {
+      onError?.(err);
+    });
+};

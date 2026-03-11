@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Spin, message } from "antd";
 import {
@@ -6,8 +6,13 @@ import {
   ArrowRightIcon,
   SpeakerWaveIcon,
   SparklesIcon,
+  WrenchScrewdriverIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";   
-import { callFetchFlashcardReview } from "../../api/api";
+import {
+  callFetchFlashcardReview,
+  evaluateFlashcardSentenceStream,
+} from "../../api/api";
 
 const FlashcardSentencePracticePage = () => {
   const { id } = useParams();
@@ -18,6 +23,7 @@ const FlashcardSentencePracticePage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sentence, setSentence] = useState("");
   const [evaluating, setEvaluating] = useState(false);
+  const [evaluationText, setEvaluationText] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -46,6 +52,111 @@ const FlashcardSentencePracticePage = () => {
   const definition = currentItem?.definition || "";
   const audioUrl = currentItem?.audioUrl || null;
 
+  const evaluationSections = useMemo(() => {
+    const text = (evaluationText ?? "").replace(/\r\n/g, "\n").trim();
+    if (!text) return null;
+
+    const tryParseJsonFromMarkdownFence = () => {
+      // Match ```json ... ``` (or ``` ... ```)
+      const fence =
+        text.match(/```json\s*([\s\S]*?)\s*```/i) ||
+        text.match(/```\s*([\s\S]*?)\s*```/);
+      if (!fence?.[1]) return null;
+      const raw = fence[1].trim();
+      try {
+        const obj = JSON.parse(raw);
+        if (!obj || typeof obj !== "object") return null;
+        const suggestionText = (obj.suggestion ?? "").toString().trim();
+        const improveText = (obj.improvement ?? "").toString().trim();
+        const commentText = (obj.remark ?? "").toString().trim();
+        const score =
+          obj.score !== undefined && obj.score !== null
+            ? Number(obj.score)
+            : null;
+
+        const improvements = improveText
+          ? improveText
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean)
+              .flatMap((l) => l.split("•").map((x) => x.trim()))
+              .map((l) => l.replace(/^[-*•]\s+/, ""))
+              .filter(Boolean)
+          : [];
+
+        return {
+          score: Number.isFinite(score) ? score : null,
+          suggestionText,
+          improvements,
+          commentText,
+        };
+      } catch {
+        return null;
+      }
+    };
+
+    const parsedJson = tryParseJsonFromMarkdownFence();
+    if (parsedJson) return parsedJson;
+
+    const findIndex = (re) => {
+      const m = text.match(re);
+      return m ? m.index : -1;
+    };
+
+    const idxSuggestion = findIndex(/(^|\n)\s*Suggestion\s*:/i);
+    const idxImprove = findIndex(/(^|\n)\s*(?:CẢI\s*THIỆN|CAI\s*THIEN)\s*:/i);
+    const idxComment = findIndex(/(^|\n)\s*(?:NHẬN\s*XÉT|NHAN\s*XET)\s*:/i);
+
+    const sliceSection = (startIdx, endIdx) => {
+      if (startIdx < 0) return "";
+      const raw = text.slice(startIdx, endIdx < 0 ? undefined : endIdx);
+      return raw.trim();
+    };
+
+    const suggestionRaw = sliceSection(
+      idxSuggestion,
+      [idxImprove, idxComment].filter((x) => x >= 0).sort((a, b) => a - b)[0] ??
+        -1,
+    );
+    const improveRaw = sliceSection(
+      idxImprove,
+      [idxComment].filter((x) => x >= 0).sort((a, b) => a - b)[0] ?? -1,
+    );
+    const commentRaw = sliceSection(idxComment, -1);
+
+    const extractAfterLabel = (raw, labelRe) => {
+      const m = raw.match(labelRe);
+      if (!m) return raw.trim();
+      return raw.slice((m.index ?? 0) + m[0].length).trim();
+    };
+
+    const suggestionText = extractAfterLabel(suggestionRaw, /Suggestion\s*:\s*/i);
+    const improveText = extractAfterLabel(
+      improveRaw,
+      /(?:CẢI\s*THIỆN|CAI\s*THIEN)\s*:\s*/i,
+    );
+    const commentText = extractAfterLabel(
+      commentRaw,
+      /(?:NHẬN\s*XÉT|NHAN\s*XET)\s*:\s*/i,
+    );
+
+    const improvements = improveText
+      ? improveText
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => l.replace(/^[-*•]\s+/, ""))
+          .filter(Boolean)
+      : [];
+
+    return {
+      score: null,
+      suggestionText,
+      improvements,
+      commentText,
+    };
+  }, [evaluationText]);
+
   const handlePlayAudio = () => {
     if (audioUrl && audioRef.current) {
       audioRef.current.play().catch(() => {});
@@ -53,8 +164,8 @@ const FlashcardSentencePracticePage = () => {
   };
 
   const handleNext = () => {
-    setShowExample(false);
     setSentence("");
+    setEvaluationText("");
     if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
   };
 
@@ -65,14 +176,23 @@ const FlashcardSentencePracticePage = () => {
       return;
     }
     setEvaluating(true);
-    // TODO: gọi API AI đánh giá câu khi backend sẵn sàng
-    message.info(
-      'Tính năng đánh giá bằng AI đang được phát triển. Câu của bạn: "' +
-        trimmed +
-        '"',
-      4,
+    setEvaluationText("");
+
+    evaluateFlashcardSentenceStream(
+      { sentence: trimmed, keyword: vocabulary },
+      {
+        onChunk: (chunk) => {
+          setEvaluationText((prev) => prev + chunk);
+        },
+        onDone: () => {
+          setEvaluating(false);
+        },
+        onError: (err) => {
+          setEvaluating(false);
+          message.error(err?.message || "Không thể đánh giá câu. Vui lòng thử lại.");
+        },
+      },
     );
-    setTimeout(() => setEvaluating(false), 500);
   };
 
   if (loading) {
@@ -162,17 +282,104 @@ const FlashcardSentencePracticePage = () => {
           className="w-full px-4 py-3 rounded-xl border-2 border-orange-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition text-gray-900 placeholder-gray-400 resize-y mb-6"
         />
 
+        {(evaluating || !!evaluationText) && (
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <p className="text-sm font-semibold text-gray-800">
+                Kết quả đánh giá
+              </p>
+              {evaluating && (
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                  <Spin size="small" />
+                  <span>Đang đánh giá...</span>
+                </div>
+              )}
+            </div>
+
+            {!evaluationSections ? (
+              <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-gray-600">
+                <div className="flex items-center gap-3">
+                  <Spin />
+                  <span>Đang nhận kết quả từ hệ thống...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {!!evaluationSections.suggestionText && (
+                  <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+                    <span className="font-semibold text-gray-900">
+                      Suggestion:&nbsp;
+                    </span>
+                    <span className="text-gray-900">
+                      {evaluationSections.suggestionText}
+                    </span>
+                    {vocabulary &&
+                      new RegExp(
+                        `\\(\\s*${vocabulary.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\s*\\)`,
+                        "i",
+                      ).test(evaluationSections.suggestionText) && (
+                        <span className="ml-1 text-red-500 line-through">
+                          ({vocabulary})
+                        </span>
+                      )}
+                  </div>
+                )}
+
+                {!!evaluationSections.improvements?.length && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <WrenchScrewdriverIcon className="w-5 h-5 text-gray-500" />
+                      <p className="text-xs font-semibold tracking-wide text-gray-600">
+                        CẢI THIỆN:
+                      </p>
+                    </div>
+                    <ul className="list-disc pl-5 space-y-2 text-gray-800">
+                      {evaluationSections.improvements.map((it, idx) => (
+                        <li key={idx}>{it}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!!evaluationSections.commentText && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-500" />
+                      <p className="text-xs font-semibold tracking-wide text-gray-600">
+                        NHẬN XÉT:
+                      </p>
+                    </div>
+                    <p className="whitespace-pre-wrap text-gray-800">
+                      {evaluationSections.commentText}
+                    </p>
+                  </div>
+                )}
+
+                {!evaluationSections.suggestionText &&
+                  !evaluationSections.improvements?.length &&
+                  !evaluationSections.commentText && (
+                    <p className="whitespace-pre-wrap text-gray-900">
+                      {evaluationText}
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Buttons */}
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={handleEvaluate}
-            disabled={evaluating}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-70 transition"
-          >
-            <SparklesIcon className="w-5 h-5" />
-            Đánh giá
-          </button>
+          {!evaluationText && (
+            <button
+              type="button"
+              onClick={handleEvaluate}
+              disabled={evaluating}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-70 transition"
+            >
+              <SparklesIcon className="w-5 h-5" />
+              {evaluating ? "Đang đánh giá..." : "Đánh giá"}
+            </button>
+          )}
         </div>
       </div>
     </div>
