@@ -372,3 +372,7 @@ export const callDeleteComment = (commentId) => {
 export const callFetchReplies = (commentId, page = 0, size = 5) => {
   return api.get(`/learner/comments/${commentId}/replies?page=${page}&size=${size}`);
 };
+
+export const getQuestionMap = (testId) => {
+  return api.get(`/learner/comments/${testId}/questions`);
+};

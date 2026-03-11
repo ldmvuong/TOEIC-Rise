@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { message, Modal, Dropdown } from 'antd';
+import { message, Modal, Dropdown, Select } from 'antd';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../../redux/hooks';
 import {
@@ -8,6 +8,7 @@ import {
     callUpdateComment,
     callDeleteComment,
     callFetchReplies,
+    getQuestionMap,
 } from '../../api/api';
 import { formatDateFull } from '../../utils/dateUtils';
 import { CharCount } from '../../utils/charCountUtils';
@@ -33,6 +34,9 @@ const CommentItem = ({
     onLoadMoreReplies,
     isAuthenticated,
     loadingMoreReplies = false,
+    onViewQuestion,
+    questions = [],
+    questionLoading = false,
 }) => {
     const [showReplyInput, setShowReplyInput] = useState(false);
     const [replyContent, setReplyContent] = useState('');
@@ -45,6 +49,9 @@ const CommentItem = ({
 
     const isOwner = comment.owner ?? comment.isOwner ?? false;
     const edited = comment.edited ?? comment.isEdited ?? false;
+    const taggedQuestionPosition = comment.taggedQuestionPosition;
+    const hasTaggedQuestion = taggedQuestionPosition !== null && taggedQuestionPosition !== undefined;
+    const [editQuestionId, setEditQuestionId] = useState(comment.taggedQuestionId ?? null);
 
     const repliesData = comment.replies;
     const repliesList = Array.isArray(repliesData?.result) ? repliesData.result : [];
@@ -66,12 +73,14 @@ const CommentItem = ({
 
     const handleEdit = async () => {
         setDropdownOpen(false);
-        if (editContent.trim() === comment.content) {
+        const trimmed = editContent.trim();
+        const initialQuestionId = comment.taggedQuestionId ?? null;
+        if (trimmed === comment.content && editQuestionId === initialQuestionId) {
             setIsEditing(false);
             return;
         }
         try {
-            await onEdit(comment.id, editContent.trim());
+            await onEdit(comment.id, trimmed, editQuestionId);
             setIsEditing(false);
             setIsExpanded(false);
         } catch {
@@ -103,6 +112,13 @@ const CommentItem = ({
         { key: 'delete', label: 'Xóa', danger: true, onClick: handleDelete },
     ];
 
+    const trimmedEditContent = editContent.trim();
+    const initialQuestionIdForEdit = comment.taggedQuestionId ?? null;
+    const isSaveDisabled =
+        !trimmedEditContent ||
+        (trimmedEditContent === (comment.content ?? '') &&
+            editQuestionId === initialQuestionIdForEdit);
+
     return (
         <div className={`flex gap-3 ${isReply ? 'ml-12 mt-3' : ''}`}>
             {comment.userAvatar ? (
@@ -122,6 +138,17 @@ const CommentItem = ({
                             {comment.createdAt ? formatDateFull(comment.createdAt) : ''}
                             {edited && <span className="ml-1">(đã chỉnh sửa)</span>}
                         </span>
+                        {hasTaggedQuestion && (
+                            <div className="mt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => onViewQuestion && onViewQuestion(comment)}
+                                    className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100"
+                                >
+                                    {`Câu ${taggedQuestionPosition}`}
+                                </button>
+                            </div>
+                        )}
                     </div>
                     {isOwner && (
                         <Dropdown
@@ -143,6 +170,26 @@ const CommentItem = ({
 
                 {isEditing ? (
                     <div className="mt-2">
+                        <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <span className="text-sm font-medium text-gray-700">
+                                Gắn với câu hỏi (tuỳ chọn)
+                            </span>
+                            <Select
+                                allowClear
+                                showSearch
+                                placeholder="Không gắn câu hỏi"
+                                className="w-full md:w-72"
+                                value={editQuestionId}
+                                onChange={(value) => setEditQuestionId(value ?? null)}
+                                options={questions.map((q) => ({
+                                    value: q.id,
+                                    label: `Câu ${q.position}`,
+                                }))}
+                                optionFilterProp="label"
+                                loading={questionLoading}
+                                size="middle"
+                            />
+                        </div>
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
@@ -155,7 +202,7 @@ const CommentItem = ({
                         <div className="mt-2 flex gap-2">
                             <button
                                 onClick={handleEdit}
-                                disabled={!editContent.trim() || editContent.trim() === comment.content}
+                                disabled={isSaveDisabled}
                                 className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
                                 Lưu
@@ -237,6 +284,9 @@ const CommentItem = ({
                                 onDelete={onDelete}
                                 onReply={onReply}
                                 isAuthenticated={isAuthenticated}
+                                onViewQuestion={onViewQuestion}
+                                questions={questions}
+                                questionLoading={questionLoading}
                             />
                         ))}
                         {canLoadMoreReplies && (
@@ -264,8 +314,31 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
     const [submitting, setSubmitting] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [loadingMoreReplies, setLoadingMoreReplies] = useState({});
+    const [questions, setQuestions] = useState([]);
+    const [questionLoading, setQuestionLoading] = useState(false);
+    const [selectedQuestionId, setSelectedQuestionId] = useState(null);
 
     const canLoadMore = meta && meta.page + 1 < meta.pages;
+
+    const handleViewTaggedQuestion = (comment) => {
+        if (!comment?.taggedQuestionPosition) return;
+        message.info('Tính năng xem chi tiết câu hỏi sẽ được bổ sung sau.');
+    };
+
+    const fetchQuestions = async () => {
+        if (!testId) return;
+        setQuestionLoading(true);
+        try {
+            const res = await getQuestionMap(testId);
+            const data = res?.data ?? res;
+            const list = Array.isArray(data) ? data : [];
+            setQuestions(list);
+        } catch (err) {
+            message.error(err?.message || 'Không thể tải danh sách câu hỏi');
+        } finally {
+            setQuestionLoading(false);
+        }
+    };
 
     const fetchComments = async (page = 0, append = false) => {
         const setter = append ? setLoadingMore : setLoading;
@@ -294,13 +367,25 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
         fetchComments(0);
     }, [testId, isAuthenticated]);
 
+    useEffect(() => {
+        if (!isAuthenticated || !testId) return;
+        fetchQuestions();
+    }, [testId, isAuthenticated]);
+
     const handleCreateComment = async () => {
         if (!newCommentContent.trim()) return;
         setSubmitting(true);
         const scrollY = window.scrollY;
         const lastPage = meta?.page ?? 0;
         try {
-            await callCreateComment({ content: newCommentContent.trim(), testId });
+            const payload = {
+                content: newCommentContent.trim(),
+                testId,
+            };
+            if (selectedQuestionId !== null && selectedQuestionId !== undefined) {
+                payload.questionId = selectedQuestionId;
+            }
+            await callCreateComment(payload);
             setNewCommentContent('');
             await fetchComments(0);
             for (let p = 1; p <= lastPage; p++) {
@@ -314,19 +399,45 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
         }
     };
 
-    const handleUpdateComment = async (commentId, content) => {
+    const handleUpdateComment = async (commentId, content, questionId) => {
         try {
-            await callUpdateComment(commentId, { content });
+            await callUpdateComment(commentId, { content, questionId });
             setComments((prev) =>
                 prev.map((c) => {
-                    if (c.id === commentId) return { ...c, content, edited: true };
+                    if (c.id === commentId) {
+                        const matchedQuestion = questionId
+                            ? questions.find((q) => q.id === questionId)
+                            : null;
+                        return {
+                            ...c,
+                            content,
+                            edited: true,
+                            taggedQuestionId: questionId ?? null,
+                            taggedQuestionPosition: matchedQuestion ? matchedQuestion.position : null,
+                        };
+                    }
                     if (c.replies?.result) {
                         return {
                             ...c,
                             replies: {
                                 ...c.replies,
                                 result: c.replies.result.map((r) =>
-                                    r.id === commentId ? { ...r, content, edited: true } : r
+                                    r.id === commentId
+                                        ? (() => {
+                                              const matchedQuestion = questionId
+                                                  ? questions.find((q) => q.id === questionId)
+                                                  : null;
+                                              return {
+                                                  ...r,
+                                                  content,
+                                                  edited: true,
+                                                  taggedQuestionId: questionId ?? null,
+                                                  taggedQuestionPosition: matchedQuestion
+                                                      ? matchedQuestion.position
+                                                      : null,
+                                              };
+                                          })()
+                                        : r
                                 ),
                             },
                         };
@@ -420,6 +531,26 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Bình luận</h2>
 
             <div className="mb-4">
+                <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <span className="text-sm font-medium text-gray-700">
+                        Gắn với câu hỏi (tuỳ chọn)
+                    </span>
+                    <Select
+                        allowClear
+                        showSearch
+                        placeholder="Không gắn câu hỏi"
+                        className="w-full md:w-72"
+                        value={selectedQuestionId}
+                        onChange={(value) => setSelectedQuestionId(value ?? null)}
+                        options={questions.map((q) => ({
+                            value: q.id,
+                            label: `Câu ${q.position}`,
+                        }))}
+                        optionFilterProp="label"
+                        loading={questionLoading}
+                        size="middle"
+                    />
+                </div>
                 <textarea
                     value={newCommentContent}
                     onChange={(e) => setNewCommentContent(e.target.value)}
@@ -454,6 +585,9 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                             onLoadMoreReplies={handleLoadMoreReplies}
                             isAuthenticated={isAuthenticated}
                             loadingMoreReplies={loadingMoreReplies[c.id]}
+                            onViewQuestion={handleViewTaggedQuestion}
+                            questions={questions}
+                            questionLoading={questionLoading}
                         />
                     ))}
                     {canLoadMore && (
