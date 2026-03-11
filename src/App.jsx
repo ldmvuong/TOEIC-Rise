@@ -37,6 +37,12 @@ import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
 import FlashcardCreatePage from "./pages/client/FlashcardCreatePage.jsx";
 import FlashcardViewPage from "./pages/client/FlashcardViewPage.jsx";
 import FlashcardEditPage from "./pages/client/FlashcardEditPage.jsx";
+import FlashcardPracticePlaceholder from "./pages/client/FlashcardPracticePlaceholder.jsx";
+import FlashcardMatchPage from "./pages/client/FlashcardMatchPage.jsx";
+import FlashcardQuizPage from "./pages/client/FlashcardQuizPage.jsx";
+import FlashcardTypePage from "./pages/client/FlashcardTypePage.jsx";
+import FlashcardSentencePracticePage from "./pages/client/FlashcardSentencePracticePage.jsx";
+import FlashcardDueChoosePage from "./pages/client/FlashcardDueChoosePage.jsx";
 import SystemPromptsChatbot from "./pages/admin/SystemPromptsChatbot.jsx";
 import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
@@ -164,10 +170,34 @@ export default function App() {
           )
         },
         {
-          path: 'flashcards/:id',
+          path: 'flashcards/due',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
-              <FlashcardViewPage />
+              <FlashcardDueChoosePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/match',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardMatchPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/quiz',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardQuizPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/type',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardTypePage />
             </ProtectedRoute>
           )
         },
@@ -178,7 +208,47 @@ export default function App() {
               <FlashcardEditPage />
             </ProtectedRoute>
           )
-        }
+        },
+        {
+          path: 'flashcards/:id/match',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardMatchPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/quiz',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardQuizPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/type',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardTypePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/sentence-practice',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardSentencePracticePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardViewPage />
+            </ProtectedRoute>
+          )
+        },
       ],
     },
     {

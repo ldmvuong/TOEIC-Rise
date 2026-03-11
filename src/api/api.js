@@ -340,6 +340,26 @@ export const callFetchFlashcardDetail = (id) => {
   return api.get(`/learner/flashcards/${id}`);
 };
 
+export const callFetchFlashcardReview = (id) => {
+  return api.get(`/learner/flashcards/${id}/review`);
+};
+
+// Thống kê tổng quan ôn tập (tab Ôn tập)
+export const callFetchFlashcardOverall = () => {
+  return api.get("/learner/flashcards/overall");
+};
+
+// Danh sách từ cần ôn ngay (cho nút "Ôn tập ngay")
+export const callFetchFlashcardDueItems = () => {
+  return api.get("/learner/flashcards/due-items");
+};
+
+// Gửi tiến độ luyện tập từng item trong bộ flashcard
+// payload: Array<{ flashcardItemId: number, isCorrect: boolean }>
+export const callSubmitFlashcardProgress = (payload) => {
+  return api.post("/learner/flashcards/submit-review", payload);
+};
+
 export const callCreateFlashcard = (data) => {
   return api.post("/learner/flashcards", data);
 };
@@ -358,4 +378,10 @@ export const callAddToFavourite = (id) => {
 
 export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
+};
+
+// Đánh giá câu ví dụ sử dụng từ vựng trong flashcard
+// payload: { sentence: string, keyword: string }
+export const evaluateFlashcardSentence = (payload) => {
+  return api.post("/learner/flashcards/sentence", payload);
 };
