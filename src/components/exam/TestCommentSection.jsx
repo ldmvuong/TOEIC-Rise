@@ -10,8 +10,9 @@ import {
     callFetchReplies,
     getQuestionMap,
 } from '../../api/api';
-import { formatDateFull } from '../../utils/dateUtils';
-import { CharCount } from '../../utils/charCountUtils';
+import { formatDateFull } from "../../utils/dateUtils";
+import { CharCount } from "../../utils/charCountUtils";
+import QuestionModal from "../client/modal/Question";
 
 const MAX_COMMENT_LENGTH = 500;
 const MAX_PREVIEW_LENGTH = 100;
@@ -317,12 +318,22 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
     const [questions, setQuestions] = useState([]);
     const [questionLoading, setQuestionLoading] = useState(false);
     const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+    const [previewQuestionId, setPreviewQuestionId] = useState(null);
 
     const canLoadMore = meta && meta.page + 1 < meta.pages;
 
     const handleViewTaggedQuestion = (comment) => {
-        if (!comment?.taggedQuestionPosition) return;
-        message.info('Tính năng xem chi tiết câu hỏi sẽ được bổ sung sau.');
+        if (!comment) return;
+        let questionId = comment.taggedQuestionId;
+        if (!questionId && comment.taggedQuestionPosition != null) {
+            const found = questions.find((q) => q.position === comment.taggedQuestionPosition);
+            if (found) questionId = found.id;
+        }
+        if (!questionId) {
+            message.error('Không tìm thấy thông tin câu hỏi.');
+            return;
+        }
+        setPreviewQuestionId(questionId);
     };
 
     const fetchQuestions = async () => {
@@ -604,6 +615,11 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                     )}
                 </div>
             )}
+            <QuestionModal
+                open={!!previewQuestionId}
+                onClose={() => setPreviewQuestionId(null)}
+                questionId={previewQuestionId}
+            />
         </div>
     );
 };

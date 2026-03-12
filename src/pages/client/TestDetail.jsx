@@ -4,7 +4,7 @@ import { getPublicTestById } from '../../api/api';
 import { Spin, Select, message } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
 import HistoryTestExam from '../../components/table/HistoryTestExam';
-import TestCommentSection from '../../components/client/TestCommentSection';
+import TestCommentSection from '../../components/exam/TestCommentSection';
 
 const TagChip = ({ children }) => (
     <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-800 rounded-full border border-gray-200">
