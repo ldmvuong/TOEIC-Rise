@@ -46,6 +46,7 @@ import FlashcardDueChoosePage from "./pages/client/FlashcardDueChoosePage.jsx";
 import SystemPromptsChatbot from "./pages/admin/SystemPromptsChatbot.jsx";
 import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
+import SystemPromptsSentenceAssessment from "./pages/admin/SystemPromptsSentenceAssessment.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 
 
@@ -396,6 +397,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsExplanation />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/sentence-assessment',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsSentenceAssessment />
             </ProtectedRoute>
           ),
         },
