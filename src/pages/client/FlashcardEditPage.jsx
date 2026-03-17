@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Input, Switch, Button, message, Spin, Card, Tooltip } from 'antd';
 import { 
@@ -13,8 +13,10 @@ import {
     callFetchFlashcardDetail, 
     callUpdateFlashcard 
 } from '../../api/api';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const { TextArea } = Input;
+const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
 
 const FlashcardEditPage = () => {
     const { id } = useParams();
@@ -24,6 +26,7 @@ const FlashcardEditPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isNotFound, setIsNotFound] = useState(false); // Lỗi 404 - không tìm thấy hoặc không có quyền
     const [isOwner, setIsOwner] = useState(false); // Quyền sở hữu - từ API
+    const [isLookupLoading, setIsLookupLoading] = useState(false);
 
     // --- STATE DỮ LIỆU ---
     const [name, setName] = useState('');
@@ -38,6 +41,18 @@ const FlashcardEditPage = () => {
         name: '',
         items: []
     });
+
+    // Debounce timers for dictionary lookup (per item index)
+    const lookupTimeoutsRef = useRef({});
+    // Track latest lookup request per item to avoid race conditions
+    const lookupSeqRef = useRef({});
+
+    useEffect(() => {
+        return () => {
+            Object.values(lookupTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+            lookupTimeoutsRef.current = {};
+        };
+    }, []);
 
     // --- FETCH DATA ---
     useEffect(() => {
@@ -114,6 +129,128 @@ const FlashcardEditPage = () => {
             newErrors.items[index] = { ...newErrors.items[index], [field]: '' };
             setErrors(newErrors);
         }
+
+        if (field === 'vocabulary') {
+            scheduleLookup(index, value);
+        }
+    };
+
+    const handleLookupFromDictionary = async (index, vocabOverride) => {
+        const vocab = (vocabOverride ?? items[index]?.vocabulary ?? '').trim();
+        if (!vocab) {
+            return;
+        }
+
+        try {
+            setIsLookupLoading(true);
+            const seq = (lookupSeqRef.current[index] ?? 0) + 1;
+            lookupSeqRef.current[index] = seq;
+
+            const response = await fetch(
+                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}`
+            );
+
+            if (!response.ok) {
+                // If not found, clear suggestion fields so UI hides pronunciation/audio
+                if (response.status === 404) {
+                    setItems((prevItems) => {
+                        const newItems = [...prevItems];
+                        const current = { ...newItems[index] };
+                        const latestSeq = lookupSeqRef.current[index];
+                        const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                        if (latestSeq !== seq || !stillSameVocab) return prevItems;
+                        current.definition = '';
+                        current.pronunciation = '';
+                        current.audioUrl = '';
+                        newItems[index] = current;
+                        return newItems;
+                    });
+                }
+                // Silent fail on API error
+                return;
+            }
+
+            const data = await response.json();
+
+            // If word does not exist, clear suggestion fields
+            if (data?.exists === false) {
+                setItems((prevItems) => {
+                    const newItems = [...prevItems];
+                    const current = { ...newItems[index] };
+                    const latestSeq = lookupSeqRef.current[index];
+                    const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                    if (latestSeq !== seq || !stillSameVocab) return prevItems;
+                    current.definition = '';
+                    current.pronunciation = '';
+                    current.audioUrl = '';
+                    newItems[index] = current;
+                    return newItems;
+                });
+                return;
+            }
+
+            if (!data?.exists || !Array.isArray(data.results) || data.results.length === 0) {
+                // Silent fail when no results / unexpected response shape
+                return;
+            }
+
+            const firstResult = data.results[0];
+
+            const pronunciation =
+                Array.isArray(firstResult.pronunciations) && firstResult.pronunciations.length > 0
+                    ? firstResult.pronunciations[0].ipa || ''
+                    : '';
+
+            const allDefinitions = Array.isArray(firstResult.meanings)
+                ? firstResult.meanings
+                    .map((m) => m?.definition?.trim())
+                    .filter(Boolean)
+                : [];
+            const combinedDefinition = allDefinitions.join('; ');
+
+            const audioPath = firstResult.audio || '';
+            const audioUrl =
+                audioPath && typeof audioPath === 'string'
+                    ? (audioPath.startsWith('http') ? audioPath : `${DICT_API_BASE_URL}${audioPath}`)
+                    : '';
+
+            setItems((prevItems) => {
+                const newItems = [...prevItems];
+                const current = { ...newItems[index] };
+                const latestSeq = lookupSeqRef.current[index];
+                const stillSameVocab = (current.vocabulary ?? '').trim().toLowerCase() === vocab.toLowerCase();
+                if (latestSeq !== seq || !stillSameVocab) return prevItems;
+
+                current.definition = combinedDefinition || '';
+                current.pronunciation = pronunciation || '';
+                current.audioUrl = audioUrl || '';
+
+                newItems[index] = current;
+                return newItems;
+            });
+        } catch (error) {
+            console.error('Error looking up dictionary:', error);
+            // Silent fail on error, no user-facing message
+        } finally {
+            setIsLookupLoading(false);
+        }
+    };
+
+    const scheduleLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) clearTimeout(existing);
+        lookupTimeoutsRef.current[index] = setTimeout(() => {
+            handleLookupFromDictionary(index, vocabValue);
+        }, 3000);
+    };
+
+    const flushLookup = (index, vocabValue) => {
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
+        }
+        handleLookupFromDictionary(index, vocabValue);
     };
 
     const handleNameChange = (value) => {
@@ -134,6 +271,11 @@ const FlashcardEditPage = () => {
     const handleRemoveItem = (index) => {
         if (items.length === 1) {
             return;
+        }
+        const existing = lookupTimeoutsRef.current[index];
+        if (existing) {
+            clearTimeout(existing);
+            delete lookupTimeoutsRef.current[index];
         }
         const newItems = items.filter((_, i) => i !== index);
         const newErrors = { ...errors };
@@ -372,27 +514,21 @@ const FlashcardEditPage = () => {
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
+                                            onBlur={(e) => flushLookup(index, e.target.value)}
                                         />
                                         {errors.items[index]?.vocabulary && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].vocabulary}</div>
                                         )}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            placeholder="/Phiên âm/ (Optional)" 
-                                            size="small"
-                                            value={item.pronunciation}
-                                            onChange={(e) => handleItemChange(index, 'pronunciation', e.target.value)}
-                                            className="w-1/2"
-                                        />
-                                        <Input 
-                                            placeholder="Audio URL (Optional)" 
-                                            size="small"
-                                            value={item.audioUrl}
-                                            onChange={(e) => handleItemChange(index, 'audioUrl', e.target.value)}
-                                            className="w-1/2"
-                                        />
-                                    </div>
+                                    {/* Pronunciation (display-only, only if exists) */}
+                                    {item.pronunciation && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-gray-400 uppercase font-semibold">Phiên âm (Pronunciation)</label>
+                                            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm text-gray-700 bg-gray-50 border border-gray-200 w-fit">
+                                                /{item.pronunciation}/
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Cột Định nghĩa */}
@@ -414,6 +550,13 @@ const FlashcardEditPage = () => {
                                         * Gợi ý: Có thể nhập câu ví dụ vào phần định nghĩa nếu cần.
                                     </div>
                                 </div>
+
+                                {/* Nếu có audioUrl thì hiển thị player xem trước */}
+                                {item.audioUrl && (
+                                    <div className="md:col-span-2 mt-2 max-w-md">
+                                        <AudioPlayerUI audioUrl={item.audioUrl} />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

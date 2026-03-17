@@ -126,17 +126,17 @@ export const createTag = (payload) => api.post(`/staff/tags`, payload);
 export const updateTag = (tagId, payload) =>
   api.put(`/staff/tags/${tagId}`, payload);
 
-// Staff System Prompts
+// Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
-  api.get(`/staff/system-prompts?${query}`);
+  api.get(`/admin/system-prompts?${query}`);
 export const getSystemPromptDetail = (featureType, id) =>
-  api.get(`/staff/system-prompts/${featureType}/${id}`);
+  api.get(`/admin/system-prompts/${featureType}/${id}`);
 export const createSystemPrompt = (featureType, payload) =>
-  api.post(`/staff/system-prompts/${featureType}`, payload);
+  api.post(`/admin/system-prompts/${featureType}`, payload);
 export const updateSystemPrompt = (featureType, id, payload) =>
-  api.put(`/staff/system-prompts/${featureType}/${id}`, payload);
+  api.put(`/admin/system-prompts/${featureType}/${id}`, payload);
 export const changeSystemPromptActive = (featureType, id) =>
-  api.patch(`/staff/system-prompts/${featureType}/${id}`);
+  api.patch(`/admin/system-prompts/${featureType}/${id}`);
 
 // Admin Staff Report
 
@@ -349,4 +349,21 @@ export const callAddToFavourite = (id) => {
 
 export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
+};
+
+export const callFetchFlashcardsForPopup = (params = {}) => {
+  const { name, page = 0, size = 10, sortBy = "name", direction = "DESC" } = params;
+  return api.get("/learner/flashcards/popup", {
+    params: {
+      name,
+      page,
+      size,
+      sortBy,
+      direction,
+    },
+  });
+};
+
+export const callAddFlashcardItemToPopup = (payload) => {
+  return api.post("/learner/flashcards/popup", payload);
 };
