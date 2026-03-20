@@ -23,12 +23,14 @@ const typeToEnumMap = {
   chatbot: "CHATBOT",
   "q-and-a": "Q_AND_A",
   explanation: "EXPLANATION_GENERATION",
+  "sentence-assessment": "SENTENCE_ASSESSMENT",
 };
 
 const typeToLabelMap = {
   chatbot: "Chatbot",
   "q-and-a": "Q & A",
   explanation: "Explanation Generation",
+  "sentence-assessment": "Sentence Assessment",
 };
 
 const SystemPromptDetailPage = () => {
