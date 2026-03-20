@@ -15,6 +15,7 @@ const Sidebar = ({
   volume = 1,
   onVolumeChange = () => {},
   canNavigate = true, // Part 1-4 không cho navigate
+  allowListeningNavigation = false,
   flaggedQuestions = [],
   answers = {} // { questionId: selectedOptionIndex } - để biết câu nào đã làm
 }) => {
@@ -49,6 +50,7 @@ const Sidebar = ({
           currentQuestionGroupIndex={currentQuestionGroupIndex}
           onNavigateToQuestion={onNavigateToQuestion}
           canNavigate={canNavigate}
+          allowListeningNavigation={allowListeningNavigation}
           flaggedQuestions={flaggedQuestions}
           answers={answers}
         />

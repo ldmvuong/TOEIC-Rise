@@ -6,6 +6,7 @@ import PassageDisplay from '../../components/exam/PassageDisplay';
 import ImageDisplay from '../../components/exam/ImageDisplay';
 import { formatTime } from '../../utils/timeUtils';
 import DictionaryText from '../../components/shared/DictionaryText';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const RedoWrong = () => {
   const { userTestId } = useParams();
@@ -77,7 +78,7 @@ const RedoWrong = () => {
           const isWrong = isUserAnswer && !isCorrectOption;
 
           return (
-            <div key={index} className="flex items-center gap-2">
+            <div key={optionLetter} className="flex items-center gap-2">
               <div
                 className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
                   isCorrect
@@ -109,13 +110,14 @@ const RedoWrong = () => {
     );
   };
 
-  const renderQuestionGroup = (group) => {
+  const renderQuestionGroup = (group, groupIndex) => {
     const isPart6Or7 = partNumber === 6 || partNumber === 7;
     const questionRangeText = getQuestionRangeText(group.questions);
+    const groupKey = group?.id ?? `group-${groupIndex}`;
 
     if (isPart6Or7) {
       return (
-        <div key={group.id} className="mb-8">
+        <div key={groupKey} className="mb-8">
           {questionRangeText && (
             <div className="mb-2">
               <span className="text-sm font-semibold text-gray-700">{questionRangeText}</span>
@@ -153,14 +155,15 @@ const RedoWrong = () => {
                 </div>
 
             <div className="w-[45%] overflow-y-auto pl-4" style={{ maxHeight: '70vh' }}>
-              {group.questions?.map((question) => {
+              {group.questions?.map((question, questionIndex) => {
                 const showCorrectLine =
                   question.correctOption &&
                   (!question.userAnswer || question.userAnswer !== question.correctOption);
+                const questionKey = question?.id ?? `${groupKey}-${question?.position ?? questionIndex}`;
 
                 return (
                   <div
-                    key={question.id}
+                    key={questionKey}
                     id={`redo-question-${question.position}`}
                     className="mb-6 pb-6 border-b border-gray-200 last:border-b-0"
                   >
@@ -208,7 +211,7 @@ const RedoWrong = () => {
     }
 
     return (
-      <div key={group.id} className="mb-8">
+      <div key={groupKey} className="mb-8">
         {questionRangeText && (
           <div className="mb-2">
             <span className="text-sm font-semibold text-gray-700">{questionRangeText}</span>
@@ -217,6 +220,11 @@ const RedoWrong = () => {
         <div className="relative rounded-xl bg-white shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500"></div>
           <div className="p-5 pt-6">
+            {(partNumber >= 1 && partNumber <= 4) && group.audioUrl && (
+              <div className="mb-4">
+                <AudioPlayerUI audioUrl={group.audioUrl} />
+              </div>
+            )}
             {group.imageUrl && (
               <div className="mb-4">
                 <ImageDisplay imageUrl={group.imageUrl} />
@@ -228,14 +236,15 @@ const RedoWrong = () => {
               </div>
             )}
             <div className="space-y-6">
-              {group.questions?.map((question) => {
+              {group.questions?.map((question, questionIndex) => {
                 const showCorrectLine =
                   question.correctOption &&
                   (!question.userAnswer || question.userAnswer !== question.correctOption);
+                const questionKey = question?.id ?? `${groupKey}-${question?.position ?? questionIndex}`;
 
                 return (
                   <div
-                    key={question.id}
+                    key={questionKey}
                     id={`redo-question-${question.position}`}
                     className="mb-6 pb-6 border-b border-gray-200 last:border-b-0"
                   >
@@ -357,7 +366,7 @@ const RedoWrong = () => {
             {selectedPart && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">{selectedPart.partName}</h2>
-                {selectedPart.questionGroups?.map((group) => renderQuestionGroup(group))}
+                {selectedPart.questionGroups?.map((group, groupIndex) => renderQuestionGroup(group, groupIndex))}
               </div>
             )}
           </div>
@@ -373,7 +382,7 @@ const RedoWrong = () => {
                 </h4>
                 <div className="grid grid-cols-5 gap-1">
                   {part.questionGroups?.flatMap((group) =>
-                    group.questions?.map((question) => {
+                    group.questions?.map((question, questionIndex) => {
                       const isCorrect =
                         question.userAnswer &&
                         question.correctOption &&
@@ -384,10 +393,11 @@ const RedoWrong = () => {
                         question.userAnswer !== question.correctOption;
 
                       const status = isCorrect ? 'correct' : isWrong ? 'incorrect' : 'unanswered';
+                      const questionKey = question?.id ?? `${part?.id ?? partIdx}-${question?.position ?? questionIndex}`;
 
                       return (
                         <button
-                          key={`${part.id}-${question.id}`}
+                          key={questionKey}
                           onClick={() => {
                             setSelectedPartIndex(partIdx);
                             scrollToQuestion(question.position);
