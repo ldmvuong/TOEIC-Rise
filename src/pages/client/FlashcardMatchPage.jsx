@@ -94,6 +94,7 @@ const FlashcardMatchPage = () => {
     const totalBatches = Math.ceil(items.length / PAIRS_PER_BATCH);
     const isLastBatch = batchIndex >= totalBatches - 1;
     const batchComplete = currentBatchItems.length > 0 && matchedPairIds.size === currentBatchItems.length;
+    const isCompleted = batchComplete && isLastBatch;
 
     useEffect(() => {
         if (batchComplete && !isLastBatch) {
@@ -102,11 +103,6 @@ const FlashcardMatchPage = () => {
             setSelectedCard(null);
         }
     }, [batchComplete, isLastBatch]);
-
-    const visibleCards = useMemo(
-        () => cards.filter((c) => !matchedPairIds.has(c.pairId)),
-        [cards, matchedPairIds]
-    );
 
     const markCorrect = (itemId) => {
         if (!itemId) return;
@@ -194,7 +190,29 @@ const FlashcardMatchPage = () => {
     };
 
     const handleExit = () => {
+        if (submittingExit) return;
         const target = isDueMode ? '/flashcards/due' : `/flashcards/${id}`;
+
+        // Nếu đã hoàn thành bài thì không hiển thị cảnh báo nữa:
+        // tự động gửi data lên BE và điều hướng.
+        if (isCompleted) {
+            (async () => {
+                try {
+                    setSubmittingExit(true);
+                    const payload = buildProgressPayload();
+                    if (payload.items.length) {
+                        await callSubmitFlashcardProgress(payload);
+                    }
+                } catch (err) {
+                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                } finally {
+                    setSubmittingExit(false);
+                    navigate(target);
+                }
+            })();
+            return;
+        }
+
         if (!hasProgress) {
             navigate(target);
             return;
@@ -223,10 +241,10 @@ const FlashcardMatchPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#1e222d] flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Spin size="large" className="text-green-500" />
-                    <p className="text-gray-400">Đang tải dữ liệu...</p>
+                    <Spin size="large" className="text-green-600" />
+                    <p className="text-gray-600">Đang tải dữ liệu...</p>
                 </div>
             </div>
         );
@@ -234,12 +252,12 @@ const FlashcardMatchPage = () => {
 
     if (!items.length) {
         return (
-            <div className="min-h-screen bg-[#1e222d] flex items-center justify-center p-4">
-                <div className="text-center text-gray-400">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="text-center text-gray-600">
                     <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#2B3141] text-white rounded-xl hover:bg-[#353b4a] transition"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-xl hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
                         Quay lại bộ thẻ
@@ -249,21 +267,21 @@ const FlashcardMatchPage = () => {
         );
     }
 
-    const allMatched = visibleCards.length === 0;
+    const allMatched = currentBatchItems.length > 0 && matchedPairIds.size === currentBatchItems.length;
     const allDone = allMatched && isLastBatch;
     const totalMatchedSoFar = batchIndex * PAIRS_PER_BATCH + matchedPairIds.size;
 
     return (
-        <div className="min-h-screen bg-[#1e222d] text-gray-100 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-[#2B3141]">
+        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <button
                     onClick={handleExit}
-                    className="p-2 rounded-lg hover:bg-[#2B3141] transition flex items-center gap-2 text-gray-300 hover:text-white"
+                    className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span className="hidden sm:inline">Quay lại</span>
                 </button>
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-gray-600">
                     Nối từ với nghĩa · Lượt {batchIndex + 1}/{totalBatches} · Đã nối {totalMatchedSoFar}/{items.length} cặp
                 </span>
             </div>
@@ -271,8 +289,8 @@ const FlashcardMatchPage = () => {
             <div className="flex-1 p-4 overflow-auto flex flex-col min-h-0">
                 {allDone ? (
                     <div className="flex flex-col items-center justify-center py-16 flex-1">
-                        <p className="text-xl font-semibold text-green-400 mb-4">Hoàn thành!</p>
-                        <p className="text-gray-400 mb-6">Bạn đã nối đúng tất cả cặp từ.</p>
+                        <p className="text-xl font-semibold text-green-700 mb-4">Hoàn thành!</p>
+                        <p className="text-gray-600 mb-6">Bạn đã nối đúng tất cả cặp từ.</p>
                         <button
                             onClick={handleExit}
                             disabled={submittingExit}
@@ -283,7 +301,8 @@ const FlashcardMatchPage = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-3 flex-1 w-full min-h-[50vh] gap-3 sm:gap-4">
-                        {visibleCards.map((card, indexInVisible) => {
+                        {cards.map((card, indexInVisible) => {
+                            const isAlreadyMatched = matchedPairIds.has(card.pairId);
                             const selected = isSelected(card);
                             const isCorrectFeedback = isInFeedback(card, 'correct');
                             const isWrongFeedback = isInFeedback(card, 'wrong');
@@ -292,21 +311,26 @@ const FlashcardMatchPage = () => {
                                     key={`${card.pairId}-${card.type}-${indexInVisible}`}
                                     type="button"
                                     onClick={() => handleCardClick(card)}
+                                    disabled={isAlreadyMatched}
                                     className={`p-4 sm:p-5 rounded-xl text-left transition min-h-[80px] sm:min-h-[120px] flex flex-col justify-center flex-1 md:min-h-0 md:h-full ${
+                                        isAlreadyMatched
+                                            ? 'opacity-0 border border-transparent bg-transparent pointer-events-none'
+                                            : ''
+                                    } ${
                                         isCorrectFeedback
-                                            ? 'bg-green-600 border-2 border-green-400'
+                                            ? 'bg-green-100 border-2 border-green-300'
                                             : isWrongFeedback
-                                                ? 'bg-red-600 border-2 border-red-400'
+                                                ? 'bg-red-100 border-2 border-red-300'
                                                 : selected
-                                                    ? 'bg-[#5F677A] border-2 border-[#7a8299]'
-                                                    : 'bg-[#2B3141] border border-[#353b4a] hover:border-[#4a5166]'
+                                                    ? 'bg-blue-50 border-2 border-blue-200'
+                                                    : 'bg-white border border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                                     }`}
                                 >
-                                    <span className="text-white font-medium text-base sm:text-lg leading-snug break-words">
+                                    <span className="text-gray-900 font-medium text-base sm:text-lg leading-snug break-words">
                                         {card.text || '—'}
                                     </span>
                                     {card.pronunciation && (
-                                        <span className="text-gray-400 text-sm mt-1">
+                                        <span className="text-gray-600 text-sm mt-1">
                                             /{card.pronunciation}/
                                         </span>
                                     )}

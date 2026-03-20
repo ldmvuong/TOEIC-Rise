@@ -164,9 +164,17 @@ const FlashcardSentencePracticePage = () => {
   };
 
   const handleNext = () => {
+    setEvaluating(false);
     setSentence("");
     setEvaluationText("");
     if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
+  };
+
+  const handlePrev = () => {
+    setEvaluating(false);
+    setSentence("");
+    setEvaluationText("");
+    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
 
   const handleEvaluate = () => {
@@ -228,20 +236,34 @@ const FlashcardSentencePracticePage = () => {
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate(`/flashcards/${id}`)}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition"
+              className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
           >
             <ArrowLeftIcon className="w-6 h-6" />
+              <span className="hidden sm:inline">Quay lại</span>
           </button>
           <span className="text-gray-600 font-medium">
             {currentIndex + 1} / {total}
           </span>
-          <button
-            onClick={handleNext}
-            disabled={currentIndex >= total - 1}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-          >
-            <ArrowRightIcon className="w-6 h-6" />
-          </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentIndex <= 0}
+                className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+              >
+                <span className="hidden sm:inline">Trước</span>
+                <ArrowLeftIcon className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={currentIndex >= total - 1}
+                className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+              >
+                <span className="hidden sm:inline">Sau</span>
+                <ArrowRightIcon className="w-5 h-5" />
+              </button>
+            </div>
         </div>
 
         {/* Instruction */}

@@ -104,6 +104,7 @@ const FlashcardQuizPage = () => {
     }, [currentItem, items]);
 
     const total = items.length;
+    const isCompleted = total > 0 && currentIndex >= total - 1 && revealed;
 
     const markCorrect = (itemId) => {
         if (!itemId) return;
@@ -149,8 +150,7 @@ const FlashcardQuizPage = () => {
     const handleSkip = () => {
         setRevealed(true);
         setSelectedKey(null);
-        setResults((prev) => ({ ...prev, [currentIndex]: 'skip' }));
-        // "Bạn không biết?" được tính là sai
+        setResults((prev) => ({ ...prev, [currentIndex]: 'wrong' }));
         markWrong(currentItemId);
     };
 
@@ -165,7 +165,29 @@ const FlashcardQuizPage = () => {
     };
 
     const handleExit = () => {
+        if (submittingExit) return;
         const target = isDueMode ? '/flashcards/due' : `/flashcards/${id}`;
+
+        // Nếu đã hoàn thành thì tự động gửi tiến độ và điều hướng,
+        // không hiển thị cảnh báo xác nhận.
+        if (isCompleted) {
+            (async () => {
+                try {
+                    setSubmittingExit(true);
+                    const payload = buildProgressPayload();
+                    if (payload.items.length) {
+                        await callSubmitFlashcardProgress(payload);
+                    }
+                } catch (err) {
+                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                } finally {
+                    setSubmittingExit(false);
+                    navigate(target);
+                }
+            })();
+            return;
+        }
+
         if (!hasProgress) {
             navigate(target);
             return;
@@ -194,10 +216,10 @@ const FlashcardQuizPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Spin size="large" className="text-green-500" />
-                    <p className="text-gray-400">Đang tải dữ liệu...</p>
+                    <Spin size="large" className="text-green-600" />
+                    <p className="text-gray-600">Đang tải dữ liệu...</p>
                 </div>
             </div>
         );
@@ -205,12 +227,12 @@ const FlashcardQuizPage = () => {
 
     if (!items.length) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                <div className="text-center text-gray-400">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="text-center text-gray-600">
                     <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
                         Quay lại bộ thẻ
@@ -222,12 +244,12 @@ const FlashcardQuizPage = () => {
 
     if (items.length < 4) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                <div className="text-center text-gray-400">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="text-center text-gray-600">
                     <p className="mb-4">Cần ít nhất 4 từ vựng để chơi. Hiện có {items.length} từ.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
                         Quay lại bộ thẻ
@@ -238,29 +260,29 @@ const FlashcardQuizPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <button
                     onClick={handleExit}
-                    className="p-2 rounded-lg hover:bg-gray-800 transition flex items-center gap-2 text-gray-300 hover:text-white"
+                    className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span className="hidden sm:inline">Quay lại</span>
                 </button>
-                <span className="text-sm text-gray-400">Trắc nghiệm lựa chọn</span>
+                <span className="text-sm text-gray-600">Trắc nghiệm lựa chọn</span>
             </div>
 
             {/* Progress bar: đỏ khi chọn sai */}
             <div className="px-4 pt-4">
-                <div className="flex items-center gap-1 overflow-hidden rounded-full bg-gray-700">
+                <div className="flex items-center gap-1 overflow-hidden rounded-full bg-gray-200">
                     {items.map((_, i) => {
                         const isWrong = results[i] === 'wrong';
                         const isPastOrCurrentRevealed = i < currentIndex || (i === currentIndex && revealed);
                         const segmentBg = isWrong
-                            ? 'bg-red-500'
+                            ? 'bg-red-200'
                             : isPastOrCurrentRevealed
-                                ? 'bg-green-500'
-                                : 'bg-gray-600';
+                                ? 'bg-green-200'
+                                : 'bg-gray-300';
                         return (
                             <div
                                 key={i}
@@ -270,20 +292,20 @@ const FlashcardQuizPage = () => {
                     })}
                 </div>
                 <div className="flex justify-between mt-2 text-sm">
-                    <span className="text-green-400 font-medium">{currentIndex + 1}</span>
+                    <span className="text-green-700 font-medium">{currentIndex + 1}</span>
                     <span className="text-gray-500">{total}</span>
                 </div>
             </div>
 
             <div className="px-4 py-6 flex-1">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">
                     Định nghĩa
                 </h2>
-                <p className="text-2xl md:text-3xl font-bold text-white mb-8">
+                <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
                     {currentItem?.definition || '—'}
                 </p>
 
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
                     Chọn đáp án đúng
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -293,12 +315,12 @@ const FlashcardQuizPage = () => {
                         const showWrong = revealed && selected && !opt.isCorrect;
                         const disabled = revealed;
                         const bg = showCorrect
-                            ? 'bg-green-600 border-green-500'
+                            ? 'bg-green-100 border-green-300'
                             : showWrong
-                                ? 'bg-red-600/30 border-red-500'
+                                ? 'bg-red-100 border-red-300'
                                 : selected
-                                    ? 'bg-blue-600/30 border-blue-500'
-                                    : 'bg-gray-800 border-gray-600 hover:border-gray-500';
+                                    ? 'bg-blue-50 border-blue-200'
+                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50';
                         return (
                             <button
                                 key={`${opt.vocabulary}-${idx}`}
@@ -309,9 +331,9 @@ const FlashcardQuizPage = () => {
                                     disabled ? 'cursor-default' : 'cursor-pointer'
                                 }`}
                             >
-                                <span className="font-medium text-white block">{opt.vocabulary}</span>
+                                <span className="font-medium text-gray-900 block">{opt.vocabulary}</span>
                                 {opt.pronunciation && (
-                                    <span className="text-sm text-gray-400 mt-1">
+                                    <span className="text-sm text-gray-600 mt-1">
                                         /{opt.pronunciation}/
                                     </span>
                                 )}
@@ -325,10 +347,10 @@ const FlashcardQuizPage = () => {
                         <button
                             type="button"
                             onClick={handleSkip}
-                            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-300 text-sm"
+                            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm transition"
                         >
                             <QuestionMarkCircleIcon className="w-5 h-5" />
-                            Bạn không biết?
+                            Bỏ qua
                         </button>
                     ) : (
                         <button

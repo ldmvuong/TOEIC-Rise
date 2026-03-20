@@ -75,6 +75,7 @@ const FlashcardTypePage = () => {
     const correctWord = currentItem?.vocabulary || currentItem?.word || '';
     const total = items.length;
     const currentItemId = currentItem?.id;
+    const isCompleted = total > 0 && currentIndex >= total;
 
     const markCorrect = (itemId) => {
         if (!itemId) return;
@@ -188,7 +189,29 @@ const FlashcardTypePage = () => {
     };
 
     const handleExit = () => {
+        if (submittingExit) return;
         const target = isDueMode ? '/flashcards/due' : `/flashcards/${id}`;
+
+        // Nếu đã hoàn thành thì tự động gửi tiến độ và điều hướng,
+        // không hiển thị cảnh báo xác nhận.
+        if (isCompleted) {
+            (async () => {
+                try {
+                    setSubmittingExit(true);
+                    const payload = buildProgressPayload();
+                    if (payload.items.length) {
+                        await callSubmitFlashcardProgress(payload);
+                    }
+                } catch (err) {
+                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                } finally {
+                    setSubmittingExit(false);
+                    navigate(target);
+                }
+            })();
+            return;
+        }
+
         if (!hasProgress) {
             navigate(target);
             return;
@@ -221,10 +244,10 @@ const FlashcardTypePage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#1A202C] flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Spin size="large" className="text-teal-500" />
-                    <p className="text-gray-400">Đang tải dữ liệu...</p>
+                    <Spin size="large" className="text-teal-600" />
+                    <p className="text-gray-600">Đang tải dữ liệu...</p>
                 </div>
             </div>
         );
@@ -232,12 +255,12 @@ const FlashcardTypePage = () => {
 
     if (!items.length) {
         return (
-            <div className="min-h-screen bg-[#1A202C] flex items-center justify-center p-4">
-                <div className="text-center text-gray-400">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="text-center text-gray-600">
                     <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#2D3748] text-white rounded-xl hover:bg-[#4A5568] transition"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-xl hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
                         Quay lại bộ thẻ
@@ -251,29 +274,24 @@ const FlashcardTypePage = () => {
         feedback && (feedback.status === 'wrong' || feedback.status === 'hint-wrong');
 
     return (
-        <div className="min-h-screen bg-[#1A202C] text-gray-100 flex flex-col">
+        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[#2D3748]">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <button
                     onClick={handleExit}
-                    className="p-2 rounded-lg hover:bg-[#2D3748] transition flex items-center gap-2 text-gray-300 hover:text-white"
+                    className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span className="hidden sm:inline">Quay lại</span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <CheckCircleIcon className="w-5 h-5 text-gray-500" />
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-500" />
-                    <ExclamationTriangleIcon className="w-5 h-5 text-gray-500" />
-                </div>
             </div>
 
             {/* Main content */}
             <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full">
                 {currentIndex >= total ? (
                     <div className="text-center">
-                        <p className="text-xl font-semibold text-teal-400 mb-4">Hoàn thành!</p>
-                        <p className="text-gray-400 mb-6">Bạn đã ôn hết các từ trong lượt này.</p>
+                        <p className="text-xl font-semibold text-teal-700 mb-4">Hoàn thành!</p>
+                        <p className="text-gray-600 mb-6">Bạn đã ôn hết các từ trong lượt này.</p>
                         <button
                             onClick={handleExit}
                             className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium"
@@ -284,18 +302,18 @@ const FlashcardTypePage = () => {
                 ) : (
                     <>
                         {/* Vietnamese word - luôn hiển thị */}
-                        <h1 className="text-3xl sm:text-4xl font-bold text-white text-center mb-6">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
                             {currentItem?.definition || '—'}
                         </h1>
 
                         {/* Khi đúng: khối feedback xanh */}
                         {feedback === 'correct' && (
-                            <div className="w-full rounded-xl border-2 border-green-500 bg-[#1A202C] p-6 mb-6">
-                                <div className="flex items-center justify-center gap-2 text-green-500 mb-3">
+                            <div className="w-full rounded-xl border-2 border-green-200 bg-white p-6 mb-6">
+                                <div className="flex items-center justify-center gap-2 text-green-600 mb-3">
                                     <CheckCircleSolid className="w-8 h-8" />
                                     <span className="text-xl font-semibold">Chính xác!</span>
                                 </div>
-                                <p className="text-2xl sm:text-3xl font-bold text-green-500 text-center">
+                                <p className="text-2xl sm:text-3xl font-bold text-green-700 text-center">
                                     {correctWord}
                                 </p>
                             </div>
@@ -303,17 +321,17 @@ const FlashcardTypePage = () => {
 
                         {/* Khi sai (bấm Kiểm tra): khối feedback đỏ */}
                         {feedback?.status === 'wrong' && (
-                            <div className="w-full rounded-xl border-2 border-red-400/80 bg-red-950/20 p-6 mb-6">
-                                <div className="flex items-center justify-center gap-2 text-red-400 mb-3">
+                            <div className="w-full rounded-xl border-2 border-red-200 bg-red-50 p-6 mb-6">
+                                <div className="flex items-center justify-center gap-2 text-red-600 mb-3">
                                     <XCircleIcon className="w-8 h-8" />
                                     <span className="text-xl font-semibold">Chưa đúng</span>
                                 </div>
-                                <p className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
+                                <p className="text-2xl sm:text-3xl font-bold text-red-900 text-center mb-4">
                                     {feedback.correctWord}
                                 </p>
-                                <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                                <div className="flex items-center justify-center gap-2 text-gray-600 text-sm">
                                     <span>Bạn gõ:</span>
-                                    <span className="text-red-400 line-through font-medium">
+                                    <span className="text-red-600 line-through font-medium">
                                         {feedback.userAnswer || '—'}
                                     </span>
                                 </div>
@@ -329,12 +347,12 @@ const FlashcardTypePage = () => {
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Gõ từ tiếng Anh..."
-                                    className="w-full px-4 py-3 rounded-xl bg-[#2D3748] border border-[#4A5568] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-lg mb-4"
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 text-lg mb-4"
                                 />
                                 {/* hint-wrong: chỉ dòng gạch đỏ */}
                                 {isWrong && (
                                     <div className="w-full mb-2">
-                                        <p className="text-red-400 line-through text-lg">
+                                        <p className="text-red-600 line-through text-lg">
                                             {feedback.userAnswer || '—'}
                                         </p>
                                     </div>
@@ -348,7 +366,7 @@ const FlashcardTypePage = () => {
                                 type="button"
                                 onClick={handleHint}
                                 disabled={feedback?.status === 'wrong'}
-                                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#2D3748] hover:bg-[#4A5568] text-gray-300 transition border border-[#4A5568] disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 title="Gợi ý thêm 1 ký tự"
                             >
                                 <LightBulbIcon className="w-5 h-5" />
@@ -359,7 +377,7 @@ const FlashcardTypePage = () => {
                             <button
                                 type="button"
                                 onClick={handleSkip}
-                                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#2D3748] hover:bg-[#4A5568] text-gray-300 transition border border-[#4A5568]"
+                                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition border border-gray-200"
                                 title="Bỏ qua từ này"
                             >
                                 <ArrowRightCircleIcon className="w-5 h-5" />
