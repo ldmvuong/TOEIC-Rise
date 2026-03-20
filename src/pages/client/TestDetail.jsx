@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPublicTestById } from '../../api/api';
-import { Spin, Select, message } from 'antd';
+import { Spin, Select, message, Modal } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
 import HistoryTestExam from '../../components/table/HistoryTestExam';
+
+const FULL_TEST_STORAGE_KEY_PREFIX = 'toeic_full_test_progress_';
+const FULL_TEST_SKIP_CONTINUE_PROMPT_PREFIX = 'toeic_full_test_skip_continue_prompt_';
 
 const TagChip = ({ children }) => (
     <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-800 rounded-full border border-gray-200">
@@ -43,11 +46,14 @@ const TestDetail = () => {
     const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
     const userRole = useAppSelector(state => state.account.user?.role);
     const isLearner = userRole === 'LEARNER';
+
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('practice');
     const [selectedParts, setSelectedParts] = useState([]);
     const [timeLimit, setTimeLimit] = useState(null);
+
+    const continuePromptShownRef = useRef(false);
 
     const goLogin = () => {
         const cb = encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
@@ -74,7 +80,9 @@ const TestDetail = () => {
                 testId: id,
                 mode: 'practice',
                 parts: selectedParts,
-                timeLimit: timeLimit || null
+                // AntD Select option values must not be null. We use `-1` as "no limit"
+                // and convert back to null for DoTest.
+                timeLimit: timeLimit === -1 || timeLimit == null ? null : timeLimit
             }
         });
     };
@@ -113,6 +121,69 @@ const TestDetail = () => {
         };
         fetchDetail();
     }, [parsedId]);
+
+    // Nếu có tiến độ full test trong localStorage thì hỏi người dùng tiếp tục
+    useEffect(() => {
+        if (!parsedId) return;
+        if (!isAuthenticated || !isLearner) return;
+        if (!data) return; // đợi khi đã load dữ liệu trang để tránh prompt "giữa chừng"
+        if (continuePromptShownRef.current) return;
+
+        continuePromptShownRef.current = true;
+
+        const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${parsedId}`;
+        const raw = (() => {
+            try {
+                return localStorage.getItem(key);
+            } catch {
+                return null;
+            }
+        })();
+
+        const hasProgress = typeof raw === 'string' && raw.trim() !== '';
+        if (!hasProgress) return;
+
+        const skipKey = `${FULL_TEST_SKIP_CONTINUE_PROMPT_PREFIX}${parsedId}`;
+
+        Modal.confirm({
+            title: 'Tiếp tục làm bài',
+            content: 'Bạn đang làm dở bài test này. Có muốn tiếp tục làm không?',
+            okText: 'Có',
+            cancelText: 'Không',
+            okType: 'primary',
+            onOk: () => {
+                // Đánh dấu để DoTest không hiển thị lại modal "tiếp tục"
+                try {
+                    sessionStorage.setItem(skipKey, '1');
+                } catch {
+                    // không sao
+                }
+
+                navigate('/do-test', {
+                    state: {
+                        testId: parsedId,
+                        mode: 'full',
+                        parts: [1, 2, 3, 4, 5, 6, 7],
+                        timeLimit: null,
+                    },
+                });
+            },
+            onCancel: () => {
+                // Đúng yêu cầu: chỉ xóa localStorage và đóng modal
+                try {
+                    localStorage.removeItem(key);
+                } catch {
+                    // không sao
+                }
+
+                try {
+                    sessionStorage.removeItem(skipKey);
+                } catch {
+                    // không sao
+                }
+            },
+        });
+    }, [parsedId, isAuthenticated, isLearner, data, navigate]);
 
     if (loading) {
         return <Spin size="large" fullscreen tip="Đang tải chi tiết đề thi..." />;
@@ -197,7 +268,7 @@ const TestDetail = () => {
                                                             value={timeLimit}
                                                             onChange={setTimeLimit}
                                                             options={[
-                                                                { value: null, label: '-- Không giới hạn --' },
+                                                                { value: -1, label: '-- Không giới hạn --' },
                                                                 ...Array.from({ length: 36 }, (_, i) => {
                                                                     const minutes = (i + 1) * 5;
                                                                     return { value: minutes, label: `${minutes} phút` };

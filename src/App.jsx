@@ -308,7 +308,7 @@ export default function App() {
         {
           path: 'system-prompts/chatbot',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsChatbot />
             </ProtectedRoute>
           ),
@@ -316,7 +316,7 @@ export default function App() {
         {
           path: 'system-prompts/q-and-a',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsQAndA />
             </ProtectedRoute>
           ),
@@ -324,7 +324,7 @@ export default function App() {
         {
           path: 'system-prompts/explanation',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsExplanation />
             </ProtectedRoute>
           ),
@@ -332,7 +332,7 @@ export default function App() {
         {
           path: 'system-prompts/:type/:id',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptDetailPage />
             </ProtectedRoute>
           ),

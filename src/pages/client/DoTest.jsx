@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import { getTestExam, submitTestExam, submitWrongAnswerExam } from '../../api/api';
 import QuestionGroup from '../../components/exam/question.group';
 import Sidebar from '../../components/exam/sidebar';
@@ -9,6 +9,8 @@ import { useTestNavigation } from '../../hooks/useTestNavigation';
 import { useAudio } from '../../hooks/useAudio';
 import { scrollToElement } from '../../utils/scrollUtils';
 import { message, Modal } from 'antd';
+
+const FULL_TEST_STORAGE_KEY_PREFIX = 'toeic_full_test_progress_';
 
 const DoTest = () => {
     const location = useLocation();
@@ -51,11 +53,28 @@ const DoTest = () => {
     const timerInitializedRef = useRef(false);
     const isTestSubmittedRef = useRef(false);
     const allowNavigationRef = useRef(false); // Flag để cho phép navigation khi người dùng xác nhận rời khỏi
+    const blockerRef = useRef(null); // Ref tới blocker (điều hướng trong app) để gọi proceed/reset
+    const fullTestProgressRef = useRef(null); // Payload lưu full test (dùng trong beforeunload)
     
     const isFullTest = mode === 'full';
     const isRedoWrongMode = mode === 'wrong';
     const hasTimeLimit = isFullTest || (timeLimitMinutes && timeLimitMinutes > 0);
-    
+
+    // Chặn điều hướng trong app (Link, navigate) khi đang làm full test chưa nộp bài
+    const shouldBlockNav = !!isFullTest && !!testData && !isTestSubmitted;
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            shouldBlockNav && currentLocation.pathname !== nextLocation.pathname
+    );
+    blockerRef.current = blocker;
+
+    // Khi blocker chặn điều hướng → hiển thị modal xác nhận
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            setShowLeaveConfirm(true);
+            setPendingNavigation({ fromBlocker: true });
+        }
+    }, [blocker.state]);
     // Xác định part hiện tại có phải phần nghe (1-4) không
     const isListeningPart = () => {
         if (!testData?.partResponses?.[currentPartIndex]) return false;
@@ -64,7 +83,7 @@ const DoTest = () => {
         return partNumber >= 1 && partNumber <= 4;
     };
     
-    const canNavigate = !isListeningPart();
+    const canNavigate = isRedoWrongMode ? true : !isListeningPart();
     
     // Sử dụng custom hook cho navigation
     const { moveToNextGroup: moveToNextGroupHook, moveToPreviousGroup: moveToPreviousGroupHook } = useTestNavigation(
@@ -117,15 +136,14 @@ const DoTest = () => {
         moveToPreviousGroupHook();
     }, [testData, currentPartIndex, currentQuestionGroupIndex, moveToPreviousGroupHook]);
     
-    // Gọi API lấy đề thi - chỉ gọi khi có testId và partIds
+    // Gọi API lấy đề thi - hoặc khôi phục từ localStorage (full test)
     useEffect(() => {
-        const fetchTest = async () => {
-            // Nếu đã có dữ liệu preload (ví dụ: làm lại câu sai), không gọi API getTestExam
+        const initTest = async () => {
+            // Case 1: redo-wrong dùng preloadedTestData trực tiếp
             if (preloadedTestData) {
                 setLoading(true);
                 setTestData(preloadedTestData);
-                
-                // Nếu có giới hạn thời gian (phút), set countdown để Sidebar hiển thị
+
                 if (isFullTest) {
                     setTimeRemaining(120 * 60);
                 } else if (timeLimitMinutes && timeLimitMinutes > 0) {
@@ -133,12 +151,13 @@ const DoTest = () => {
                 } else {
                     setTimeRemaining(0);
                 }
-                
+
                 setStartTime(Date.now());
                 setCurrentPartIndex(0);
                 setCurrentQuestionGroupIndex(0);
                 setAnswers({});
                 setFlaggedQuestions([]);
+                setViewedParts([]);
                 setIsTestSubmitted(false);
                 setTestResult(null);
                 setLoading(false);
@@ -150,33 +169,88 @@ const DoTest = () => {
                 navigate('/online-tests');
                 return;
             }
-            
+
             if (!partIds || partIds.length === 0) {
                 message.error('Vui lòng chọn ít nhất một phần');
                 navigate(-1);
                 return;
             }
-            
+
+            // Case 2: full test - khôi phục progress từ localStorage
+            if (isFullTest) {
+                const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+                try {
+                    const raw = localStorage.getItem(key);
+                    const hasProgress = typeof raw === 'string' && raw.trim() !== '';
+
+                    if (hasProgress) {
+                        let saved = null;
+                        try {
+                            saved = JSON.parse(raw);
+                        } catch (parseError) {
+                            console.error('Lỗi parse localStorage full test:', parseError);
+                            // Dữ liệu localStorage bị lỗi -> xóa để tránh logic treo
+                            localStorage.removeItem(key);
+                        }
+
+                        if (saved?.testId == testId && saved?.testData) {
+                            // Không hiển thị modal ở DoTest: tự động khôi phục tiến độ
+                            setTestData(saved.testData);
+                            setAnswers(saved.answers || {});
+                            setFlaggedQuestions(saved.flaggedQuestions || []);
+                            setCurrentPartIndex(saved.currentPartIndex ?? 0);
+                            setCurrentQuestionGroupIndex(saved.currentQuestionGroupIndex ?? 0);
+                            setViewedParts(saved.viewedParts || []);
+                            setStartTime(saved.startTime ?? Date.now());
+
+                            const now = Date.now();
+                            const savedAt = saved.savedAt || now;
+                            const elapsedSinceSave = (now - savedAt) / 1000;
+                            const newTimeRemaining = Math.max(
+                                0,
+                                Math.floor((saved.timeRemaining || 0) - elapsedSinceSave)
+                            );
+
+                            // Nếu đã hết giờ: đặt 1 để sau 1 giây timer effect tự động nộp bài
+                            setTimeRemaining(newTimeRemaining <= 0 ? 1 : newTimeRemaining);
+                            setIsTestSubmitted(false);
+                            setTestResult(null);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Khôi phục tiến độ full test thất bại:', e);
+                }
+            }
+
+            // Case 3: lấy đề từ API
             setLoading(true);
             try {
-                // Gọi API - chỉ truyền testId và partIds, KHÔNG truyền mode
                 const res = await getTestExam(testId, partIds);
-                
                 if (res && res.data) {
                     setTestData(res.data);
-                    
-                    // Khởi tạo timer cho Full Test (120 phút = 7200 giây)
-                    // mode chỉ dùng cho frontend logic, không gửi lên API
+
                     if (isFullTest) {
                         setTimeRemaining(120 * 60); // 120 phút
                     } else if (timeLimitMinutes && timeLimitMinutes > 0) {
                         setTimeRemaining(timeLimitMinutes * 60);
+                    } else {
+                        setTimeRemaining(0);
                     }
-                    
-                    // Bắt đầu đếm thời gian làm bài
+
+                    // Reset state cho session mới
+                    setCurrentPartIndex(0);
+                    setCurrentQuestionGroupIndex(0);
+                    setAnswers({});
+                    setFlaggedQuestions([]);
+                    setViewedParts([]);
+
                     setStartTime(Date.now());
+                    setIsTestSubmitted(false);
+                    setTestResult(null);
                 } else {
-                    message.error('Dữ liệu đề thi không hợp lệ');
+                    message.error("Dữ liệu đề thi không hợp lệ");
                 }
             } catch (error) {
                 message.error(error?.message || 'Không thể tải đề thi');
@@ -184,8 +258,8 @@ const DoTest = () => {
                 setLoading(false);
             }
         };
-        
-        fetchTest();
+
+        initTest();
     }, [testId, partIds.join(','), timeLimitMinutes, mode, navigate, preloadedTestData, isFullTest]);
     
     // Hàm dừng tất cả audio
@@ -201,7 +275,7 @@ const DoTest = () => {
     }, []);
 
     // Hàm nộp bài - được tách ra để tái sử dụng
-    const submitTest = useCallback(async (successMessage = 'Đã nộp bài thành công!') => {
+    const submitTest = useCallback(async () => {
         if (!testData || !testId || isTestSubmitted) {
             if (isTestSubmitted) {
                 message.info('Bài thi đã được nộp rồi!');
@@ -267,13 +341,24 @@ const DoTest = () => {
                 }
             } else {
                 const response = await submitTestExam(payload);
-                
+
                 // Nếu thành công (status 200), lưu kết quả và hiển thị popup
                 if (response && response.data) {
                     // Dừng timer
                     setIsTestSubmitted(true);
                     setTimeRemaining(0);
-                    
+
+                    // Xóa tiến độ full test đã lưu (nếu có)
+                    if (isFullTest && testId) {
+                        try {
+                            localStorage.removeItem(
+                                `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`
+                            );
+                        } catch (e) {
+                            console.error('Xóa tiến độ full test thất bại:', e);
+                        }
+                    }
+
                     // Lưu kết quả
                     setTestResult(response.data);
                 }
@@ -306,24 +391,79 @@ const DoTest = () => {
         });
     };
     
-    // Xử lý xác nhận rời khỏi trang
+    // Xử lý xác nhận rời khỏi trang (nút Thoát trong modal)
     const handleConfirmLeave = () => {
         setShowLeaveConfirm(false);
-        // Đánh dấu cho phép navigation
+        // Nếu là full test thì lưu tiến độ vào localStorage trước khi thoát
+        if (isFullTest && testId && testData) {
+            const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+            const payload = {
+                testId,
+                mode: 'full',
+                partIds: partIds || [1, 2, 3, 4, 5, 6, 7],
+                timeLimit: null,
+                testData,
+                answers,
+                flaggedQuestions,
+                timeRemaining,
+                savedAt: Date.now(),
+                startTime,
+                currentPartIndex,
+                currentQuestionGroupIndex,
+                viewedParts
+            };
+            try {
+                localStorage.setItem(key, JSON.stringify(payload));
+            } catch (e) {
+                console.error('Lưu tiến độ full test thất bại:', e);
+            }
+        }
+        // Nếu đang chặn điều hướng trong app (Link/navigate) → cho phép đi tới trang đích
+        if (pendingNavigation?.fromBlocker && blockerRef.current?.state === 'blocked') {
+            allowNavigationRef.current = true;
+            setPendingNavigation(null);
+            blockerRef.current?.proceed();
+            return;
+        }
+        // Nút Back / popstate → về trang danh sách đề thi
         allowNavigationRef.current = true;
         setPendingNavigation(null);
-        // Luôn navigate về trang danh sách đề thi khi ấn "Thoát"
-        // Sử dụng setTimeout để đảm bảo state đã được cập nhật
         setTimeout(() => {
             navigate('/online-tests', { replace: true });
         }, 0);
     };
-    
+
     const handleCancelLeave = () => {
         setShowLeaveConfirm(false);
+        if (pendingNavigation?.fromBlocker && blockerRef.current?.state === 'blocked') {
+            blockerRef.current?.reset();
+        }
         setPendingNavigation(null);
     };
     
+    // Cập nhật ref tiến độ full test để lưu khi beforeunload (đóng tab/F5)
+    useEffect(() => {
+        if (!isFullTest || !testId || !testData || isTestSubmitted) {
+            fullTestProgressRef.current = null;
+            return;
+        }
+        fullTestProgressRef.current = {
+            testId,
+            mode: 'full',
+            partIds: partIds || [1, 2, 3, 4, 5, 6, 7],
+            timeLimit: null,
+            testData,
+            answers,
+            flaggedQuestions,
+            timeRemaining,
+            savedAt: Date.now(),
+            startTime,
+            currentPartIndex,
+            currentQuestionGroupIndex,
+            viewedParts
+        };
+    }, [isFullTest, testId, testData, isTestSubmitted, partIds, answers, flaggedQuestions, timeRemaining, startTime, currentPartIndex, currentQuestionGroupIndex, viewedParts]);
+
     // Đóng modal xác nhận nếu đã nộp bài
     useEffect(() => {
         if (isTestSubmitted && showLeaveConfirm) {
@@ -345,7 +485,7 @@ const DoTest = () => {
         }
         
         // Lắng nghe popstate (back/forward button)
-        const handlePopState = (e) => {
+        const handlePopState = () => {
             // Kiểm tra lại isTestSubmitted bằng ref (luôn có giá trị mới nhất)
             // Nếu đã nộp bài, cho phép navigation
             if (isTestSubmittedRef.current) {
@@ -379,28 +519,31 @@ const DoTest = () => {
         };
     }, [isTestSubmitted, testData]);
     
-    // Xử lý beforeunload event (đóng tab/trình duyệt, F5, back/forward)
+    // Xử lý beforeunload event (đóng tab/trình duyệt, F5)
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-            // Nếu đã được phép navigation hoặc đã nộp bài, không chặn
             if (allowNavigationRef.current || isTestSubmitted) {
                 return;
             }
-            
-            if (!isTestSubmitted && testData !== null) {
-                // Hiển thị dialog mặc định của trình duyệt
-                e.preventDefault();
-                e.returnValue = ''; // Chrome yêu cầu returnValue
-                return ''; // Một số trình duyệt yêu cầu return string
+            if (!testData) return;
+            // Full test: lưu tiến độ trước khi hiện dialog (đóng tab/F5 vẫn giữ bài làm)
+            if (isFullTest && fullTestProgressRef.current) {
+                try {
+                    const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${fullTestProgressRef.current.testId}`;
+                    const payload = { ...fullTestProgressRef.current, savedAt: Date.now() };
+                    localStorage.setItem(key, JSON.stringify(payload));
+                } catch (err) {
+                    console.error('Lưu tiến độ full test (beforeunload) thất bại:', err);
+                }
             }
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
         };
-        
+
         window.addEventListener('beforeunload', handleBeforeUnload);
-        
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [isTestSubmitted, testData]);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isTestSubmitted, testData, isFullTest]);
     
     // Timer countdown - đếm ngược thời gian còn lại (nếu có giới hạn)
     useEffect(() => {
@@ -517,7 +660,7 @@ const DoTest = () => {
     }, [testData, partNumber, currentQuestionGroupIndex, viewedParts, loading]);
     
     // Xử lý thay đổi câu trả lời
-    const handleQuestionChange = (updatedQuestion, questionIndex) => {
+    const handleQuestionChange = (updatedQuestion) => {
         setAnswers(prev => ({
             ...prev,
             [updatedQuestion.id]: updatedQuestion.selectedOption
@@ -545,8 +688,9 @@ const DoTest = () => {
         const partNumber = parseInt(partName.replace('Part ', ''));
         const isPartListening = partNumber >= 1 && partNumber <= 4;
         
-        // Không cho phép navigate đến listening parts
-        if (isPartListening) {
+        // Trong full test: không cho phép navigate đến listening parts.
+        // Trong "wrong" mode (làm lại câu sai): cho phép tự do chuyển câu.
+        if (isPartListening && !isRedoWrongMode) {
             return;
         }
         
@@ -689,6 +833,8 @@ const DoTest = () => {
                                         partName={currentPart?.partName || ''}
                                         isListeningPart={isListeningPart()}
                                         disableDictionary={isFullTest}
+                                        showAudioControl={isRedoWrongMode && partNumber >= 1 && partNumber <= 4}
+                                        volume={volume}
                                     />
                                 </div>
                             </div>
@@ -751,6 +897,7 @@ const DoTest = () => {
                     volume={volume}
                     onVolumeChange={setVolume}
                     canNavigate={canNavigate}
+                    allowListeningNavigation={isRedoWrongMode}
                     flaggedQuestions={flaggedQuestions}
                     answers={answers}
                 />
@@ -819,7 +966,11 @@ const DoTest = () => {
                 okType="danger"
             >
                 <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
-                <p className="text-red-600 font-medium mt-2">Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.</p>
+                {isFullTest ? (
+                    <p className="text-blue-600 font-medium mt-2">Tiến độ sẽ được lưu. Bạn có thể tiếp tục làm bài khi quay lại (chọn lại làm full test cùng đề).</p>
+                ) : (
+                    <p className="text-red-600 font-medium mt-2">Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.</p>
+                )}
             </Modal>
         </div>
     );
