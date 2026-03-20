@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getUserTestAnswersOverall } from '../../api/api';
-import { message } from 'antd';
+import { getUserTestAnswersOverall, getWrongAnswerExam, getDoWrongAnswer } from '../../api/api';
+import { message, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
@@ -16,6 +16,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [chatQuestionData, setChatQuestionData] = useState(null);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reportQuestionData, setReportQuestionData] = useState(null);
+    const [isRedoWrongLoading, setIsRedoWrongLoading] = useState(false);
+    const [showRedoWrongChoiceModal, setShowRedoWrongChoiceModal] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -140,199 +142,321 @@ const AnswerSheet = ({ userTestId, testId }) => {
         }
     };
 
+    const handleRedoWrongAnswers = async () => {
+        if (!userTestId) {
+            message.error('Không tìm thấy ID bài thi');
+            return;
+        }
+
+        setIsRedoWrongLoading(true);
+        try {
+            const res = await getWrongAnswerExam(userTestId);
+            const wrongExam = res?.data;
+
+            if (!wrongExam?.partResponses?.length) {
+                message.info('Bạn không có câu sai để làm lại.');
+                return;
+            }
+
+            setShowRedoWrongChoiceModal(false);
+            navigate('/do-test', {
+                state: {
+                    mode: 'wrong',
+                    testId: wrongExam.id,
+                    preloadedTestData: wrongExam,
+                    wrongUserTestId: userTestId
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching wrong answers exam:', error);
+            message.error(error?.response?.data?.message || 'Không thể tải danh sách câu sai');
+        } finally {
+            setIsRedoWrongLoading(false);
+        }
+    };
+
+    const handleFixOneByOne = async () => {
+        if (!userTestId) {
+            message.error('Không tìm thấy ID bài thi');
+            return;
+        }
+
+        setIsRedoWrongLoading(true);
+        try {
+            const res = await getDoWrongAnswer(userTestId);
+            const data = res?.data;
+
+            if (!data?.partResponses?.length) {
+                message.info('Bạn không có câu sai để sửa từng câu.');
+                return;
+            }
+
+            setShowRedoWrongChoiceModal(false);
+            navigate(`/fix-wrong-one-by-one/${userTestId}`, {
+                state: { fixOneByOneData: data }
+            });
+        } catch (error) {
+            console.error('Error fetching do-wrong-answer:', error);
+            message.error(error?.response?.data?.message || 'Không thể tải danh sách câu sai');
+        } finally {
+            setIsRedoWrongLoading(false);
+        }
+    };
+
+    const openRedoWrongModal = () => {
+        if (!userTestId) {
+            message.error('Không tìm thấy ID bài thi');
+            return;
+        }
+        setShowRedoWrongChoiceModal(true);
+    };
+
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            {/* Header */}
-            <div className="mb-4">
-                <div className="flex gap-3 mb-4">
-                    <button
-                        onClick={() => setActiveView('answers')}
-                        className={`px-4 py-2 rounded-lg font-medium ${
-                            activeView === 'answers'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                        Đáp án
-                    </button>
-                    <button
-                        onClick={handleViewDetails}
-                        className={`px-4 py-2 rounded-lg font-medium ${
-                            activeView === 'detailed'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                        Xem chi tiết đáp án
-                    </button>
-                </div>
-            </div>
-
-            {/* Tips Section */}
-            {activeView === 'detailed' && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start gap-3">
-                        <span className="text-2xl">💡</span>
-                        <div className="text-sm text-green-800">
-                            <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo và lưu highlight từ vựng, keywords và tạo note để học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Answer Sheet */}
-            {activeView === 'answers' && (
-                <div className="space-y-6">
-                    {sortedParts.map((partName) => {
-                        const questions = answersData[partName] || [];
-                        if (questions.length === 0) return null;
-
-                        // Determine part number for grouping
-                        const partNumber = parseInt(partName.replace('Part ', ''));
-                        const questionsPerColumn = Math.ceil(questions.length / 2);
-
-                        return (
-                            <div key={partName} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">{partName}</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {/* Left Column */}
-                                    <div className="space-y-2">
-                                        {questions.slice(0, questionsPerColumn).map((question) => {
-                                            const status = getQuestionStatus(question);
-                                            return (
-                                                <div
-                                                    key={question.userAnswerId}
-                                                    className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
-                                                        status === 'correct'
-                                                            ? 'bg-green-50 border-green-200'
-                                                            : status === 'incorrect'
-                                                            ? 'bg-red-50 border-red-200'
-                                                            : 'bg-gray-50 border-gray-200'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        {/* Question Number */}
-                                                        <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                                                            {question.position}
-                                                        </div>
-                                                        
-                                                        {/* Answer Info */}
-                                                        <div className="flex-1 min-w-0">
-                                                            {renderQuestionAnswer(question)}
-                                                        </div>
-
-                                                        {/* Detail Button */}
-                                                        <button 
-                                                            onClick={() => {
-                                                                setSelectedQuestionId(question.userAnswerId);
-                                                                setIsAnswerModalOpen(true);
-                                                            }}
-                                                            className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
-                                                        >
-                                                            Chi tiết
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    
-                                    {/* Right Column */}
-                                    {questions.length > questionsPerColumn && (
-                                        <div className="space-y-2">
-                                            {questions.slice(questionsPerColumn).map((question) => {
-                                                const status = getQuestionStatus(question);
-                                                return (
-                                                    <div
-                                                        key={question.userAnswerId}
-                                                        className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
-                                                            status === 'correct'
-                                                                ? 'bg-green-50 border-green-200'
-                                                                : status === 'incorrect'
-                                                                ? 'bg-red-50 border-red-200'
-                                                                : 'bg-gray-50 border-gray-200'
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center gap-2">
-                                                            {/* Question Number */}
-                                                            <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
-                                                                {question.position}
-                                                            </div>
-                                                            
-                                                            {/* Answer Info */}
-                                                            <div className="flex-1 min-w-0">
-                                                                {renderQuestionAnswer(question)}
-                                                            </div>
-
-                                                            {/* Detail Button */}
-                                                            <button 
-                                                                onClick={() => {
-                                                                    setSelectedQuestionId(question.userAnswerId);
-                                                                    setIsAnswerModalOpen(true);
-                                                                }}
-                                                                className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
-                                                            >
-                                                                Chi tiết
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Detailed View Placeholder */}
-            {activeView === 'detailed' && (
-                <div className="text-center py-12 text-gray-500">
-                    Tính năng xem chi tiết đáp án đang được phát triển
-                </div>
-            )}
-
-            {/* Answer Question Modal */}
-            <AnswerQuestion
-                open={isAnswerModalOpen}
-                onClose={() => {
-                    setIsAnswerModalOpen(false);
-                    setSelectedQuestionId(null);
-                }}
-                userAnswerId={selectedQuestionId}
-                onReport={(questionData) => {
-                    setReportQuestionData(questionData);
-                    setIsReportModalOpen(true);
-                }}
-                onChatAI={(questionData) => {
-                    setChatQuestionData(questionData);
-                    setIsChatModalOpen(true);
-                }}
-            />
-
-            {/* Chat Question Modal */}
-            <ChatQuestion
-                open={isChatModalOpen}
-                onClose={() => {
-                    setIsChatModalOpen(false);
-                    setChatQuestionData(null);
-                }}
-                questionData={chatQuestionData}
-            />
-
-            {/* Report Question Modal */}
-            <ReportQuestion
-                open={isReportModalOpen}
-                onClose={() => {
-                    setIsReportModalOpen(false);
-                    setReportQuestionData(null);
-                }}
-                questionData={reportQuestionData}
-            />
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        {/* Header */}
+        <div className="mb-4">
+          <div className="flex gap-3 mb-4">
+            <button
+              onClick={() => setActiveView("answers")}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeView === "answers"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Đáp án
+            </button>
+            <button
+              onClick={handleViewDetails}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeView === "detailed"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Xem chi tiết đáp án
+            </button>
+            <button
+              onClick={openRedoWrongModal}
+              disabled={isRedoWrongLoading}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeView === "detailed"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
+            </button>
+          </div>
         </div>
+
+        {/* Tips Section */}
+        {activeView === "detailed" && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💡</span>
+              <div className="text-sm text-green-800">
+                <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo
+                và lưu highlight từ vựng, keywords và tạo note để học và tra cứu
+                khi có nhu cầu ôn lại đề thi này trong tương lai.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Answer Sheet */}
+        {activeView === "answers" && (
+          <div className="space-y-6">
+            {sortedParts.map((partName) => {
+              const questions = answersData[partName] || [];
+              if (questions.length === 0) return null;
+
+              // Determine part number for grouping
+              const partNumber = parseInt(partName.replace("Part ", ""));
+              const questionsPerColumn = Math.ceil(questions.length / 2);
+
+              return (
+                <div
+                  key={partName}
+                  className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    {partName}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Left Column */}
+                    <div className="space-y-2">
+                      {questions
+                        .slice(0, questionsPerColumn)
+                        .map((question) => {
+                          const status = getQuestionStatus(question);
+                          return (
+                            <div
+                              key={question.userAnswerId}
+                              className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
+                                status === "correct"
+                                  ? "bg-green-50 border-green-200"
+                                  : status === "incorrect"
+                                    ? "bg-red-50 border-red-200"
+                                    : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {/* Question Number */}
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                                  {question.position}
+                                </div>
+
+                                {/* Answer Info */}
+                                <div className="flex-1 min-w-0">
+                                  {renderQuestionAnswer(question)}
+                                </div>
+
+                                {/* Detail Button */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedQuestionId(
+                                      question.userAnswerId,
+                                    );
+                                    setIsAnswerModalOpen(true);
+                                  }}
+                                  className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
+                                >
+                                  Chi tiết
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    {/* Right Column */}
+                    {questions.length > questionsPerColumn && (
+                      <div className="space-y-2">
+                        {questions.slice(questionsPerColumn).map((question) => {
+                          const status = getQuestionStatus(question);
+                          return (
+                            <div
+                              key={question.userAnswerId}
+                              className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
+                                status === "correct"
+                                  ? "bg-green-50 border-green-200"
+                                  : status === "incorrect"
+                                    ? "bg-red-50 border-red-200"
+                                    : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {/* Question Number */}
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                                  {question.position}
+                                </div>
+
+                                {/* Answer Info */}
+                                <div className="flex-1 min-w-0">
+                                  {renderQuestionAnswer(question)}
+                                </div>
+
+                                {/* Detail Button */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedQuestionId(
+                                      question.userAnswerId,
+                                    );
+                                    setIsAnswerModalOpen(true);
+                                  }}
+                                  className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
+                                >
+                                  Chi tiết
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Detailed View Placeholder */}
+        {activeView === "detailed" && (
+          <div className="text-center py-12 text-gray-500">
+            Tính năng xem chi tiết đáp án đang được phát triển
+          </div>
+        )}
+
+        {/* Answer Question Modal */}
+        <AnswerQuestion
+          open={isAnswerModalOpen}
+          onClose={() => {
+            setIsAnswerModalOpen(false);
+            setSelectedQuestionId(null);
+          }}
+          userAnswerId={selectedQuestionId}
+          onReport={(questionData) => {
+            setReportQuestionData(questionData);
+            setIsReportModalOpen(true);
+          }}
+          onChatAI={(questionData) => {
+            setChatQuestionData(questionData);
+            setIsChatModalOpen(true);
+          }}
+        />
+
+        {/* Chat Question Modal */}
+        <ChatQuestion
+          open={isChatModalOpen}
+          onClose={() => {
+            setIsChatModalOpen(false);
+            setChatQuestionData(null);
+          }}
+          questionData={chatQuestionData}
+        />
+
+        {/* Report Question Modal */}
+        <ReportQuestion
+          open={isReportModalOpen}
+          onClose={() => {
+            setIsReportModalOpen(false);
+            setReportQuestionData(null);
+          }}
+          questionData={reportQuestionData}
+        />
+
+        {/* Modal chọn chế độ làm lại câu sai */}
+        <Modal
+          title="Làm lại câu sai"
+          open={showRedoWrongChoiceModal}
+          onCancel={() => setShowRedoWrongChoiceModal(false)}
+          footer={null}
+          centered
+          width={420}
+        >
+          <div className="py-2 space-y-3">
+            <button
+              type="button"
+              onClick={handleFixOneByOne}
+              disabled={isRedoWrongLoading}
+              className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRedoWrongAnswers}
+              disabled={isRedoWrongLoading}
+              className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              Làm lại toàn bộ câu sai
+            </button>
+          </div>
+        </Modal>
+      </div>
     );
 };
 

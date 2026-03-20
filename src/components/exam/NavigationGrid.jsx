@@ -9,6 +9,7 @@ const NavigationGrid = ({
   currentQuestionGroupIndex = 0,
   onNavigateToQuestion = () => {},
   canNavigate = true,
+  allowListeningNavigation = false,
   flaggedQuestions = [],
   answers = {}
 }) => {
@@ -64,8 +65,9 @@ const NavigationGrid = ({
       </div>
       
       {questionNumbers.map((partData, partIdx) => {
-        // Với listening parts, chỉ cho phép navigate nếu đang ở listening part đó
-        const canNavigateThisPart = partData.isListening ? false : canNavigate;
+        // Listening part (Part 1-4) có thể được phép navigate trong chế độ "làm lại câu sai"
+        const canNavigateThisPart =
+          partData.isListening ? canNavigate && allowListeningNavigation : canNavigate;
         
         return (
           <div key={partData.partId} className="space-y-2">

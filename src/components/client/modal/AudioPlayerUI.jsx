@@ -3,19 +3,31 @@ import { useState, useRef, useEffect } from 'react';
 /**
  * Visible audio player UI component with play/pause, progress bar, time display, and volume control
  */
-const AudioPlayerUI = ({ audioUrl }) => {
+const AudioPlayerUI = ({
+    audioUrl,
+    audioId,
+    volume: volumeValue,
+    onVolumeChange,
+    showVolumeControl = true,
+}) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [volume, setVolume] = useState(1);
+    const [volume, setVolume] = useState(volumeValue ?? 1);
+    const [playbackRate, setPlaybackRate] = useState(1);
     const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+    const [showSpeedSlider, setShowSpeedSlider] = useState(false);
     const audioRef = useRef(null);
 
     useEffect(() => {
-        const audio = audioRef.current;
+        const audio =
+            audioId ? document.getElementById(audioId) : audioRef.current;
         if (!audio) return;
 
-        // Reset state when audioUrl changes
+        // Keep a ref reference for internal usage (progress/seek)
+        audioRef.current = audio;
+
+        // Reset state when switching to a different audio element
         setIsPlaying(false);
         setCurrentTime(0);
         setDuration(0);
@@ -35,7 +47,9 @@ const AudioPlayerUI = ({ audioUrl }) => {
         audio.addEventListener('play', handlePlay);
         audio.addEventListener('pause', handlePause);
 
+        // Apply latest settings to the current audio element
         audio.volume = volume;
+        audio.playbackRate = playbackRate;
 
         return () => {
             audio.removeEventListener('timeupdate', updateTime);
@@ -44,7 +58,27 @@ const AudioPlayerUI = ({ audioUrl }) => {
             audio.removeEventListener('play', handlePlay);
             audio.removeEventListener('pause', handlePause);
         };
-    }, [audioUrl, volume]);
+    }, [audioUrl, audioId]);
+
+    useEffect(() => {
+        if (typeof volumeValue === 'number' && !Number.isNaN(volumeValue)) {
+            setVolume(volumeValue);
+        }
+    }, [volumeValue]);
+
+    useEffect(() => {
+        // Apply volume changes to the active audio element.
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.volume = volume;
+    }, [volume]);
+
+    useEffect(() => {
+        // Apply playback rate changes to the active audio element.
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.playbackRate = playbackRate;
+    }, [playbackRate]);
 
     const togglePlayPause = () => {
         const audio = audioRef.current;
@@ -69,6 +103,7 @@ const AudioPlayerUI = ({ audioUrl }) => {
     const handleVolumeChange = (e) => {
         const newVolume = parseFloat(e.target.value);
         setVolume(newVolume);
+        onVolumeChange?.(newVolume);
         if (audioRef.current) {
             audioRef.current.volume = newVolume;
         }
@@ -85,8 +120,10 @@ const AudioPlayerUI = ({ audioUrl }) => {
 
     return (
         <div className="mb-4">
-            <audio ref={audioRef} src={audioUrl} preload="metadata" key={audioUrl} />
-            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+            {!audioId && (
+                <audio ref={audioRef} src={audioUrl} preload="metadata" key={audioUrl} />
+            )}
+            <div className="relative flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
                 {/* Play/Pause Button */}
                 <button
                     onClick={togglePlayPause}
@@ -123,46 +160,79 @@ const AudioPlayerUI = ({ audioUrl }) => {
                     {formatTime(currentTime)}
                 </div>
 
-                {/* Volume Control */}
-                <div className="relative flex-shrink-0">
-                    <button
-                        onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800"
-                    >
-                        {volume === 0 ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
-                            </svg>
+                {showVolumeControl && (
+                    /* Volume Control */
+                    <div className="relative flex-shrink-0">
+                        <button
+                            onClick={() => setShowVolumeSlider(!showVolumeSlider)}
+                            className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800"
+                        >
+                            {volume === 0 ? (
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-3.793a1 1 0 011.617.793zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                                </svg>
+                            )}
+                        </button>
+                        {showVolumeSlider && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    value={volume}
+                                    onChange={handleVolumeChange}
+                                    className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                    style={{
+                                        background: `linear-gradient(to right, #2563eb 0%, #2563eb ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
+                                    }}
+                                />
+                            </div>
                         )}
-                    </button>
-                    {showVolumeSlider && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
-                            <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.01"
-                                value={volume}
-                                onChange={handleVolumeChange}
-                                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                style={{
-                                    background: `linear-gradient(to right, #2563eb 0%, #2563eb ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* Settings Icon (Placeholder) */}
-                <button className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800">
+                <button
+                    type="button"
+                    onClick={() => {
+                        setShowSpeedSlider((prev) => !prev);
+                        setShowVolumeSlider(false);
+                    }}
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800"
+                    title="Điều chỉnh tốc độ phát"
+                >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                     </svg>
                 </button>
+
+                {showSpeedSlider && (
+                        <div className="absolute top-full right-0 mt-2 z-50 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-48">
+                        <div className="text-xs text-gray-600 mb-2">
+                            Tốc độ:{' '}
+                            <span className="font-semibold text-gray-900">{playbackRate.toFixed(1)}x</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="2"
+                            step="0.1"
+                            value={playbackRate}
+                            onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
+                            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex items-center justify-between mt-2 text-[10px] text-gray-500">
+                            <span>0.5x</span>
+                            <span>1.0x</span>
+                            <span>2.0x</span>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

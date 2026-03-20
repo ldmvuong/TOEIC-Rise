@@ -33,9 +33,10 @@ const STATIC_MENU = [
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>, key: "/admin/system-prompts/chatbot", icon: <ApiOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>, key: "/admin/system-prompts/chatbot", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>, key: "/admin/system-prompts/sentence-assessment", icon: <ApiOutlined />, roles: ["ADMIN"] },
 ];
 
 export default function AdminLayout() {

@@ -126,17 +126,17 @@ export const createTag = (payload) => api.post(`/staff/tags`, payload);
 export const updateTag = (tagId, payload) =>
   api.put(`/staff/tags/${tagId}`, payload);
 
-// Staff System Prompts
+// Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
-  api.get(`/staff/system-prompts?${query}`);
+  api.get(`/admin/system-prompts?${query}`);
 export const getSystemPromptDetail = (featureType, id) =>
-  api.get(`/staff/system-prompts/${featureType}/${id}`);
+  api.get(`/admin/system-prompts/${featureType}/${id}`);
 export const createSystemPrompt = (featureType, payload) =>
-  api.post(`/staff/system-prompts/${featureType}`, payload);
+  api.post(`/admin/system-prompts/${featureType}`, payload);
 export const updateSystemPrompt = (featureType, id, payload) =>
-  api.put(`/staff/system-prompts/${featureType}/${id}`, payload);
+  api.put(`/admin/system-prompts/${featureType}/${id}`, payload);
 export const changeSystemPromptActive = (featureType, id) =>
-  api.patch(`/staff/system-prompts/${featureType}/${id}`);
+  api.patch(`/admin/system-prompts/${featureType}/${id}`);
 
 // Admin Staff Report
 
@@ -287,6 +287,15 @@ export const viewTestResultDetails = (userTestId) =>
 export const reportQuestionIssue = (payload) =>
   api.post("/learner/question-reports", payload);
 
+export const getWrongAnswerExam = (userTestId) =>
+  api.get(`/learner/user-tests/${userTestId}/wrong-answer`);
+
+export const getDoWrongAnswer = (userTestId) =>
+  api.get(`/learner/user-tests/${userTestId}/do-wrong-answer`);
+
+export const submitWrongAnswerExam = (userTestId, payload) =>
+  api.post(`/learner/user-tests/${userTestId}/wrong-answer`, payload);
+
 export const getHistoryTest = (query) =>
   api.get(`/learner/analysis/result?${query}`);
 
@@ -331,6 +340,26 @@ export const callFetchFlashcardDetail = (id) => {
   return api.get(`/learner/flashcards/${id}`);
 };
 
+export const callFetchFlashcardReview = (id) => {
+  return api.get(`/learner/flashcards/${id}/review`);
+};
+
+// Thống kê tổng quan ôn tập (tab Ôn tập)
+export const callFetchFlashcardOverall = () => {
+  return api.get("/learner/flashcards/overall");
+};
+
+// Danh sách từ cần ôn ngay (cho nút "Ôn tập ngay")
+export const callFetchFlashcardDueItems = () => {
+  return api.get("/learner/flashcards/due-items");
+};
+
+// Gửi tiến độ luyện tập từng item trong bộ flashcard
+// payload: Array<{ flashcardItemId: number, isCorrect: boolean }>
+export const callSubmitFlashcardProgress = (payload) => {
+  return api.post("/learner/flashcards/submit-review", payload);
+};
+
 export const callCreateFlashcard = (data) => {
   return api.post("/learner/flashcards", data);
 };
@@ -350,8 +379,6 @@ export const callAddToFavourite = (id) => {
 export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
 };
-
-// Comment APIs
 
 export const callFetchComments = (testId, page = 0, size = 10) => {
   return api.get(`/learner/comments/test/${testId}?page=${page}&size=${size}`);
@@ -379,4 +406,143 @@ export const getQuestionMap = (testId) => {
 
 export const getQuestionDetail = (questionId) => {
   return api.get(`/learner/comments/questions/${questionId}`);
+};
+
+// Đánh giá câu ví dụ sử dụng từ vựng trong flashcard
+// payload: { sentence: string, keyword: string }
+export const evaluateFlashcardSentence = (payload) => {
+  return api.post("/learner/flashcards/sentence", payload);
+};
+
+// Stream đánh giá câu (Flux<ChatResponse>)
+// payload: { sentence: string, keyword: string }
+export const evaluateFlashcardSentenceStream = (
+  payload,
+  { onChunk, onDone, onError },
+) => {
+  const backendUrl =
+    api?.defaults?.baseURL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    window.location.origin;
+  const token = localStorage.getItem("access_token");
+
+  fetch(`${backendUrl}/learner/flashcards/sentence`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "text/event-stream, application/json",
+    },
+    body: JSON.stringify(payload ?? {}),
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        onError?.(new Error(response.statusText || "Evaluate sentence failed"));
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      const tryEmitJson = (raw) => {
+        const trimmed = (raw ?? "").trim();
+        if (!trimmed) return;
+
+        // SSE event format: data: {...}
+        if (trimmed.startsWith("data:")) {
+          const payloadStr = trimmed.replace(/^data:\s*/, "");
+          if (!payloadStr || payloadStr === "[DONE]") return;
+          try {
+            const parsed = JSON.parse(payloadStr);
+            if (parsed?.content) onChunk?.(parsed.content);
+          } catch (err) {
+            console.error("Parse sentence evaluation SSE chunk:", err);
+          }
+          return;
+        }
+
+        // Non-SSE: raw JSON object per chunk
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed?.content) onChunk?.(parsed.content);
+          } catch (err) {
+            console.error("Parse sentence evaluation JSON chunk:", err);
+          }
+        }
+      };
+
+      const processBuffer = () => {
+        const findBoundary = () => {
+          const doubleNewLine = buffer.indexOf("\n\n");
+          const doubleCarriage = buffer.indexOf("\r\n\r\n");
+          if (doubleNewLine === -1 && doubleCarriage === -1) return null;
+          if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
+          if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
+          return doubleNewLine < doubleCarriage
+            ? { index: doubleNewLine, length: 2 }
+            : { index: doubleCarriage, length: 4 };
+        };
+
+        let boundary;
+        while ((boundary = findBoundary()) !== null) {
+          const rawEvent = buffer.slice(0, boundary.index);
+          buffer = buffer.slice(boundary.index + boundary.length);
+          tryEmitJson(rawEvent);
+        }
+      };
+
+      try {
+        while (true) {
+          let readResult;
+          try {
+            readResult = await reader.read();
+          } catch (readError) {
+            console.warn("Sentence evaluation stream closed:", readError);
+            break;
+          }
+          const { value, done } = readResult;
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          processBuffer();
+        }
+        buffer += decoder.decode();
+        processBuffer();
+        // flush last buffer (in case BE doesn't end with \n\n)
+        tryEmitJson(buffer);
+        buffer = "";
+      } finally {
+        reader.releaseLock();
+      }
+
+      onDone?.();
+    })
+    .catch((err) => {
+      onError?.(err);
+    });
+};
+
+export const callFetchFlashcardsForPopup = (params = {}) => {
+  const {
+    name,
+    page = 0,
+    size = 10,
+    sortBy = "name",
+    direction = "DESC",
+  } = params;
+  return api.get("/learner/flashcards/popup", {
+    params: {
+      name,
+      page,
+      size,
+      sortBy,
+      direction,
+    },
+  });
+};
+
+export const callAddFlashcardItemToPopup = (payload) => {
+  return api.post("/learner/flashcards/popup", payload);
 };

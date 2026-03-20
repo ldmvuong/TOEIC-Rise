@@ -13,9 +13,10 @@ import {
     callRemoveFromFavourite,
     callDeleteFlashcard
 } from '../../api/api';
-import { UserIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+import { UserIcon, BookmarkIcon, AcademicCapIcon, ArrowsRightLeftIcon, ClipboardDocumentCheckIcon, LanguageIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import FlashcardStudyModal from '../../components/client/modal/FlashcardStudyModal';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const FlashcardViewPage = () => {
     const { id } = useParams();
@@ -253,23 +254,85 @@ const FlashcardViewPage = () => {
 
                 {/* 2. CHẾ ĐỘ HỌC */}
                 <Card className="shadow-sm rounded-xl border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4">Chế độ học</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Card Thẻ ghi nhớ */}
+                    <div className="flex items-center gap-2 mb-4">
+                        <AcademicCapIcon className="w-6 h-6 text-gray-700" />
+                        <h3 className="text-lg font-bold text-gray-800">Chế độ luyện tập</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Card Thẻ ghi nhớ (Flashcard) */}
                         <button 
                             onClick={() => setIsStudyModalOpen(true)}
-                            className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all text-left"
+                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
+                            style={{ background: '#22c55e' }}
                         >
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
                                     <BookmarkSolid className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-bold text-gray-800">Thẻ ghi nhớ</h4>
+                                <h4 className="font-bold text-white">Flashcard</h4>
                             </div>
-                            <p className="text-sm text-gray-600">Học từ vựng bằng flashcard</p>
+                            <p className="text-sm text-white/90">Luyện tập với thẻ ghi nhớ, lật thẻ để xem nghĩa và ví dụ</p>
                         </button>
 
-                        {/* Các game khác sẽ bổ sung sau */}
+                        {/* Nối từ với nghĩa */}
+                        <button 
+                            onClick={() => navigate(`/flashcards/${id}/match`)}
+                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
+                            style={{ background: '#3b82f6' }}
+                        >
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                                    <ArrowsRightLeftIcon className="w-6 h-6 text-white" />
+                                </div>
+                                <h4 className="font-bold text-white">Nối từ với nghĩa</h4>
+                            </div>
+                            <p className="text-sm text-white/90">Kéo thả hoặc chọn cặp từ vựng – nghĩa tương ứng</p>
+                        </button>
+
+                        {/* Trắc nghiệm lựa chọn */}
+                        <button 
+                            onClick={() => navigate(`/flashcards/${id}/quiz`)}
+                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
+                            style={{ background: '#8b5cf6' }}
+                        >
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                                    <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />
+                                </div>
+                                <h4 className="font-bold text-white">Trắc nghiệm lựa chọn</h4>
+                            </div>
+                            <p className="text-sm text-white/90">Trắc nghiệm 4 đáp án, chọn 1 đáp án đúng cho từ vựng</p>
+                        </button>
+
+                        {/* Hiển thị tiếng Việt, nhập từ tiếng Anh */}
+                        <button 
+                            onClick={() => navigate(`/flashcards/${id}/type`)}
+                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
+                            style={{ background: '#f97316' }}
+                        >
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                                    <LanguageIcon className="w-6 h-6 text-white" />
+                                </div>
+                                <h4 className="font-bold text-white">Hiển thị tiếng Việt, nhập từ tiếng Anh</h4>
+                            </div>
+                            <p className="text-sm text-white/90">Xem nghĩa tiếng Việt và gõ từ vựng tiếng Anh tương ứng</p>
+                        </button>
+
+                        {/* Luyện câu với AI */}
+                        <button 
+                            onClick={() => navigate(`/flashcards/${id}/sentence-practice`)}
+                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white md:col-span-2"
+                            style={{ background: '#ec4899' }}
+                        >
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
+                                    <PencilSquareIcon className="w-6 h-6 text-white" />
+                                </div>
+                                <h4 className="font-bold text-white">Luyện câu với AI</h4>
+                            </div>
+                            <p className="text-sm text-white/90">Tạo câu với từ vựng và nhận phản hồi từ AI</p>
+                        </button>
                     </div>
                 </Card>
 
@@ -299,9 +362,9 @@ const FlashcardViewPage = () => {
                                                 <p className="text-sm text-gray-500">/{item.pronunciation}/</p>
                                             )}
                                             {item.audioUrl && (
-                                                <audio controls className="w-full mt-2">
-                                                    <source src={item.audioUrl} type="audio/mpeg" />
-                                                </audio>
+                                                <div className="mt-3 max-w-md">
+                                                    <AudioPlayerUI audioUrl={item.audioUrl} />
+                                                </div>
                                             )}
                                         </div>
 

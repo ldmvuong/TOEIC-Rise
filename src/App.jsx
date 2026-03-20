@@ -29,15 +29,24 @@ import DoMiniTest from "./pages/client/DoMiniTest.jsx";
 import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
 import TestResultDetail from "./pages/client/TestResultDetail.jsx";
+import RedoWrong from "./pages/client/RedoWrong.jsx";
+import FixWrongOneByOne from "./pages/client/FixWrongOneByOne.jsx";
 import TestAnalytics from "./pages/client/TestAnalytics.jsx";
 import ExamStructure from "./pages/client/ExamStructure.jsx";
 import FlashcardLibrary from "./pages/client/FlashcardLibrary.jsx";
 import FlashcardCreatePage from "./pages/client/FlashcardCreatePage.jsx";
 import FlashcardViewPage from "./pages/client/FlashcardViewPage.jsx";
 import FlashcardEditPage from "./pages/client/FlashcardEditPage.jsx";
+import FlashcardPracticePlaceholder from "./pages/client/FlashcardPracticePlaceholder.jsx";
+import FlashcardMatchPage from "./pages/client/FlashcardMatchPage.jsx";
+import FlashcardQuizPage from "./pages/client/FlashcardQuizPage.jsx";
+import FlashcardTypePage from "./pages/client/FlashcardTypePage.jsx";
+import FlashcardSentencePracticePage from "./pages/client/FlashcardSentencePracticePage.jsx";
+import FlashcardDueChoosePage from "./pages/client/FlashcardDueChoosePage.jsx";
 import SystemPromptsChatbot from "./pages/admin/SystemPromptsChatbot.jsx";
 import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
+import SystemPromptsSentenceAssessment from "./pages/admin/SystemPromptsSentenceAssessment.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 
 
@@ -114,6 +123,22 @@ export default function App() {
           )
         },
         {
+          path: 'redo-wrong/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <RedoWrong />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'fix-wrong-one-by-one/:userTestId',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FixWrongOneByOne />
+            </ProtectedRoute>
+          )
+        },
+        {
           path: 'statistics',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
@@ -146,10 +171,34 @@ export default function App() {
           )
         },
         {
-          path: 'flashcards/:id',
+          path: 'flashcards/due',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
-              <FlashcardViewPage />
+              <FlashcardDueChoosePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/match',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardMatchPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/quiz',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardQuizPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/due/type',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardTypePage />
             </ProtectedRoute>
           )
         },
@@ -160,7 +209,47 @@ export default function App() {
               <FlashcardEditPage />
             </ProtectedRoute>
           )
-        }
+        },
+        {
+          path: 'flashcards/:id/match',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardMatchPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/quiz',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardQuizPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/type',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardTypePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id/sentence-practice',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardSentencePracticePage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'flashcards/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <FlashcardViewPage />
+            </ProtectedRoute>
+          )
+        },
       ],
     },
     {
@@ -290,7 +379,7 @@ export default function App() {
         {
           path: 'system-prompts/chatbot',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsChatbot />
             </ProtectedRoute>
           ),
@@ -298,7 +387,7 @@ export default function App() {
         {
           path: 'system-prompts/q-and-a',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsQAndA />
             </ProtectedRoute>
           ),
@@ -306,15 +395,23 @@ export default function App() {
         {
           path: 'system-prompts/explanation',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsExplanation />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/sentence-assessment',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsSentenceAssessment />
             </ProtectedRoute>
           ),
         },
         {
           path: 'system-prompts/:type/:id',
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptDetailPage />
             </ProtectedRoute>
           ),
