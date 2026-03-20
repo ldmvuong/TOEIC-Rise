@@ -6,6 +6,7 @@ import PassageDisplay from './PassageDisplay';
 import QuestionContent from './QuestionContent';
 import QuestionOptions from './QuestionOptions';
 import DictionaryText from '../shared/DictionaryText';
+import AudioPlayerUI from '../client/modal/AudioPlayerUI';
 
 const QuestionGroup = ({ 
   questionGroup, 
@@ -15,7 +16,9 @@ const QuestionGroup = ({
   onToggleFlag,
   partName = '',
   isListeningPart = false,
-  disableDictionary = false
+  disableDictionary = false,
+  showAudioControl = false,
+  volume,
 }) => {
   const { audioUrl, imageUrl, passage, questions = [] } = questionGroup || {};
 
@@ -107,6 +110,16 @@ const QuestionGroup = ({
         <>
           {/* Audio Player (chỉ cho phần nghe) */}
           <AudioPlayer audioUrl={audioUrl} groupId={questionGroup?.id} />
+
+          {/* Visible audio control (chỉ bật cho chế độ làm lại câu sai) */}
+          {isListeningPart && audioUrl && showAudioControl && (
+            <AudioPlayerUI
+              audioUrl={audioUrl}
+              audioId={`audio-${questionGroup?.id}`}
+              showVolumeControl={false}
+              volume={volume}
+            />
+          )}
 
           {/* Image (cho phần nghe - hiển thị trước options) */}
           {isListeningPart && imageUrl && (

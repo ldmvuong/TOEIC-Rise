@@ -26,8 +26,11 @@ const SystemPromptsPage = ({ featureType, title }) => {
       case "Q_AND_A":
         return "q-and-a";
       case "EXPLANATION_GENERATION":
-      default:
         return "explanation";
+      case "SENTENCE_ASSESSMENT":
+        return "sentence-assessment";
+      default:
+        return "chatbot";
     }
   }, [featureType]);
 

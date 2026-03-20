@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     callFetchPublicFlashcards, 
     callFetchMyFlashcards, 
-    callFetchFavouriteFlashcards
+    callFetchFavouriteFlashcards,
+    callFetchFlashcardOverall
 } from '../../api/api';
 import { Spin, Pagination, Empty, message } from 'antd';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -28,6 +29,10 @@ const FlashcardLibrary = () => {
     const [pageSize, setPageSize] = useState(8);
     const [total, setTotal] = useState(0);
 
+    // State cho tab Ôn tập (API overall)
+    const [overallData, setOverallData] = useState(null);
+    const [overallLoading, setOverallLoading] = useState(false);
+
     // Hàm gọi API lấy dữ liệu
     const fetchFlashcards = async () => {
         setIsLoading(true);
@@ -39,6 +44,9 @@ const FlashcardLibrary = () => {
                 res = await callFetchPublicFlashcards(query);
             } else if (activeTab === 'my') {
                 res = await callFetchMyFlashcards(query);
+            } else if (activeTab === 'review') {
+                // Tab Ôn tập không gọi danh sách flashcard ở đây
+                return;
             } else if (activeTab === 'favourite') {
                 res = await callFetchFavouriteFlashcards(query);
             }
@@ -82,6 +90,28 @@ const FlashcardLibrary = () => {
         fetchFlashcards();
     }, [activeTab, current, pageSize]);
 
+    // Gọi API overall khi vào tab Ôn tập
+    const fetchOverall = async () => {
+        setOverallLoading(true);
+        setOverallData(null);
+        try {
+            const res = await callFetchFlashcardOverall();
+            const data = res?.data;
+            setOverallData(data?.result ?? data ?? null);
+        } catch (err) {
+            console.error(err);
+            message.error(err?.message || 'Không tải được thống kê ôn tập');
+        } finally {
+            setOverallLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'review') {
+            fetchOverall();
+        }
+    }, [activeTab]);
+
     // Xử lý chuyển tab
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -113,7 +143,8 @@ const FlashcardLibrary = () => {
                 {[
                     { key: 'public', label: 'Cộng đồng' },
                     { key: 'my', label: 'Của tôi' },
-                    { key: 'favourite', label: 'Đã lưu' }
+                    { key: 'favourite', label: 'Đã lưu' },
+                    { key: 'review', label: 'Ôn tập' },
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -129,43 +160,106 @@ const FlashcardLibrary = () => {
                 ))}
             </div>
 
-            {/* --- LIST CONTENT --- */}
-            {isLoading ? (
-                <div className="flex justify-center py-20">
-                    <Spin size="large" />
-                </div>
-            ) : (
-                <>
-                    {dataFlashcards.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {dataFlashcards.map((item) => (
-                                <FlashcardCard
-                                    key={item.id}
-                                    item={item}
-                                    activeTab={activeTab}
-                                    onFavouriteChange={handleFavouriteChange}
-                                />
-                            ))}
+            {/* --- REVIEW SUMMARY & DUE CARD (tab Ôn tập) --- */}
+            {activeTab === 'review' && (
+                <div className="space-y-4 mb-8">
+                    {overallLoading ? (
+                        <div className="flex justify-center py-12">
+                            <Spin size="large" />
                         </div>
                     ) : (
-                        <Empty description="Chưa có bộ flashcard nào" />
-                    )}
+                        <>
+                            {/* Mục tiêu hôm nay: Ôn tập & Từ mới */}
+                            <div className="flex flex-col lg:flex-row gap-4">
+                                {/* Ôn tập - số từ đã ôn */}
+                                <div className="flex-1 bg-gradient-to-r from-pink-100 to-purple-100 border border-pink-200 rounded-2xl p-4 sm:p-6 flex items-center justify-between gap-4 shadow-sm">
+                                    <div>
+                                        <p className="text-sm font-semibold text-pink-600 mb-1">Số từ đã ôn</p>
+                                        <p className="text-3xl font-semibold text-pink-700">
+                                            {overallData?.totalLearnedWords ?? 0}{' '}
+                                            <span className="text-base font-normal text-gray-600">từ</span>
+                                        </p>
+                                        <p className="text-gray-500 text-sm mt-1">Không giới hạn</p>
+                                    </div>
+                                </div>
 
-                    {/* Pagination */}
-                    {total > 0 && (
-                        <div className="mt-8 flex justify-center">
-                            <Pagination 
-                                current={current} 
-                                pageSize={pageSize} 
-                                total={total}
-                                onChange={(p, s) => { 
-                                    setCurrent(p); 
-                                    setPageSize(s); 
-                                }} 
-                                showSizeChanger
-                                pageSizeOptions={['8', '12', '16', '24']}
-                            /> 
+                                {/* Từ mới */}
+                                <div className="flex-1 bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-600 mb-1">Số từ mới</p>
+                                        <p className="text-2xl font-semibold text-blue-700 mb-2">
+                                            {overallData?.totalNewWords ?? 0}
+                                            <span className="text-base font-normal text-gray-600"> từ</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Từ cần ôn ngay */}
+                            <div className="border border-purple-200 bg-purple-50 rounded-2xl px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm text-purple-600 mb-1">Từ cần ôn ngay</p>
+                                    <p className="text-base sm:text-lg font-semibold text-purple-700">
+                                        <span className="text-lg sm:text-xl font-bold">
+                                            {overallData?.totalDueWords ?? 0}
+                                        </span>{' '}
+                                        từ đến hạn
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+                                    onClick={() => navigate('/flashcards/due')}
+                                >
+                                    Ôn tập ngay
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* --- LIST CONTENT --- */}
+            {activeTab !== 'review' && (
+                <>
+                    {isLoading ? (
+                        <div className="flex justify-center py-20">
+                            <Spin size="large" />
                         </div>
+                    ) : (
+                        <>
+                            {dataFlashcards.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {dataFlashcards.map((item) => (
+                                        <FlashcardCard
+                                            key={item.id}
+                                            item={item}
+                                            activeTab={activeTab}
+                                            onFavouriteChange={handleFavouriteChange}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <Empty description="Chưa có bộ flashcard nào" />
+                            )}
+
+                            {/* Pagination */}
+                            {total > 0 && (
+                                <div className="mt-8 flex justify-center">
+                                    <Pagination 
+                                        current={current} 
+                                        pageSize={pageSize} 
+                                        total={total}
+                                        onChange={(p, s) => { 
+                                            setCurrent(p); 
+                                            setPageSize(s); 
+                                        }} 
+                                        showSizeChanger
+                                        pageSizeOptions={['8', '12', '16', '24']}
+                                    /> 
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             )}
