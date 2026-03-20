@@ -4,6 +4,7 @@ import { getPublicTestById } from '../../api/api';
 import { Spin, Select, message, Modal } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
 import HistoryTestExam from '../../components/table/HistoryTestExam';
+import TestCommentSection from '../../components/exam/TestCommentSection';
 
 const FULL_TEST_STORAGE_KEY_PREFIX = 'toeic_full_test_progress_';
 const FULL_TEST_SKIP_CONTINUE_PROMPT_PREFIX = 'toeic_full_test_skip_continue_prompt_';
@@ -219,6 +220,8 @@ const TestDetail = () => {
                         {/* Results table */}
                         <HistoryTestExam testId={parsedId} isAuthenticated={isAuthenticated} />
 
+                        
+
                         {/* Tabs */}
                         <div className="mt-6 bg-white border border-gray-200 rounded-xl">
                                 <div className="px-5 pt-4">
@@ -318,6 +321,9 @@ const TestDetail = () => {
 
                             </div>
                         </div>
+
+                        {/* Comment Section - đặt dưới cùng */}
+                        <TestCommentSection testId={parsedId} isAuthenticated={isAuthenticated} />
                     </div>
 
                     {/* Right/Sidebar */}

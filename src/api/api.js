@@ -380,6 +380,34 @@ export const callRemoveFromFavourite = (id) => {
   return api.delete(`/learner/flashcards/favourite/${id}`);
 };
 
+export const callFetchComments = (testId, page = 0, size = 10) => {
+  return api.get(`/learner/comments/test/${testId}?page=${page}&size=${size}`);
+};
+
+export const callCreateComment = (payload) => {
+  return api.post("/learner/comments", payload);
+};
+
+export const callUpdateComment = (commentId, payload) => {
+  return api.put(`/learner/comments/${commentId}`, payload);
+};
+
+export const callDeleteComment = (commentId) => {
+  return api.delete(`/learner/comments/${commentId}`);
+};
+
+export const callFetchReplies = (commentId, page = 0, size = 5) => {
+  return api.get(`/learner/comments/${commentId}/replies?page=${page}&size=${size}`);
+};
+
+export const getQuestionMap = (testId) => {
+  return api.get(`/learner/comments/${testId}/questions`);
+};
+
+export const getQuestionDetail = (questionId) => {
+  return api.get(`/learner/comments/questions/${questionId}`);
+};
+
 // Đánh giá câu ví dụ sử dụng từ vựng trong flashcard
 // payload: { sentence: string, keyword: string }
 export const evaluateFlashcardSentence = (payload) => {
