@@ -410,9 +410,7 @@ export const evaluateFlashcardSentenceStream = (
   })
     .then(async (response) => {
       if (!response.ok || !response.body) {
-        onError?.(
-          new Error(response.statusText || "Evaluate sentence failed"),
-        );
+        onError?.(new Error(response.statusText || "Evaluate sentence failed"));
         return;
       }
 
@@ -496,4 +494,27 @@ export const evaluateFlashcardSentenceStream = (
     .catch((err) => {
       onError?.(err);
     });
+};
+
+export const callFetchFlashcardsForPopup = (params = {}) => {
+  const {
+    name,
+    page = 0,
+    size = 10,
+    sortBy = "name",
+    direction = "DESC",
+  } = params;
+  return api.get("/learner/flashcards/popup", {
+    params: {
+      name,
+      page,
+      size,
+      sortBy,
+      direction,
+    },
+  });
+};
+
+export const callAddFlashcardItemToPopup = (payload) => {
+  return api.post("/learner/flashcards/popup", payload);
 };

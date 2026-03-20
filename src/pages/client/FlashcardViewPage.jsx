@@ -16,6 +16,7 @@ import {
 import { UserIcon, BookmarkIcon, AcademicCapIcon, ArrowsRightLeftIcon, ClipboardDocumentCheckIcon, LanguageIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import FlashcardStudyModal from '../../components/client/modal/FlashcardStudyModal';
+import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
 
 const FlashcardViewPage = () => {
     const { id } = useParams();
@@ -361,9 +362,9 @@ const FlashcardViewPage = () => {
                                                 <p className="text-sm text-gray-500">/{item.pronunciation}/</p>
                                             )}
                                             {item.audioUrl && (
-                                                <audio controls className="w-full mt-2">
-                                                    <source src={item.audioUrl} type="audio/mpeg" />
-                                                </audio>
+                                                <div className="mt-3 max-w-md">
+                                                    <AudioPlayerUI audioUrl={item.audioUrl} />
+                                                </div>
                                             )}
                                         </div>
 
