@@ -88,6 +88,14 @@ api.interceptors.request.use((config) => {
       delete config.headers.Authorization;
     }
   }
+
+  // Multipart: default axios Content-Type is application/json — that breaks FormData
+  // (Spring @ModelAttribute + MultipartFile). Let the browser set boundary.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+  }
+
   return config;
 });
 

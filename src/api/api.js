@@ -144,7 +144,13 @@ export const getBlogCategoryById = (id) =>
 
 export const getBlogPostsByCategorySlug = (categorySlug, query) => {
   const encoded = encodeURIComponent(categorySlug);
-  return api.get(`/staff/blog-posts/${encoded}?${query}`);
+  return api.get(`/staff/blog-posts/categories/${encoded}?${query}`);
+};
+
+export const createBlogPost = (categorySlug, formData) => {
+  const encoded = encodeURIComponent(categorySlug);
+  // Let axios set multipart boundary for FormData
+  return api.post(`/staff/blog-posts/${encoded}`, formData);
 };
 
 // Admin System Prompts (admin only)

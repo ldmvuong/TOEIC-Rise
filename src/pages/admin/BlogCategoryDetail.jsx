@@ -21,6 +21,7 @@ import {
   CalendarOutlined,
   EditOutlined,
   EyeOutlined,
+  FileAddOutlined,
   FileTextOutlined,
   SearchOutlined,
   UserOutlined,
@@ -239,6 +240,12 @@ const BlogCategoryDetailPage = () => {
           </Button>
           <Button
             type="primary"
+            icon={<FileAddOutlined />}
+            onClick={() => navigate(`/admin/blog-categories/${id}/posts/new`)}
+          >
+            New post
+          </Button>
+          <Button
             icon={<EditOutlined />}
             onClick={() => setOpenUpdateModal(true)}
           >

@@ -25,6 +25,7 @@ import AnalyticsPage from "./pages/admin/Analytics.jsx";
 import TagsPage from "./pages/admin/Tags.jsx";
 import BlogCategoriesPage from "./pages/admin/BlogCategories.jsx";
 import BlogCategoryDetailPage from "./pages/admin/BlogCategoryDetail.jsx";
+import BlogPostCreatePage from "./pages/admin/BlogPostCreate.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
@@ -383,6 +384,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <BlogCategoriesPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-categories/:id/posts/new',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogPostCreatePage />
             </ProtectedRoute>
           ),
         },
