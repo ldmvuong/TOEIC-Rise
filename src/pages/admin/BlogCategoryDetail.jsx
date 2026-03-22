@@ -36,6 +36,26 @@ import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blo
 
 const { Text, Title } = Typography;
 
+/** Blog list API: camelCase or snake_case */
+function pickPostMeta(post) {
+  const authorName = post.authorName ?? post.author_name;
+  const updatedAt = post.updatedAt ?? post.updated_at;
+  const rawViews = post.views ?? post.view_count ?? post.viewCount;
+  const views =
+    rawViews === null || rawViews === undefined || rawViews === ""
+      ? null
+      : Number(rawViews);
+  return { authorName, updatedAt, views };
+}
+
+function formatPostUpdatedAt(value) {
+  if (value == null || value === "") return null;
+  const normalized =
+    typeof value === "string" ? value.replace(" ", "T") : value;
+  const d = dayjs(normalized);
+  return d.isValid() ? d.format("MMM D, YYYY") : String(value);
+}
+
 /** Match backend EBlogPostStatus */
 const BLOG_POST_STATUS_OPTIONS = [
   { value: "DRAFT", label: "Draft" },
@@ -355,17 +375,17 @@ const BlogCategoryDetailPage = () => {
               />
             ) : (
               <Row gutter={[20, 20]}>
-                {posts.map((post) => (
+                {posts.map((post) => {
+                  const { authorName, updatedAt, views } = pickPostMeta(post);
+                  const updatedLabel = formatPostUpdatedAt(updatedAt);
+                  return (
                   <Col xs={24} sm={12} xl={8} key={post.id}>
                     <Card
                       hoverable
-                      className="h-full overflow-hidden rounded-xl border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200"
+                      className="h-full rounded-xl border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200"
                       styles={{
                         body: {
                           padding: 0,
-                          display: "flex",
-                          flexDirection: "column",
-                          height: "100%",
                         },
                       }}
                       cover={
@@ -391,7 +411,7 @@ const BlogCategoryDetailPage = () => {
                         )
                       }
                     >
-                      <div className="flex flex-1 flex-col p-4 pt-3">
+                      <div className="p-4 pt-3">
                         <Title
                           level={5}
                           className="!mb-2 !mt-0 line-clamp-2 min-h-[2.75rem] text-slate-900"
@@ -402,37 +422,36 @@ const BlogCategoryDetailPage = () => {
                         {post.summary ? (
                           <Text
                             type="secondary"
-                            className="line-clamp-3 text-sm leading-relaxed mb-3"
+                            className="line-clamp-3 text-sm leading-relaxed mb-3 block"
                           >
                             {post.summary}
                           </Text>
-                        ) : (
-                          <div className="mb-3 flex-1" />
-                        )}
-                        <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 border-0 border-t border-solid border-slate-100 pt-3 text-xs text-slate-500">
-                          {post.authorName ? (
+                        ) : null}
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 border-0 border-t border-solid border-slate-200 pt-3 mt-1 text-xs text-slate-600">
+                          {authorName ? (
                             <span className="inline-flex items-center gap-1">
                               <UserOutlined />
-                              {post.authorName}
+                              {authorName}
                             </span>
                           ) : null}
-                          {post.updatedAt ? (
+                          {updatedLabel ? (
                             <span className="inline-flex items-center gap-1">
                               <CalendarOutlined />
-                              {dayjs(post.updatedAt).format("MMM D, YYYY")}
+                              {updatedLabel}
                             </span>
                           ) : null}
-                          {post.views != null ? (
+                          {views != null && !Number.isNaN(views) ? (
                             <span className="inline-flex items-center gap-1">
                               <EyeOutlined />
-                              {post.views.toLocaleString()} views
+                              {views.toLocaleString()} views
                             </span>
                           ) : null}
                         </div>
                       </div>
                     </Card>
                   </Col>
-                ))}
+                  );
+                })}
               </Row>
             )}
           </Spin>
