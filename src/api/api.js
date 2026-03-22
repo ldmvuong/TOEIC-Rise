@@ -126,6 +126,10 @@ export const createTag = (payload) => api.post(`/staff/tags`, payload);
 export const updateTag = (tagId, payload) =>
   api.put(`/staff/tags/${tagId}`, payload);
 
+// Staff Blog categories
+export const getAllBlogCategories = (query) =>
+  api.get(`/staff/blog-categories?${query}`);
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);

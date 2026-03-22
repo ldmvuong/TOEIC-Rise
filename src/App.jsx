@@ -23,6 +23,7 @@ import ReportDetailPage from "./pages/admin/ReportDetail.jsx";
 import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
 import AnalyticsPage from "./pages/admin/Analytics.jsx";
 import TagsPage from "./pages/admin/Tags.jsx";
+import BlogCategoriesPage from "./pages/admin/BlogCategories.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
@@ -373,6 +374,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <TagsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-categories',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogCategoriesPage />
             </ProtectedRoute>
           ),
         },

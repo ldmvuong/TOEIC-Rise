@@ -16,6 +16,7 @@ import {
     FileTextOutlined,
     BarChartOutlined,
     TagOutlined,
+    BookOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -33,6 +34,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/blog-categories">Blog categories</Link>, key: "/admin/blog-categories", icon: <BookOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>, key: "/admin/system-prompts/chatbot", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN"] },
@@ -44,7 +46,7 @@ export default function AdminLayout() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const [collapsed, setCollapsed] = useState(false);
-    const [activeMenu, setActiveMenu] = useState("/admin");``
+    const [activeMenu, setActiveMenu] = useState("/admin");
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     // Redux state
