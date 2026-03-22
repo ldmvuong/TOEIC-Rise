@@ -130,6 +130,9 @@ export const updateTag = (tagId, payload) =>
 export const getAllBlogCategories = (query) =>
   api.get(`/staff/blog-categories?${query}`);
 
+export const createBlogCategory = (payload) =>
+  api.post("/staff/blog-categories", payload);
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);

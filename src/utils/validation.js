@@ -7,6 +7,10 @@ export const TEST_SET_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/;
 export const TEST_NAME_REGEX = /^[a-zA-Z0-9 ()]+$/; // same as backend Constant.TEST_NAME_PATTERN
 export const FULLNAME_REGEX = /^[\p{L} ]+$/u; // Matches backend PROFILE_FULLNAME_PATTERN = "^[\\p{L} ]+$"
 export const TAG_NAME_REGEX = /^[\p{L}0-9 ().,\[\]':-]{1,100}$/u;
+/** Matches backend BlogCategoryCreateRequest name */
+export const BLOG_CATEGORY_NAME_REGEX = /^[\p{L}0-9\s.,&()\-]{2,50}$/u;
+/** Matches backend BlogCategoryCreateRequest slug */
+export const BLOG_CATEGORY_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const SYSTEM_PROMPT_CONTENT_REGEX = /^[\p{L}0-9 !#%&*()\[\]_+;:'",.<>?\/{}\-\n\r\u2013]{20,}$/u;
 // Avatar validation constants
 export const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB - Matches backend AVATAR_MAX_SIZE

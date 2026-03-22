@@ -1,12 +1,16 @@
 import React, { useRef, useState } from "react";
+import { Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import { getAllBlogCategories } from "@/api/api";
+import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
 
 const BlogCategoriesPage = () => {
   const tableRef = useRef();
   const formRef = useRef();
 
+  const [openCreateModal, setOpenCreateModal] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState({ page: 0, pageSize: 10, total: 0 });
@@ -90,6 +94,10 @@ const BlogCategoriesPage = () => {
     return temp;
   };
 
+  const reloadTable = () => {
+    tableRef.current?.reload();
+  };
+
   return (
     <div>
       <DataTable
@@ -133,6 +141,21 @@ const BlogCategoriesPage = () => {
         }}
         scroll={{ x: true }}
         rowSelection={false}
+        toolBarRender={() => [
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setOpenCreateModal(true)}
+          >
+            Create category
+          </Button>,
+        ]}
+      />
+      <ModalCreateBlogCategory
+        openModal={openCreateModal}
+        setOpenModal={setOpenCreateModal}
+        reloadTable={reloadTable}
       />
     </div>
   );
