@@ -18,11 +18,10 @@ import {
 } from "@/api/api";
 import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
 
-/** Match backend EBlogPostStatus names; extend if your enum differs */
+/** Match backend EBlogPostStatus */
 const BLOG_POST_STATUS_ENUM = {
   DRAFT: { text: "Draft" },
   PUBLISHED: { text: "Published" },
-  SCHEDULED: { text: "Scheduled" },
   ARCHIVED: { text: "Archived" },
 };
 
