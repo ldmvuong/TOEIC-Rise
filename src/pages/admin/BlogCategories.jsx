@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, message, notification, Space, Switch } from "antd";
-import { EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { EditOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import {
@@ -12,6 +13,7 @@ import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blo
 import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
 
 const BlogCategoriesPage = () => {
+  const navigate = useNavigate();
   const tableRef = useRef();
   const formRef = useRef();
 
@@ -117,11 +119,20 @@ const BlogCategoriesPage = () => {
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 180,
       align: "center",
       hideInSearch: true,
       render: (_text, record) => (
         <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() =>
+              navigate(`/admin/blog-categories/${record.id}`)
+            }
+          >
+            View
+          </Button>
           <Button
             type="link"
             icon={<EditOutlined />}

@@ -139,6 +139,14 @@ export const updateBlogCategory = (id, payload) =>
 export const inactiveBlogCategory = (id) =>
   api.patch(`/staff/blog-categories/${id}`);
 
+export const getBlogCategoryById = (id) =>
+  api.get(`/staff/blog-categories/${id}`);
+
+export const getBlogPostsByCategorySlug = (categorySlug, query) => {
+  const encoded = encodeURIComponent(categorySlug);
+  return api.get(`/staff/blog-posts/${encoded}?${query}`);
+};
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);
