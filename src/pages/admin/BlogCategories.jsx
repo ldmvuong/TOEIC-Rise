@@ -1,16 +1,19 @@
 import React, { useRef, useState } from "react";
-import { Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Button, Space, Tag } from "antd";
+import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import { getAllBlogCategories } from "@/api/api";
 import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
+import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
 
 const BlogCategoriesPage = () => {
   const tableRef = useRef();
   const formRef = useRef();
 
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState({ page: 0, pageSize: 10, total: 0 });
@@ -40,6 +43,22 @@ const BlogCategoriesPage = () => {
     },
     {
       title: "Active",
+      key: "isActive",
+      width: 110,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => {
+        const on = record.active ?? record.isActive;
+        if (on === undefined || on === null) return "—";
+        return (
+          <Tag color={on ? "green" : "default"}>
+            {on ? "Active" : "Inactive"}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Active",
       dataIndex: "isActive",
       hideInTable: true,
       valueType: "select",
@@ -51,6 +70,27 @@ const BlogCategoriesPage = () => {
         allowClear: true,
         placeholder: "All",
       },
+    },
+    {
+      title: "Action",
+      key: "action",
+      width: 100,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setSelectedCategory(record);
+              setOpenUpdateModal(true);
+            }}
+          >
+            Edit
+          </Button>
+        </Space>
+      ),
     },
   ];
 
@@ -156,6 +196,12 @@ const BlogCategoriesPage = () => {
         openModal={openCreateModal}
         setOpenModal={setOpenCreateModal}
         reloadTable={reloadTable}
+      />
+      <ModalUpdateBlogCategory
+        openModal={openUpdateModal}
+        setOpenModal={setOpenUpdateModal}
+        reloadTable={reloadTable}
+        categoryData={selectedCategory}
       />
     </div>
   );
