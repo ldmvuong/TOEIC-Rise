@@ -1,9 +1,13 @@
 import React, { useRef, useState } from "react";
-import { Button, Space, Tag } from "antd";
+import { Button, message, notification, Space, Switch } from "antd";
 import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
-import { getAllBlogCategories } from "@/api/api";
+import {
+  getAllBlogCategories,
+  inactiveBlogCategory,
+  updateBlogCategory,
+} from "@/api/api";
 import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
 import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
 
@@ -14,9 +18,42 @@ const BlogCategoriesPage = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState({ page: 0, pageSize: 10, total: 0 });
+
+  const handleActiveChange = async (record, checked) => {
+    const id = record?.id;
+    if (id == null) return;
+
+    setTogglingId(id);
+    try {
+      if (!checked) {
+        await inactiveBlogCategory(id);
+        message.success("Blog category set to inactive");
+      } else {
+        await updateBlogCategory(id, {
+          name: record.name?.trim(),
+          slug: String(record.slug ?? "").trim().toLowerCase(),
+          active: true,
+        });
+        message.success("Blog category set to active");
+      }
+      reloadTable();
+    } catch (e) {
+      const errorMessage =
+        e?.message ||
+        e?.response?.data?.message ||
+        "Could not update active status";
+      notification.error({
+        message: "Update failed",
+        description: errorMessage,
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const columns = [
     {
@@ -43,17 +80,23 @@ const BlogCategoriesPage = () => {
     },
     {
       title: "Active",
-      key: "isActive",
-      width: 110,
+      key: "isActiveSwitch",
+      width: 120,
       align: "center",
       hideInSearch: true,
       render: (_text, record) => {
         const on = record.active ?? record.isActive;
         if (on === undefined || on === null) return "—";
+        const checked = Boolean(on);
         return (
-          <Tag color={on ? "green" : "default"}>
-            {on ? "Active" : "Inactive"}
-          </Tag>
+          <Switch
+            checked={checked}
+            checkedChildren="On"
+            unCheckedChildren="Off"
+            loading={togglingId === record.id}
+            disabled={togglingId !== null && togglingId !== record.id}
+            onChange={(next) => handleActiveChange(record, next)}
+          />
         );
       },
     },

@@ -136,6 +136,9 @@ export const createBlogCategory = (payload) =>
 export const updateBlogCategory = (id, payload) =>
   api.put(`/staff/blog-categories/${id}`, payload);
 
+export const inactiveBlogCategory = (id) =>
+  api.patch(`/staff/blog-categories/${id}`);
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);
