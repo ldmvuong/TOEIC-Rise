@@ -153,6 +153,9 @@ export const createBlogPost = (categorySlug, formData) => {
   return api.post(`/staff/blog-posts/${encoded}`, formData);
 };
 
+export const getBlogPostDetailForStaff = (id) =>
+  api.get(`/staff/blog-posts/${id}`);
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);

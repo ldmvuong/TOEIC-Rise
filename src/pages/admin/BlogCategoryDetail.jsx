@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Button,
   Card,
@@ -412,13 +412,18 @@ const BlogCategoryDetailPage = () => {
                       }
                     >
                       <div className="p-4 pt-3">
-                        <Title
-                          level={5}
-                          className="!mb-2 !mt-0 line-clamp-2 min-h-[2.75rem] text-slate-900"
-                          style={{ fontSize: 16, lineHeight: 1.4 }}
+                        <Link
+                          to={`/admin/blog-posts/${post.id}`}
+                          className="block text-inherit no-underline hover:text-blue-600"
                         >
-                          {post.title || "Untitled"}
-                        </Title>
+                          <Title
+                            level={5}
+                            className="!mb-2 !mt-0 line-clamp-2 min-h-[2.75rem] text-slate-900"
+                            style={{ fontSize: 16, lineHeight: 1.4 }}
+                          >
+                            {post.title || "Untitled"}
+                          </Title>
+                        </Link>
                         {post.summary ? (
                           <Text
                             type="secondary"
