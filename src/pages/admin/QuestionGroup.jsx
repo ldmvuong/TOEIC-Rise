@@ -6,7 +6,8 @@ import { getQuestionGroup, updateQuestionGroup, updateQuestion, generateExplanat
 import parse from "html-react-parser";
 import { marked } from "marked";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import { ClassicEditor, Essentials, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote } from "ckeditor5";
+import 'ckeditor5/ckeditor5.css';
 import TagsSelector from "@/components/admin/TagsSelector";
 import {
     validateQuestionGroupAudio,
@@ -411,6 +412,7 @@ const QuestionGroupPage = () => {
         // If you use the free GPL build, keep 'GPL'. If you have a commercial key,
         // replace this value with the key from your CKEditor account.
         licenseKey: "GPL",
+        plugins: [ Essentials, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote ],
         toolbar: [
             "heading",
             "|",
@@ -756,9 +758,117 @@ const QuestionGroupPage = () => {
                                     <style>{`
                                         .ckeditor-wrapper .ck-editor__editable {
                                             min-height: 400px !important;
+                                            padding: 18px 20px;
+                                            background: #fff;
+                                            font-size: 14px;
+                                            line-height: 1.75;
+                                            color: #0f172a;
+                                            box-sizing: border-box;
+                                        }
+                                        .ckeditor-wrapper .ck-editor__editable:focus {
+                                            outline: none;
+                                            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+                                        }
+                                        .ckeditor-wrapper .ck-content {
+                                            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+                                              "Apple Color Emoji", "Segoe UI Emoji";
+                                        }
+                                        .ckeditor-wrapper .ck-toolbar {
+                                            background: linear-gradient(#f8fafc, #f1f5f9);
+                                            border-bottom: 1px solid #e2e8f0;
+                                        }
+                                        .ckeditor-wrapper .ck-toolbar__items {
+                                            flex-wrap: wrap;
+                                            gap: 4px;
                                         }
                                         .ckeditor-wrapper .ck-editor {
                                             min-height: 500px;
+                                        }
+                                        .ckeditor-wrapper .ck-content a {
+                                            color: #2563eb;
+                                            text-decoration: none;
+                                            border-bottom: 1px solid rgba(37, 99, 235, 0.35);
+                                        }
+                                        .ckeditor-wrapper .ck-content a:hover {
+                                            color: #1d4ed8;
+                                            border-bottom-color: rgba(29, 78, 216, 0.6);
+                                        }
+                                        .ckeditor-wrapper .ck-content img {
+                                            max-width: 100%;
+                                            height: auto;
+                                            border-radius: 10px;
+                                            border: 1px solid #e5e7eb;
+                                        }
+                                        .ckeditor-wrapper .ck-content p {
+                                            margin: 0 0 0.75rem;
+                                        }
+                                        .ckeditor-wrapper .ck-content h1,
+                                        .ckeditor-wrapper .ck-content h2,
+                                        .ckeditor-wrapper .ck-content h3 {
+                                            margin: 1.2em 0 0.6em;
+                                            font-weight: 800;
+                                            line-height: 1.25;
+                                            color: #0f172a;
+                                        }
+                                        .ckeditor-wrapper .ck-content h1 { font-size: 26px; }
+                                        .ckeditor-wrapper .ck-content h2 { font-size: 21px; }
+                                        .ckeditor-wrapper .ck-content h3 { font-size: 17px; }
+                                        .ckeditor-wrapper .ck-content ul,
+                                        .ckeditor-wrapper .ck-content ol {
+                                            padding-left: 1.5rem;
+                                            margin: 0.5rem 0 0.75rem;
+                                        }
+                                        .ckeditor-wrapper .ck-content li { margin: 0.25rem 0; }
+                                        .ckeditor-wrapper .ck-content hr {
+                                            border: 0;
+                                            border-top: 1px solid #e5e7eb;
+                                            margin: 1rem 0;
+                                        }
+                                        .ckeditor-wrapper .ck-content table {
+                                            width: 100%;
+                                            border-collapse: separate;
+                                            border-spacing: 0;
+                                            margin: 1rem 0;
+                                        }
+                                        .ckeditor-wrapper .ck-content table th {
+                                            background: #f8fafc;
+                                            font-weight: 700;
+                                            color: #0f172a;
+                                        }
+                                        .ckeditor-wrapper .ck-content table td,
+                                        .ckeditor-wrapper .ck-content table th {
+                                            border: 1px solid #e5e7eb;
+                                            padding: 10px 12px;
+                                            vertical-align: top;
+                                        }
+                                        .ckeditor-wrapper .ck-content blockquote {
+                                            margin: 1rem 0;
+                                            padding: 0.75rem 1rem;
+                                            border-left: 4px solid #818cf8;
+                                            background: #eef2ff;
+                                            border-radius: 10px;
+                                            color: #334155;
+                                        }
+                                        .ckeditor-wrapper .ck-content pre {
+                                            background: #0b1220;
+                                            color: #e5e7eb;
+                                            padding: 14px;
+                                            border-radius: 12px;
+                                            overflow: auto;
+                                        }
+                                        .ckeditor-wrapper .ck-content code {
+                                            background: #f1f5f9;
+                                            padding: 0 6px;
+                                            border-radius: 6px;
+                                            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+                                              "Courier New", monospace;
+                                            font-size: 12.5px;
+                                        }
+                                        .ckeditor-wrapper .ck-content pre code {
+                                            background: transparent;
+                                            padding: 0;
+                                            border-radius: 0;
+                                            font-size: inherit;
                                         }
                                     `}</style>
                                     <CKEditor
@@ -796,9 +906,117 @@ const QuestionGroupPage = () => {
                                     <style>{`
                                         .ckeditor-wrapper .ck-editor__editable {
                                             min-height: 400px !important;
+                                            padding: 18px 20px;
+                                            background: #fff;
+                                            font-size: 14px;
+                                            line-height: 1.75;
+                                            color: #0f172a;
+                                            box-sizing: border-box;
+                                        }
+                                        .ckeditor-wrapper .ck-editor__editable:focus {
+                                            outline: none;
+                                            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+                                        }
+                                        .ckeditor-wrapper .ck-content {
+                                            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+                                              "Apple Color Emoji", "Segoe UI Emoji";
+                                        }
+                                        .ckeditor-wrapper .ck-toolbar {
+                                            background: linear-gradient(#f8fafc, #f1f5f9);
+                                            border-bottom: 1px solid #e2e8f0;
+                                        }
+                                        .ckeditor-wrapper .ck-toolbar__items {
+                                            flex-wrap: wrap;
+                                            gap: 4px;
                                         }
                                         .ckeditor-wrapper .ck-editor {
                                             min-height: 500px;
+                                        }
+                                        .ckeditor-wrapper .ck-content a {
+                                            color: #2563eb;
+                                            text-decoration: none;
+                                            border-bottom: 1px solid rgba(37, 99, 235, 0.35);
+                                        }
+                                        .ckeditor-wrapper .ck-content a:hover {
+                                            color: #1d4ed8;
+                                            border-bottom-color: rgba(29, 78, 216, 0.6);
+                                        }
+                                        .ckeditor-wrapper .ck-content img {
+                                            max-width: 100%;
+                                            height: auto;
+                                            border-radius: 10px;
+                                            border: 1px solid #e5e7eb;
+                                        }
+                                        .ckeditor-wrapper .ck-content p {
+                                            margin: 0 0 0.75rem;
+                                        }
+                                        .ckeditor-wrapper .ck-content h1,
+                                        .ckeditor-wrapper .ck-content h2,
+                                        .ckeditor-wrapper .ck-content h3 {
+                                            margin: 1.2em 0 0.6em;
+                                            font-weight: 800;
+                                            line-height: 1.25;
+                                            color: #0f172a;
+                                        }
+                                        .ckeditor-wrapper .ck-content h1 { font-size: 26px; }
+                                        .ckeditor-wrapper .ck-content h2 { font-size: 21px; }
+                                        .ckeditor-wrapper .ck-content h3 { font-size: 17px; }
+                                        .ckeditor-wrapper .ck-content ul,
+                                        .ckeditor-wrapper .ck-content ol {
+                                            padding-left: 1.5rem;
+                                            margin: 0.5rem 0 0.75rem;
+                                        }
+                                        .ckeditor-wrapper .ck-content li { margin: 0.25rem 0; }
+                                        .ckeditor-wrapper .ck-content hr {
+                                            border: 0;
+                                            border-top: 1px solid #e5e7eb;
+                                            margin: 1rem 0;
+                                        }
+                                        .ckeditor-wrapper .ck-content table {
+                                            width: 100%;
+                                            border-collapse: separate;
+                                            border-spacing: 0;
+                                            margin: 1rem 0;
+                                        }
+                                        .ckeditor-wrapper .ck-content table th {
+                                            background: #f8fafc;
+                                            font-weight: 700;
+                                            color: #0f172a;
+                                        }
+                                        .ckeditor-wrapper .ck-content table td,
+                                        .ckeditor-wrapper .ck-content table th {
+                                            border: 1px solid #e5e7eb;
+                                            padding: 10px 12px;
+                                            vertical-align: top;
+                                        }
+                                        .ckeditor-wrapper .ck-content blockquote {
+                                            margin: 1rem 0;
+                                            padding: 0.75rem 1rem;
+                                            border-left: 4px solid #818cf8;
+                                            background: #eef2ff;
+                                            border-radius: 10px;
+                                            color: #334155;
+                                        }
+                                        .ckeditor-wrapper .ck-content pre {
+                                            background: #0b1220;
+                                            color: #e5e7eb;
+                                            padding: 14px;
+                                            border-radius: 12px;
+                                            overflow: auto;
+                                        }
+                                        .ckeditor-wrapper .ck-content code {
+                                            background: #f1f5f9;
+                                            padding: 0 6px;
+                                            border-radius: 6px;
+                                            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+                                              "Courier New", monospace;
+                                            font-size: 12.5px;
+                                        }
+                                        .ckeditor-wrapper .ck-content pre code {
+                                            background: transparent;
+                                            padding: 0;
+                                            border-radius: 0;
+                                            font-size: inherit;
                                         }
                                     `}</style>
                                     <CKEditor
