@@ -156,6 +156,11 @@ export const createBlogPost = (categorySlug, formData) => {
 export const getBlogPostDetailForStaff = (id) =>
   api.get(`/staff/blog-posts/${id}`);
 
+export const changeBlogPostStatus = (id, status) => {
+  const params = new URLSearchParams({ status });
+  return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);
+};
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);

@@ -19,7 +19,11 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { getBlogPostDetailForStaff } from "@/api/api";
+import {
+  changeBlogPostStatus,
+  getBlogPostDetailForStaff,
+} from "@/api/api";
+import { message, Popconfirm } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -99,6 +103,7 @@ const BlogPostDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [post, setPost] = useState(null);
+  const [changingStatus, setChangingStatus] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -151,6 +156,23 @@ const BlogPostDetailPage = () => {
 
   const status = post.status;
   const statusColor = STATUS_COLOR[status] ?? "default";
+
+  const changeStatus = async (nextStatus) => {
+    if (!post?.id) return;
+    if (!nextStatus || nextStatus === status) return;
+    setChangingStatus(true);
+    try {
+      await changeBlogPostStatus(post.id, nextStatus);
+      message.success("Blog post status updated");
+      await load();
+    } catch (e) {
+      message.error(
+        e?.response?.data?.message || e?.message || "Failed to update status",
+      );
+    } finally {
+      setChangingStatus(false);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 pb-12">
@@ -266,7 +288,60 @@ const BlogPostDetailPage = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Status">
                   {status ? (
-                    <Tag color={statusColor}>{String(status)}</Tag>
+                    <Space direction="vertical" size={4} className="w-full">
+                      <Space wrap align="center" className="w-full">
+                        <Tag color={statusColor}>{String(status)}</Tag>
+                      </Space>
+                      <Space wrap align="center">
+                        <Popconfirm
+                          title="Set status to DRAFT?"
+                          okText="Yes"
+                          cancelText="No"
+                          disabled={changingStatus || status === "DRAFT"}
+                          onConfirm={() => changeStatus("DRAFT")}
+                        >
+                          <Button
+                            size="small"
+                            disabled={changingStatus || status === "DRAFT"}
+                          >
+                            Draft
+                          </Button>
+                        </Popconfirm>
+
+                        <Popconfirm
+                          title="Set status to PUBLISHED?"
+                          okText="Yes"
+                          cancelText="No"
+                          disabled={changingStatus || status === "PUBLISHED"}
+                          onConfirm={() => changeStatus("PUBLISHED")}
+                        >
+                          <Button
+                            size="small"
+                            type="primary"
+                            disabled={
+                              changingStatus || status === "PUBLISHED"
+                            }
+                          >
+                            Published
+                          </Button>
+                        </Popconfirm>
+
+                        <Popconfirm
+                          title="Set status to ARCHIVED?"
+                          okText="Yes"
+                          cancelText="No"
+                          disabled={changingStatus || status === "ARCHIVED"}
+                          onConfirm={() => changeStatus("ARCHIVED")}
+                        >
+                          <Button
+                            size="small"
+                            disabled={changingStatus || status === "ARCHIVED"}
+                          >
+                            Archived
+                          </Button>
+                        </Popconfirm>
+                      </Space>
+                    </Space>
                   ) : (
                     "—"
                   )}
