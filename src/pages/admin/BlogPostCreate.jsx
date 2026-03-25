@@ -1,8 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import { ClassicEditor, Heading, Essentials, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote } from "ckeditor5";
-import 'ckeditor5/ckeditor5.css';
+import {
+  ClassicEditor,
+  Heading,
+  Essentials,
+  Paragraph,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Link,
+  Table,
+  TableToolbar,
+  BlockQuote,
+  Font,
+  Alignment,
+  Indent,
+  IndentBlock,
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import {
   Button,
   Card,
@@ -94,7 +111,9 @@ const BlogPostCreatePage = () => {
       return Upload.LIST_IGNORE;
     }
     if (!isValidImageSize(file.size)) {
-      message.error(`Image must be ${AVATAR_MAX_SIZE / (1024 * 1024)}MB or smaller`);
+      message.error(
+        `Image must be ${AVATAR_MAX_SIZE / (1024 * 1024)}MB or smaller`,
+      );
       return Upload.LIST_IGNORE;
     }
     setThumbnailFile(file);
@@ -161,56 +180,83 @@ const BlogPostCreatePage = () => {
   };
 
   const blogPostEditorConfiguration = {
-  licenseKey: "GPL",
-  plugins: [Essentials, Heading, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote],
-  heading: {
-    options: [
-      {
-        model: "paragraph",
-        title: "Paragraph",
-        class: "ck-heading_paragraph",
-      },
-      {
-        model: "heading1",
-        view: "h1",
-        title: "Heading 1",
-        class: "ck-heading_heading1",
-      },
-      {
-        model: "heading2",
-        view: "h2",
-        title: "Heading 2",
-        class: "ck-heading_heading2",
-      },
-      {
-        model: "heading3",
-        view: "h3",
-        title: "Heading 3",
-        class: "ck-heading_heading3",
-      },
+    licenseKey: "GPL",
+    plugins: [
+      Essentials,
+      Heading,
+      Paragraph,
+      Bold,
+      Italic,
+      Underline,
+      List,
+      Link,
+      Table,
+      TableToolbar,
+      BlockQuote,
+      Font,
+      Alignment,
+      Indent,
+      IndentBlock,
     ],
-  },
-  toolbar: [
-    "undo",
-    "redo",
-    "|",
-    "heading",
-    "|",
-    "bold",
-    "italic",
-    "|",
-    "numberedList",
-    "bulletedList",
-    "|",
-    "link",
-    "insertTable",
-    "blockQuote",
-  ],
-  // Classic build includes Table + merge; tableProperties plugins are not in this build.
-  table: {
-    contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
-  },
-};
+    heading: {
+      options: [
+        {
+          model: "paragraph",
+          title: "Paragraph",
+          class: "ck-heading_paragraph",
+        },
+        {
+          model: "heading1",
+          view: "h1",
+          title: "Heading 1",
+          class: "ck-heading_heading1",
+        },
+        {
+          model: "heading2",
+          view: "h2",
+          title: "Heading 2",
+          class: "ck-heading_heading2",
+        },
+        {
+          model: "heading3",
+          view: "h3",
+          title: "Heading 3",
+          class: "ck-heading_heading3",
+        },
+      ],
+    },
+    toolbar: [
+      "undo",
+      "redo",
+      "|",
+      "heading",
+      "|",
+      "bold",
+      "italic",
+      "underline",
+      "|",
+      "fontSize",
+      "fontFamily",
+      "fontColor",
+      "fontBackgroundColor",
+      "|",
+      "numberedList",
+      "bulletedList",
+      "|",
+      "link",
+      "insertTable",
+      "blockQuote",
+      "|",
+      "alignment",
+      "|",
+      "indent",
+      "outdent",
+    ],
+    // Classic build includes Table + merge; tableProperties plugins are not in this build.
+    table: {
+      contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
+    },
+  };
 
   if (loadingCategory) {
     return (
@@ -234,7 +280,7 @@ const BlogPostCreatePage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 pb-12">
+    <div className="max-w-[1400px] mx-auto p-4 pb-12">
       <Space direction="vertical" size="large" className="w-full">
         <Space wrap align="center">
           <Button
@@ -248,7 +294,9 @@ const BlogPostCreatePage = () => {
           </Title>
           <Text type="secondary">
             Category: <strong>{category.name}</strong>{" "}
-            <code className="text-xs bg-slate-100 px-1 rounded">{category.slug}</code>
+            <code className="text-xs bg-slate-100 px-1 rounded">
+              {category.slug}
+            </code>
           </Text>
         </Space>
 
@@ -260,7 +308,7 @@ const BlogPostCreatePage = () => {
           className="w-full"
         >
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={16}>
+            <Col xs={24} lg={18}>
               <Card title="Post details" className="shadow-sm">
                 <Form.Item
                   label="Title"
@@ -275,11 +323,7 @@ const BlogPostCreatePage = () => {
                     },
                   ]}
                 >
-                  <Input
-                    maxLength={150}
-                    showCount
-                    placeholder="Post title"
-                  />
+                  <Input maxLength={150} showCount placeholder="Post title" />
                 </Form.Item>
 
                 <Form.Item
@@ -335,6 +379,10 @@ const BlogPostCreatePage = () => {
                   </div>
                   <div className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white">
                     <style>{`
+                      .ckeditor-wrapper {
+                        width: 100%;
+                        display: block;
+                      }
                       .ckeditor-wrapper .ck-editor__editable {
                         min-height: 420px !important;
                         padding: 18px 20px;
@@ -343,6 +391,7 @@ const BlogPostCreatePage = () => {
                         line-height: 1.75;
                         color: #0f172a;
                         box-sizing: border-box;
+                        width: 100%;
                       }
                       .ckeditor-wrapper .ck-editor__editable:focus {
                         outline: none;
@@ -350,14 +399,25 @@ const BlogPostCreatePage = () => {
                       }
                       .ckeditor-wrapper .ck-editor {
                         min-height: 480px;
+                        width: 100%;
+                      }
+                      .ckeditor-wrapper .ck-editor__main {
+                        width: 100%;
+                      }
+                      .ckeditor-wrapper .ck-editor__top {
+                        width: 100%;
                       }
                       .ckeditor-wrapper .ck-toolbar {
                         background: linear-gradient(#f8fafc, #f1f5f9);
                         border-bottom: 1px solid #e2e8f0;
+                        width: 100%;
+                        padding: 0 8px;
                       }
                       .ckeditor-wrapper .ck-toolbar__items {
                         flex-wrap: wrap;
                         gap: 4px;
+                        width: 100%;
+                        justify-content: flex-start;
                       }
                       .ckeditor-wrapper .ck-content {
                         font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
@@ -512,7 +572,7 @@ const BlogPostCreatePage = () => {
               </Card>
             </Col>
 
-            <Col xs={24} lg={8}>
+            <Col xs={24} lg={6}>
               <Card
                 title="Outline (from headings)"
                 className="shadow-sm lg:sticky lg:top-4"
@@ -520,9 +580,9 @@ const BlogPostCreatePage = () => {
               >
                 {outline.length === 0 ? (
                   <Text type="secondary">
-                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>, or{" "}
-                    <strong>Heading 3</strong> in the editor to see the outline
-                    here.
+                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>,
+                    or <strong>Heading 3</strong> in the editor to see the
+                    outline here.
                   </Text>
                 ) : (
                   <ul className="list-none pl-0 m-0 space-y-2">
@@ -543,7 +603,9 @@ const BlogPostCreatePage = () => {
                                 : "secondary"
                           }
                           className={
-                            item.level === 1 ? "font-semibold text-slate-900" : ""
+                            item.level === 1
+                              ? "font-semibold text-slate-900"
+                              : ""
                           }
                         >
                           H{item.level}: {item.text}
