@@ -81,6 +81,12 @@ const BlogCategoriesPage = () => {
       sorter: true,
     },
     {
+      title: "Posts",
+      dataIndex: "numberOfPosts",
+      ellipsis: true,
+      sorter: true,
+    },
+    {
       title: "Active",
       key: "isActiveSwitch",
       width: 120,
