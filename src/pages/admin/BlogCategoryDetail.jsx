@@ -63,6 +63,12 @@ const BLOG_POST_STATUS_OPTIONS = [
   { value: "ARCHIVED", label: "Archived" },
 ];
 
+const BLOG_POST_STATUS_COLOR = {
+  DRAFT: "default",
+  PUBLISHED: "green",
+  ARCHIVED: "orange",
+};
+
 const SORT_OPTIONS = [
   { value: "updatedAt_DESC", label: "Newest first" },
   { value: "updatedAt_ASC", label: "Oldest first" },
@@ -378,6 +384,9 @@ const BlogCategoryDetailPage = () => {
                 {posts.map((post) => {
                   const { authorName, updatedAt, views } = pickPostMeta(post);
                   const updatedLabel = formatPostUpdatedAt(updatedAt);
+                  const postStatus = post.status;
+                  const postStatusColor =
+                    (postStatus && BLOG_POST_STATUS_COLOR[postStatus]) || "default";
                   return (
                   <Col xs={24} sm={12} xl={8} key={post.id}>
                     <Card
@@ -424,6 +433,16 @@ const BlogCategoryDetailPage = () => {
                             {post.title || "Untitled"}
                           </Title>
                         </Link>
+                            {postStatus ? (
+                              <div className="mb-2">
+                                <Tag
+                                  color={postStatusColor}
+                                  className="text-xs"
+                                >
+                                  {postStatus}
+                                </Tag>
+                              </div>
+                            ) : null}
                         {post.summary ? (
                           <Text
                             type="secondary"
