@@ -37,7 +37,9 @@ const BlogCategoriesPage = () => {
       } else {
         await updateBlogCategory(id, {
           name: record.name?.trim(),
-          slug: String(record.slug ?? "").trim().toLowerCase(),
+          slug: String(record.slug ?? "")
+            .trim()
+            .toLowerCase(),
           active: true,
         });
         message.success("Blog category set to active");
@@ -84,7 +86,9 @@ const BlogCategoriesPage = () => {
       title: "Posts",
       dataIndex: "numberOfPosts",
       ellipsis: true,
-      sorter: true,
+      align: "center",
+      hideInSearch: true,
+      render: (text) => <>{text ?? 0}</>,
     },
     {
       title: "Active",
@@ -133,9 +137,7 @@ const BlogCategoriesPage = () => {
           <Button
             type="link"
             icon={<EyeOutlined />}
-            onClick={() =>
-              navigate(`/admin/blog-categories/${record.id}`)
-            }
+            onClick={() => navigate(`/admin/blog-categories/${record.id}`)}
           >
             View
           </Button>
