@@ -18,6 +18,7 @@ import {
   Alignment,
   Indent,
   IndentBlock,
+  RemoveFormat,
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
 import {
@@ -197,6 +198,7 @@ const BlogPostCreatePage = () => {
       Alignment,
       Indent,
       IndentBlock,
+      RemoveFormat,
     ],
     heading: {
       options: [
@@ -251,6 +253,8 @@ const BlogPostCreatePage = () => {
       "|",
       "indent",
       "outdent",
+      "|",
+      "removeFormat",
     ],
     // Classic build includes Table + merge; tableProperties plugins are not in this build.
     table: {
@@ -280,7 +284,7 @@ const BlogPostCreatePage = () => {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 pb-12">
+    <div className="max-w-[1500px] mx-auto p-4 pb-12">
       <Space direction="vertical" size="large" className="w-full">
         <Space wrap align="center">
           <Button
