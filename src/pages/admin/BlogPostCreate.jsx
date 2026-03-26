@@ -19,6 +19,8 @@ import {
   Indent,
   IndentBlock,
   RemoveFormat,
+  Image,
+  ImageUpload,
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
 import {
@@ -43,7 +45,7 @@ import {
   isValidImageExtension,
   isValidImageSize,
 } from "@/utils/validation";
-import { createBlogPost, getBlogCategoryById } from "@/api/api";
+import { createBlogPost, getBlogCategoryById, uploadBlogPostImage } from "@/api/api";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -59,6 +61,37 @@ function extractHeadingOutline(html) {
   } catch {
     return [];
   }
+}
+
+class BlogPostImageUploadAdapter {
+  constructor(loader) {
+    this.loader = loader;
+  }
+
+  upload() {
+    return this.loader.file.then((file) => {
+      const formData = new FormData();
+      // Backend expects Multipart @ModelAttribute BlogPostImageRequest.image
+      formData.append("image", file);
+      return uploadBlogPostImage(formData).then((res) => {
+        const url = res?.data;
+        if (!url) {
+          throw new Error("Image upload succeeded but no URL returned");
+        }
+        return { default: url };
+      });
+    });
+  }
+
+  abort() {
+    // Optional: axios request cancellation can be added later if needed.
+  }
+}
+
+function BlogPostImageUploadAdapterPlugin(editor) {
+  const fileRepository = editor.plugins.get("FileRepository");
+  fileRepository.createUploadAdapter = (loader) =>
+    new BlogPostImageUploadAdapter(loader);
 }
 
 const BlogPostCreatePage = () => {
@@ -194,6 +227,8 @@ const BlogPostCreatePage = () => {
       Table,
       TableToolbar,
       BlockQuote,
+      Image,
+      ImageUpload,
       Font,
       Alignment,
       Indent,
@@ -246,6 +281,7 @@ const BlogPostCreatePage = () => {
       "bulletedList",
       "|",
       "link",
+      "imageUpload",
       "insertTable",
       "blockQuote",
       "|",
@@ -260,6 +296,7 @@ const BlogPostCreatePage = () => {
     table: {
       contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
     },
+    extraPlugins: [BlogPostImageUploadAdapterPlugin],
   };
 
   if (loadingCategory) {

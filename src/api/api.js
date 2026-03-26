@@ -156,6 +156,9 @@ export const createBlogPost = (categorySlug, formData) => {
 export const getBlogPostDetailForStaff = (id) =>
   api.get(`/staff/blog-posts/${id}`);
 
+export const uploadBlogPostImage = (formData) =>
+  api.post("/staff/blog-posts/upload-image", formData);
+
 export const changeBlogPostStatus = (id, status) => {
   const params = new URLSearchParams({ status });
   return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);
