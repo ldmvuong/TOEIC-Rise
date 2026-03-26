@@ -53,6 +53,7 @@ import {
   getBlogCategoryById,
   uploadBlogPostImage,
   deleteBlogPostImage,
+  generateBlogSummaryStream,
 } from "@/api/api";
 
 const { Title, Text } = Typography;
@@ -122,6 +123,11 @@ const BlogPostCreatePage = () => {
   const [fileList, setFileList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [deletingImageUrl, setDeletingImageUrl] = useState(null);
+
+  const [generateSummaryModalOpen, setGenerateSummaryModalOpen] =
+    useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [generatedSummaryText, setGeneratedSummaryText] = useState("");
 
   const outline = useMemo(
     () => extractHeadingOutline(contentHtml),
@@ -205,6 +211,44 @@ const BlogPostCreatePage = () => {
     } finally {
       setDeletingImageUrl(null);
     }
+  };
+
+  const handleGenerateSummary = () => {
+    const title = String(form.getFieldValue("title") ?? "").trim();
+    const content = String(contentHtml ?? "").trim();
+
+    if (!title) {
+      message.error("Please enter a title first");
+      return;
+    }
+    if (content.replace(/<[^>]*>/g, "").trim().length < 50) {
+      message.error("Please write at least 50 characters of content first");
+      return;
+    }
+
+    setGeneratedSummaryText("");
+    setGenerateSummaryModalOpen(true);
+    setGeneratingSummary(true);
+
+    generateBlogSummaryStream(
+      { title, content },
+      {
+        onChunk: (text) => setGeneratedSummaryText((prev) => prev + text),
+        onDone: () => setGeneratingSummary(false),
+        onError: (err) => {
+          setGeneratingSummary(false);
+          message.error(err?.message || "Failed to generate summary");
+        },
+      },
+    );
+  };
+
+  const handleUseGeneratedSummary = () => {
+    const next = (generatedSummaryText ?? "").trim();
+    if (!next) return;
+    form.setFieldsValue({ summary: next });
+    setGenerateSummaryModalOpen(false);
+    message.success("Applied generated summary");
   };
 
   const beforeThumbnailUpload = (file) => {
@@ -461,7 +505,20 @@ const BlogPostCreatePage = () => {
                 </Form.Item>
 
                 <Form.Item
-                  label="Summary"
+                  label={
+                    <Space align="center" size={8}>
+                      <span>Summary</span>
+                      <Button
+                        size="small"
+                        type="default"
+                        onClick={handleGenerateSummary}
+                        loading={generatingSummary}
+                        disabled={submitting}
+                      >
+                        Generate summary
+                      </Button>
+                    </Space>
+                  }
                   name="summary"
                   rules={[
                     { required: true, message: "Summary is required" },
@@ -742,6 +799,43 @@ const BlogPostCreatePage = () => {
           </Row>
         </Form>
       </Space>
+      <Modal
+        open={generateSummaryModalOpen}
+        title="Generate blog post summary"
+        onCancel={() => {
+          if (!generatingSummary) {
+            setGenerateSummaryModalOpen(false);
+          }
+        }}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => setGenerateSummaryModalOpen(false)}
+            disabled={generatingSummary}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="use"
+            type="primary"
+            onClick={handleUseGeneratedSummary}
+            disabled={generatingSummary || !generatedSummaryText.trim()}
+          >
+            Use this summary
+          </Button>,
+        ]}
+        width={720}
+        destroyOnClose
+      >
+        <div className="min-h-[160px]">
+          {generatingSummary && !generatedSummaryText ? (
+            <div className="text-slate-500">Generating…</div>
+          ) : null}
+          <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-800 whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
+            {generatedSummaryText || "—"}
+          </div>
+        </div>
+      </Modal>
       <Modal
         open={manageImagesOpen}
         onCancel={() => setManageImagesOpen(false)}
