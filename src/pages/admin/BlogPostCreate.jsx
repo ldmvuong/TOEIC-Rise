@@ -29,6 +29,9 @@ import {
   Col,
   Form,
   Input,
+  Empty,
+  Modal,
+  Popconfirm,
   Row,
   Space,
   Typography,
@@ -45,7 +48,12 @@ import {
   isValidImageExtension,
   isValidImageSize,
 } from "@/utils/validation";
-import { createBlogPost, getBlogCategoryById, uploadBlogPostImage } from "@/api/api";
+import {
+  createBlogPost,
+  getBlogCategoryById,
+  uploadBlogPostImage,
+  deleteBlogPostImage,
+} from "@/api/api";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -64,8 +72,9 @@ function extractHeadingOutline(html) {
 }
 
 class BlogPostImageUploadAdapter {
-  constructor(loader) {
+  constructor(loader, onUploaded) {
     this.loader = loader;
+    this.onUploaded = onUploaded;
   }
 
   upload() {
@@ -78,6 +87,7 @@ class BlogPostImageUploadAdapter {
         if (!url) {
           throw new Error("Image upload succeeded but no URL returned");
         }
+        this.onUploaded?.(url);
         return { default: url };
       });
     });
@@ -88,10 +98,12 @@ class BlogPostImageUploadAdapter {
   }
 }
 
-function BlogPostImageUploadAdapterPlugin(editor) {
-  const fileRepository = editor.plugins.get("FileRepository");
-  fileRepository.createUploadAdapter = (loader) =>
-    new BlogPostImageUploadAdapter(loader);
+function createBlogPostImageUploadAdapterPlugin(onUploaded) {
+  return function BlogPostImageUploadAdapterPlugin(editor) {
+    const fileRepository = editor.plugins.get("FileRepository");
+    fileRepository.createUploadAdapter = (loader) =>
+      new BlogPostImageUploadAdapter(loader, onUploaded);
+  };
 }
 
 const BlogPostCreatePage = () => {
@@ -104,9 +116,12 @@ const BlogPostCreatePage = () => {
   const [category, setCategory] = useState(null);
 
   const [contentHtml, setContentHtml] = useState("");
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+  const [manageImagesOpen, setManageImagesOpen] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingImageUrl, setDeletingImageUrl] = useState(null);
 
   const outline = useMemo(
     () => extractHeadingOutline(contentHtml),
@@ -138,6 +153,59 @@ const BlogPostCreatePage = () => {
   useEffect(() => {
     loadCategory();
   }, [loadCategory]);
+
+  const handleImageUploaded = useCallback((url) => {
+    if (!url) return;
+    setUploadedImageUrls((prev) => {
+      if (prev.includes(url)) return prev;
+      return [...prev, url];
+    });
+  }, []);
+
+  const extractImageUrlsFromHtml = useCallback((html) => {
+    if (!html || typeof window === "undefined") return [];
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return [...doc.querySelectorAll("img")]
+        .map((img) => img.getAttribute("src"))
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const normalizeImageUrl = (url) => {
+    if (!url || typeof url !== "string") return "";
+    // Backend may return absolute URLs; editor usage check should ignore query params.
+    return url.split("#")[0].split("?")[0].trim();
+  };
+
+  const handleDeleteUploadedImage = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    const usedUrls = extractImageUrlsFromHtml(contentHtml);
+    const isInUse = usedUrls.some(
+      (u) => normalizeImageUrl(u) === normalizeImageUrl(imageUrl),
+    );
+
+    if (isInUse) {
+      message.error("Cannot delete: this image is still used in CKEditor content.");
+      return;
+    }
+
+    try {
+      setDeletingImageUrl(imageUrl);
+      await deleteBlogPostImage(imageUrl);
+      setUploadedImageUrls((prev) =>
+        prev.filter((u) => normalizeImageUrl(u) !== normalizeImageUrl(imageUrl)),
+      );
+      message.success("Image deleted");
+    } catch (e) {
+      message.error(e?.response?.data?.message || e?.message || "Failed to delete image");
+    } finally {
+      setDeletingImageUrl(null);
+    }
+  };
 
   const beforeThumbnailUpload = (file) => {
     if (!isValidImageExtension(file.name)) {
@@ -213,91 +281,96 @@ const BlogPostCreatePage = () => {
     }
   };
 
-  const blogPostEditorConfiguration = {
-    licenseKey: "GPL",
-    plugins: [
-      Essentials,
-      Heading,
-      Paragraph,
-      Bold,
-      Italic,
-      Underline,
-      List,
-      Link,
-      Table,
-      TableToolbar,
-      BlockQuote,
-      Image,
-      ImageUpload,
-      Font,
-      Alignment,
-      Indent,
-      IndentBlock,
-      RemoveFormat,
-    ],
-    heading: {
-      options: [
-        {
-          model: "paragraph",
-          title: "Paragraph",
-          class: "ck-heading_paragraph",
-        },
-        {
-          model: "heading1",
-          view: "h1",
-          title: "Heading 1",
-          class: "ck-heading_heading1",
-        },
-        {
-          model: "heading2",
-          view: "h2",
-          title: "Heading 2",
-          class: "ck-heading_heading2",
-        },
-        {
-          model: "heading3",
-          view: "h3",
-          title: "Heading 3",
-          class: "ck-heading_heading3",
-        },
+  const blogPostEditorConfiguration = useMemo(
+    () => ({
+      licenseKey: "GPL",
+      plugins: [
+        Essentials,
+        Heading,
+        Paragraph,
+        Bold,
+        Italic,
+        Underline,
+        List,
+        Link,
+        Table,
+        TableToolbar,
+        BlockQuote,
+        Image,
+        ImageUpload,
+        Font,
+        Alignment,
+        Indent,
+        IndentBlock,
+        RemoveFormat,
       ],
-    },
-    toolbar: [
-      "undo",
-      "redo",
-      "|",
-      "heading",
-      "|",
-      "bold",
-      "italic",
-      "underline",
-      "|",
-      "fontSize",
-      "fontFamily",
-      "fontColor",
-      "fontBackgroundColor",
-      "|",
-      "numberedList",
-      "bulletedList",
-      "|",
-      "link",
-      "imageUpload",
-      "insertTable",
-      "blockQuote",
-      "|",
-      "alignment",
-      "|",
-      "indent",
-      "outdent",
-      "|",
-      "removeFormat",
-    ],
-    // Classic build includes Table + merge; tableProperties plugins are not in this build.
-    table: {
-      contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
-    },
-    extraPlugins: [BlogPostImageUploadAdapterPlugin],
-  };
+      heading: {
+        options: [
+          {
+            model: "paragraph",
+            title: "Paragraph",
+            class: "ck-heading_paragraph",
+          },
+          {
+            model: "heading1",
+            view: "h1",
+            title: "Heading 1",
+            class: "ck-heading_heading1",
+          },
+          {
+            model: "heading2",
+            view: "h2",
+            title: "Heading 2",
+            class: "ck-heading_heading2",
+          },
+          {
+            model: "heading3",
+            view: "h3",
+            title: "Heading 3",
+            class: "ck-heading_heading3",
+          },
+        ],
+      },
+      toolbar: [
+        "undo",
+        "redo",
+        "|",
+        "heading",
+        "|",
+        "bold",
+        "italic",
+        "underline",
+        "|",
+        "fontSize",
+        "fontFamily",
+        "fontColor",
+        "fontBackgroundColor",
+        "|",
+        "numberedList",
+        "bulletedList",
+        "|",
+        "link",
+        "imageUpload",
+        "insertTable",
+        "blockQuote",
+        "|",
+        "alignment",
+        "|",
+        "indent",
+        "outdent",
+        "|",
+        "removeFormat",
+      ],
+      // Classic build includes Table + merge; tableProperties plugins are not in this build.
+      table: {
+        contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
+      },
+      extraPlugins: [
+        createBlogPostImageUploadAdapterPlugin(handleImageUploaded),
+      ],
+    }),
+    [handleImageUploaded],
+  );
 
   if (loadingCategory) {
     return (
@@ -417,6 +490,15 @@ const BlogPostCreatePage = () => {
                       then use the table balloon for rows/columns and{" "}
                       <strong>Merge cells</strong>.
                     </Text>
+                  </div>
+                  <div className="flex items-center justify-end mb-2">
+                    <Button
+                      size="small"
+                      onClick={() => setManageImagesOpen(true)}
+                      disabled={uploadedImageUrls.length === 0}
+                    >
+                      Manage images ({uploadedImageUrls.length})
+                    </Button>
                   </div>
                   <div className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white">
                     <style>{`
@@ -660,6 +742,58 @@ const BlogPostCreatePage = () => {
           </Row>
         </Form>
       </Space>
+      <Modal
+        open={manageImagesOpen}
+        onCancel={() => setManageImagesOpen(false)}
+        title="Manage uploaded images"
+        footer={null}
+        width={920}
+        destroyOnClose
+      >
+        {uploadedImageUrls.length === 0 ? (
+          <Empty description="No uploaded images in this editor session." />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {uploadedImageUrls.map((url) => (
+              <div
+                key={url}
+                className="border border-slate-200 rounded-xl overflow-hidden bg-white"
+              >
+                <div className="bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    className="w-full h-36 object-cover"
+                  />
+                </div>
+                <div className="p-3">
+                  <div className="text-xs text-slate-500 line-clamp-2">
+                    {url}
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Popconfirm
+                      title="Delete this image?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={() => handleDeleteUploadedImage(url)}
+                      disabled={deletingImageUrl === url}
+                    >
+                      <Button
+                        size="small"
+                        danger
+                        disabled={deletingImageUrl === url}
+                      >
+                        {deletingImageUrl === url ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

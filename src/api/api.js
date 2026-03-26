@@ -159,6 +159,11 @@ export const getBlogPostDetailForStaff = (id) =>
 export const uploadBlogPostImage = (formData) =>
   api.post("/staff/blog-posts/upload-image", formData);
 
+export const deleteBlogPostImage = (imageUrl) =>
+  api.delete("/staff/blog-posts/delete-image", {
+    data: { imageUrl },
+  });
+
 export const changeBlogPostStatus = (id, status) => {
   const params = new URLSearchParams({ status });
   return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);
