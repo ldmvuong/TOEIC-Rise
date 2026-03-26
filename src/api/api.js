@@ -169,6 +169,9 @@ export const changeBlogPostStatus = (id, status) => {
   return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);
 };
 
+export const updateBlogPost = (id, payload) =>
+  api.put(`/staff/blog-posts/${id}`, payload);
+
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
   api.get(`/admin/system-prompts?${query}`);

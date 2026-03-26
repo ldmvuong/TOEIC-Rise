@@ -181,6 +181,12 @@ const BlogPostDetailPage = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
             Back
           </Button>
+          <Button
+            type="primary"
+            onClick={() => navigate(`/admin/blog-posts/${post.id}/edit`)}
+          >
+            Edit
+          </Button>
           {post.categoryId != null && (
             <Link to={`/admin/blog-categories/${post.categoryId}`}>
               <Button type="link">Category: {post.categoryName || "View"}</Button>
