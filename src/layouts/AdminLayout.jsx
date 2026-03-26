@@ -39,6 +39,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>, key: "/admin/system-prompts/sentence-assessment", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/system-prompts/blog-summarization">Blog Summarization Prompts</Link>, key: "/admin/system-prompts/blog-summarization", icon: <ApiOutlined />, roles: ["ADMIN"] },
 ];
 
 export default function AdminLayout() {

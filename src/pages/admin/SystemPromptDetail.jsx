@@ -24,6 +24,7 @@ const typeToEnumMap = {
   "q-and-a": "Q_AND_A",
   explanation: "EXPLANATION_GENERATION",
   "sentence-assessment": "SENTENCE_ASSESSMENT",
+  "blog-summarization": "BLOG_SUMMARIZATION",
 };
 
 const typeToLabelMap = {
@@ -31,6 +32,7 @@ const typeToLabelMap = {
   "q-and-a": "Q & A",
   explanation: "Explanation Generation",
   "sentence-assessment": "Sentence Assessment",
+  "blog-summarization": "Blog Summarization",
 };
 
 const SystemPromptDetailPage = () => {
