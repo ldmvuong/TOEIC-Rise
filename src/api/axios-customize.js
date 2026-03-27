@@ -13,7 +13,9 @@ const PUBLIC_ENDPOINTS = [
   "/auth/verify-otp",
   "/auth/reset-password",
   "/test-sets", 
-  "/tests" 
+  "/tests",
+  "/blog-categories",
+  "/blog-posts",
 ];
 
 // Helper check URL

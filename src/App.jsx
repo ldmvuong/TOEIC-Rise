@@ -28,6 +28,9 @@ import BlogCategoryDetailPage from "./pages/admin/BlogCategoryDetail.jsx";
 import BlogPostCreatePage from "./pages/admin/BlogPostCreate.jsx";
 import BlogPostDetailPage from "./pages/admin/BlogPostDetail.jsx";
 import BlogPostUpdatePage from "./pages/admin/BlogPostUpdate.jsx";
+import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
+import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
+import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
@@ -76,6 +79,26 @@ export default function App() {
       errorElement: <NotFound />,
       children: [
         { index: true, element: <HomePage /> },
+        {
+          path: "blog",
+          element: <BlogCategoriesPublicPage />,
+        },
+        {
+          path: "blog/categories",
+          element: <BlogCategoriesPublicPage />,
+        },
+        {
+          path: "blog/categories/:slug",
+          element: <BlogPostsPublicPage mode="category" />,
+        },
+        {
+          path: "blog/newest",
+          element: <BlogPostsPublicPage mode="newest" />,
+        },
+        {
+          path: "blog/posts/:slug",
+          element: <BlogPostDetailPublicPage />,
+        },
         {
           path: 'exam-structure',
           element: <ExamStructure />

@@ -20,6 +20,7 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
+    { name: "Blog", href: "/blog" },
     { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
@@ -77,7 +78,10 @@ export default function Header({ currentPath }) {
           {/* Navigation */}
           <nav className="flex items-center gap-8">
             {nav.map((item) => {
-              const isActive = activePath === item.href
+              const isActive =
+                item.href === "/"
+                  ? activePath === "/"
+                  : activePath === item.href || activePath.startsWith(`${item.href}/`)
               return (
                 <Link
                   key={item.name}

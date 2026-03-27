@@ -97,6 +97,34 @@ export const getPublicTestById = (id) => {
   return api.get(`/tests/${id}`);
 };
 
+// === Learner Blog APIs (public) ===
+export const getPublicBlogCategories = () => api.get("/blog-categories");
+
+export const getNewestPublicBlogPosts = ({ title = "", page = 0, size = 10 } = {}) => {
+  const params = new URLSearchParams();
+  if (title) params.append("title", title);
+  params.append("page", String(page));
+  params.append("size", String(size));
+  return api.get(`/blog-posts/newest?${params.toString()}`);
+};
+
+export const getPublicBlogPostsByCategorySlug = (
+  categorySlug,
+  { title = "", page = 0, size = 10 } = {},
+) => {
+  const params = new URLSearchParams();
+  if (title) params.append("title", title);
+  params.append("page", String(page));
+  params.append("size", String(size));
+  const encoded = encodeURIComponent(categorySlug);
+  return api.get(`/blog-posts/categories/${encoded}?${params.toString()}`);
+};
+
+export const getPublicBlogPostDetailBySlug = (slug) => {
+  const encoded = encodeURIComponent(slug);
+  return api.get(`/blog-posts/${encoded}`);
+};
+
 // Admin users
 
 export const getAllUsers = (query) => api.get(`/admin/users?${query}`);
