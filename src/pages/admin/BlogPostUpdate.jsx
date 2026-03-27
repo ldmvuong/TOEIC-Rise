@@ -44,12 +44,12 @@ import {
 } from "antd";
 import { ArrowLeftOutlined, InboxOutlined } from "@ant-design/icons";
 import {
-  AVATAR_MAX_SIZE,
+  BLOG_POST_THUMBNAIL_MAX_SIZE,
   BLOG_POST_SLUG_REGEX,
   BLOG_POST_SUMMARY_REGEX,
   BLOG_POST_TITLE_REGEX,
   isValidImageExtension,
-  isValidImageSize,
+  isValidBlogPostThumbnailSize,
 } from "@/utils/validation";
 import {
   deleteBlogPostImage,
@@ -243,9 +243,9 @@ const BlogPostUpdatePage = () => {
       message.error("Use an image file (jpg, png, gif, bmp, webp)");
       return Upload.LIST_IGNORE;
     }
-    if (!isValidImageSize(file.size)) {
+    if (!isValidBlogPostThumbnailSize(file.size)) {
       message.error(
-        `Image must be ${AVATAR_MAX_SIZE / (1024 * 1024)}MB or smaller`,
+        `Image must be ${BLOG_POST_THUMBNAIL_MAX_SIZE / (1024 * 1024)}MB or smaller`,
       );
       return Upload.LIST_IGNORE;
     }

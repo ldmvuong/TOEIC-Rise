@@ -19,6 +19,7 @@ export const BLOG_POST_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** Matches backend BlogPostCreateRequest summary */
 export const BLOG_POST_SUMMARY_REGEX =
   /^[\p{L}0-9\s.,!?:'"()\-]{10,500}$/u;
+export const BLOG_POST_THUMBNAIL_MAX_SIZE = 4 * 1024 * 1024; // 4MB - Matches backend BLOG_POST_THUMBNAIL_MAX_SIZE
 export const SYSTEM_PROMPT_CONTENT_REGEX = /^[\p{L}0-9 !#%&*()\[\]_+;:'",.<>?\/{}\-\n\r\u2013]{20,}$/u;
 // Avatar validation constants
 export const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB - Matches backend AVATAR_MAX_SIZE
@@ -48,6 +49,11 @@ export const isValidImageExtension = (filename) => {
 export const isValidImageSize = (fileSize) => {
     return fileSize > 0 && fileSize <= AVATAR_MAX_SIZE;
 };
+
+export const isValidBlogPostThumbnailSize = (fileSize) => {
+    return fileSize > 0 && fileSize <= BLOG_POST_THUMBNAIL_MAX_SIZE;
+};
+
 
 export const validateAvatar = (file) => {
     if (!file) return { valid: true };
