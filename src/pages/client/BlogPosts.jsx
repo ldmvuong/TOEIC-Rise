@@ -7,7 +7,6 @@ import {
   Image,
   Input,
   Pagination,
-  Segmented,
   Spin,
   Tag,
   Typography,
@@ -21,7 +20,6 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
-  getNewestPublicBlogPosts,
   getPublicBlogCategories,
   getPublicBlogPostsByCategorySlug,
 } from "@/api/api";
@@ -41,7 +39,7 @@ function formatUpdatedAt(value) {
   return d.isValid() ? d.format("MMM D, YYYY") : String(value);
 }
 
-const BlogPostsPage = ({ mode }) => {
+const BlogPostsPage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
 
@@ -56,7 +54,7 @@ const BlogPostsPage = ({ mode }) => {
   const [q, setQ] = useState("");
   const [appliedQ, setAppliedQ] = useState("");
 
-  const viewMode = mode === "category" ? "category" : "newest";
+  const viewMode = "category";
 
   const activeCategory = useMemo(() => {
     if (viewMode !== "category") return null;
@@ -85,26 +83,17 @@ const BlogPostsPage = ({ mode }) => {
     setLoading(true);
     setError("");
     try {
-      let res;
-      if (viewMode === "newest") {
-        res = await getNewestPublicBlogPosts({
-          title: appliedQ.trim(),
-          page: meta.page,
-          size: meta.pageSize,
-        });
-      } else {
-        if (!slug) {
-          setPosts([]);
-          setMeta((m) => ({ ...m, total: 0, pages: 0 }));
-          setLoading(false);
-          return;
-        }
-        res = await getPublicBlogPostsByCategorySlug(slug, {
-          title: appliedQ.trim(),
-          page: meta.page,
-          size: meta.pageSize,
-        });
+      if (!slug) {
+        setPosts([]);
+        setMeta((m) => ({ ...m, total: 0, pages: 0 }));
+        setLoading(false);
+        return;
       }
+      const res = await getPublicBlogPostsByCategorySlug(slug, {
+        title: appliedQ.trim(),
+        page: meta.page,
+        size: meta.pageSize,
+      });
       const data = res?.data ?? {};
       setPosts(Array.isArray(data.result) ? data.result : []);
       setMeta((m) => ({
@@ -127,8 +116,6 @@ const BlogPostsPage = ({ mode }) => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const segmentedValue = viewMode === "newest" ? "Newest" : "By category";
-
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -136,35 +123,23 @@ const BlogPostsPage = ({ mode }) => {
           <div className="flex items-center gap-2">
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate("/blog/categories")}
+              onClick={() => navigate("/blog")}
             >
               Categories
             </Button>
           </div>
-          <Segmented
-            value={segmentedValue}
-            options={["Newest", "By category"]}
-            onChange={(val) => {
-              const next = val === "Newest" ? "/blog/newest" : "/blog/categories";
-              navigate(next);
-            }}
-          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8">
             <div className="mb-5">
               <Title level={2} style={{ marginBottom: 6 }}>
-                {viewMode === "newest"
-                  ? "Newest posts"
-                  : activeCategory?.name || "Category posts"}
+                {activeCategory?.name || "Category posts"}
               </Title>
               <Text type="secondary" className="text-base">
-                {viewMode === "newest"
-                  ? "Fresh TOEIC content from our team."
-                  : activeCategory
-                    ? `Category: ${activeCategory.slug}`
-                    : `Category: ${slug}`}
+                {activeCategory
+                  ? `Category: ${activeCategory.slug}`
+                  : `Category: ${slug}`}
               </Text>
             </div>
 
@@ -177,8 +152,13 @@ const BlogPostsPage = ({ mode }) => {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   onPressEnter={() => {
-                    setMeta((m) => ({ ...m, page: 0 }));
-                    setAppliedQ(q);
+                    const keyword = q.trim();
+                    if (!keyword) {
+                      setMeta((m) => ({ ...m, page: 0 }));
+                      setAppliedQ("");
+                      return;
+                    }
+                    navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
                   }}
                   allowClear
                   size="large"
@@ -201,8 +181,13 @@ const BlogPostsPage = ({ mode }) => {
                     type="primary"
                     size="large"
                     onClick={() => {
-                      setMeta((m) => ({ ...m, page: 0 }));
-                      setAppliedQ(q);
+                      const keyword = q.trim();
+                      if (!keyword) {
+                        setMeta((m) => ({ ...m, page: 0 }));
+                        setAppliedQ("");
+                        return;
+                      }
+                      navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
                     }}
                   >
                     Search
@@ -341,13 +326,6 @@ const BlogPostsPage = ({ mode }) => {
                 <Empty description="No categories" />
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Button
-                    type={viewMode === "newest" ? "primary" : "default"}
-                    onClick={() => navigate("/blog/newest")}
-                    className="text-left"
-                  >
-                    Newest posts
-                  </Button>
                   <div className="mt-2 text-xs text-slate-500">
                     Categories
                   </div>

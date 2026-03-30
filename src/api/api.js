@@ -125,6 +125,19 @@ export const getPublicBlogPostDetailBySlug = (slug) => {
   return api.get(`/blog-posts/${encoded}`);
 };
 
+export const searchPublicBlogs = ({ keyword, page = 0, size = 10 }) => {
+  const params = new URLSearchParams();
+  params.append("keyword", String(keyword ?? ""));
+  params.append("page", String(page));
+  params.append("size", String(size));
+  return api.get(`/blog-posts/search?${params.toString()}`);
+};
+
+export const getPublicRelatedBlogPosts = (id, limit = 5) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return api.get(`/blog-posts/relate/${id}?${params.toString()}`);
+};
+
 // Admin users
 
 export const getAllUsers = (query) => api.get(`/admin/users?${query}`);

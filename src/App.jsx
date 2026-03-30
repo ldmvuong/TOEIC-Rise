@@ -31,6 +31,7 @@ import BlogPostUpdatePage from "./pages/admin/BlogPostUpdate.jsx";
 import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
 import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
 import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
+import BlogSearchPage from "./pages/client/BlogSearch.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
@@ -89,11 +90,11 @@ export default function App() {
         },
         {
           path: "blog/categories/:slug",
-          element: <BlogPostsPublicPage mode="category" />,
+          element: <BlogPostsPublicPage />,
         },
         {
-          path: "blog/newest",
-          element: <BlogPostsPublicPage mode="newest" />,
+          path: "blog/search",
+          element: <BlogSearchPage />,
         },
         {
           path: "blog/posts/:slug",

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import parse from "html-react-parser";
-import { Button, Card, Image, Space, Spin, Tag, Typography } from "antd";
+import { Button, Card, Empty, Image, Space, Spin, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -9,7 +9,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { getPublicBlogPostDetailBySlug } from "@/api/api";
+import { getPublicBlogPostDetailBySlug, getPublicRelatedBlogPosts } from "@/api/api";
 
 const { Title, Text } = Typography;
 
@@ -73,6 +73,8 @@ const BlogPostDetailPublicPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [post, setPost] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!slug) {
@@ -96,6 +98,33 @@ const BlogPostDetailPublicPage = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const postId = post?.id;
+    if (!postId) {
+      setRelatedPosts([]);
+      return;
+    }
+    let mounted = true;
+    const run = async () => {
+      setRelatedLoading(true);
+      try {
+        const res = await getPublicRelatedBlogPosts(postId, 5);
+        const data = res?.data;
+        if (!mounted) return;
+        setRelatedPosts(Array.isArray(data) ? data : []);
+      } catch {
+        if (!mounted) return;
+        setRelatedPosts([]);
+      } finally {
+        if (mounted) setRelatedLoading(false);
+      }
+    };
+    run();
+    return () => {
+      mounted = false;
+    };
+  }, [post?.id]);
 
   const { contentHtml, tocItems } = useMemo(() => {
     const { html, items } = injectHeadingIdsAndToc(post?.content);
@@ -127,7 +156,7 @@ const BlogPostDetailPublicPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <Space wrap className="mb-5">
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
             Back
@@ -146,12 +175,17 @@ const BlogPostDetailPublicPage = () => {
           styles={{ body: { padding: 0 } }}
         >
           {post.thumbnailUrl ? (
-            <div className="bg-slate-100 max-h-[420px] overflow-hidden">
+            <div className="bg-slate-100 max-h-[420px] overflow-hidden flex items-center justify-center">
               <Image
                 src={post.thumbnailUrl}
                 alt=""
                 className="w-full object-cover"
-                style={{ width: "100%", maxHeight: 420, objectFit: "cover" }}
+                style={{
+                  width: "100%",
+                  maxHeight: 420,
+                  objectFit: "cover",
+                  objectPosition: "center center",
+                }}
                 preview
               />
             </div>
@@ -192,7 +226,7 @@ const BlogPostDetailPublicPage = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-9">
             <Card
               className="rounded-2xl border-slate-200 shadow-sm"
               title="Article"
@@ -216,13 +250,21 @@ const BlogPostDetailPublicPage = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
             {tocItems.length > 0 ? (
               <Card
-                className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4"
+                className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
                 title="On this page"
                 styles={{
-                  body: { maxHeight: "min(70vh, 520px)", overflowY: "auto", padding: "12px 16px" },
+                  header: {
+                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderBottom: "1px solid #e2e8f0",
+                  },
+                  body: {
+                    maxHeight: "min(70vh, 520px)",
+                    overflowY: "auto",
+                    padding: "12px",
+                  },
                 }}
               >
                 <nav aria-label="Table of contents">
@@ -230,18 +272,43 @@ const BlogPostDetailPublicPage = () => {
                     {tocItems.map((item) => (
                       <li
                         key={item.id}
-                        style={{ paddingLeft: (item.level - 1) * 12 }}
-                        className="text-sm border-l-2 border-indigo-200 pl-2"
+                        style={{ marginLeft: (item.level - 1) * 10 }}
+                        className="text-sm"
                       >
                         <a
                           href={`#${item.id}`}
-                          className="text-slate-700 hover:text-indigo-600 no-underline break-words"
+                          className={`group flex items-start gap-2 no-underline rounded-lg px-2.5 py-2 border transition-all ${
+                            item.level === 1
+                              ? "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70"
+                              : item.level === 2
+                                ? "border-slate-200 bg-white hover:bg-slate-50"
+                                : "border-transparent bg-transparent hover:bg-slate-50"
+                          }`}
                           onClick={(e) => {
                             e.preventDefault();
                             scrollToHeading(item.id);
                           }}
                         >
-                          {item.text}
+                          <span
+                            className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                              item.level === 1
+                                ? "bg-indigo-500"
+                                : item.level === 2
+                                  ? "bg-slate-400"
+                                  : "bg-slate-300"
+                            }`}
+                          />
+                          <span
+                            className={`break-words leading-snug ${
+                              item.level === 1
+                                ? "text-indigo-900 font-semibold group-hover:text-indigo-700"
+                                : item.level === 2
+                                  ? "text-slate-700 font-medium group-hover:text-slate-900"
+                                  : "text-slate-600 group-hover:text-slate-800"
+                            }`}
+                          >
+                            {item.text}
+                          </span>
                         </a>
                       </li>
                     ))}
@@ -255,6 +322,66 @@ const BlogPostDetailPublicPage = () => {
             )}
           </div>
         </div>
+
+        <Card
+          className="rounded-2xl border-slate-200 shadow-sm mt-6"
+          title="Related posts"
+          styles={{ body: { padding: 16 } }}
+        >
+          {relatedLoading ? (
+            <div className="py-8 flex justify-center">
+              <Spin />
+            </div>
+          ) : relatedPosts.length === 0 ? (
+            <Empty description="No related posts found" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {relatedPosts.map((rp) => (
+                <Card
+                  key={rp.id}
+                  hoverable
+                  className="rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                  styles={{ body: { padding: 12 } }}
+                >
+                  {rp.thumbnailUrl ? (
+                    <div className="rounded-lg overflow-hidden bg-slate-100 mb-3">
+                      <Image
+                        src={rp.thumbnailUrl}
+                        alt=""
+                        preview={false}
+                        className="w-full object-cover"
+                        style={{ height: 130, width: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-[130px] rounded-lg bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 mb-3" />
+                  )}
+                  <div className="text-sm font-semibold text-slate-900 line-clamp-2">
+                    {rp.title || "Untitled"}
+                  </div>
+                  {rp.summary ? (
+                    <div className="mt-1 text-xs text-slate-600 line-clamp-3">
+                      {rp.summary}
+                    </div>
+                  ) : null}
+                  <div className="mt-3 flex justify-end">
+                    {rp.slug ? (
+                      <Link to={`/blog/posts/${rp.slug}`}>
+                        <Button size="small" type="primary">
+                          Read
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button size="small" disabled>
+                        Read
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

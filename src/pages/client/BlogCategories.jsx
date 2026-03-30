@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Card, Input, Spin, Tag, Typography, Empty, Image } from "antd";
+import { Button, Card, Input, Spin, Tag, Typography, Empty, Image, Space } from "antd";
 import {
   ArrowRightOutlined,
   CalendarOutlined,
@@ -75,16 +75,6 @@ const BlogCategoriesPage = () => {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return categories;
-    return categories.filter((c) => {
-      const name = String(c?.name ?? "").toLowerCase();
-      const slug = String(c?.slug ?? "").toLowerCase();
-      return name.includes(term) || slug.includes(term);
-    });
-  }, [categories, q]);
-
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -103,15 +93,30 @@ const BlogCategoriesPage = () => {
               allowClear
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onPressEnter={() => {
+                const keyword = q.trim();
+                if (!keyword) return;
+                navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
+              }}
               prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Search categories (name or slug)"
+              placeholder="Search posts by keyword"
               size="large"
               className="rounded-xl"
             />
             <div className="mt-2 flex justify-end">
-              <Button type="link" onClick={() => navigate("/blog/newest")}>
-                View newest posts
-              </Button>
+              <Space>
+                <Button
+                  type="default"
+                  onClick={() => {
+                    const keyword = q.trim();
+                    if (!keyword) return;
+                    navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
+                  }}
+                  disabled={!q.trim()}
+                >
+                  Search posts
+                </Button>
+              </Space>
             </div>
           </div>
         </div>
@@ -124,13 +129,13 @@ const BlogCategoriesPage = () => {
           <Card className="rounded-2xl border-slate-200 shadow-sm">
             <Text type="danger">{error}</Text>
           </Card>
-        ) : filtered.length === 0 ? (
+        ) : categories.length === 0 ? (
           <Card className="rounded-2xl border-slate-200 shadow-sm">
             <Empty description="No categories found" />
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((c) => {
+            {categories.map((c) => {
               const isActive = c?.isActive ?? true;
               return (
                 <Link
@@ -177,9 +182,6 @@ const BlogCategoriesPage = () => {
             <Title level={3} style={{ margin: 0 }}>
               Newest posts
             </Title>
-            <Button type="link" onClick={() => navigate("/blog/newest")}>
-              See all
-            </Button>
           </div>
 
           {newestLoading ? (
