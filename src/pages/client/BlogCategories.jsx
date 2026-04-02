@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Card, Input, Spin, Tag, Typography, Empty, Image, Space } from "antd";
+import {
+  Button,
+  Card,
+  Input,
+  Spin,
+  Tag,
+  Typography,
+  Empty,
+  Image,
+  Space,
+  Pagination,
+} from "antd";
 import {
   ArrowRightOutlined,
   CalendarOutlined,
@@ -27,6 +38,12 @@ const BlogCategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [newestPosts, setNewestPosts] = useState([]);
   const [newestLoading, setNewestLoading] = useState(false);
+  const [newestMeta, setNewestMeta] = useState({
+    page: 0,
+    pageSize: 6,
+    total: 0,
+    pages: 0,
+  });
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -58,13 +75,24 @@ const BlogCategoriesPage = () => {
     const run = async () => {
       setNewestLoading(true);
       try {
-        const res = await getNewestPublicBlogPosts({ page: 0, size: 6 });
+        const res = await getNewestPublicBlogPosts({
+          page: newestMeta.page,
+          size: newestMeta.pageSize,
+        });
         const data = res?.data ?? {};
         if (!mounted) return;
         setNewestPosts(Array.isArray(data.result) ? data.result : []);
+        setNewestMeta((prev) => ({
+          ...prev,
+          page: data.meta?.page ?? prev.page,
+          pageSize: data.meta?.pageSize ?? prev.pageSize,
+          total: data.meta?.total ?? 0,
+          pages: data.meta?.pages ?? 0,
+        }));
       } catch {
         if (!mounted) return;
         setNewestPosts([]);
+        setNewestMeta((prev) => ({ ...prev, total: 0, pages: 0 }));
       } finally {
         if (mounted) setNewestLoading(false);
       }
@@ -73,7 +101,7 @@ const BlogCategoriesPage = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [newestMeta.page, newestMeta.pageSize]);
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
@@ -193,72 +221,92 @@ const BlogCategoriesPage = () => {
               <Empty description="No newest posts yet" />
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {newestPosts.map((p) => (
-                <Card
-                  key={p.id}
-                  hoverable
-                  className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
-                  styles={{ body: { padding: 14 } }}
-                >
-                  {p.thumbnailUrl ? (
-                    <div className="rounded-xl overflow-hidden bg-slate-100 mb-3">
-                      <Image
-                        src={p.thumbnailUrl}
-                        alt=""
-                        preview={false}
-                        className="w-full object-cover"
-                        style={{ height: 150, width: "100%", objectFit: "cover" }}
-                      />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {newestPosts.map((p) => (
+                  <Card
+                    key={p.id}
+                    hoverable
+                    className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                    styles={{ body: { padding: 14 } }}
+                  >
+                    {p.thumbnailUrl ? (
+                      <div className="rounded-xl overflow-hidden bg-slate-100 mb-3">
+                        <Image
+                          src={p.thumbnailUrl}
+                          alt=""
+                          preview={false}
+                          className="w-full object-cover"
+                          style={{ height: 150, width: "100%", objectFit: "cover" }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-[150px] rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 mb-3" />
+                    )}
+
+                    <div className="text-base font-semibold text-slate-900 line-clamp-2">
+                      {p.title || "Untitled"}
                     </div>
-                  ) : (
-                    <div className="h-[150px] rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 mb-3" />
-                  )}
+                    {p.summary ? (
+                      <div className="mt-1 text-sm text-slate-600 line-clamp-3">
+                        {p.summary}
+                      </div>
+                    ) : null}
 
-                  <div className="text-base font-semibold text-slate-900 line-clamp-2">
-                    {p.title || "Untitled"}
-                  </div>
-                  {p.summary ? (
-                    <div className="mt-1 text-sm text-slate-600 line-clamp-3">
-                      {p.summary}
+                    <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                      {p.authorName ? (
+                        <span className="inline-flex items-center gap-1">
+                          <UserOutlined />
+                          {p.authorName}
+                        </span>
+                      ) : null}
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarOutlined />
+                        {formatUpdatedAt(p.updatedAt)}
+                      </span>
+                      {p.views != null ? (
+                        <span className="inline-flex items-center gap-1">
+                          <EyeOutlined />
+                          {Number(p.views).toLocaleString()}
+                        </span>
+                      ) : null}
                     </div>
-                  ) : null}
 
-                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                    {p.authorName ? (
-                      <span className="inline-flex items-center gap-1">
-                        <UserOutlined />
-                        {p.authorName}
-                      </span>
-                    ) : null}
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarOutlined />
-                      {formatUpdatedAt(p.updatedAt)}
-                    </span>
-                    {p.views != null ? (
-                      <span className="inline-flex items-center gap-1">
-                        <EyeOutlined />
-                        {Number(p.views).toLocaleString()}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 flex justify-end">
-                    {p?.slug ? (
-                      <Link to={`/blog/posts/${p.slug}`}>
-                        <Button type="primary" size="small">
+                    <div className="mt-4 flex justify-end">
+                      {p?.slug ? (
+                        <Link to={`/blog/posts/${p.slug}`}>
+                          <Button type="primary" size="small">
+                            Read
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button size="small" disabled>
                           Read
                         </Button>
-                      </Link>
-                    ) : (
-                      <Button size="small" disabled>
-                        Read
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {newestMeta.total > 0 ? (
+                <div className="mt-6 flex justify-center">
+                  <Pagination
+                    current={newestMeta.page + 1}
+                    pageSize={newestMeta.pageSize}
+                    total={newestMeta.total}
+                    showSizeChanger
+                    pageSizeOptions={["3", "6", "9", "12"]}
+                    onChange={(page, pageSize) => {
+                      setNewestMeta((prev) => ({
+                        ...prev,
+                        page: page - 1,
+                        pageSize,
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </div>
