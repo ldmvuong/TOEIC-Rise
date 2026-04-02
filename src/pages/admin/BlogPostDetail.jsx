@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   Col,
-  Descriptions,
   Image,
   Row,
   Space,
@@ -175,7 +174,7 @@ const BlogPostDetailPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 pb-12">
+    <div className="max-w-7xl mx-auto p-4 pb-12">
       <Space direction="vertical" size="large" className="w-full">
         <Space wrap>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
@@ -232,8 +231,180 @@ const BlogPostDetailPage = () => {
           </Space>
         </Card>
 
+        <Card
+          title="Details"
+          className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
+          styles={{
+            header: {
+              background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+              borderBottom: "1px solid #e2e8f0",
+            },
+            body: { padding: 0 },
+          }}
+        >
+          <div className="divide-y divide-slate-100">
+            <div className="px-5 py-4">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                Slug
+              </div>
+              <code className="block text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 break-all">
+                {post.slug || "—"}
+              </code>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-50/50">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                Status
+              </div>
+              {status ? (
+                <Space direction="vertical" size={12} className="w-full">
+                  <Tag color={statusColor} className="m-0 px-2.5 py-0.5 text-sm">
+                    {String(status)}
+                  </Tag>
+                  <div className="flex flex-wrap gap-2">
+                    <Popconfirm
+                      title="Set status to DRAFT?"
+                      okText="Yes"
+                      cancelText="No"
+                      disabled={changingStatus || status === "DRAFT"}
+                      onConfirm={() => changeStatus("DRAFT")}
+                    >
+                      <Button
+                        size="small"
+                        disabled={changingStatus || status === "DRAFT"}
+                      >
+                        Draft
+                      </Button>
+                    </Popconfirm>
+
+                    <Popconfirm
+                      title="Set status to PUBLISHED?"
+                      okText="Yes"
+                      cancelText="No"
+                      disabled={changingStatus || status === "PUBLISHED"}
+                      onConfirm={() => changeStatus("PUBLISHED")}
+                    >
+                      <Button
+                        size="small"
+                        type="primary"
+                        disabled={changingStatus || status === "PUBLISHED"}
+                      >
+                        Published
+                      </Button>
+                    </Popconfirm>
+
+                    <Popconfirm
+                      title="Set status to ARCHIVED?"
+                      okText="Yes"
+                      cancelText="No"
+                      disabled={changingStatus || status === "ARCHIVED"}
+                      onConfirm={() => changeStatus("ARCHIVED")}
+                    >
+                      <Button
+                        size="small"
+                        disabled={changingStatus || status === "ARCHIVED"}
+                      >
+                        Archived
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                </Space>
+              ) : (
+                <Text type="secondary">—</Text>
+              )}
+            </div>
+
+            <div className="px-5 py-4">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                Views
+              </div>
+              <div className="flex items-center gap-2 text-slate-800">
+                <EyeOutlined className="text-slate-400" />
+                <span className="text-base font-medium tabular-nums">
+                  {post.views != null ? Number(post.views).toLocaleString() : "—"}
+                </span>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-50/50">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                Timeline
+              </div>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500">
+                    <CalendarOutlined />
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Created</div>
+                    <div className="text-sm text-slate-800 font-medium">
+                      {formatDateTime(post.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500">
+                    <CalendarOutlined />
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Updated</div>
+                    <div className="text-sm text-slate-800 font-medium">
+                      {formatDateTime(post.updatedAt)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-4">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                Author
+              </div>
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                  <UserOutlined />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-slate-900 truncate">
+                    {post.authorName || "—"}
+                  </div>
+                  {post.authorEmail ? (
+                    <div className="text-xs text-slate-500 mt-0.5 break-all">
+                      {post.authorEmail}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-4 bg-slate-50/50">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                Category
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="text-sm font-medium text-slate-900">
+                  {post.categoryName || "—"}
+                </div>
+                {post.categorySlug ? (
+                  <code className="mt-1 block text-xs text-slate-600 bg-slate-50 rounded px-2 py-1 border border-slate-100">
+                    {post.categorySlug}
+                  </code>
+                ) : null}
+                {post.categoryIsActive != null ? (
+                  <Tag
+                    color={post.categoryIsActive ? "green" : "default"}
+                    className="mt-2 m-0"
+                  >
+                    {post.categoryIsActive ? "Category active" : "Category inactive"}
+                  </Tag>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <Row gutter={[16, 16]}>
-          <Col xs={24} lg={16}>
+          <Col xs={24} lg={18}>
             <Card title="Content" className="shadow-sm">
               <div
                 className="blog-post-detail-content text-slate-800 leading-relaxed
@@ -254,13 +425,21 @@ const BlogPostDetailPage = () => {
               </div>
             </Card>
           </Col>
-          <Col xs={24} lg={8}>
+          <Col xs={24} lg={6}>
             {tocItems.length > 0 ? (
               <Card
                 title="On this page"
-                className="shadow-sm mb-4 lg:sticky lg:top-4 lg:z-10"
+                className="rounded-2xl border-slate-200 shadow-sm mb-4 lg:sticky lg:top-4 lg:z-10 overflow-hidden"
                 styles={{
-                  body: { maxHeight: "min(70vh, 480px)", overflowY: "auto", padding: "12px 16px" },
+                  header: {
+                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderBottom: "1px solid #e2e8f0",
+                  },
+                  body: {
+                    maxHeight: "min(70vh, 520px)",
+                    overflowY: "auto",
+                    padding: "12px",
+                  },
                 }}
               >
                 <nav aria-label="Table of contents">
@@ -268,18 +447,43 @@ const BlogPostDetailPage = () => {
                     {tocItems.map((item) => (
                       <li
                         key={item.id}
-                        style={{ paddingLeft: (item.level - 1) * 12 }}
-                        className="text-sm border-l-2 border-indigo-200 pl-2"
+                        style={{ marginLeft: (item.level - 1) * 10 }}
+                        className="text-sm"
                       >
                         <a
                           href={`#${item.id}`}
-                          className="text-slate-700 hover:text-indigo-600 no-underline break-words"
+                          className={`group flex items-start gap-2 no-underline rounded-lg px-2.5 py-2 border transition-all ${
+                            item.level === 1
+                              ? "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70"
+                              : item.level === 2
+                                ? "border-slate-200 bg-white hover:bg-slate-50"
+                                : "border-transparent bg-transparent hover:bg-slate-50"
+                          }`}
                           onClick={(e) => {
                             e.preventDefault();
                             scrollToHeading(item.id);
                           }}
                         >
-                          {item.text}
+                          <span
+                            className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                              item.level === 1
+                                ? "bg-indigo-500"
+                                : item.level === 2
+                                  ? "bg-slate-400"
+                                  : "bg-slate-300"
+                            }`}
+                          />
+                          <span
+                            className={`break-words leading-snug ${
+                              item.level === 1
+                                ? "text-indigo-900 font-semibold group-hover:text-indigo-700"
+                                : item.level === 2
+                                  ? "text-slate-700 font-medium group-hover:text-slate-900"
+                                  : "text-slate-600 group-hover:text-slate-800"
+                            }`}
+                          >
+                            {item.text}
+                          </span>
                         </a>
                       </li>
                     ))}
@@ -287,104 +491,6 @@ const BlogPostDetailPage = () => {
                 </nav>
               </Card>
             ) : null}
-            <Card title="Details" className="shadow-sm">
-              <Descriptions column={1} size="small" bordered>
-                <Descriptions.Item label="Slug">
-                  <code className="text-xs">{post.slug || "—"}</code>
-                </Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  {status ? (
-                    <Space direction="vertical" size={4} className="w-full">
-                      <Space wrap align="center" className="w-full">
-                        <Tag color={statusColor}>{String(status)}</Tag>
-                      </Space>
-                      <Space wrap align="center">
-                        <Popconfirm
-                          title="Set status to DRAFT?"
-                          okText="Yes"
-                          cancelText="No"
-                          disabled={changingStatus || status === "DRAFT"}
-                          onConfirm={() => changeStatus("DRAFT")}
-                        >
-                          <Button
-                            size="small"
-                            disabled={changingStatus || status === "DRAFT"}
-                          >
-                            Draft
-                          </Button>
-                        </Popconfirm>
-
-                        <Popconfirm
-                          title="Set status to PUBLISHED?"
-                          okText="Yes"
-                          cancelText="No"
-                          disabled={changingStatus || status === "PUBLISHED"}
-                          onConfirm={() => changeStatus("PUBLISHED")}
-                        >
-                          <Button
-                            size="small"
-                            type="primary"
-                            disabled={
-                              changingStatus || status === "PUBLISHED"
-                            }
-                          >
-                            Published
-                          </Button>
-                        </Popconfirm>
-
-                        <Popconfirm
-                          title="Set status to ARCHIVED?"
-                          okText="Yes"
-                          cancelText="No"
-                          disabled={changingStatus || status === "ARCHIVED"}
-                          onConfirm={() => changeStatus("ARCHIVED")}
-                        >
-                          <Button
-                            size="small"
-                            disabled={changingStatus || status === "ARCHIVED"}
-                          >
-                            Archived
-                          </Button>
-                        </Popconfirm>
-                      </Space>
-                    </Space>
-                  ) : (
-                    "—"
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Views">
-                  {post.views != null ? Number(post.views).toLocaleString() : "—"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Created">
-                  <CalendarOutlined className="mr-1" />
-                  {formatDateTime(post.createdAt)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Updated">
-                  <CalendarOutlined className="mr-1" />
-                  {formatDateTime(post.updatedAt)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Author">
-                  <UserOutlined className="mr-1" />
-                  {post.authorName || "—"}
-                  {post.authorEmail ? (
-                    <div className="text-xs text-slate-500 mt-1">{post.authorEmail}</div>
-                  ) : null}
-                </Descriptions.Item>
-                <Descriptions.Item label="Category">
-                  {post.categoryName || "—"}
-                  {post.categorySlug ? (
-                    <div>
-                      <code className="text-xs">{post.categorySlug}</code>
-                    </div>
-                  ) : null}
-                  {post.categoryIsActive != null ? (
-                    <Tag color={post.categoryIsActive ? "green" : "default"} className="mt-1">
-                      {post.categoryIsActive ? "Category active" : "Category inactive"}
-                    </Tag>
-                  ) : null}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
           </Col>
         </Row>
       </Space>
