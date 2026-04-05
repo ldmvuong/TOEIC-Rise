@@ -11,7 +11,11 @@ import TestSetPage from "./pages/admin/TestSet.jsx";
 import SpeakingTestSetPage from "./pages/admin/SpeakingTestSet.jsx";
 import WritingTestSetPage from "./pages/admin/WritingTestSet.jsx";
 import TestDetailPage from "./pages/admin/TestDetail.jsx";
+import SpeakingTestDetailPage from "./pages/admin/SpeakingTestDetail.jsx";
+import WritingTestDetailPage from "./pages/admin/WritingTestDetail.jsx";
 import TestPage from "./pages/admin/Test.jsx";
+import SpeakingTestPage from "./pages/admin/SpeakingTest.jsx";
+import WritingTestPage from "./pages/admin/WritingTest.jsx";
 import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
@@ -357,6 +361,38 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <WritingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestDetailPage />
             </ProtectedRoute>
           ),
         },

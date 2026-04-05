@@ -6,7 +6,13 @@ import { Button, Space, Tag } from "antd";
 import dayjs from 'dayjs';
 import queryString from 'query-string';
 import { fetchWritingTestSets } from '../../redux/slices/writingTestSetSlide';
-import { getTestInWritingTestSet, createWritingTestSet, updateWritingTestSet } from '../../api/api';
+import {
+    getTestInWritingTestSet,
+    createWritingTestSet,
+    updateWritingTestSet,
+    importWritingTests,
+    getAllWritingTestSets,
+} from '../../api/api';
 import DataTable from '../../components/admin/data-table/index';
 import ModalTestSet from '../../components/admin/test-set/modal.testset';
 import DrawerTest from '../../components/admin/drawer/drawer.test';
@@ -289,6 +295,10 @@ const WritingTestSetPage = () => {
                         setDataInit(currentTestSet);
                     }
                 }}
+                importTestsFn={importWritingTests}
+                getAllTestSetsFn={getAllWritingTestSets}
+                importBaseTitle="Import writing test"
+                getTestDetailPath={(testId) => `/admin/writing-tests/${testId}`}
             />
         </div>
     );

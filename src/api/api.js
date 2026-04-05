@@ -82,6 +82,36 @@ export const changeTestStatus = (id, status) => {
   return api.patch(`/admin/tests/${id}?${params.toString()}`);
 };
 
+// Staff Speaking Tests
+export const getAllSpeakingTests = (query) =>
+  api.get(`/staff/speaking-tests?${query}`);
+
+export const importSpeakingTests = (formData) =>
+  api.post("/staff/speaking-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getSpeakingTestById = (id) =>
+  api.get(`/staff/speaking-tests/${id}`);
+
+export const updateSpeakingTest = (id, payload) =>
+  api.put(`/staff/speaking-tests/${id}`, payload);
+
+// Staff Writing Tests
+export const getAllWritingTests = (query) =>
+  api.get(`/staff/writing-tests?${query}`);
+
+export const importWritingTests = (formData) =>
+  api.post("/staff/writing-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingTestById = (id) =>
+  api.get(`/staff/writing-tests/${id}`);
+
+export const updateWritingTest = (id, payload) =>
+  api.put(`/staff/writing-tests/${id}`, payload);
+
 export const getQuestionGroup = (id) => api.get(`/staff/question-groups/${id}`);
 
 export const updateQuestionGroup = (id, formData) =>

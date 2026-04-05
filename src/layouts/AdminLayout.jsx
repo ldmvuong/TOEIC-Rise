@@ -41,6 +41,8 @@ const TEST_SET_ROUTES = [
 const PROMPTS_SUBMENU_KEY = "admin-system-prompts-submenu";
 const PROMPT_ROUTE_PREFIX = "/admin/system-prompts";
 
+const TESTS_SUBMENU_KEY = "admin-tests-submenu";
+
 const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/analytics">Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
@@ -67,7 +69,29 @@ const STATIC_MENU = [
             },
         ],
     },
-    { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
+    {
+        key: TESTS_SUBMENU_KEY,
+        label: "Tests",
+        icon: <BugOutlined />,
+        roles: ["ADMIN", "STAFF"],
+        children: [
+            {
+                key: "/admin/tests",
+                label: <Link to="/admin/tests">Listening & reading</Link>,
+                icon: <BugOutlined />,
+            },
+            {
+                key: "/admin/speaking-tests",
+                label: <Link to="/admin/speaking-tests">Speaking</Link>,
+                icon: <AudioOutlined />,
+            },
+            {
+                key: "/admin/writing-tests",
+                label: <Link to="/admin/writing-tests">Writing</Link>,
+                icon: <FormOutlined />,
+            },
+        ],
+    },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
@@ -134,6 +158,18 @@ export default function AdminLayout() {
                 if (!next.includes(PROMPTS_SUBMENU_KEY)) next.push(PROMPTS_SUBMENU_KEY);
             } else {
                 next = next.filter((k) => k !== PROMPTS_SUBMENU_KEY);
+            }
+            const inTestsSection =
+                path === "/admin/tests" ||
+                path.startsWith("/admin/tests/") ||
+                path === "/admin/speaking-tests" ||
+                path.startsWith("/admin/speaking-tests/") ||
+                path === "/admin/writing-tests" ||
+                path.startsWith("/admin/writing-tests/");
+            if (inTestsSection) {
+                if (!next.includes(TESTS_SUBMENU_KEY)) next.push(TESTS_SUBMENU_KEY);
+            } else {
+                next = next.filter((k) => k !== TESTS_SUBMENU_KEY);
             }
             return next;
         });

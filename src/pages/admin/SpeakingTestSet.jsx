@@ -6,7 +6,13 @@ import { Button, Space, Tag } from "antd";
 import dayjs from 'dayjs';
 import queryString from 'query-string';
 import { fetchSpeakingTestSets } from '../../redux/slices/speakingTestSetSlide';
-import { getTestInSpeakingTestSet, createSpeakingTestSet, updateSpeakingTestSet } from '../../api/api';
+import {
+    getTestInSpeakingTestSet,
+    createSpeakingTestSet,
+    updateSpeakingTestSet,
+    importSpeakingTests,
+    getAllSpeakingTestSets,
+} from '../../api/api';
 import DataTable from '../../components/admin/data-table/index';
 import ModalTestSet from '../../components/admin/test-set/modal.testset';
 import DrawerTest from '../../components/admin/drawer/drawer.test';
@@ -289,6 +295,10 @@ const SpeakingTestSetPage = () => {
                         setDataInit(currentTestSet);
                     }
                 }}
+                importTestsFn={importSpeakingTests}
+                getAllTestSetsFn={getAllSpeakingTestSets}
+                importBaseTitle="Import speaking test"
+                getTestDetailPath={(testId) => `/admin/speaking-tests/${testId}`}
             />
         </div>
     );
