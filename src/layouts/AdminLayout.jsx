@@ -17,6 +17,8 @@ import {
     BarChartOutlined,
     TagOutlined,
     BookOutlined,
+    AudioOutlined,
+    FormOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -30,6 +32,8 @@ const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/analytics">Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/speaking-test-sets">Speaking Test Sets</Link>, key: "/admin/speaking-test-sets", icon: <AudioOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/writing-test-sets">Writing Test Sets</Link>, key: "/admin/writing-test-sets", icon: <FormOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },

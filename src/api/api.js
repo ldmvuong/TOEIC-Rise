@@ -38,11 +38,31 @@ export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
 export const getAllTestSets = (query) => {
-  return api.get(`/staff/test-sets?${query}`);
+  return api.get(`/staff/test-sets/listening-reading?${query}`);
 };
 
 export const getTestInTestSet = (id, query) =>
   api.get(`/admin/test-sets/${id}?${query}`);
+
+// Admin Speaking Test Sets
+export const createSpeakingTestSet = (payload) =>
+  api.post("/admin/speaking-test-sets", payload);
+export const updateSpeakingTestSet = (payload) =>
+  api.put("/admin/speaking-test-sets", payload);
+export const getAllSpeakingTestSets = (query) =>
+  api.get(`/staff/test-sets/speaking?${query}`);
+export const getTestInSpeakingTestSet = (id, query) =>
+  api.get(`/admin/speaking-test-sets/${id}?${query}`);
+
+// Admin Writing Test Sets
+export const createWritingTestSet = (payload) =>
+  api.post("/admin/writing-test-sets", payload);
+export const updateWritingTestSet = (payload) =>
+  api.put("/admin/writing-test-sets", payload);
+export const getAllWritingTestSets = (query) =>
+  api.get(`/staff/test-sets/writing?${query}`);
+export const getTestInWritingTestSet = (id, query) =>
+  api.get(`/admin/writing-test-sets/${id}?${query}`);
 
 // Admin/Staff Tests
 export const getAllTests = (query) => api.get(`/staff/tests?${query}`);

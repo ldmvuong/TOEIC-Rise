@@ -8,6 +8,8 @@ import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
+import SpeakingTestSetPage from "./pages/admin/SpeakingTestSet.jsx";
+import WritingTestSetPage from "./pages/admin/WritingTestSet.jsx";
 import TestDetailPage from "./pages/admin/TestDetail.jsx";
 import TestPage from "./pages/admin/Test.jsx";
 import Profile from "./pages/admin/Profile.jsx";
@@ -339,6 +341,22 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <TestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestSetPage />
             </ProtectedRoute>
           ),
         },
