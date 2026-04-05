@@ -4,6 +4,8 @@ import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import TestList from './pages/client/TestList.jsx';
+import LearnerTypedTestList from "./pages/client/LearnerTypedTestList.jsx";
+import LearnerTypedTestDetail from "./pages/client/LearnerTypedTestDetail.jsx";
 import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
@@ -119,6 +121,22 @@ export default function App() {
         {
           path: 'online-tests/:id/:slug?',
           element: <TestDetail />
+        },
+        {
+          path: "speaking-tests",
+          element: <LearnerTypedTestList variant="speaking" />,
+        },
+        {
+          path: "speaking-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="speaking" />,
+        },
+        {
+          path: "writing-tests",
+          element: <LearnerTypedTestList variant="writing" />,
+        },
+        {
+          path: "writing-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="writing" />,
         },
         {
           path: 'do-test',

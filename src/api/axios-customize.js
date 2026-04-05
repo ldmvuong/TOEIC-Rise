@@ -12,8 +12,12 @@ const PUBLIC_ENDPOINTS = [
   "/auth/forgot-password",
   "/auth/verify-otp",
   "/auth/reset-password",
-  "/test-sets", 
+  "/test-sets",
   "/tests",
+  "/speaking-test-sets",
+  "/speaking-tests",
+  "/writing-test-sets",
+  "/writing-tests",
   "/blog-categories",
   "/blog-posts",
 ];

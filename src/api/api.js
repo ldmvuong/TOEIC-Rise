@@ -171,6 +171,23 @@ export const getPublicTestById = (id) => {
   return api.get(`/tests/${id}`);
 };
 
+// Learner Speaking / Writing (public — same shapes as listening test sets / tests)
+export const getLearnerSpeakingTestSets = () => api.get("/speaking-test-sets");
+
+export const getLearnerSpeakingTests = (query) =>
+  api.get(`/speaking-tests?${query}`);
+
+export const getLearnerSpeakingTestById = (id) =>
+  api.get(`/speaking-tests/${id}`);
+
+export const getLearnerWritingTestSets = () => api.get("/writing-test-sets");
+
+export const getLearnerWritingTests = (query) =>
+  api.get(`/writing-tests?${query}`);
+
+export const getLearnerWritingTestById = (id) =>
+  api.get(`/writing-tests/${id}`);
+
 // === Learner Blog APIs (public) ===
 export const getPublicBlogCategories = () => api.get("/blog-categories");
 
