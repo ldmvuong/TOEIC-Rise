@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { Modal, Form, Input, Upload, Button, message } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import DebounceSelect from '../../admin/debouce.select';
-import { importTests, getAllTestSets } from '../../../api/api';
+import { importTests as defaultImportTests, getAllTestSets as defaultGetAllTestSets } from '../../../api/api';
 import { isValidTestName } from '../../../utils/validation';
 
-const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTestSetName }) => {
+const ImportTestModal = ({
+    open,
+    onClose,
+    onSuccess,
+    defaultTestSetId,
+    defaultTestSetName,
+    importTestsFn = defaultImportTests,
+    getAllTestSetsFn = defaultGetAllTestSets,
+    importBaseTitle = 'Import TOEIC Test',
+}) => {
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
     
@@ -26,7 +35,7 @@ const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTe
                         params.set('size', '100');
                         params.set('sortBy', 'updatedAt');
                         params.set('direction', 'DESC');
-                        const res = await getAllTestSets(params.toString());
+                        const res = await getAllTestSetsFn(params.toString());
                         const testSet = res?.data?.result?.find(item => item.id === defaultTestSetId);
                         if (testSet) {
                             form.setFieldsValue({
@@ -54,7 +63,7 @@ const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTe
         params.set('sortBy', 'updatedAt');
         params.set('direction', 'DESC');
         if (value) params.set('name', value);
-        const res = await getAllTestSets(params.toString());
+        const res = await getAllTestSetsFn(params.toString());
         const list = res?.data?.result || [];
         const meta = res?.data?.meta || { page, pageSize: size, total: list.length };
         const hasMore = (meta.page + 1) * meta.pageSize < meta.total;
@@ -92,7 +101,7 @@ const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTe
 
             setSubmitting(true);
 
-            await importTests(formData);
+            await importTestsFn(formData);
 
             message.success('Test imported successfully');
             
@@ -139,9 +148,9 @@ const ImportTestModal = ({ open, onClose, onSuccess, defaultTestSetId, defaultTe
         return isExcel && isLt10M ? false : Upload.LIST_IGNORE;
     };
 
-    const modalTitle = defaultTestSetName 
+    const modalTitle = defaultTestSetName
         ? `Import test to ${defaultTestSetName}`
-        : "Import TOEIC Test";
+        : importBaseTitle;
 
     return (
         <Modal

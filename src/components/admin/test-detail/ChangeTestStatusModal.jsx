@@ -1,9 +1,15 @@
 import { ModalForm, ProFormSelect } from "@ant-design/pro-components";
 import { Form, message, notification } from "antd";
 import { useEffect } from "react";
-import { changeTestStatus } from "@/api/api";
+import { changeTestStatus as defaultChangeTestStatus } from "@/api/api";
 
-const ChangeTestStatusModal = ({ open, onClose, test, onSuccess }) => {
+const ChangeTestStatusModal = ({
+    open,
+    onClose,
+    test,
+    onSuccess,
+    changeStatusFn = (tid, status) => defaultChangeTestStatus(tid, status),
+}) => {
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -18,7 +24,7 @@ const ChangeTestStatusModal = ({ open, onClose, test, onSuccess }) => {
 
     const handleFinish = async (values) => {
         try {
-            await changeTestStatus(test.id, values.status);
+            await changeStatusFn(test.id, values.status);
             message.success("Test status changed successfully");
             onClose?.();
             onSuccess?.();

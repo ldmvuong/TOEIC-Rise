@@ -10,11 +10,25 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import ImportTestModal from '../Test/import.test.modal';
+import { importTests as defaultImportTests, getAllTestSets as defaultGetAllTestSets } from '../../../api/api';
 
 const { Search } = Input;
 const { Option } = Select;
 
-const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, onFetchTests, onEditTestSet, testSetId }, ref) => {
+const DrawerTest = forwardRef(({
+    open,
+    onClose,
+    testData,
+    loading,
+    testSetName,
+    onFetchTests,
+    onEditTestSet,
+    testSetId,
+    importTestsFn = defaultImportTests,
+    getAllTestSetsFn = defaultGetAllTestSets,
+    importBaseTitle = 'Import TOEIC Test',
+    getTestDetailPath = (testId) => `/admin/tests/${testId}`,
+}, ref) => {
     const navigate = useNavigate();
     const [searchForm] = Form.useForm();
     const [currentPage, setCurrentPage] = useState(1);
@@ -322,7 +336,7 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                                                 key="view"
                                                 type="text"
                                                 icon={<EyeOutlined />}
-                                                onClick={() => navigate(`/admin/tests/${test.id}`)}
+                                                onClick={() => navigate(getTestDetailPath(test.id))}
                                                 title="View test details"
                                             />
                                         ]}
@@ -397,6 +411,9 @@ const DrawerTest = forwardRef(({ open, onClose, testData, loading, testSetName, 
                 }}
                 defaultTestSetId={testSetId}
                 defaultTestSetName={testSetName}
+                importTestsFn={importTestsFn}
+                getAllTestSetsFn={getAllTestSetsFn}
+                importBaseTitle={importBaseTitle}
             />
         </Drawer>
     );

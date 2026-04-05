@@ -38,11 +38,31 @@ export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
 export const getAllTestSets = (query) => {
-  return api.get(`/staff/test-sets?${query}`);
+  return api.get(`/staff/test-sets/listening-reading?${query}`);
 };
 
 export const getTestInTestSet = (id, query) =>
   api.get(`/admin/test-sets/${id}?${query}`);
+
+// Admin Speaking Test Sets
+export const createSpeakingTestSet = (payload) =>
+  api.post("/admin/speaking-test-sets", payload);
+export const updateSpeakingTestSet = (payload) =>
+  api.put("/admin/speaking-test-sets", payload);
+export const getAllSpeakingTestSets = (query) =>
+  api.get(`/staff/test-sets/speaking?${query}`);
+export const getTestInSpeakingTestSet = (id, query) =>
+  api.get(`/admin/speaking-test-sets/${id}?${query}`);
+
+// Admin Writing Test Sets
+export const createWritingTestSet = (payload) =>
+  api.post("/admin/writing-test-sets", payload);
+export const updateWritingTestSet = (payload) =>
+  api.put("/admin/writing-test-sets", payload);
+export const getAllWritingTestSets = (query) =>
+  api.get(`/staff/test-sets/writing?${query}`);
+export const getTestInWritingTestSet = (id, query) =>
+  api.get(`/admin/writing-test-sets/${id}?${query}`);
 
 // Admin/Staff Tests
 export const getAllTests = (query) => api.get(`/staff/tests?${query}`);
@@ -62,6 +82,36 @@ export const changeTestStatus = (id, status) => {
   return api.patch(`/admin/tests/${id}?${params.toString()}`);
 };
 
+// Staff Speaking Tests
+export const getAllSpeakingTests = (query) =>
+  api.get(`/staff/speaking-tests?${query}`);
+
+export const importSpeakingTests = (formData) =>
+  api.post("/staff/speaking-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getSpeakingTestById = (id) =>
+  api.get(`/staff/speaking-tests/${id}`);
+
+export const updateSpeakingTest = (id, payload) =>
+  api.put(`/staff/speaking-tests/${id}`, payload);
+
+// Staff Writing Tests
+export const getAllWritingTests = (query) =>
+  api.get(`/staff/writing-tests?${query}`);
+
+export const importWritingTests = (formData) =>
+  api.post("/staff/writing-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingTestById = (id) =>
+  api.get(`/staff/writing-tests/${id}`);
+
+export const updateWritingTest = (id, payload) =>
+  api.put(`/staff/writing-tests/${id}`, payload);
+
 export const getQuestionGroup = (id) => api.get(`/staff/question-groups/${id}`);
 
 export const updateQuestionGroup = (id, formData) =>
@@ -70,6 +120,30 @@ export const updateQuestionGroup = (id, formData) =>
   });
 
 export const updateQuestion = (payload) => api.put("/staff/questions", payload);
+
+// Staff Speaking / Writing question groups (SWQuestionGroupUpdateRequest: image, imageUrl, passage)
+export const getSpeakingQuestionGroup = (id) =>
+  api.get(`/staff/speaking-question-groups/${id}`);
+
+export const updateSpeakingQuestionGroup = (id, formData) =>
+  api.put(`/staff/speaking-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingQuestionGroup = (id) =>
+  api.get(`/staff/writing-question-groups/${id}`);
+
+export const updateWritingQuestionGroup = (id, formData) =>
+  api.put(`/staff/writing-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+// Staff Speaking questions
+export const getSpeakingQuestionById = (id) =>
+  api.get(`/staff/speaking-questions/${id}`);
+
+export const updateSpeakingQuestion = (payload) =>
+  api.put("/staff/speaking-questions", payload);
 
 // Profile
 
@@ -96,6 +170,23 @@ export const getPublicTest = (query) => {
 export const getPublicTestById = (id) => {
   return api.get(`/tests/${id}`);
 };
+
+// Learner Speaking / Writing (public — same shapes as listening test sets / tests)
+export const getLearnerSpeakingTestSets = () => api.get("/speaking-test-sets");
+
+export const getLearnerSpeakingTests = (query) =>
+  api.get(`/speaking-tests?${query}`);
+
+export const getLearnerSpeakingTestById = (id) =>
+  api.get(`/speaking-tests/${id}`);
+
+export const getLearnerWritingTestSets = () => api.get("/writing-test-sets");
+
+export const getLearnerWritingTests = (query) =>
+  api.get(`/writing-tests?${query}`);
+
+export const getLearnerWritingTestById = (id) =>
+  api.get(`/writing-tests/${id}`);
 
 // === Learner Blog APIs (public) ===
 export const getPublicBlogCategories = () => api.get("/blog-categories");

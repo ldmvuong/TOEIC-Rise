@@ -4,12 +4,20 @@ import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import TestList from './pages/client/TestList.jsx';
+import LearnerTypedTestList from "./pages/client/LearnerTypedTestList.jsx";
+import LearnerTypedTestDetail from "./pages/client/LearnerTypedTestDetail.jsx";
 import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
+import SpeakingTestSetPage from "./pages/admin/SpeakingTestSet.jsx";
+import WritingTestSetPage from "./pages/admin/WritingTestSet.jsx";
 import TestDetailPage from "./pages/admin/TestDetail.jsx";
+import SpeakingTestDetailPage from "./pages/admin/SpeakingTestDetail.jsx";
+import WritingTestDetailPage from "./pages/admin/WritingTestDetail.jsx";
 import TestPage from "./pages/admin/Test.jsx";
+import SpeakingTestPage from "./pages/admin/SpeakingTest.jsx";
+import WritingTestPage from "./pages/admin/WritingTest.jsx";
 import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
@@ -21,6 +29,8 @@ import UserPage from "./pages/admin/User.jsx";
 import ReportPage from "./pages/admin/Report.jsx";
 import ReportDetailPage from "./pages/admin/ReportDetail.jsx";
 import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
+import SpeakingQuestionGroupPage from "./pages/admin/SpeakingQuestionGroupPage.jsx";
+import WritingQuestionGroupPage from "./pages/admin/WritingQuestionGroupPage.jsx";
 import AnalyticsPage from "./pages/admin/Analytics.jsx";
 import TagsPage from "./pages/admin/Tags.jsx";
 import BlogCategoriesPage from "./pages/admin/BlogCategories.jsx";
@@ -111,6 +121,22 @@ export default function App() {
         {
           path: 'online-tests/:id/:slug?',
           element: <TestDetail />
+        },
+        {
+          path: "speaking-tests",
+          element: <LearnerTypedTestList variant="speaking" />,
+        },
+        {
+          path: "speaking-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="speaking" />,
+        },
+        {
+          path: "writing-tests",
+          element: <LearnerTypedTestList variant="writing" />,
+        },
+        {
+          path: "writing-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="writing" />,
         },
         {
           path: 'do-test',
@@ -343,6 +369,54 @@ export default function App() {
           ),
         },
         {
+          path: 'speaking-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: 'tests',
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
@@ -387,6 +461,22 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <QuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingQuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingQuestionGroupPage />
             </ProtectedRoute>
           ),
         },
