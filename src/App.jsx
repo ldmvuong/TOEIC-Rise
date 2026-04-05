@@ -27,6 +27,8 @@ import UserPage from "./pages/admin/User.jsx";
 import ReportPage from "./pages/admin/Report.jsx";
 import ReportDetailPage from "./pages/admin/ReportDetail.jsx";
 import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
+import SpeakingQuestionGroupPage from "./pages/admin/SpeakingQuestionGroupPage.jsx";
+import WritingQuestionGroupPage from "./pages/admin/WritingQuestionGroupPage.jsx";
 import AnalyticsPage from "./pages/admin/Analytics.jsx";
 import TagsPage from "./pages/admin/Tags.jsx";
 import BlogCategoriesPage from "./pages/admin/BlogCategories.jsx";
@@ -441,6 +443,22 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <QuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingQuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingQuestionGroupPage />
             </ProtectedRoute>
           ),
         },

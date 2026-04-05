@@ -1,9 +1,13 @@
 import parse from "html-react-parser";
+import { useNavigate } from "react-router-dom";
+import { EyeOutlined } from "@ant-design/icons";
+import { Button } from "antd";
 
 /**
  * Read-only part view for speaking test detail (parts → question groups → questions with content only).
  */
 const SpeakingPartDetail = ({ part }) => {
+    const navigate = useNavigate();
     if (!part) {
         return (
             <div className="md:col-span-3 bg-white shadow rounded p-4">
@@ -50,9 +54,24 @@ const SpeakingPartDetail = ({ part }) => {
                                         )}
                                     </div>
                                 </div>
-                                <span className="text-xs text-gray-500">
-                                    {(group.questions || []).length} questions
-                                </span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-gray-500">
+                                        {(group.questions || []).length} questions
+                                    </span>
+                                    <Button
+                                        type="link"
+                                        size="small"
+                                        className="!p-0"
+                                        icon={<EyeOutlined />}
+                                        onClick={() =>
+                                            navigate(
+                                                `/admin/speaking-question-groups/${group.id}`,
+                                            )
+                                        }
+                                    >
+                                        View details
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="p-4 space-y-3">

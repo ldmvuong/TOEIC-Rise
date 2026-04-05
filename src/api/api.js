@@ -121,6 +121,30 @@ export const updateQuestionGroup = (id, formData) =>
 
 export const updateQuestion = (payload) => api.put("/staff/questions", payload);
 
+// Staff Speaking / Writing question groups (SWQuestionGroupUpdateRequest: image, imageUrl, passage)
+export const getSpeakingQuestionGroup = (id) =>
+  api.get(`/staff/speaking-question-groups/${id}`);
+
+export const updateSpeakingQuestionGroup = (id, formData) =>
+  api.put(`/staff/speaking-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingQuestionGroup = (id) =>
+  api.get(`/staff/writing-question-groups/${id}`);
+
+export const updateWritingQuestionGroup = (id, formData) =>
+  api.put(`/staff/writing-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+// Staff Speaking questions
+export const getSpeakingQuestionById = (id) =>
+  api.get(`/staff/speaking-questions/${id}`);
+
+export const updateSpeakingQuestion = (payload) =>
+  api.put("/staff/speaking-questions", payload);
+
 // Profile
 
 export const getUserProfile = () => api.get("/profile");
