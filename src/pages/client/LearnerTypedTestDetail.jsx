@@ -103,7 +103,13 @@ const LearnerTypedTestDetail = ({ variant }) => {
             return;
         }
 
-        navigate("/do-test", {
+        navigate(
+            variant === "speaking"
+                ? "/do-speaking-test"
+                : variant === "writing"
+                  ? "/do-writing-test"
+                  : "/do-test",
+            {
             state: {
                 testId: id,
                 learnerTestType: variant,
@@ -111,12 +117,25 @@ const LearnerTypedTestDetail = ({ variant }) => {
                 parts: selectedParts,
                 timeLimit: timeLimit === -1 || timeLimit == null ? null : timeLimit,
             },
-        });
+            },
+        );
     };
 
     const handleStartFullTest = () => {
-        const parts = allPartIdsFromData.length > 0 ? allPartIdsFromData : [1, 2, 3, 4, 5, 6, 7];
-        navigate("/do-test", {
+        const defaultParts =
+            variant === "speaking"
+                ? [1, 2, 3, 4, 5]
+                : variant === "writing"
+                  ? [1, 2, 3]
+                  : [1, 2, 3, 4, 5, 6, 7];
+        const parts = allPartIdsFromData.length > 0 ? allPartIdsFromData : defaultParts;
+        navigate(
+            variant === "speaking"
+                ? "/do-speaking-test"
+                : variant === "writing"
+                  ? "/do-writing-test"
+                  : "/do-test",
+            {
             state: {
                 testId: id,
                 learnerTestType: variant,
@@ -124,7 +143,8 @@ const LearnerTypedTestDetail = ({ variant }) => {
                 parts,
                 timeLimit: null,
             },
-        });
+            },
+        );
     };
 
     const parsedId = useMemo(() => {
@@ -169,8 +189,13 @@ const LearnerTypedTestDetail = ({ variant }) => {
         if (!hasProgress) return;
 
         const skipKey = storageKeySkip;
-        const parts =
-            allPartIdsFromData.length > 0 ? allPartIdsFromData : [1, 2, 3, 4, 5, 6, 7];
+        const defaultParts =
+            variant === "speaking"
+                ? [1, 2, 3, 4, 5]
+                : variant === "writing"
+                  ? [1, 2, 3]
+                  : [1, 2, 3, 4, 5, 6, 7];
+        const parts = allPartIdsFromData.length > 0 ? allPartIdsFromData : defaultParts;
 
         Modal.confirm({
             title: "Tiếp tục làm bài",
@@ -185,7 +210,13 @@ const LearnerTypedTestDetail = ({ variant }) => {
                     // ignore
                 }
 
-                navigate("/do-test", {
+                navigate(
+                    variant === "speaking"
+                        ? "/do-speaking-test"
+                        : variant === "writing"
+                          ? "/do-writing-test"
+                          : "/do-test",
+                    {
                     state: {
                         testId: parsedId,
                         learnerTestType: variant,
@@ -193,7 +224,8 @@ const LearnerTypedTestDetail = ({ variant }) => {
                         parts,
                         timeLimit: null,
                     },
-                });
+                    },
+                );
             },
             onCancel: () => {
                 try {

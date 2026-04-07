@@ -44,6 +44,8 @@ import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
 import BlogSearchPage from "./pages/client/BlogSearch.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
+import DoSpeakingTest from "./pages/client/DoSpeakingTest.jsx";
+import DoWritingTest from "./pages/client/DoWritingTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
 import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
@@ -143,6 +145,22 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <DoTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'do-speaking-test',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <DoSpeakingTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'do-writing-test',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <DoWritingTest />
             </ProtectedRoute>
           )
         },

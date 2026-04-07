@@ -535,6 +535,24 @@ export const getTestExam = (id, parts) => {
   });
 };
 
+export const getSpeakingExam = (id, parts) => {
+  const partsArray = Array.isArray(parts) ? parts : [parts];
+  return api.get(`/learner/user-tests/speaking-exam/${id}`, {
+    params: {
+      parts: partsArray.join(","),
+    },
+  });
+};
+
+export const getWritingExam = (id, parts) => {
+  const partsArray = Array.isArray(parts) ? parts : [parts];
+  return api.get(`/learner/user-tests/writing-exam/${id}`, {
+    params: {
+      parts: partsArray.join(","),
+    },
+  });
+};
+
 export const getUserTestHistory = (testId) =>
   api.get(`/learner/user-tests/view-histories/${testId}`);
 

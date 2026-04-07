@@ -78,7 +78,7 @@ export default function Header({ currentPath }) {
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-6 lg:gap-8">
+          <nav className="flex items-center gap-4 lg:gap-6">
             {nav.map((item) => {
               const isActive =
                 item.href === "/"
@@ -88,7 +88,7 @@ export default function Header({ currentPath }) {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive
                       ? "text-blue-600 border-b-2 border-blue-600 pb-1"
                       : "text-gray-700 hover:text-blue-600"
