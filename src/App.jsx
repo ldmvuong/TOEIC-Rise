@@ -48,6 +48,9 @@ import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
 import SystemPromptsSentenceAssessment from "./pages/admin/SystemPromptsSentenceAssessment.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
+import Dictation from "./pages/admin/Dictation.jsx";
+import TestSetDictation from "./pages/admin/TestSetDictation.jsx";
+import DictationExport from "./pages/admin/DictationExport.jsx";
 
 
 export default function App() {
@@ -413,6 +416,30 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'dictation',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <Dictation />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: "dictation/:id",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <TestSetDictation />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/export",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <DictationExport />
             </ProtectedRoute>
           ),
         },

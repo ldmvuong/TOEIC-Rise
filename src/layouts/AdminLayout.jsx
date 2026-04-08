@@ -37,6 +37,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>, key: "/admin/system-prompts/sentence-assessment", icon: <ApiOutlined />, roles: ["ADMIN"] },
+    { label: <Link to="/admin/dictation">Dictation</Link>, key: "/admin/dictation", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
 ];
 
 export default function AdminLayout() {
@@ -44,7 +45,7 @@ export default function AdminLayout() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const [collapsed, setCollapsed] = useState(false);
-    const [activeMenu, setActiveMenu] = useState("/admin");``
+    const [activeMenu, setActiveMenu] = useState("/admin");
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     // Redux state

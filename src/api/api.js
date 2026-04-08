@@ -37,6 +37,16 @@ export const refreshToken = () => api.post("/auth/refresh-token");
 export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
+export const getTestSetDictation = () => api.get(`/staff/test-sets/dictation`);
+
+export const getTestSetDictationDetail = (id) => api.get(`/staff/test-sets/dictation/${id}/tests`);
+
+export const generateDictationPreview = (testId, partId) =>
+  api.get(`/staff/chatbot/generate-preview`, {
+    params: { testId, partId },
+  });
+
+export const importDictation = (payload) => api.post(`/staff/dictation/import`, payload);
 export const getAllTestSets = (query) => {
   return api.get(`/staff/test-sets?${query}`);
 };
