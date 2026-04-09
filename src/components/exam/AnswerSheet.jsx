@@ -43,10 +43,18 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
     // Helper function to determine question status
     const getQuestionStatus = (question) => {
-        if (!question.userAnswer || question.userAnswer === '') {
+        const hasChoiceAnswer =
+            question.userAnswer != null && String(question.userAnswer).trim() !== '';
+        const hasTextAnswer =
+            question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
+
+        if (!hasChoiceAnswer && !hasTextAnswer) {
             return 'skipped'; // Chưa trả lời
         }
-        if (question.userAnswer === question.correctAnswer) {
+        if (hasTextAnswer && !question.correctAnswer) {
+            return 'answered'; // Đã trả lời dạng text (writing)
+        }
+        if (hasChoiceAnswer && question.userAnswer === question.correctAnswer) {
             return 'correct'; // Đúng
         }
         return 'incorrect'; // Sai
@@ -56,7 +64,23 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const renderQuestionAnswer = (question) => {
         const status = getQuestionStatus(question);
         const userAnswer = question.userAnswer || '';
+        const userAnswerText = question.userAnswerText || '';
         const correctAnswer = question.correctAnswer;
+        const hasTextAnswer = String(userAnswerText).trim() !== '';
+
+        if (hasTextAnswer) {
+            return (
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500 font-medium">Câu trả lời:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Đã nhập</span>
+                    </div>
+                    <p className="text-xs text-gray-700 line-clamp-2 whitespace-pre-wrap">
+                        {userAnswerText}
+                    </p>
+                </div>
+            );
+        }
 
         return (
             <div className="flex items-center gap-2 flex-wrap">
@@ -98,6 +122,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     )}
                     {status === 'incorrect' && (
                         <span className="text-lg text-red-600 font-bold">✗</span>
+                    )}
+                    {status === 'answered' && (
+                        <span className="text-base text-emerald-600 font-bold">●</span>
                     )}
                     {status === 'skipped' && (
                         <span className="text-base text-gray-400 font-bold">—</span>

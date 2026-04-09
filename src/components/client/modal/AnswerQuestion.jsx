@@ -79,6 +79,8 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
         options = [],
         correctOption,
         userAnswer = '',
+        userAnswerText,
+        feedback,
         explanation,
     } = questionData || {};
 
@@ -305,6 +307,20 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                             <p className="text-sm font-semibold text-green-600">
                                 Đáp án đúng: {correctOption}
                             </p>
+                        </div>
+                    )}
+
+                    {userAnswerText != null && String(userAnswerText).trim() !== '' && (
+                        <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                            <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">{userAnswerText}</p>
+                        </div>
+                    )}
+
+                    {feedback != null && String(feedback).trim() !== '' && (
+                        <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                            <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">{feedback}</p>
                         </div>
                     )}
                 </div>

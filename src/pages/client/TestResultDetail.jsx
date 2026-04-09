@@ -93,6 +93,8 @@ const TestResultDetail = () => {
             tags: question.tags ?? group?.tags ?? [],
             correctOption: question.correctOption ?? question.correctAnswer ?? null,
             userAnswer: question.userAnswer ?? question.selectedAnswer ?? '',
+            userAnswerText: question.userAnswerText ?? question.userTextAnswer ?? '',
+            feedback: question.feedback ?? null,
             explanation: question.explanation ?? group?.explanation ?? null,
             partName: part?.partName ?? question.partName ?? null,
             questionId: question.questionId ?? question.id ?? null,
@@ -135,6 +137,8 @@ const TestResultDetail = () => {
         const maxOptions = isPart2 ? 3 : 4;
         const options = question.options || [];
         const preparedQuestion = prepareQuestionData(question, group, part);
+        const hasWritingAnswer =
+            question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
 
         return (
             <div id={`question-${question.position}`} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
@@ -233,6 +237,22 @@ const TestResultDetail = () => {
                         <p className="text-sm font-semibold text-green-600">
                             Đáp án đúng: {question.correctOption}
                         </p>
+                    </div>
+                )}
+
+                {/* Writing Answer Text */}
+                {hasWritingAnswer && (
+                    <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                        <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.userAnswerText}</p>
+                    </div>
+                )}
+
+                {/* Writing Feedback */}
+                {question.feedback != null && String(question.feedback).trim() !== '' && (
+                    <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.feedback}</p>
                     </div>
                 )}
 
@@ -484,9 +504,12 @@ const TestResultDetail = () => {
                                 <div className="grid grid-cols-5 gap-1">
                                     {part.questionGroups?.map((group) =>
                                         group.questions?.map((question) => {
+                                            const hasAnswered =
+                                                (question.userAnswer != null && String(question.userAnswer).trim() !== '') ||
+                                                (question.userAnswerText != null && String(question.userAnswerText).trim() !== '');
                                             const status = question.isCorrect
                                                 ? 'correct'
-                                                : question.userAnswer
+                                                : hasAnswered
                                                 ? 'incorrect'
                                                 : 'skipped';
 
