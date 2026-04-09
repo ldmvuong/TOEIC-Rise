@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
-import { getWritingExam } from "../../api/api";
+import { getWritingExam, submitWritingTestExam } from "../../api/api";
 
 const FULL_TEST_SECONDS = 60 * 60;
 const PART_TIME_LIMIT_SECONDS = {
@@ -62,6 +62,10 @@ const DoWritingTest = () => {
 
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [questionNotes, setQuestionNotes] = useState({});
+  const [questionAnswers, setQuestionAnswers] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     const init = async () => {
@@ -159,7 +163,7 @@ const DoWritingTest = () => {
   }, [isFullTest, currentPart, currentPartNumber, partStartDone]);
 
   useEffect(() => {
-    if (!isFullTest || finished) return;
+    if (!isFullTest || finished || isSubmitted) return;
     const timer = setInterval(() => {
       setFullRemaining((prev) => {
         if (prev <= 1) {
@@ -170,10 +174,10 @@ const DoWritingTest = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isFullTest, finished]);
+  }, [isFullTest, finished, isSubmitted]);
 
   useEffect(() => {
-    if (!isFullTest || finished || !partStartDone) return;
+    if (!isFullTest || finished || isSubmitted || !partStartDone) return;
     const timer = setInterval(() => {
       setPartRemaining((prev) => {
         if (prev > 1) return prev - 1;
@@ -189,19 +193,58 @@ const DoWritingTest = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isFullTest, finished, partStartDone, currentPartIndex, parts.length]);
+  }, [isFullTest, finished, isSubmitted, partStartDone, currentPartIndex, parts.length]);
+
+  const submitWriting = useCallback(async () => {
+    if (!testData || !testId || isSubmitting || isSubmitted) return;
+
+    const allAnswers = [];
+    testData.partResponses.forEach((part) => {
+      part.questionGroupResponses.forEach((group) => {
+        group.questionDetailResponses.forEach((q) => {
+          allAnswers.push({
+            questionId: q.id,
+            answerText: questionAnswers[q.id] || "",
+          });
+        });
+      });
+    });
+
+    const payload = {
+      testId: Number(testId),
+      timeSpent: isFullTest ? FULL_TEST_SECONDS - fullRemaining : 1,
+      parts: isFullTest ? null : testData.partResponses.map((p) => p.partName),
+      answers: allAnswers,
+    };
+
+    try {
+      setIsSubmitting(true);
+      const res = await submitWritingTestExam(payload);
+      if (res?.data) {
+        setIsSubmitted(true);
+        setTestResult(res.data);
+      }
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || error?.message || "Không thể nộp bài Writing",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    testData,
+    testId,
+    isSubmitting,
+    isSubmitted,
+    questionAnswers,
+    isFullTest,
+    fullRemaining,
+  ]);
 
   useEffect(() => {
-    if (!finished) return;
-    Modal.success({
-      title: "Hoàn thành bài Writing",
-      content: isFullTest
-        ? "Bạn đã hoàn thành full test Writing."
-        : "Bạn đã hoàn thành bài Writing.",
-      okText: "Quay lại chi tiết đề",
-      onOk: () => navigate(`/writing-tests/${testId}`),
-    });
-  }, [finished, isFullTest, navigate, testId]);
+    if (!finished || isSubmitted) return;
+    submitWriting();
+  }, [finished, isSubmitted, submitWriting]);
 
   const canGoPrevious =
     currentPartIndex > 0 || currentGroupIndex > 0 || currentQuestionIndex > 0;
@@ -243,6 +286,9 @@ const DoWritingTest = () => {
 
   const currentQuestionNote = currentQuestion?.id
     ? questionNotes[currentQuestion.id] || ""
+    : "";
+  const currentQuestionAnswer = currentQuestion?.id
+    ? questionAnswers[currentQuestion.id] || ""
     : "";
 
   if (loading) {
@@ -391,9 +437,15 @@ const DoWritingTest = () => {
                 Bài viết của bạn
               </div>
               <textarea
-                disabled
-                placeholder="Khung nhập bài viết (coming soon)"
-                className="w-full min-h-[220px] rounded-lg border border-gray-300 p-3 bg-gray-100 text-gray-500 cursor-not-allowed"
+                value={currentQuestionAnswer}
+                onChange={(e) =>
+                  setQuestionAnswers((prev) => ({
+                    ...prev,
+                    [currentQuestion.id]: e.target.value,
+                  }))
+                }
+                placeholder="Nhập câu trả lời cho câu hỏi này..."
+                className="w-full min-h-[220px] rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
           </div>
@@ -417,7 +469,81 @@ const DoWritingTest = () => {
             Câu tiếp
           </button>
         </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() =>
+              Modal.confirm({
+                title: "Xác nhận nộp bài",
+                content:
+                  "Bạn có chắc chắn muốn nộp bài Writing? Sau khi nộp bạn không thể chỉnh sửa.",
+                okText: "Nộp bài",
+                cancelText: "Tiếp tục làm",
+                onOk: () => submitWriting(),
+              })
+            }
+            disabled={isSubmitting || isSubmitted}
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
+          >
+            {isSubmitting ? "Đang nộp..." : isSubmitted ? "Đã nộp" : "Nộp bài"}
+          </button>
+        </div>
       </div>
+
+      {testResult ? (
+        <Modal
+          title="Kết quả bài Writing"
+          open={!!testResult}
+          onOk={() => navigate(`/test-result/${testResult.userTestId}`)}
+          onCancel={() => navigate(`/test-result/${testResult.userTestId}`)}
+          okText="Xem chi tiết"
+          cancelText="Đóng"
+          width={600}
+          centered
+        >
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <span className="text-gray-700 font-medium">Tổng số câu hỏi:</span>
+                <span className="text-lg font-semibold text-blue-600">
+                  {testResult.totalQuestions}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                <span className="text-gray-700 font-medium">
+                  Số câu đã trả lời:
+                </span>
+                <span className="text-lg font-semibold text-green-600">
+                  {testResult.totalAnswers}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <span className="text-gray-700 font-medium">
+                  Thời gian làm bài:
+                </span>
+                <span className="text-lg font-semibold text-orange-600">
+                  {formatTime(testResult.timeSpent)}
+                </span>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-800 mb-2">
+                    {testResult.totalQuestions > 0
+                      ? `${Math.round((testResult.totalAnswers / testResult.totalQuestions) * 100)}%`
+                      : "0%"}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Tỷ lệ câu đã hoàn thành
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 };
