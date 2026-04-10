@@ -47,6 +47,11 @@ export const generateDictationPreview = (testId, partId) =>
   });
 
 export const importDictation = (payload) => api.post(`/staff/dictation/import`, payload);
+
+export const getDictationDetail = (testId, partId) =>
+  api.get(`/staff/dictation/test/${testId}/part/${partId}`);
+
+export const updateDictationTranscript = (payload) => api.put(`/staff/dictation`, payload);
 export const getAllTestSets = (query) => {
   return api.get(`/staff/test-sets?${query}`);
 };

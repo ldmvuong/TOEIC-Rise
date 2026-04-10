@@ -19,9 +19,14 @@ import {
   Typography,
   message,
 } from "antd";
-import { ArrowLeftOutlined, CheckOutlined, ReloadOutlined, CheckCircleTwoTone } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  CloseOutlined,
+  EditOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import parse from "html-react-parser";
-import { generateDictationPreview, importDictation } from "../../api/api";
+import { getDictationDetail, updateDictationTranscript } from "../../api/api";
 
 const { Title, Text } = Typography;
 
@@ -34,7 +39,7 @@ function safeText(value) {
   return typeof value === "string" ? value : "";
 }
 
-export default function DictationExport() {
+export default function DictationDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
@@ -53,8 +58,8 @@ export default function DictationExport() {
   const [error, setError] = useState("");
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState([]);
-  const [importing, setImporting] = useState(false);
-  const [reviewedMap, setReviewedMap] = useState({});
+  const [editingMap, setEditingMap] = useState({});
+  const [savingMap, setSavingMap] = useState({});
 
   const canShowQuestionText = isPartId(partId, [2]);
   const canShowOptions = isPartId(partId, [1, 2]);
@@ -69,7 +74,6 @@ export default function DictationExport() {
       passageText: safeText(q?.passageText),
       options: Array.isArray(q?.options) ? q.options.map((x) => safeText(x)) : [],
     }));
-    // normalize option length based on part
     next.forEach((row) => {
       const opts = Array.isArray(row.options) ? [...row.options] : [];
       while (opts.length < optionCount) opts.push("");
@@ -78,11 +82,11 @@ export default function DictationExport() {
     setEditing(next);
   };
 
-  const toggleReviewed = (key) => {
-    setReviewedMap((prev) => ({ ...prev, [key]: !prev?.[key] }));
+  const setItemEditing = (key, value) => {
+    setEditingMap((prev) => ({ ...prev, [key]: !!value }));
   };
 
-  const runPreview = async () => {
+  const fetchDetail = async () => {
     if (!testId || !partId) {
       setError("Missing query params: testId / partId");
       setLoading(false);
@@ -91,31 +95,31 @@ export default function DictationExport() {
 
     setLoading(true);
     setError("");
-    setProgress(5);
+    setProgress(10);
 
-    // Fake progress animation while waiting for long-running API
     let alive = true;
     const timer = window.setInterval(() => {
       setProgress((p) => {
         if (!alive) return p;
         if (p >= 92) return p;
-        const step = p < 40 ? 7 : p < 70 ? 4 : 2;
-        return Math.min(92, p + step);
+        return Math.min(92, p + 6);
       });
-    }, 650);
+    }, 350);
 
     try {
-      const res = await generateDictationPreview(testId, partId);
+      const res = await getDictationDetail(testId, partId);
       const data = Array.isArray(res?.data) ? res.data : [];
       setItems(data);
       hydrateEditing(data);
-      setReviewedMap({});
+      setEditingMap({});
+      setSavingMap({});
       setProgress(100);
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "Unable to generate preview.");
+      setError(e?.response?.data?.message || e?.message || "Unable to load dictation detail.");
       setItems([]);
       setEditing([]);
-      setReviewedMap({});
+      setEditingMap({});
+      setSavingMap({});
       setProgress(0);
     } finally {
       alive = false;
@@ -125,7 +129,7 @@ export default function DictationExport() {
   };
 
   useEffect(() => {
-    runPreview();
+    fetchDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [testId, partId]);
 
@@ -149,84 +153,45 @@ export default function DictationExport() {
     });
   };
 
-  const handleAcceptExport = async () => {
-    if (!testId || !partId) return;
-    if (!items.length) return;
-
-    const total = items.length;
-    const reviewedCount = items.reduce((acc, q, idx) => {
-      const key = q?.id ?? q?.questionGroupId ?? idx;
-      return acc + (reviewedMap?.[key] ? 1 : 0);
-    }, 0);
-    const unreviewed = total - reviewedCount;
-
-    if (unreviewed > 0) {
-      const ok = await new Promise((resolve) => {
-        Modal.confirm({
-          title: "Some items are not reviewed",
-          content: `You have reviewed ${reviewedCount}/${total} items. Proceed with import anyway?`,
-          okText: "Proceed",
-          cancelText: "Cancel",
-          onOk: () => resolve(true),
-          onCancel: () => resolve(false),
-        });
-      });
-      if (!ok) return;
+  const handleSaveOne = async (reviewKey, idx) => {
+    const row = editing[idx] || {};
+    const item = items[idx] || {};
+    const idValue = item?.id ?? row?.id;
+    if (!idValue) {
+      message.error("Missing dictation transcript id.");
+      return;
     }
 
-    setImporting(true);
+    setSavingMap((prev) => ({ ...prev, [reviewKey]: true }));
     try {
-      const transcripts = (items ?? []).map((q, idx) => {
-        const row = editing[idx] || {};
+      const payload = {
+        id: Number(idValue),
+        questionText: canShowQuestionText ? safeText(row.questionText) : "",
+        options: canShowOptions ? (Array.isArray(row.options) ? row.options.map((x) => safeText(x)) : []) : [],
+        passageText: canShowPassageText ? safeText(row.passageText) : "",
+      };
 
-        const out = {
-          questionGroupId: q?.questionGroupId ?? row?.questionGroupId,
-          questionText: canShowQuestionText ? safeText(row.questionText) : "",
-          options: canShowOptions ? (Array.isArray(row.options) ? row.options.map((x) => safeText(x)) : []) : [],
-          passageText: canShowPassageText ? safeText(row.passageText) : "",
-        };
-
-        // normalize options length
-        if (canShowOptions) {
-          const opts = Array.isArray(out.options) ? [...out.options] : [];
-          while (opts.length < optionCount) opts.push("");
-          out.options = opts.slice(0, optionCount);
-        }
-
-        return out;
-      });
-
-      const missingQg = transcripts.find((t) => !t?.questionGroupId);
-      if (missingQg) {
-        throw new Error("Missing questionGroupId in transcripts payload.");
+      if (canShowOptions) {
+        const opts = Array.isArray(payload.options) ? [...payload.options] : [];
+        while (opts.length < optionCount) opts.push("");
+        payload.options = opts.slice(0, optionCount);
       }
 
-      await importDictation({
-        testId: Number(testId),
-        partId: Number(partId),
-        transcripts,
-      });
-
-      message.success("Import successful.");
-      const testSetId = state?.testSetId;
-      if (testSetId) {
-        navigate(`/admin/dictation/${testSetId}`, {
-          replace: true,
-          state: {
-            testSetId,
-            testSetName: state?.testSetName,
-            refresh: Date.now(),
-          },
-        });
-      } else {
-        navigate(-1);
-      }
+      await updateDictationTranscript(payload);
+      message.success("Updated.");
+      setItemEditing(reviewKey, false);
     } catch (e) {
-      message.error(e?.response?.data?.message || e?.message || "Import failed.");
+      message.error(e?.response?.data?.message || e?.message || "Update failed.");
     } finally {
-      setImporting(false);
+      setSavingMap((prev) => ({ ...prev, [reviewKey]: false }));
     }
   };
+
+  const headerTitle = useMemo(() => {
+    const testLabel = testId ? `Test #${testId}` : "Test";
+    const partLabel = partNo ? `Part ${partNo}` : "Part";
+    return `${testLabel} • ${partLabel}`;
+  }, [partNo, testId]);
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
@@ -235,7 +200,7 @@ export default function DictationExport() {
           items={[
             { title: <Link to="/admin/dictation">Dictation</Link> },
             state?.testSetName ? { title: state.testSetName } : null,
-            { title: "Export preview" },
+            { title: headerTitle },
           ].filter(Boolean)}
         />
 
@@ -245,29 +210,17 @@ export default function DictationExport() {
               <Button shape="circle" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
               <div>
                 <Title level={3} style={{ margin: 0 }}>
-                  Export preview
+                  Dictation detail
                 </Title>
                 <Text type="secondary">
-                  Test #{testId} • Part {partNo ?? "-"}
+                  {headerTitle}
                 </Text>
               </div>
             </Space>
           </div>
 
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={runPreview} loading={loading}>
-              Regenerate
-            </Button>
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              onClick={handleAcceptExport}
-              disabled={loading || importing || !items.length}
-              loading={importing}
-            >
-              Accept export
-            </Button>
-          </Space>
+          {/* Actions intentionally hidden for now.
+              Admin will edit per-questionGroup via upcoming APIs. */}
         </div>
 
         {error ? <Alert type="error" showIcon message="Error" description={error} /> : null}
@@ -278,9 +231,9 @@ export default function DictationExport() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                 <Space>
                   <Spin />
-                  <Text strong>Generating preview…</Text>
+                  <Text strong>Loading…</Text>
                 </Space>
-                <Text type="secondary">This can take a while</Text>
+                <Text type="secondary">Fetching dictation detail</Text>
               </div>
               <Progress percent={progress} status="active" strokeLinecap="round" />
               <Skeleton active paragraph={{ rows: 5 }} />
@@ -288,41 +241,70 @@ export default function DictationExport() {
           </Card>
         ) : !items.length ? (
           <Card>
-            <Empty description="No preview items" />
+            <Empty description="No items" />
           </Card>
         ) : (
           <Space direction="vertical" size={14} style={{ width: "100%" }}>
             {items.map((q, idx) => {
               const editRow = editing[idx] || {};
               const reviewKey = q?.id ?? q?.questionGroupId ?? idx;
-              const isReviewed = !!reviewedMap?.[reviewKey];
+              const isEditing = !!editingMap?.[reviewKey];
+              const isSaving = !!savingMap?.[reviewKey];
+
               return (
-                <Card
-                  key={reviewKey}
-                  styles={{ body: { padding: 16, position: "relative" } }}
-                >
+                <Card key={reviewKey} styles={{ body: { padding: 16, position: "relative" } }}>
                   <div style={{ position: "absolute", top: 10, right: 12, zIndex: 1 }}>
-                    <Tooltip title={isReviewed ? "Reviewed" : "Mark as reviewed"}>
-                      <Button
-                        type="text"
-                        size="small"
-                        onClick={() => toggleReviewed(reviewKey)}
-                        icon={
-                          <CheckCircleTwoTone
-                            twoToneColor={isReviewed ? "#52c41a" : "#d9d9d9"}
-                            style={{ fontSize: 18 }}
-                          />
-                        }
-                      />
-                    </Tooltip>
+                    <Space size={4}>
+                      {!isEditing ? (
+                        <Tooltip title="Edit">
+                          <Button type="text" size="small" icon={<EditOutlined />} onClick={() => setItemEditing(reviewKey, true)} />
+                        </Tooltip>
+                      ) : (
+                        <>
+                          <Tooltip title="Save">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<SaveOutlined />}
+                              loading={isSaving}
+                              onClick={() => handleSaveOne(reviewKey, idx)}
+                            />
+                          </Tooltip>
+                          <Tooltip title="Cancel">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<CloseOutlined />}
+                              disabled={isSaving}
+                              onClick={() => {
+                                // revert this row to API data
+                                const item = items[idx] || {};
+                                setEditing((prev) => {
+                                  const next = [...prev];
+                                  const opts = Array.isArray(item?.options) ? item.options.map((x) => safeText(x)) : [];
+                                  while (opts.length < optionCount) opts.push("");
+                                  next[idx] = {
+                                    ...next[idx],
+                                    id: item?.id,
+                                    questionGroupId: item?.questionGroupId,
+                                    questionText: safeText(item?.questionText),
+                                    passageText: safeText(item?.passageText),
+                                    options: opts.slice(0, optionCount),
+                                  };
+                                  return next;
+                                });
+                                setItemEditing(reviewKey, false);
+                              }}
+                            />
+                          </Tooltip>
+                        </>
+                      )}
+                    </Space>
                   </div>
+
                   <Row gutter={[16, 16]}>
                     <Col xs={24} lg={12}>
-                      <Card
-                        size="small"
-                        title="Transcript"
-                        styles={{ body: { background: "#fafafa" } }}
-                      >
+                      <Card size="small" title="Transcript" styles={{ body: { background: "#fafafa" } }}>
                         <div style={{ lineHeight: 1.6 }}>
                           {q?.transcript ? parse(String(q.transcript)) : <Text type="secondary">No transcript</Text>}
                         </div>
@@ -338,6 +320,17 @@ export default function DictationExport() {
                                 value={editRow.questionText ?? ""}
                                 onChange={(e) => handleChange(idx, { questionText: e.target.value })}
                                 placeholder="Question text"
+                                readOnly={!isEditing}
+                                disabled={isSaving}
+                                style={
+                                  !isEditing
+                                    ? {
+                                        background: "#fff",
+                                        color: "rgba(0, 0, 0, 0.88)",
+                                        cursor: "default",
+                                      }
+                                    : undefined
+                                }
                               />
                             </Form.Item>
                           ) : null}
@@ -352,6 +345,17 @@ export default function DictationExport() {
                                     onChange={(e) => handleChangeOption(idx, optIdx, e.target.value)}
                                     addonBefore={String.fromCharCode(65 + optIdx)}
                                     placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                                    readOnly={!isEditing}
+                                    disabled={isSaving}
+                                    style={
+                                      !isEditing
+                                        ? {
+                                            background: "#fff",
+                                            color: "rgba(0, 0, 0, 0.88)",
+                                            cursor: "default",
+                                          }
+                                        : undefined
+                                    }
                                   />
                                 ))}
                               </Space>
@@ -365,6 +369,17 @@ export default function DictationExport() {
                                 value={editRow.passageText ?? ""}
                                 onChange={(e) => handleChange(idx, { passageText: e.target.value })}
                                 placeholder="Passage text"
+                                readOnly={!isEditing}
+                                disabled={isSaving}
+                                style={
+                                  !isEditing
+                                    ? {
+                                        background: "#fff",
+                                        color: "rgba(0, 0, 0, 0.88)",
+                                        cursor: "default",
+                                      }
+                                    : undefined
+                                }
                               />
                             </Form.Item>
                           ) : null}

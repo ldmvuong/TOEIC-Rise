@@ -18,7 +18,6 @@ import {
 import {
   ArrowLeftOutlined,
   CheckCircleTwoTone,
-  EditOutlined,
   EyeOutlined,
   PlusCircleOutlined,
   ReloadOutlined,
@@ -50,7 +49,7 @@ function unique(arr) {
   return Array.from(new Set(arr));
 }
 
-function PartCard({ ready, partNo, onCreate, onView, onEdit }) {
+function PartCard({ ready, partNo, onCreate, onView }) {
   return (
     <div
       style={{
@@ -78,9 +77,6 @@ function PartCard({ ready, partNo, onCreate, onView, onEdit }) {
         <Space size={6}>
           <Tooltip title="View details">
             <Button size="small" icon={<EyeOutlined />} onClick={onView} />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button size="small" icon={<EditOutlined />} onClick={onEdit} />
           </Tooltip>
         </Space>
       ) : (
@@ -151,11 +147,27 @@ export default function TestSetDictation() {
   };
 
   const handleViewPart = (testId, partNo) => {
-    message.info(`View details for Test ${testId} - Part ${partNo}`);
+    navigate(`/admin/dictation/detail?testId=${encodeURIComponent(testId)}&partId=${encodeURIComponent(partNo)}`, {
+      state: {
+        testSetName,
+        testSetId: id,
+        testId,
+        partId: partNo,
+        mode: "view",
+      },
+    });
   };
 
   const handleEditPart = (testId, partNo) => {
-    message.info(`Edit content for Test ${testId} - Part ${partNo}`);
+    navigate(`/admin/dictation/detail?testId=${encodeURIComponent(testId)}&partId=${encodeURIComponent(partNo)}`, {
+      state: {
+        testSetName,
+        testSetId: id,
+        testId,
+        partId: partNo,
+        mode: "edit",
+      },
+    });
   };
 
   return (
@@ -238,7 +250,6 @@ export default function TestSetDictation() {
                             ready={readyParts.includes(partNo)}
                             onCreate={() => handleCreatePart(t?.id, partNo)}
                             onView={() => handleViewPart(t?.id, partNo)}
-                            onEdit={() => handleEditPart(t?.id, partNo)}
                           />
                         ))}
                       </Space>

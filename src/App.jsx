@@ -51,6 +51,7 @@ import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 import Dictation from "./pages/admin/Dictation.jsx";
 import TestSetDictation from "./pages/admin/TestSetDictation.jsx";
 import DictationExport from "./pages/admin/DictationExport.jsx";
+import DictationDetail from "./pages/admin/DictationDetail.jsx";
 
 
 export default function App() {
@@ -440,6 +441,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <DictationExport />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/detail",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <DictationDetail />
             </ProtectedRoute>
           ),
         },
