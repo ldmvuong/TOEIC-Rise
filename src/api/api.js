@@ -565,6 +565,9 @@ export const submitWritingTestExam = (payload) =>
 export const getUserTestStatisticsResult = (userTestId) =>
   api.get(`/learner/user-tests/${userTestId}`);
 
+export const getWritingTestStatisticsResult = (userTestId) =>
+  api.get(`/learner/user-tests/writing/${userTestId}`);
+
 export const getUserTestAnswersOverall = (userTestId) =>
   api.get(`/learner/user-tests/answers-overall/${userTestId}`);
 

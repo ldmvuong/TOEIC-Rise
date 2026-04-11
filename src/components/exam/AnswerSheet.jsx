@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getUserTestAnswersOverall, getWrongAnswerExam, getDoWrongAnswer } from '../../api/api';
 import { message, Modal } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
@@ -28,9 +28,18 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [isRedoWrongLoading, setIsRedoWrongLoading] = useState(false);
     const [showRedoWrongChoiceModal, setShowRedoWrongChoiceModal] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const skipAnswersForWriting = searchParams.get('writing') === '1';
 
     useEffect(() => {
         if (!userTestId) {
+            setHasFetched(true);
+            return;
+        }
+
+        if (skipAnswersForWriting) {
+            setAnswersData(null);
             setHasFetched(true);
             return;
         }
@@ -48,7 +57,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
         };
 
         fetchAnswers();
-    }, [userTestId]);
+    }, [userTestId, skipAnswersForWriting]);
 
     // Helper function to determine question status
     const getQuestionStatus = (question) => {
@@ -150,7 +159,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
-                    Không có dữ liệu đáp án
+                    {skipAnswersForWriting
+                        ? 'Bài Writing không hiển thị bảng đáp án trắc nghiệm tại đây. Xem phần thống kê phía trên để biết số câu đã làm và thời gian.'
+                        : 'Không có dữ liệu đáp án'}
                 </div>
             </div>
         );
@@ -184,9 +195,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const hideRedoWrong = partKeys.some((k) => isWritingOrListeningPartName(k));
 
     const handleViewDetails = () => {
-        // Navigate to detailed answer view
         if (userTestId) {
-            navigate(`/test-result-detail/${userTestId}`);
+            navigate(
+                `/test-result-detail/${userTestId}${location.search || ''}`,
+            );
         } else {
             message.error('Không tìm thấy ID bài thi');
         }

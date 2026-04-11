@@ -4,6 +4,7 @@ import { Modal, Spin, message } from "antd";
 import { getWritingExam, submitWritingTestExam } from "../../api/api";
 import PassageDisplay from "../../components/exam/PassageDisplay";
 import DictionaryText from "../../components/shared/DictionaryText";
+import { buildTestResultPath } from "../../utils/testResultNavigation";
 
 const FULL_TEST_SECONDS = 60 * 60;
 const FULL_TEST_STORAGE_KEY_PREFIX = "toeic_full_test_progress_";
@@ -691,8 +692,20 @@ const DoWritingTest = () => {
         <Modal
           title="Kết quả bài Writing"
           open={!!testResult}
-          onOk={() => navigate(`/test-result/${testResult.userTestId}`)}
-          onCancel={() => navigate(`/test-result/${testResult.userTestId}`)}
+          onOk={() =>
+            navigate(
+              buildTestResultPath(testResult.userTestId, {
+                forceWriting: true,
+              }),
+            )
+          }
+          onCancel={() =>
+            navigate(
+              buildTestResultPath(testResult.userTestId, {
+                forceWriting: true,
+              }),
+            )
+          }
           okText="Xem chi tiết"
           cancelText="Đóng"
           width={600}
