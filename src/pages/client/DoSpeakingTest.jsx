@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
 import { getSpeakingExam } from "../../api/api";
+import PassageDisplay from "../../components/exam/PassageDisplay";
+import DictionaryText from "../../components/shared/DictionaryText";
 
 const FULL_TEST_SECONDS = 20 * 60;
 const FULL_TEST_STORAGE_KEY_PREFIX = "toeic_full_test_progress_";
@@ -509,11 +511,10 @@ const DoSpeakingTest = () => {
               <div className="text-sm font-medium text-amber-800 mb-2">
                 Passage
               </div>
-              <div
-                className="text-gray-800 prose max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html: sanitizeHtml(currentGroup.passage),
-                }}
+              <PassageDisplay
+                passage={sanitizeHtml(currentGroup.passage)}
+                disableDictionary={isFullTest}
+                plain
               />
             </div>
           ) : null}
@@ -531,7 +532,12 @@ const DoSpeakingTest = () => {
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
             Question {currentQuestion.position}
           </h2>
-          <p className="text-gray-800 whitespace-pre-wrap">{currentQuestion.content}</p>
+          <DictionaryText
+            className="text-gray-800 whitespace-pre-wrap"
+            disableDictionary={isFullTest}
+          >
+            {currentQuestion.content}
+          </DictionaryText>
 
           {isFullTest ? (
             <div className="mt-5 p-4 rounded-lg border border-blue-200 bg-blue-50">

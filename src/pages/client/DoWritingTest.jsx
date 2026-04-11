@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
 import { getWritingExam, submitWritingTestExam } from "../../api/api";
+import PassageDisplay from "../../components/exam/PassageDisplay";
+import DictionaryText from "../../components/shared/DictionaryText";
 
 const FULL_TEST_SECONDS = 60 * 60;
 const FULL_TEST_STORAGE_KEY_PREFIX = "toeic_full_test_progress_";
@@ -566,11 +568,10 @@ const DoWritingTest = () => {
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 min-h-[420px]">
               <div className="text-sm font-medium text-amber-800 mb-2">Passage</div>
               {currentGroup.passage ? (
-                <div
-                  className="text-gray-800 prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(currentGroup.passage),
-                  }}
+                <PassageDisplay
+                  passage={sanitizeHtml(currentGroup.passage)}
+                  disableDictionary={isFullTest}
+                  plain
                 />
               ) : (
                 <div className="text-gray-500 text-sm italic">
@@ -592,9 +593,14 @@ const DoWritingTest = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
                 Question {currentQuestion.position}
               </h2>
-              <p className="text-gray-700 mb-4">
-                Hãy viết câu trả lời cho câu hỏi này.
-              </p>
+              <DictionaryText
+                className="text-gray-700 mb-4 whitespace-pre-wrap"
+                disableDictionary={isFullTest}
+              >
+                {String(currentQuestion.content ?? "").trim()
+                  ? currentQuestion.content
+                  : "Hãy viết câu trả lời cho câu hỏi này."}
+              </DictionaryText>
 
               <div className="mb-3">
                 <button

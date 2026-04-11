@@ -7,7 +7,12 @@ import AddToFlashcardModal from '../client/modal/AddToFlashcardModal';
 /**
  * Component hiển thị passage (đoạn văn)
  */
-const PassageDisplay = ({ passage, disableDictionary = false }) => {
+const PassageDisplay = ({
+  passage,
+  disableDictionary = false,
+  /** When true, no outer white card — for embedding inside Speaking/Writing panels */
+  plain = false,
+}) => {
   const [isDictionaryModalOpen, setIsDictionaryModalOpen] = useState(false);
   const [isAddToFlashcardOpen, setIsAddToFlashcardOpen] = useState(false);
   const { selectedWord, iconPosition, showIcon, containerRef, handleDoubleClick, hideIcon } = useDictionary();
@@ -28,28 +33,34 @@ const PassageDisplay = ({ passage, disableDictionary = false }) => {
     }
   };
 
+  const outerCardClass = plain
+    ? ""
+    : "mb-6 p-4 bg-white rounded-lg border border-gray-200";
+  const innerTextClass = plain
+    ? "text-gray-800 prose max-w-none leading-relaxed"
+    : "text-gray-800 text-sm leading-relaxed";
+
   // If dictionary is disabled, render without dictionary functionality
   if (disableDictionary) {
+    if (plain) {
+      return <div className={innerTextClass}>{parse(passage)}</div>;
+    }
     return (
-      <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-        <div className="text-gray-800 text-sm leading-relaxed">
-          {parse(passage)}
-        </div>
+      <div className={outerCardClass}>
+        <div className={innerTextClass}>{parse(passage)}</div>
       </div>
     );
   }
 
   return (
     <>
-      <div 
+      <div
         ref={containerRef}
-        className="mb-6 p-4 bg-white rounded-lg border border-gray-200 relative"
+        className={`${plain ? `relative ${innerTextClass}` : `${outerCardClass} relative`}`}
         onDoubleClick={handleDoubleClick}
-        style={{ userSelect: 'text' }}
+        style={{ userSelect: "text" }}
       >
-        <div className="text-gray-800 text-sm leading-relaxed">
-          {parse(passage)}
-        </div>
+        <div className={plain ? "" : innerTextClass}>{parse(passage)}</div>
         
         {/* Dictionary & Add-to-Flashcard Icons */}
         {showIcon && (
