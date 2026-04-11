@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Modal } from 'antd';
-import { viewAnswersQuestionDetail } from '../../../api/api';
+import {
+    viewAnswersQuestionDetail,
+    getOrGenerateWritingFeedback,
+} from '../../../api/api';
 import { message } from 'antd';
 import parse from 'html-react-parser';
 import AudioPlayerUI from './AudioPlayerUI';
@@ -21,6 +24,8 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     const [loading, setLoading] = useState(false);
     const [showTranscript, setShowTranscript] = useState(false);
     const [showExplanation, setShowExplanation] = useState(false);
+    const [writingFeedbackLoading, setWritingFeedbackLoading] = useState(false);
+    const [fetchedWritingFeedback, setFetchedWritingFeedback] = useState(null);
 
     useEffect(() => {
         if (open && userAnswerId) {
@@ -30,6 +35,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             setQuestionData(null);
             setShowTranscript(false);
             setShowExplanation(false);
+            setFetchedWritingFeedback(null);
         }
     }, [open, userAnswerId]);
 
@@ -37,6 +43,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
         if (!userAnswerId) return;
 
         setLoading(true);
+        setFetchedWritingFeedback(null);
         try {
             const response = await viewAnswersQuestionDetail(userAnswerId);
             const data = response.data || null;
@@ -62,6 +69,35 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             setQuestionData(null);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const resolvedUserAnswerId = questionData?.userAnswerId ?? userAnswerId;
+
+    const handleFetchWritingFeedback = async () => {
+        if (!resolvedUserAnswerId) {
+            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            return;
+        }
+        setWritingFeedbackLoading(true);
+        try {
+            const res = await getOrGenerateWritingFeedback(resolvedUserAnswerId);
+            const text =
+                typeof res?.data === 'string'
+                    ? res.data
+                    : res?.data != null
+                      ? String(res.data)
+                      : '';
+            setFetchedWritingFeedback(text);
+        } catch (error) {
+            console.error('Writing feedback error:', error);
+            message.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể lấy nhận xét Writing.',
+            );
+        } finally {
+            setWritingFeedbackLoading(false);
         }
     };
 
@@ -91,6 +127,15 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     // API already handles the options array (Part 2 has 3, other parts have 4)
     const maxOptions = allOptions.length > 0 ? allOptions.length : 0;
     const shouldShowOptions = maxOptions > 0;
+
+    const hasUserAnswerText =
+        userAnswerText != null && String(userAnswerText).trim() !== '';
+    const effectiveFeedback =
+        fetchedWritingFeedback != null && String(fetchedWritingFeedback).trim() !== ''
+            ? fetchedWritingFeedback
+            : feedback;
+    const showFeedbackBlock =
+        effectiveFeedback != null && String(effectiveFeedback).trim() !== '';
 
     return (
         <Modal
@@ -310,17 +355,37 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         </div>
                     )}
 
-                    {userAnswerText != null && String(userAnswerText).trim() !== '' && (
-                        <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                            <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap">{userAnswerText}</p>
+                    {hasUserAnswerText && (
+                        <div className="mt-4 ml-11 space-y-3">
+                            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                                <p className="text-sm font-semibold text-blue-700 mb-1">
+                                    Câu trả lời của bạn:
+                                </p>
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                    {userAnswerText}
+                                </p>
+                            </div>
+                            {resolvedUserAnswerId ? (
+                                <button
+                                    type="button"
+                                    onClick={handleFetchWritingFeedback}
+                                    disabled={writingFeedbackLoading}
+                                    className="px-4 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-sm font-medium hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {writingFeedbackLoading
+                                        ? 'Đang lấy nhận xét...'
+                                        : 'Lấy nhận xét Writing từ AI'}
+                                </button>
+                            ) : null}
                         </div>
                     )}
 
-                    {feedback != null && String(feedback).trim() !== '' && (
+                    {showFeedbackBlock && (
                         <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
                             <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap">{feedback}</p>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                {effectiveFeedback}
+                            </p>
                         </div>
                     )}
                 </div>

@@ -571,6 +571,9 @@ export const getUserTestAnswersOverall = (userTestId) =>
 export const viewAnswersQuestionDetail = (userAnswerId) =>
   api.get(`/learner/user-answers/${userAnswerId}`);
 
+export const getOrGenerateWritingFeedback = (userAnswerId) =>
+  api.get(`/learner/user-answers/writing-feedback/${userAnswerId}`);
+
 export const viewTestResultDetails = (userTestId) =>
   api.get(`/learner/user-tests/detail/${userTestId}`);
 
