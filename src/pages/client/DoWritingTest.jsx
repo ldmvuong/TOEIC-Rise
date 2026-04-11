@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
 import { getWritingExam, submitWritingTestExam } from "../../api/api";
 
 const FULL_TEST_SECONDS = 60 * 60;
+const FULL_TEST_STORAGE_KEY_PREFIX = "toeic_full_test_progress_";
+
+function getFullTestStorageKey(testId, learnerTestType) {
+  if (learnerTestType === "speaking" || learnerTestType === "writing") {
+    return `${FULL_TEST_STORAGE_KEY_PREFIX}${learnerTestType}_${testId}`;
+  }
+  return `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+}
 const PART_TIME_LIMIT_SECONDS = {
   1: 8 * 60,
   2: 20 * 60,
@@ -38,6 +46,7 @@ const DoWritingTest = () => {
   const searchParams = new URLSearchParams(location.search);
 
   const testId = state.testId || searchParams.get("testId");
+  const learnerTestType = state.learnerTestType || "writing";
   const mode = state.mode || searchParams.get("mode") || "practice";
   const isFullTest = mode === "full";
   const partIds =
@@ -66,6 +75,188 @@ const DoWritingTest = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
+  const blockerRef = useRef(null);
+  const allowNavigationRef = useRef(false);
+  const isSubmittedRef = useRef(false);
+  const fullTestProgressRef = useRef(null);
+
+  const shouldBlockNav =
+    !!isFullTest && !!testData && !isSubmitted;
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      shouldBlockNav && currentLocation.pathname !== nextLocation.pathname,
+  );
+  blockerRef.current = blocker;
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowLeaveConfirm(true);
+      setPendingNavigation({ fromBlocker: true });
+    }
+  }, [blocker.state]);
+
+  useEffect(() => {
+    isSubmittedRef.current = isSubmitted;
+  }, [isSubmitted]);
+
+  const handleConfirmLeave = () => {
+    setShowLeaveConfirm(false);
+    if (isFullTest && testId && testData) {
+      const key = getFullTestStorageKey(testId, learnerTestType);
+      const payload = {
+        testId,
+        learnerTestType,
+        mode: "full",
+        partIds: partIds || [1, 2, 3],
+        testData,
+        fullRemaining,
+        partRemaining,
+        partStartDone,
+        currentPartIndex,
+        currentGroupIndex,
+        currentQuestionIndex,
+        questionNotes,
+        questionAnswers,
+        savedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem(key, JSON.stringify(payload));
+      } catch (e) {
+        console.error("Lưu tiến độ full test Writing thất bại:", e);
+      }
+    }
+    if (
+      pendingNavigation?.fromBlocker &&
+      blockerRef.current?.state === "blocked"
+    ) {
+      allowNavigationRef.current = true;
+      setPendingNavigation(null);
+      blockerRef.current?.proceed();
+      return;
+    }
+    allowNavigationRef.current = true;
+    setPendingNavigation(null);
+    setTimeout(() => {
+      navigate("/writing-tests", { replace: true });
+    }, 0);
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveConfirm(false);
+    if (
+      pendingNavigation?.fromBlocker &&
+      blockerRef.current?.state === "blocked"
+    ) {
+      blockerRef.current?.reset();
+    }
+    setPendingNavigation(null);
+  };
+
+  useEffect(() => {
+    if (!isFullTest || !testId || !testData || isSubmitted) {
+      fullTestProgressRef.current = null;
+      return;
+    }
+    fullTestProgressRef.current = {
+      testId,
+      learnerTestType,
+      mode: "full",
+      partIds: partIds || [1, 2, 3],
+      testData,
+      fullRemaining,
+      partRemaining,
+      partStartDone,
+      currentPartIndex,
+      currentGroupIndex,
+      currentQuestionIndex,
+      questionNotes,
+      questionAnswers,
+      savedAt: Date.now(),
+    };
+  }, [
+    isFullTest,
+    testId,
+    learnerTestType,
+    testData,
+    isSubmitted,
+    partIds,
+    fullRemaining,
+    partRemaining,
+    partStartDone,
+    currentPartIndex,
+    currentGroupIndex,
+    currentQuestionIndex,
+    questionNotes,
+    questionAnswers,
+  ]);
+
+  useEffect(() => {
+    if (isSubmitted && showLeaveConfirm) {
+      setShowLeaveConfirm(false);
+      setPendingNavigation(null);
+    }
+  }, [isSubmitted, showLeaveConfirm]);
+
+  useEffect(() => {
+    if (isSubmitted || !testData) {
+      return;
+    }
+
+    const handlePopState = () => {
+      if (isSubmittedRef.current) {
+        return;
+      }
+      if (allowNavigationRef.current) {
+        allowNavigationRef.current = false;
+        return;
+      }
+      window.history.pushState(null, "", window.location.href);
+      setShowLeaveConfirm(true);
+      setPendingNavigation({ timestamp: Date.now() });
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isSubmitted, testData]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (allowNavigationRef.current || isSubmittedRef.current) {
+        return;
+      }
+      if (!testData) return;
+      if (isFullTest && fullTestProgressRef.current) {
+        try {
+          const key = getFullTestStorageKey(
+            fullTestProgressRef.current.testId,
+            fullTestProgressRef.current.learnerTestType,
+          );
+          const payload = {
+            ...fullTestProgressRef.current,
+            savedAt: Date.now(),
+          };
+          localStorage.setItem(key, JSON.stringify(payload));
+        } catch (err) {
+          console.error(
+            "Lưu tiến độ full test Writing (beforeunload) thất bại:",
+            err,
+          );
+        }
+      }
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [testData, isFullTest]);
 
   useEffect(() => {
     const init = async () => {
@@ -544,6 +735,28 @@ const DoWritingTest = () => {
           </div>
         </Modal>
       ) : null}
+
+      <Modal
+        title="Xác nhận rời khỏi trang"
+        open={showLeaveConfirm}
+        onOk={handleConfirmLeave}
+        onCancel={handleCancelLeave}
+        okText="Thoát"
+        cancelText="Tiếp tục làm bài"
+        okType="danger"
+      >
+        <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
+        {isFullTest ? (
+          <p className="text-blue-600 font-medium mt-2">
+            Tiến độ sẽ được lưu. Bạn có thể tiếp tục làm bài khi quay lại (chọn
+            lại làm full test cùng đề).
+          </p>
+        ) : (
+          <p className="text-red-600 font-medium mt-2">
+            Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.
+          </p>
+        )}
+      </Modal>
     </div>
   );
 };
