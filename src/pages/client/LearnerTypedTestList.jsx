@@ -133,7 +133,9 @@ const LearnerTypedTestList = ({ variant }) => {
 
     if (loading) {
         return (
-            <Spin size="large" fullscreen tip="Đang tải..." />
+            <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8 flex items-center justify-center">
+                <Spin size="large" tip="Đang tải..." />
+            </div>
         );
     }
 
