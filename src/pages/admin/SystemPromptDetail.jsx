@@ -25,6 +25,7 @@ const typeToEnumMap = {
   "q-and-a": "Q_AND_A",
   explanation: "EXPLANATION_GENERATION",
   "sentence-assessment": "SENTENCE_ASSESSMENT",
+  "writing-assessment": "WRITING_ASSESSMENT",
   "blog-summarization": "BLOG_SUMMARIZATION",
 };
 
@@ -33,6 +34,7 @@ const typeToLabelMap = {
   "q-and-a": "Q & A",
   explanation: "Explanation Generation",
   "sentence-assessment": "Sentence Assessment",
+  "writing-assessment": "Writing Assessment",
   "blog-summarization": "Blog Summarization",
 };
 

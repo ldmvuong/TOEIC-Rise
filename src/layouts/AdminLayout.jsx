@@ -123,6 +123,11 @@ const STATIC_MENU = [
                 icon: <ApiOutlined />,
             },
             {
+                key: "/admin/system-prompts/writing-assessment",
+                label: <Link to="/admin/system-prompts/writing-assessment">Writing Assessment Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
                 key: "/admin/system-prompts/blog-summarization",
                 label: <Link to="/admin/system-prompts/blog-summarization">Blog Summarization Prompts</Link>,
                 icon: <ApiOutlined />,
