@@ -6,6 +6,15 @@ import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
 
+function isWritingOrListeningPartName(partName) {
+    return /writing|listening/i.test(String(partName || ''));
+}
+
+function extractPartOrderNumber(partName) {
+    const m = String(partName || '').match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+}
+
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
     const [hasFetched, setHasFetched] = useState(false);
@@ -61,12 +70,13 @@ const AnswerSheet = ({ userTestId, testId }) => {
     };
 
     // Render question answer display with clear structure
-    const renderQuestionAnswer = (question) => {
+    const renderQuestionAnswer = (question, partName) => {
         const status = getQuestionStatus(question);
         const userAnswer = question.userAnswer || '';
         const userAnswerText = question.userAnswerText || '';
         const correctAnswer = question.correctAnswer;
         const hasTextAnswer = String(userAnswerText).trim() !== '';
+        const hideCorrectKey = isWritingOrListeningPartName(partName);
 
         if (hasTextAnswer) {
             return (
@@ -84,16 +94,17 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
         return (
             <div className="flex items-center gap-2 flex-wrap">
-                {/* Đáp án đúng */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-gray-500 font-medium">Đáp án:</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-semibold text-xs min-w-[28px] text-center">
-                        {correctAnswer}
-                    </span>
-                </div>
-
-                {/* Separator */}
-                <span className="text-gray-300">|</span>
+                {!hideCorrectKey && (
+                    <>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-500 font-medium">Đáp án:</span>
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-semibold text-xs min-w-[28px] text-center">
+                                {correctAnswer}
+                            </span>
+                        </div>
+                        <span className="text-gray-300">|</span>
+                    </>
+                )}
 
                 {/* Câu trả lời của bạn */}
                 <div className="flex items-center gap-1.5">
@@ -150,15 +161,27 @@ const AnswerSheet = ({ userTestId, testId }) => {
         return null;
     }
 
-    // Sort parts in order: Part 1, Part 2, ..., Part 7
+    const partKeys = Object.keys(answersData);
+    const needsWritingListeningSort = partKeys.some((k) =>
+        isWritingOrListeningPartName(k),
+    );
     const partOrder = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5', 'Part 6', 'Part 7'];
-    const sortedParts = Object.keys(answersData).sort((a, b) => {
-        const indexA = partOrder.indexOf(a);
-        const indexB = partOrder.indexOf(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-    });
+    const sortedParts = needsWritingListeningSort
+        ? [...partKeys].sort((a, b) => {
+              const na = extractPartOrderNumber(a);
+              const nb = extractPartOrderNumber(b);
+              if (na !== nb) return na - nb;
+              return String(a).localeCompare(String(b), 'vi');
+          })
+        : [...partKeys].sort((a, b) => {
+              const indexA = partOrder.indexOf(a);
+              const indexB = partOrder.indexOf(b);
+              if (indexA === -1) return 1;
+              if (indexB === -1) return -1;
+              return indexA - indexB;
+          });
+
+    const hideRedoWrong = partKeys.some((k) => isWritingOrListeningPartName(k));
 
     const handleViewDetails = () => {
         // Navigate to detailed answer view
@@ -264,17 +287,19 @@ const AnswerSheet = ({ userTestId, testId }) => {
             >
               Xem chi tiết đáp án
             </button>
-            <button
-              onClick={openRedoWrongModal}
-              disabled={isRedoWrongLoading}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                activeView === "detailed"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
-            </button>
+            {!hideRedoWrong && (
+              <button
+                onClick={openRedoWrongModal}
+                disabled={isRedoWrongLoading}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeView === "detailed"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -299,8 +324,6 @@ const AnswerSheet = ({ userTestId, testId }) => {
               const questions = answersData[partName] || [];
               if (questions.length === 0) return null;
 
-              // Determine part number for grouping
-              const partNumber = parseInt(partName.replace("Part ", ""));
               const questionsPerColumn = Math.ceil(questions.length / 2);
 
               return (
@@ -337,7 +360,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Answer Info */}
                                 <div className="flex-1 min-w-0">
-                                  {renderQuestionAnswer(question)}
+                                  {renderQuestionAnswer(question, partName)}
                                 </div>
 
                                 {/* Detail Button */}
@@ -382,7 +405,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Answer Info */}
                                 <div className="flex-1 min-w-0">
-                                  {renderQuestionAnswer(question)}
+                                  {renderQuestionAnswer(question, partName)}
                                 </div>
 
                                 {/* Detail Button */}
@@ -455,34 +478,35 @@ const AnswerSheet = ({ userTestId, testId }) => {
           questionData={reportQuestionData}
         />
 
-        {/* Modal chọn chế độ làm lại câu sai */}
-        <Modal
-          title="Làm lại câu sai"
-          open={showRedoWrongChoiceModal}
-          onCancel={() => setShowRedoWrongChoiceModal(false)}
-          footer={null}
-          centered
-          width={420}
-        >
-          <div className="py-2 space-y-3">
-            <button
-              type="button"
-              onClick={handleFixOneByOne}
-              disabled={isRedoWrongLoading}
-              className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRedoWrongAnswers}
-              disabled={isRedoWrongLoading}
-              className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              Làm lại toàn bộ câu sai
-            </button>
-          </div>
-        </Modal>
+        {!hideRedoWrong && (
+          <Modal
+            title="Làm lại câu sai"
+            open={showRedoWrongChoiceModal}
+            onCancel={() => setShowRedoWrongChoiceModal(false)}
+            footer={null}
+            centered
+            width={420}
+          >
+            <div className="py-2 space-y-3">
+              <button
+                type="button"
+                onClick={handleFixOneByOne}
+                disabled={isRedoWrongLoading}
+                className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
+              </button>
+              <button
+                type="button"
+                onClick={handleRedoWrongAnswers}
+                disabled={isRedoWrongLoading}
+                className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                Làm lại toàn bộ câu sai
+              </button>
+            </div>
+          </Modal>
+        )}
       </div>
     );
 };
