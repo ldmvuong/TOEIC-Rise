@@ -26,6 +26,7 @@ const typeToEnumMap = {
   explanation: "EXPLANATION_GENERATION",
   "sentence-assessment": "SENTENCE_ASSESSMENT",
   "writing-assessment": "WRITING_ASSESSMENT",
+  "speaking-assessment": "SPEAKING_ASSESSMENT",
   "blog-summarization": "BLOG_SUMMARIZATION",
 };
 
@@ -35,6 +36,7 @@ const typeToLabelMap = {
   explanation: "Explanation Generation",
   "sentence-assessment": "Sentence Assessment",
   "writing-assessment": "Writing Assessment",
+  "speaking-assessment": "Speaking Assessment",
   "blog-summarization": "Blog Summarization",
 };
 

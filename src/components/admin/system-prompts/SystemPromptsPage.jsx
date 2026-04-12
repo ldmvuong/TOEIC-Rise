@@ -31,6 +31,8 @@ const SystemPromptsPage = ({ featureType, title }) => {
         return "sentence-assessment";
       case "WRITING_ASSESSMENT":
         return "writing-assessment";
+      case "SPEAKING_ASSESSMENT":
+        return "speaking-assessment";
       case "BLOG_SUMMARIZATION":
         return "blog-summarization";
       default:

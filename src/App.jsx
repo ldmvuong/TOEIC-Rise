@@ -69,6 +69,7 @@ import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
 import SystemPromptsSentenceAssessment from "./pages/admin/SystemPromptsSentenceAssessment.jsx";
 import SystemPromptsWritingAssessment from "./pages/admin/SystemPromptsWritingAssessment.jsx";
+import SystemPromptsSpeakingAssessment from "./pages/admin/SystemPromptsSpeakingAssessment.jsx";
 import SystemPromptsBlogSummarization from "./pages/admin/SystemPromptsBlogSummarization.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 
@@ -592,6 +593,14 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsWritingAssessment />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/speaking-assessment',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsSpeakingAssessment />
             </ProtectedRoute>
           ),
         },
