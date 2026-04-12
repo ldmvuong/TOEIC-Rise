@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
 import MicRecorder from "mic-recorder-to-mp3";
-import { getSpeakingExam } from "../../api/api";
+import {
+  buildSpeakingTestSubmissionFormData,
+  getSpeakingExam,
+  submitSpeakingTestExam,
+} from "../../api/api";
+import { buildTestResultPath } from "../../utils/testResultNavigation";
 import PassageDisplay from "../../components/exam/PassageDisplay";
 import DictionaryText from "../../components/shared/DictionaryText";
 
@@ -56,6 +61,18 @@ function sanitizeHtml(html) {
     .replace(/javascript:/gi, "");
 }
 
+function collectSpeakingQuestionsInOrder(testData) {
+  const list = [];
+  (testData?.partResponses || []).forEach((part) => {
+    (part.questionGroupResponses || []).forEach((group) => {
+      (group.questionDetailResponses || []).forEach((q) => {
+        if (q?.id != null) list.push(q);
+      });
+    });
+  });
+  return list;
+}
+
 const DoSpeakingTest = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -98,13 +115,32 @@ const DoSpeakingTest = () => {
 
   const micCheckRecorderRef = useRef(null);
 
+  const [answerAudioByQuestionId, setAnswerAudioByQuestionId] = useState({});
+  const [answerRecording, setAnswerRecording] = useState(false);
+  const [answerEncoding, setAnswerEncoding] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [sessionStartedAt, setSessionStartedAt] = useState(null);
+
+  const answerRecorderRef = useRef(null);
+  const answerRecordingTargetIdRef = useRef(null);
+  const answerRecordingRef = useRef(false);
+  const answerAudioByQuestionIdRef = useRef({});
+  const isSubmittedRef = useRef(false);
+  const prevPhaseTypeRef = useRef(phaseType);
+
   const blockerRef = useRef(null);
   const allowNavigationRef = useRef(false);
   const finishedRef = useRef(false);
   const fullTestProgressRef = useRef(null);
 
   const shouldBlockNav =
-    !!isFullTest && !!testData && !finished && micCheckComplete;
+    !!isFullTest &&
+    !!testData &&
+    !finished &&
+    micCheckComplete &&
+    !isSubmitted;
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       shouldBlockNav && currentLocation.pathname !== nextLocation.pathname,
@@ -121,6 +157,24 @@ const DoSpeakingTest = () => {
   useEffect(() => {
     finishedRef.current = finished;
   }, [finished]);
+
+  useEffect(() => {
+    isSubmittedRef.current = isSubmitted;
+  }, [isSubmitted]);
+
+  useEffect(() => {
+    answerRecordingRef.current = answerRecording;
+  }, [answerRecording]);
+
+  useEffect(() => {
+    answerAudioByQuestionIdRef.current = answerAudioByQuestionId;
+  }, [answerAudioByQuestionId]);
+
+  useEffect(() => {
+    if (micCheckComplete && sessionStartedAt == null) {
+      setSessionStartedAt(Date.now());
+    }
+  }, [micCheckComplete, sessionStartedAt]);
 
   const handleConfirmLeave = () => {
     setShowLeaveConfirm(false);
@@ -176,7 +230,7 @@ const DoSpeakingTest = () => {
   };
 
   useEffect(() => {
-    if (!isFullTest || !testId || !testData || finished) {
+    if (!isFullTest || !testId || !testData || finished || isSubmitted) {
       fullTestProgressRef.current = null;
       return;
     }
@@ -211,14 +265,15 @@ const DoSpeakingTest = () => {
     questionNotes,
     phaseType,
     phaseRemaining,
+    isSubmitted,
   ]);
 
   useEffect(() => {
-    if (finished && showLeaveConfirm) {
+    if ((finished || isSubmitted) && showLeaveConfirm) {
       setShowLeaveConfirm(false);
       setPendingNavigation(null);
     }
-  }, [finished, showLeaveConfirm]);
+  }, [finished, isSubmitted, showLeaveConfirm]);
 
   useEffect(() => {
     if (finished || !testData || !micCheckComplete) {
@@ -226,7 +281,7 @@ const DoSpeakingTest = () => {
     }
 
     const handlePopState = () => {
-      if (finishedRef.current) {
+      if (finishedRef.current || isSubmittedRef.current) {
         return;
       }
       if (allowNavigationRef.current) {
@@ -247,7 +302,11 @@ const DoSpeakingTest = () => {
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (allowNavigationRef.current || finishedRef.current) {
+      if (
+        allowNavigationRef.current ||
+        finishedRef.current ||
+        isSubmittedRef.current
+      ) {
         return;
       }
       if (!testData || !micCheckComplete) return;
@@ -426,17 +485,111 @@ const DoSpeakingTest = () => {
     currentGroup?.id,
   ]);
 
+  const flushAnswerRecording = useCallback(async () => {
+    const recorder = answerRecorderRef.current;
+    const qid = answerRecordingTargetIdRef.current;
+    if (!recorder || !answerRecordingRef.current || qid == null) return;
+    try {
+      setAnswerEncoding(true);
+      const [, blob] = await recorder.stop().getMp3();
+      if (blob && blob.size > 0) {
+        const next = { ...answerAudioByQuestionIdRef.current, [qid]: blob };
+        answerAudioByQuestionIdRef.current = next;
+        setAnswerAudioByQuestionId(next);
+      }
+    } catch (e) {
+      console.error(e);
+      message.error(e?.message || "Không thể lưu bản ghi âm.");
+    } finally {
+      answerRecorderRef.current = null;
+      answerRecordingTargetIdRef.current = null;
+      setAnswerRecording(false);
+      setAnswerEncoding(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (!finished) return;
-    Modal.success({
-      title: "Hoàn thành bài Speaking",
-      content: isFullTest
-        ? "Bạn đã hoàn thành full test Speaking."
-        : "Bạn đã hoàn thành bài Speaking.",
-      okText: "Quay lại chi tiết đề",
-      onOk: () => navigate(`/speaking-tests/${testId}`),
+    if (!isFullTest || !micCheckComplete) {
+      prevPhaseTypeRef.current = phaseType;
+      return;
+    }
+    const prev = prevPhaseTypeRef.current;
+    prevPhaseTypeRef.current = phaseType;
+    if (prev === "answer" && phaseType !== "answer") {
+      void flushAnswerRecording();
+    }
+  }, [phaseType, isFullTest, micCheckComplete, flushAnswerRecording]);
+
+  const submitSpeaking = useCallback(async () => {
+    if (!testData || !testId || isSubmitting || isSubmitted) return;
+
+    const orderedQuestions = collectSpeakingQuestionsInOrder(testData);
+    const map = answerAudioByQuestionIdRef.current;
+
+    const timeSpent = isFullTest
+      ? Math.max(1, FULL_TEST_SECONDS - fullRemaining)
+      : Math.max(
+          1,
+          sessionStartedAt
+            ? Math.round((Date.now() - sessionStartedAt) / 1000)
+            : 1,
+        );
+
+    const fd = buildSpeakingTestSubmissionFormData({
+      testId: Number(testId),
+      timeSpent,
+      parts: isFullTest
+        ? null
+        : (testData.partResponses || []).map((p) => p.partName),
+      answers: orderedQuestions.map((q) => ({
+        questionId: q.id,
+        blob: map[q.id],
+        filename: `speaking-q${q.id}.mp3`,
+      })),
     });
-  }, [finished, isFullTest, navigate, testId]);
+
+    try {
+      setIsSubmitting(true);
+      const res = await submitSpeakingTestExam(fd);
+      if (res?.data) {
+        setIsSubmitted(true);
+        setTestResult(res.data);
+        try {
+          localStorage.removeItem(
+            getFullTestStorageKey(testId, learnerTestType),
+          );
+        } catch (_) {
+          /* ignore */
+        }
+      }
+    } catch (err) {
+      message.error(err?.message || "Không thể nộp bài Speaking");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    testData,
+    testId,
+    isSubmitting,
+    isSubmitted,
+    isFullTest,
+    fullRemaining,
+    sessionStartedAt,
+    learnerTestType,
+  ]);
+
+  useEffect(() => {
+    if (!finished || isSubmitted || isSubmitting) return;
+    let cancelled = false;
+    void (async () => {
+      await flushAnswerRecording();
+      if (cancelled) return;
+      await submitSpeaking();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [finished, isSubmitted, isSubmitting, flushAnswerRecording, submitSpeaking]);
 
   const canGoPrevious =
     currentPartIndex > 0 || currentGroupIndex > 0 || currentQuestionIndex > 0;
@@ -444,42 +597,105 @@ const DoSpeakingTest = () => {
   const handlePrevious = () => {
     if (isFullTest) return;
     if (!currentPart) return;
-    const groups = currentPart.questionGroupResponses || [];
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((v) => v - 1);
-      return;
-    }
-    if (currentGroupIndex > 0) {
-      const prevGroupIndex = currentGroupIndex - 1;
-      const prevQuestions =
-        groups[prevGroupIndex]?.questionDetailResponses?.length || 0;
-      setCurrentGroupIndex(prevGroupIndex);
-      setCurrentQuestionIndex(Math.max(0, prevQuestions - 1));
-      return;
-    }
-    if (currentPartIndex > 0) {
-      const prevPartIndex = currentPartIndex - 1;
-      const prevGroups = parts[prevPartIndex]?.questionGroupResponses || [];
-      const lastGroupIndex = Math.max(0, prevGroups.length - 1);
-      const lastQuestionIndex = Math.max(
-        0,
-        (prevGroups[lastGroupIndex]?.questionDetailResponses?.length || 1) - 1,
-      );
-      setCurrentPartIndex(prevPartIndex);
-      setCurrentGroupIndex(lastGroupIndex);
-      setCurrentQuestionIndex(lastQuestionIndex);
-    }
+    void (async () => {
+      await flushAnswerRecording();
+      const groups = currentPart.questionGroupResponses || [];
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex((v) => v - 1);
+        return;
+      }
+      if (currentGroupIndex > 0) {
+        const prevGroupIndex = currentGroupIndex - 1;
+        const prevQuestions =
+          groups[prevGroupIndex]?.questionDetailResponses?.length || 0;
+        setCurrentGroupIndex(prevGroupIndex);
+        setCurrentQuestionIndex(Math.max(0, prevQuestions - 1));
+        return;
+      }
+      if (currentPartIndex > 0) {
+        const prevPartIndex = currentPartIndex - 1;
+        const prevGroups = parts[prevPartIndex]?.questionGroupResponses || [];
+        const lastGroupIndex = Math.max(0, prevGroups.length - 1);
+        const lastQuestionIndex = Math.max(
+          0,
+          (prevGroups[lastGroupIndex]?.questionDetailResponses?.length || 1) - 1,
+        );
+        setCurrentPartIndex(prevPartIndex);
+        setCurrentGroupIndex(lastGroupIndex);
+        setCurrentQuestionIndex(lastQuestionIndex);
+      }
+    })();
   };
 
   const handleNext = () => {
     if (isFullTest) return;
-    const hasNext = moveToNextQuestion();
-    if (!hasNext) setFinished(true);
+    void (async () => {
+      await flushAnswerRecording();
+      const hasNext = moveToNextQuestion();
+      if (!hasNext) setFinished(true);
+    })();
   };
 
   const currentQuestionNote = currentQuestion?.id
     ? questionNotes[currentQuestion.id] || ""
     : "";
+
+  const currentAnswerBlob =
+    currentQuestion?.id != null
+      ? answerAudioByQuestionId[currentQuestion.id]
+      : null;
+
+  const currentAnswerPreviewUrl = useMemo(() => {
+    return currentAnswerBlob ? URL.createObjectURL(currentAnswerBlob) : null;
+  }, [currentAnswerBlob]);
+
+  useEffect(() => {
+    return () => {
+      if (currentAnswerPreviewUrl) {
+        URL.revokeObjectURL(currentAnswerPreviewUrl);
+      }
+    };
+  }, [currentAnswerPreviewUrl]);
+
+  const canRecordAnswer =
+    !isSubmitting &&
+    !isSubmitted &&
+    (!isFullTest || phaseType === "answer");
+
+  const handleAnswerRecordStart = async () => {
+    if (!canRecordAnswer || answerRecording || answerEncoding) return;
+    if (isFullTest && phaseType !== "answer") {
+      message.warning("Chỉ ghi âm trong thời gian trả lời.");
+      return;
+    }
+    if (!currentQuestion?.id) return;
+    const recorder = new MicRecorder({ bitRate: 128 });
+    answerRecorderRef.current = recorder;
+    answerRecordingTargetIdRef.current = currentQuestion.id;
+    try {
+      await recorder.start();
+      setAnswerRecording(true);
+    } catch (e) {
+      answerRecorderRef.current = null;
+      answerRecordingTargetIdRef.current = null;
+      message.error(e?.message || "Không thể bắt đầu ghi âm.");
+    }
+  };
+
+  const handleAnswerRecordStop = async () => {
+    await flushAnswerRecording();
+  };
+
+  const handleAnswerRecordClear = () => {
+    if (answerRecording || answerEncoding) return;
+    if (!currentQuestion?.id) return;
+    setAnswerAudioByQuestionId((prev) => {
+      const next = { ...prev };
+      delete next[currentQuestion.id];
+      answerAudioByQuestionIdRef.current = next;
+      return next;
+    });
+  };
 
   const handleMicCheckStart = async () => {
     if (micCheckRecording || micCheckEncoding) return;
@@ -747,14 +963,65 @@ const DoSpeakingTest = () => {
               </div>
             ) : null}
 
-            <div className="text-sm font-medium text-gray-700 mb-2">Recording</div>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg bg-gray-800 text-white opacity-60 cursor-not-allowed"
-              disabled
-            >
-              Record (coming soon)
-            </button>
+            <div className="text-sm font-medium text-gray-700 mb-2">Ghi âm trả lời</div>
+            <p className="text-xs text-gray-500 mb-3">
+              {isFullTest
+                ? "Trong thời gian trả lời, hãy bấm Bắt đầu ghi âm rồi Dừng và lưu MP3 trước khi hết giờ."
+                : "Ghi âm từng câu nếu muốn; có thể bỏ qua câu. Nghe lại, xóa hoặc thu lại trước khi nộp bài."}
+            </p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={handleAnswerRecordStart}
+                disabled={
+                  !canRecordAnswer ||
+                  answerRecording ||
+                  answerEncoding ||
+                  isSubmitting ||
+                  isSubmitted
+                }
+                className="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {answerRecording ? "Đang ghi…" : "Bắt đầu ghi âm"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAnswerRecordStop}
+                disabled={
+                  !answerRecording || answerEncoding || isSubmitting || isSubmitted
+                }
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {answerEncoding ? "Đang tạo MP3…" : "Dừng và lưu MP3"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAnswerRecordClear}
+                disabled={
+                  answerRecording ||
+                  answerEncoding ||
+                  !currentAnswerBlob ||
+                  isSubmitting ||
+                  isSubmitted
+                }
+                className="px-4 py-2 rounded-lg border border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Xóa bản ghi câu này
+              </button>
+            </div>
+            {currentAnswerPreviewUrl ? (
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
+                <div className="text-xs font-medium text-gray-600 mb-1">
+                  Nghe thử câu {currentQuestion.position}
+                </div>
+                <audio
+                  key={currentAnswerPreviewUrl}
+                  controls
+                  src={currentAnswerPreviewUrl}
+                  className="w-full max-h-10"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -762,7 +1029,7 @@ const DoSpeakingTest = () => {
           <button
             type="button"
             onClick={handlePrevious}
-            disabled={!canGoPrevious || isFullTest}
+            disabled={!canGoPrevious || isFullTest || isSubmitting}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50"
           >
             Câu trước
@@ -770,13 +1037,76 @@ const DoSpeakingTest = () => {
           <button
             type="button"
             onClick={handleNext}
-            disabled={isFullTest}
+            disabled={isFullTest || isSubmitting}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
           >
             Câu tiếp
           </button>
         </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() =>
+              Modal.confirm({
+                title: "Xác nhận nộp bài",
+                content:
+                  "Bạn có chắc muốn nộp bài Speaking? Các câu chưa ghi âm sẽ được gửi không có file âm thanh.",
+                okText: "Nộp bài",
+                cancelText: "Tiếp tục làm",
+                onOk: async () => {
+                  await flushAnswerRecording();
+                  await submitSpeaking();
+                },
+              })
+            }
+            disabled={isSubmitting || isSubmitted}
+            className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
+          >
+            {isSubmitting ? "Đang nộp…" : isSubmitted ? "Đã nộp" : "Nộp bài"}
+          </button>
+        </div>
       </div>
+
+      {testResult ? (
+        <Modal
+          title="Đã nộp bài Speaking"
+          open={!!testResult}
+          onOk={() =>
+            navigate(
+              buildTestResultPath(testResult.userTestId, {
+                parts: testData?.partResponses?.map((p) => p.partName),
+              }),
+            )
+          }
+          onCancel={() =>
+            navigate(
+              buildTestResultPath(testResult.userTestId, {
+                parts: testData?.partResponses?.map((p) => p.partName),
+              }),
+            )
+          }
+          okText="Xem kết quả"
+          cancelText="Đóng"
+          width={560}
+          centered
+        >
+          <div className="py-3 space-y-3 text-sm text-gray-700">
+            <div className="flex justify-between">
+              <span>Tổng số câu hỏi</span>
+              <span className="font-semibold">{testResult.totalQuestions}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Số câu đã nộp</span>
+              <span className="font-semibold">{testResult.totalAnswers}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Thời gian làm bài (giây)</span>
+              <span className="font-semibold">{testResult.timeSpent}</span>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
 
       <Modal
         title="Xác nhận rời khỏi trang"
