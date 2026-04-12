@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
+import MicRecorder from "mic-recorder-to-mp3";
 import { getSpeakingExam } from "../../api/api";
 import PassageDisplay from "../../components/exam/PassageDisplay";
 import DictionaryText from "../../components/shared/DictionaryText";
@@ -89,6 +90,13 @@ const DoSpeakingTest = () => {
   const [questionNotes, setQuestionNotes] = useState({});
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [micCheckComplete, setMicCheckComplete] = useState(false);
+  const [micCheckRecording, setMicCheckRecording] = useState(false);
+  const [micCheckEncoding, setMicCheckEncoding] = useState(false);
+  const [micCheckPreviewUrl, setMicCheckPreviewUrl] = useState(null);
+  const [micCheckError, setMicCheckError] = useState(null);
+
+  const micCheckRecorderRef = useRef(null);
 
   const blockerRef = useRef(null);
   const allowNavigationRef = useRef(false);
@@ -96,7 +104,7 @@ const DoSpeakingTest = () => {
   const fullTestProgressRef = useRef(null);
 
   const shouldBlockNav =
-    !!isFullTest && !!testData && !finished;
+    !!isFullTest && !!testData && !finished && micCheckComplete;
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       shouldBlockNav && currentLocation.pathname !== nextLocation.pathname,
@@ -213,7 +221,7 @@ const DoSpeakingTest = () => {
   }, [finished, showLeaveConfirm]);
 
   useEffect(() => {
-    if (finished || !testData) {
+    if (finished || !testData || !micCheckComplete) {
       return;
     }
 
@@ -235,14 +243,14 @@ const DoSpeakingTest = () => {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [finished, testData]);
+  }, [finished, testData, micCheckComplete]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (allowNavigationRef.current || finishedRef.current) {
         return;
       }
-      if (!testData) return;
+      if (!testData || !micCheckComplete) return;
       if (isFullTest && fullTestProgressRef.current) {
         try {
           const key = getFullTestStorageKey(
@@ -268,7 +276,15 @@ const DoSpeakingTest = () => {
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [testData, isFullTest]);
+  }, [testData, isFullTest, micCheckComplete]);
+
+  useEffect(() => {
+    return () => {
+      if (micCheckPreviewUrl) {
+        URL.revokeObjectURL(micCheckPreviewUrl);
+      }
+    };
+  }, [micCheckPreviewUrl]);
 
   useEffect(() => {
     const init = async () => {
@@ -334,7 +350,7 @@ const DoSpeakingTest = () => {
   ]);
 
   useEffect(() => {
-    if (!isFullTest || !currentGroup) return;
+    if (!isFullTest || !micCheckComplete || !currentGroup) return;
     const groupId = currentGroup.id;
     const mustReadPassage =
       (partNumber === 3 || partNumber === 4) && !!currentGroup.passage;
@@ -354,10 +370,11 @@ const DoSpeakingTest = () => {
     currentTiming.prepare,
     groupReadDone,
     currentQuestionIndex,
+    micCheckComplete,
   ]);
 
   useEffect(() => {
-    if (!isFullTest || finished) return;
+    if (!isFullTest || finished || !micCheckComplete) return;
     const timer = setInterval(() => {
       setFullRemaining((prev) => {
         if (prev <= 1) {
@@ -368,10 +385,10 @@ const DoSpeakingTest = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isFullTest, finished]);
+  }, [isFullTest, finished, micCheckComplete]);
 
   useEffect(() => {
-    if (!isFullTest || finished) return;
+    if (!isFullTest || finished || !micCheckComplete) return;
     const timer = setInterval(() => {
       setPhaseRemaining((prev) => {
         if (prev > 1) return prev - 1;
@@ -401,6 +418,7 @@ const DoSpeakingTest = () => {
   }, [
     isFullTest,
     finished,
+    micCheckComplete,
     phaseType,
     currentTiming.prepare,
     currentTiming.answer,
@@ -463,6 +481,55 @@ const DoSpeakingTest = () => {
     ? questionNotes[currentQuestion.id] || ""
     : "";
 
+  const handleMicCheckStart = async () => {
+    if (micCheckRecording || micCheckEncoding) return;
+    setMicCheckError(null);
+    const recorder = new MicRecorder({ bitRate: 128 });
+    micCheckRecorderRef.current = recorder;
+    try {
+      await recorder.start();
+      setMicCheckRecording(true);
+    } catch (e) {
+      micCheckRecorderRef.current = null;
+      const denied = e?.name === "NotAllowedError";
+      const msg = denied
+        ? "Trình duyệt đã chặn micro. Vui lòng cấp quyền và thử lại."
+        : e?.message || "Không thể bắt đầu ghi âm.";
+      setMicCheckError(msg);
+      message.error(msg);
+    }
+  };
+
+  const handleMicCheckStop = async () => {
+    const recorder = micCheckRecorderRef.current;
+    if (!recorder || !micCheckRecording) return;
+    setMicCheckEncoding(true);
+    try {
+      const [, blob] = await recorder.stop().getMp3();
+      setMicCheckPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(blob);
+      });
+    } catch (e) {
+      const msg = e?.message || "Không thể tạo file MP3 từ bản ghi.";
+      setMicCheckError(msg);
+      message.error(msg);
+    } finally {
+      setMicCheckRecording(false);
+      setMicCheckEncoding(false);
+      micCheckRecorderRef.current = null;
+    }
+  };
+
+  const handleMicCheckRetry = () => {
+    if (micCheckRecording || micCheckEncoding) return;
+    setMicCheckPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setMicCheckError(null);
+  };
+
   if (loading) {
     return <Spin fullscreen tip="Đang tải đề Speaking..." />;
   }
@@ -471,6 +538,104 @@ const DoSpeakingTest = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center text-gray-600">Không tìm thấy đề Speaking</div>
+      </div>
+    );
+  }
+
+  if (!micCheckComplete) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-xl mx-auto px-4 py-10">
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">
+              Bước 1 · Kiểm tra micro
+            </p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {testData.testName}
+            </h1>
+            <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+              Trước khi vào bài, hãy ghi một đoạn ngắn (vài giây). Hệ thống sẽ
+              xuất file MP3 để bạn nghe lại: nếu tiếng rõ và không bị méo, hãy
+              bấm tiếp tục. Nếu không, thu lại sau khi kiểm tra micro hoặc
+              kết nối tai nghe.
+            </p>
+
+            {micCheckError ? (
+              <div
+                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                role="alert"
+              >
+                {micCheckError}
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleMicCheckStart}
+                disabled={micCheckRecording || micCheckEncoding}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {micCheckRecording ? "Đang ghi…" : "Bắt đầu thử micro"}
+              </button>
+              <button
+                type="button"
+                onClick={handleMicCheckStop}
+                disabled={!micCheckRecording || micCheckEncoding}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {micCheckEncoding ? "Đang tạo MP3…" : "Dừng"}
+              </button>
+              <button
+                type="button"
+                onClick={handleMicCheckRetry}
+                disabled={
+                  micCheckRecording ||
+                  micCheckEncoding ||
+                  !micCheckPreviewUrl
+                }
+                className="px-4 py-2 rounded-lg border border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Thu lại
+              </button>
+            </div>
+
+            {micCheckPreviewUrl ? (
+              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="text-sm font-medium text-gray-800 mb-2">
+                  Nghe thử bản ghi (MP3)
+                </div>
+                <audio
+                  key={micCheckPreviewUrl}
+                  controls
+                  src={micCheckPreviewUrl}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Nếu bạn nghe rõ giọng của mình, micro đã hoạt động ổn định.
+                </p>
+              </div>
+            ) : null}
+
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-6">
+              <button
+                type="button"
+                onClick={() => navigate("/speaking-tests")}
+                className="text-sm text-gray-600 hover:text-gray-900 underline-offset-2 hover:underline"
+              >
+                Quay lại danh sách đề
+              </button>
+              <button
+                type="button"
+                onClick={() => setMicCheckComplete(true)}
+                disabled={!micCheckPreviewUrl || micCheckRecording || micCheckEncoding}
+                className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Âm thanh ổn — vào làm bài
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
