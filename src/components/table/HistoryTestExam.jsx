@@ -147,6 +147,9 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
                                                                     forceWriting:
                                                                         variant ===
                                                                         'writing',
+                                                                    forceSpeaking:
+                                                                        variant ===
+                                                                        'speaking',
                                                                 },
                                                             ),
                                                         );

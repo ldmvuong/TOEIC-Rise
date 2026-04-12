@@ -4,6 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, FlagOutlined } from '@ant-des
 import {
     getUserTestStatisticsResult,
     getWritingTestStatisticsResult,
+    getSpeakingTestStatisticsResult,
 } from '../../api/api';
 import { message } from 'antd';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
@@ -44,6 +45,25 @@ function shouldPreferWritingStatisticsApi(data) {
     return false;
 }
 
+function shouldPreferSpeakingStatisticsApi(data) {
+    if (!data) return false;
+    if (
+        Array.isArray(data.parts) &&
+        data.parts.some((p) => /speaking/i.test(String(p)))
+    ) {
+        return true;
+    }
+    if (
+        data.userAnswersByPart &&
+        Object.keys(data.userAnswersByPart).some((k) =>
+            /speaking/i.test(String(k)),
+        )
+    ) {
+        return true;
+    }
+    return false;
+}
+
 const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [activePartTab, setActivePartTab] = useState(null);
     const [data, setData] = useState(null);
@@ -57,6 +77,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const writingFromUrl = searchParams.get('writing') === '1';
+    const speakingFromUrl = searchParams.get('speaking') === '1';
 
     // Fetch data from API
     useEffect(() => {
@@ -72,11 +93,21 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     setData(writingStatsResponseToViewModel(res.data));
                     return;
                 }
+                if (speakingFromUrl) {
+                    const res = await getSpeakingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(res.data));
+                    return;
+                }
                 const response = await getUserTestStatisticsResult(userTestId);
                 const responseData = response.data;
                 if (shouldPreferWritingStatisticsApi(responseData)) {
                     const wRes = await getWritingTestStatisticsResult(userTestId);
                     setData(writingStatsResponseToViewModel(wRes.data));
+                    return;
+                }
+                if (shouldPreferSpeakingStatisticsApi(responseData)) {
+                    const sRes = await getSpeakingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(sRes.data));
                     return;
                 }
                 setData(responseData);
@@ -89,7 +120,18 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                         setData(writingStatsResponseToViewModel(wRes.data));
                         return;
                     } catch {
-                        // fall through
+                        /* fall through */
+                    }
+                }
+                if (!speakingFromUrl) {
+                    try {
+                        const sRes = await getSpeakingTestStatisticsResult(
+                            userTestId,
+                        );
+                        setData(writingStatsResponseToViewModel(sRes.data));
+                        return;
+                    } catch {
+                        /* fall through */
                     }
                 }
                 console.error('Error fetching statistics:', error);
@@ -100,7 +142,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
         };
 
         fetchData();
-    }, [userTestId, writingFromUrl]);
+    }, [userTestId, writingFromUrl, speakingFromUrl]);
 
     // Get parts list - memoized to use in multiple places
     const partsList = useMemo(() => {
@@ -279,6 +321,10 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                         onClick={() => {
                             if (data.isWritingSummary && data.testId != null) {
                                 const slug = toSlug(data.testName || 'test');
+                                if (speakingFromUrl) {
+                                    navigate(`/speaking-tests/${data.testId}/${slug}`);
+                                    return;
+                                }
                                 navigate(`/writing-tests/${data.testId}/${slug}`);
                                 return;
                             }

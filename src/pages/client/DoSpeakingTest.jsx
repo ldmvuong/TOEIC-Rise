@@ -1075,14 +1075,14 @@ const DoSpeakingTest = () => {
           onOk={() =>
             navigate(
               buildTestResultPath(testResult.userTestId, {
-                parts: testData?.partResponses?.map((p) => p.partName),
+                forceSpeaking: true,
               }),
             )
           }
           onCancel={() =>
             navigate(
               buildTestResultPath(testResult.userTestId, {
-                parts: testData?.partResponses?.map((p) => p.partName),
+                forceSpeaking: true,
               }),
             )
           }

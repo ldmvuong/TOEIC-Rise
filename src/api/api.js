@@ -601,6 +601,9 @@ export const getUserTestStatisticsResult = (userTestId) =>
 export const getWritingTestStatisticsResult = (userTestId) =>
   api.get(`/learner/user-tests/writing/${userTestId}`);
 
+export const getSpeakingTestStatisticsResult = (userTestId) =>
+  api.get(`/learner/user-tests/speaking/${userTestId}`);
+
 export const getUserTestAnswersOverall = (userTestId) =>
   api.get(`/learner/user-tests/answers-overall/${userTestId}`);
 
@@ -609,6 +612,9 @@ export const viewAnswersQuestionDetail = (userAnswerId) =>
 
 export const getOrGenerateWritingFeedback = (userAnswerId) =>
   api.get(`/learner/user-answers/writing-feedback/${userAnswerId}`);
+
+export const getOrGenerateSpeakingFeedback = (userAnswerId) =>
+  api.get(`/learner/user-answers/speaking-feedback/${userAnswerId}`);
 
 export const viewTestResultDetails = (userTestId) =>
   api.get(`/learner/user-tests/detail/${userTestId}`);

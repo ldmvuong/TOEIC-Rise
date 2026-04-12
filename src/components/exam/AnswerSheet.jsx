@@ -1,18 +1,90 @@
 import { useEffect, useState } from 'react';
-import { getUserTestAnswersOverall, getWrongAnswerExam, getDoWrongAnswer } from '../../api/api';
+import {
+    getUserTestAnswersOverall,
+    getWrongAnswerExam,
+    getDoWrongAnswer,
+    viewTestResultDetails,
+} from '../../api/api';
 import { message, Modal } from 'antd';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
 
-function isWritingOrListeningPartName(partName) {
-    return /writing|listening/i.test(String(partName || ''));
+function isWritingListeningOrSpeakingPartName(partName) {
+    return /writing|listening|speaking/i.test(String(partName || ''));
 }
 
 function extractPartOrderNumber(partName) {
     const m = String(partName || '').match(/(\d+)/);
     return m ? parseInt(m[1], 10) : 0;
+}
+
+/**
+ * Learner answer id for GET /learner/user-answers/{userAnswerId}.
+ * Matches TestResultDetail.prepareQuestionData and answers-overall variants.
+ */
+function resolveUserAnswerIdFromRow(q) {
+    if (!q || typeof q !== 'object') return null;
+    const direct =
+        q.userAnswerId ??
+        q.userAnswerID ??
+        q.learnerAnswerId ??
+        q.learnerAnswerID;
+    if (direct != null && direct !== '') return direct;
+    const nested =
+        q.userAnswer && typeof q.userAnswer === 'object'
+            ? q.userAnswer.id ?? q.userAnswer.userAnswerId
+            : null;
+    if (nested != null && nested !== '') return nested;
+    if (q.id != null && q.id !== '') return q.id;
+    return null;
+}
+
+function normalizeAnswersDataByPart(map) {
+    if (!map || typeof map !== 'object') return map;
+    const out = {};
+    for (const [partName, questions] of Object.entries(map)) {
+        if (!Array.isArray(questions)) {
+            out[partName] = questions;
+            continue;
+        }
+        out[partName] = questions.map((q) => ({
+            ...q,
+            userAnswerId: resolveUserAnswerIdFromRow(q),
+        }));
+    }
+    return out;
+}
+
+/** Same shape as GET /learner/user-tests/answers-overall/{id} (part → question rows). */
+function mapTestDetailToAnswersByPart(detail) {
+    const parts = detail?.partResponses;
+    if (!Array.isArray(parts) || parts.length === 0) return {};
+    const out = {};
+    for (const part of parts) {
+        const partName = part.partName || 'Part';
+        const rows = [];
+        for (const group of part.questionGroups || []) {
+            for (const q of group.questions || []) {
+                rows.push({
+                    userAnswerId: resolveUserAnswerIdFromRow(q),
+                    position: q.position ?? q.questionPosition,
+                    userAnswer: q.userAnswer ?? q.selectedAnswer ?? '',
+                    userAnswerText: q.userAnswerText ?? q.userTextAnswer ?? '',
+                    userAnswerAudioUrl: q.userAnswerAudioUrl ?? '',
+                    correctAnswer: q.correctAnswer ?? q.correctOption ?? null,
+                });
+            }
+        }
+        rows.sort(
+            (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
+        );
+        if (rows.length > 0) {
+            out[partName] = rows;
+        }
+    }
+    return out;
 }
 
 const AnswerSheet = ({ userTestId, testId }) => {
@@ -39,15 +111,36 @@ const AnswerSheet = ({ userTestId, testId }) => {
         }
 
         if (skipAnswersForWriting) {
+            setHasFetched(false);
             setAnswersData(null);
-            setHasFetched(true);
+            const fetchWritingFromDetail = async () => {
+                try {
+                    const response = await viewTestResultDetails(userTestId);
+                    const mapped = mapTestDetailToAnswersByPart(response?.data);
+                    setAnswersData(
+                        mapped && Object.keys(mapped).length > 0 ? mapped : null,
+                    );
+                } catch (error) {
+                    console.error('Error fetching writing test detail:', error);
+                    message.error(
+                        error?.message ||
+                            'Không thể tải chi tiết bài Writing (đáp án).',
+                    );
+                    setAnswersData(null);
+                } finally {
+                    setHasFetched(true);
+                }
+            };
+            void fetchWritingFromDetail();
             return;
         }
 
         const fetchAnswers = async () => {
             try {
                 const response = await getUserTestAnswersOverall(userTestId);
-                setAnswersData(response.data || {});
+                setAnswersData(
+                    normalizeAnswersDataByPart(response.data || {}),
+                );
             } catch (error) {
                 console.error('Error fetching answers:', error);
                 message.error('Không thể tải đáp án');
@@ -65,9 +158,15 @@ const AnswerSheet = ({ userTestId, testId }) => {
             question.userAnswer != null && String(question.userAnswer).trim() !== '';
         const hasTextAnswer =
             question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
+        const hasAudioAnswer =
+            question.userAnswerAudioUrl != null &&
+            String(question.userAnswerAudioUrl).trim() !== '';
 
-        if (!hasChoiceAnswer && !hasTextAnswer) {
+        if (!hasChoiceAnswer && !hasTextAnswer && !hasAudioAnswer) {
             return 'skipped'; // Chưa trả lời
+        }
+        if (hasAudioAnswer) {
+            return 'answered'; // Đã nộp file âm thanh (Speaking)
         }
         if (hasTextAnswer && !question.correctAnswer) {
             return 'answered'; // Đã trả lời dạng text (writing)
@@ -83,9 +182,28 @@ const AnswerSheet = ({ userTestId, testId }) => {
         const status = getQuestionStatus(question);
         const userAnswer = question.userAnswer || '';
         const userAnswerText = question.userAnswerText || '';
+        const userAnswerAudioUrl = question.userAnswerAudioUrl || '';
         const correctAnswer = question.correctAnswer;
         const hasTextAnswer = String(userAnswerText).trim() !== '';
-        const hideCorrectKey = isWritingOrListeningPartName(partName);
+        const hasAudioAnswer = String(userAnswerAudioUrl).trim() !== '';
+        const hideCorrectKey = isWritingListeningOrSpeakingPartName(partName);
+
+        if (hasAudioAnswer) {
+            return (
+                <div className="flex flex-col gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500 font-medium">Bản ghi:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Đã nộp</span>
+                    </div>
+                    <audio
+                        controls
+                        src={userAnswerAudioUrl}
+                        className="w-full max-h-9"
+                        preload="metadata"
+                    />
+                </div>
+            );
+        }
 
         if (hasTextAnswer) {
             return (
@@ -154,13 +272,23 @@ const AnswerSheet = ({ userTestId, testId }) => {
         );
     };
 
+    if (skipAnswersForWriting && !hasFetched) {
+        return (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="text-center py-12 text-gray-500">
+                    Đang tải đáp án Writing...
+                </div>
+            </div>
+        );
+    }
+
     // Only show "no data" message after fetch is complete
     if (hasFetched && (!answersData || Object.keys(answersData).length === 0)) {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
                     {skipAnswersForWriting
-                        ? 'Bài Writing không hiển thị bảng đáp án trắc nghiệm tại đây. Xem phần thống kê phía trên để biết số câu đã làm và thời gian.'
+                        ? 'Không có dữ liệu chi tiết bài Writing. Bạn vẫn có thể xem thống kê phía trên hoặc mở trang chi tiết đáp án.'
                         : 'Không có dữ liệu đáp án'}
                 </div>
             </div>
@@ -174,7 +302,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
     const partKeys = Object.keys(answersData);
     const needsWritingListeningSort = partKeys.some((k) =>
-        isWritingOrListeningPartName(k),
+        isWritingListeningOrSpeakingPartName(k),
     );
     const partOrder = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5', 'Part 6', 'Part 7'];
     const sortedParts = needsWritingListeningSort
@@ -192,7 +320,21 @@ const AnswerSheet = ({ userTestId, testId }) => {
               return indexA - indexB;
           });
 
-    const hideRedoWrong = partKeys.some((k) => isWritingOrListeningPartName(k));
+    const hideRedoWrong = partKeys.some((k) =>
+        isWritingListeningOrSpeakingPartName(k),
+    );
+
+    const openAnswerDetailModal = (question) => {
+        const id = resolveUserAnswerIdFromRow(question);
+        if (id == null || id === '') {
+            message.warning(
+                'Không tìm thấy mã câu trả lời để xem chi tiết.',
+            );
+            return;
+        }
+        setSelectedQuestionId(id);
+        setIsAnswerModalOpen(true);
+    };
 
     const handleViewDetails = () => {
         if (userTestId) {
@@ -355,7 +497,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
                           const status = getQuestionStatus(question);
                           return (
                             <div
-                              key={question.userAnswerId}
+                              key={
+                                resolveUserAnswerIdFromRow(question) ??
+                                `${partName}-${question.position}-l`
+                              }
                               className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
                                 status === "correct"
                                   ? "bg-green-50 border-green-200"
@@ -377,12 +522,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Detail Button */}
                                 <button
-                                  onClick={() => {
-                                    setSelectedQuestionId(
-                                      question.userAnswerId,
-                                    );
-                                    setIsAnswerModalOpen(true);
-                                  }}
+                                  type="button"
+                                  onClick={() =>
+                                    openAnswerDetailModal(question)
+                                  }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
                                   Chi tiết
@@ -400,7 +543,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
                           const status = getQuestionStatus(question);
                           return (
                             <div
-                              key={question.userAnswerId}
+                              key={
+                                resolveUserAnswerIdFromRow(question) ??
+                                `${partName}-${question.position}-r`
+                              }
                               className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
                                 status === "correct"
                                   ? "bg-green-50 border-green-200"
@@ -422,12 +568,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Detail Button */}
                                 <button
-                                  onClick={() => {
-                                    setSelectedQuestionId(
-                                      question.userAnswerId,
-                                    );
-                                    setIsAnswerModalOpen(true);
-                                  }}
+                                  type="button"
+                                  onClick={() =>
+                                    openAnswerDetailModal(question)
+                                  }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
                                   Chi tiết

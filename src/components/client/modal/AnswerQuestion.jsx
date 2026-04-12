@@ -3,6 +3,7 @@ import { Modal } from 'antd';
 import {
     viewAnswersQuestionDetail,
     getOrGenerateWritingFeedback,
+    getOrGenerateSpeakingFeedback,
 } from '../../../api/api';
 import { message } from 'antd';
 import parse from 'html-react-parser';
@@ -26,26 +27,40 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     const [showExplanation, setShowExplanation] = useState(false);
     const [writingFeedbackLoading, setWritingFeedbackLoading] = useState(false);
     const [fetchedWritingFeedback, setFetchedWritingFeedback] = useState(null);
+    const [speakingFeedbackLoading, setSpeakingFeedbackLoading] = useState(false);
+    const [fetchedSpeakingFeedback, setFetchedSpeakingFeedback] = useState(null);
 
     useEffect(() => {
-        if (open && userAnswerId) {
-            fetchQuestionDetails();
+        const resolvedId =
+            userAnswerId != null && userAnswerId !== ''
+                ? String(userAnswerId).trim()
+                : '';
+        if (open && resolvedId) {
+            fetchQuestionDetails(resolvedId);
         } else {
             // Reset state when modal closes
             setQuestionData(null);
             setShowTranscript(false);
             setShowExplanation(false);
             setFetchedWritingFeedback(null);
+            setFetchedSpeakingFeedback(null);
         }
     }, [open, userAnswerId]);
 
-    const fetchQuestionDetails = async () => {
-        if (!userAnswerId) return;
+    const fetchQuestionDetails = async (resolvedUserAnswerIdParam) => {
+        const id =
+            resolvedUserAnswerIdParam != null && resolvedUserAnswerIdParam !== ''
+                ? String(resolvedUserAnswerIdParam).trim()
+                : userAnswerId != null && userAnswerId !== ''
+                  ? String(userAnswerId).trim()
+                  : '';
+        if (!id) return;
 
         setLoading(true);
         setFetchedWritingFeedback(null);
+        setFetchedSpeakingFeedback(null);
         try {
-            const response = await viewAnswersQuestionDetail(userAnswerId);
+            const response = await viewAnswersQuestionDetail(id);
             const data = response.data || null;
             
             // Ensure options is always an array (keep null values for rendering)
@@ -58,7 +73,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             if (data) {
                 setQuestionData({
                     ...data,
-                    userAnswerId: data.userAnswerId ?? userAnswerId
+                    userAnswerId: data.userAnswerId ?? id,
                 });
             } else {
                 setQuestionData(null);
@@ -101,6 +116,33 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
         }
     };
 
+    const handleFetchSpeakingFeedback = async () => {
+        if (!resolvedUserAnswerId) {
+            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            return;
+        }
+        setSpeakingFeedbackLoading(true);
+        try {
+            const res = await getOrGenerateSpeakingFeedback(resolvedUserAnswerId);
+            const text =
+                typeof res?.data === 'string'
+                    ? res.data
+                    : res?.data != null
+                      ? String(res.data)
+                      : '';
+            setFetchedSpeakingFeedback(text);
+        } catch (error) {
+            console.error('Speaking feedback error:', error);
+            message.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể lấy nhận xét Speaking.',
+            );
+        } finally {
+            setSpeakingFeedbackLoading(false);
+        }
+    };
+
     if (!open) return null;
 
     const {
@@ -116,6 +158,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
         correctOption,
         userAnswer = '',
         userAnswerText,
+        userAnswerAudioUrl = '',
         feedback,
         explanation,
     } = questionData || {};
@@ -130,10 +173,20 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
 
     const hasUserAnswerText =
         userAnswerText != null && String(userAnswerText).trim() !== '';
-    const effectiveFeedback =
-        fetchedWritingFeedback != null && String(fetchedWritingFeedback).trim() !== ''
+    const hasUserAnswerAudio =
+        userAnswerAudioUrl != null && String(userAnswerAudioUrl).trim() !== '';
+    const speakingFeedbackPicked =
+        fetchedSpeakingFeedback != null &&
+        String(fetchedSpeakingFeedback).trim() !== ''
+            ? fetchedSpeakingFeedback
+            : null;
+    const writingFeedbackPicked =
+        fetchedWritingFeedback != null &&
+        String(fetchedWritingFeedback).trim() !== ''
             ? fetchedWritingFeedback
-            : feedback;
+            : null;
+    const effectiveFeedback =
+        speakingFeedbackPicked ?? writingFeedbackPicked ?? feedback;
     const showFeedbackBlock =
         effectiveFeedback != null && String(effectiveFeedback).trim() !== '';
 
@@ -375,6 +428,34 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                     {writingFeedbackLoading
                                         ? 'Đang lấy nhận xét...'
                                         : 'Lấy nhận xét Writing từ AI'}
+                                </button>
+                            ) : null}
+                        </div>
+                    )}
+
+                    {hasUserAnswerAudio && (
+                        <div className="mt-4 ml-11 space-y-3">
+                            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                                <p className="text-sm font-semibold text-emerald-800 mb-2">
+                                    Bản ghi trả lời của bạn:
+                                </p>
+                                <audio
+                                    controls
+                                    src={String(userAnswerAudioUrl).trim()}
+                                    className="w-full max-h-10"
+                                    preload="metadata"
+                                />
+                            </div>
+                            {resolvedUserAnswerId ? (
+                                <button
+                                    type="button"
+                                    onClick={handleFetchSpeakingFeedback}
+                                    disabled={speakingFeedbackLoading}
+                                    className="px-4 py-2 rounded-lg border border-teal-300 bg-teal-50 text-teal-900 text-sm font-medium hover:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {speakingFeedbackLoading
+                                        ? 'Đang lấy nhận xét...'
+                                        : 'Lấy nhận xét Speaking từ AI'}
                                 </button>
                             ) : null}
                         </div>

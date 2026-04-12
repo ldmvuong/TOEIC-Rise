@@ -10,9 +10,9 @@ import ChatQuestion from '../../components/client/modal/ChatQuestion';
 import ReportQuestion from '../../components/client/modal/ReportQuestion';
 import DictionaryText from '../../components/shared/DictionaryText';
 
-/** Part names like "Listening Part 1" / "Writing Part 2" need special ordering and no public correct key. */
-function isWritingOrListeningPartName(partName) {
-    return /writing|listening/i.test(String(partName || ''));
+/** Part names like "Listening Part 1" / "Writing Part 2" / "Speaking Part 1" need special ordering and no public correct key. */
+function isWritingListeningOrSpeakingPartName(partName) {
+    return /writing|listening|speaking/i.test(String(partName || ''));
 }
 
 function extractPartOrderNumber(partName) {
@@ -59,7 +59,7 @@ const TestResultDetail = () => {
     const sortedPartResponses = useMemo(() => {
         const parts = testData?.partResponses;
         if (!parts?.length) return [];
-        const needsSort = parts.some((p) => isWritingOrListeningPartName(p.partName));
+        const needsSort = parts.some((p) => isWritingListeningOrSpeakingPartName(p.partName));
         if (!needsSort) return parts;
         return [...parts].sort((a, b) => {
             const na = extractPartOrderNumber(a.partName);
@@ -107,6 +107,10 @@ const TestResultDetail = () => {
             correctOption: question.correctOption ?? question.correctAnswer ?? null,
             userAnswer: question.userAnswer ?? question.selectedAnswer ?? '',
             userAnswerText: question.userAnswerText ?? question.userTextAnswer ?? '',
+            userAnswerAudioUrl:
+                question.userAnswerAudioUrl != null
+                    ? String(question.userAnswerAudioUrl)
+                    : '',
             feedback: question.feedback ?? null,
             explanation: question.explanation ?? group?.explanation ?? null,
             partName: part?.partName ?? question.partName ?? null,
@@ -145,7 +149,7 @@ const TestResultDetail = () => {
 
     // Render question with answer status
     const renderQuestion = (question, partNumber, group, part) => {
-        const hideCorrectAnswerLine = isWritingOrListeningPartName(part?.partName);
+        const hideCorrectAnswerLine = isWritingListeningOrSpeakingPartName(part?.partName);
         const isPart2 = partNumber === 2;
         const isPart6Or7 = partNumber === 6 || partNumber === 7;
         const maxOptions = isPart2 ? 3 : 4;
@@ -153,6 +157,9 @@ const TestResultDetail = () => {
         const preparedQuestion = prepareQuestionData(question, group, part);
         const hasWritingAnswer =
             question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
+        const hasSpeakingAudio =
+            question.userAnswerAudioUrl != null &&
+            String(question.userAnswerAudioUrl).trim() !== '';
 
         return (
             <div id={`question-${question.position}`} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
@@ -261,6 +268,19 @@ const TestResultDetail = () => {
                     <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
                         <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
                         <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.userAnswerText}</p>
+                    </div>
+                )}
+
+                {/* Speaking — learner recording */}
+                {hasSpeakingAudio && (
+                    <div className="mt-4 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <p className="text-sm font-semibold text-emerald-800 mb-2">Bản ghi trả lời của bạn:</p>
+                        <audio
+                            controls
+                            src={String(question.userAnswerAudioUrl).trim()}
+                            className="w-full max-h-10"
+                            preload="metadata"
+                        />
                     </div>
                 )}
 
@@ -520,8 +540,12 @@ const TestResultDetail = () => {
                                     {part.questionGroups?.map((group) =>
                                         group.questions?.map((question) => {
                                             const hasAnswered =
-                                                (question.userAnswer != null && String(question.userAnswer).trim() !== '') ||
-                                                (question.userAnswerText != null && String(question.userAnswerText).trim() !== '');
+                                                (question.userAnswer != null &&
+                                                    String(question.userAnswer).trim() !== '') ||
+                                                (question.userAnswerText != null &&
+                                                    String(question.userAnswerText).trim() !== '') ||
+                                                (question.userAnswerAudioUrl != null &&
+                                                    String(question.userAnswerAudioUrl).trim() !== '');
                                             const status = question.isCorrect
                                                 ? 'correct'
                                                 : hasAnswered
