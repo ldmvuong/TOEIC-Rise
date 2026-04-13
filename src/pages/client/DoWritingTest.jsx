@@ -478,12 +478,25 @@ const DoWritingTest = () => {
     if (!ok) setFinished(true);
   };
 
+  const handleRestrictedClipboardAction = useCallback(
+    (e) => {
+      if (!isFullTest) return;
+      e.preventDefault();
+      message.warning("Full test Writing không cho phép copy/paste.");
+    },
+    [isFullTest],
+  );
+
   const currentQuestionNote = currentQuestion?.id
     ? questionNotes[currentQuestion.id] || ""
     : "";
   const currentQuestionAnswer = currentQuestion?.id
     ? questionAnswers[currentQuestion.id] || ""
     : "";
+  const currentAnswerWordCount = String(currentQuestionAnswer)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
 
   if (loading) {
     return <Spin fullscreen tip="Đang tải đề Writing..." />;
@@ -634,6 +647,9 @@ const DoWritingTest = () => {
               <div className="text-sm font-medium text-gray-700 mb-2">
                 Bài viết của bạn
               </div>
+              <div className="text-xs text-gray-500 mb-2">
+                Số từ: {currentAnswerWordCount}
+              </div>
               <textarea
                 value={currentQuestionAnswer}
                 onChange={(e) =>
@@ -642,6 +658,10 @@ const DoWritingTest = () => {
                     [currentQuestion.id]: e.target.value,
                   }))
                 }
+                onCopy={handleRestrictedClipboardAction}
+                onCut={handleRestrictedClipboardAction}
+                onPaste={handleRestrictedClipboardAction}
+                onDrop={handleRestrictedClipboardAction}
                 placeholder="Nhập câu trả lời cho câu hỏi này..."
                 className="w-full min-h-[220px] rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
