@@ -337,6 +337,9 @@ export const submitMiniTest = (payload) => {
   return api.post("/learner/mini-tests", payload);
 };
 
+// Dictation (Learner)
+export const getDictationLibrary = () => api.get("/learner/dictation/library");
+
 // === FLASHCARD APIs ===
 
 export const callFetchPublicFlashcards = (query) => {
