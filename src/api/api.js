@@ -30,7 +30,7 @@ export const loginWithGoogle = () => {
   window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/auth/login/google?callback=${callbackUrl}`;
 };
 
-export const refreshToken = () => api.post("/auth/refresh-token");
+export const refreshToken = () => api.get("/auth/refresh-token");
 
 // Admin Test Sets
 

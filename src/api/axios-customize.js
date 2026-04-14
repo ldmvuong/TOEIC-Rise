@@ -22,9 +22,24 @@ const PUBLIC_ENDPOINTS = [
   "/blog-posts",
 ];
 
+const CUSTOM_AUTH_PUBLIC_ENDPOINTS = ["/auth/reset-password"];
+
+const getRequestPath = (url = "") => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  }
+  return url.split("?")[0];
+};
+
 // Helper check URL
 const isPublicUrl = (url) => {
-  return PUBLIC_ENDPOINTS.some((endpoint) => url.startsWith(endpoint));
+  const path = getRequestPath(url);
+  return PUBLIC_ENDPOINTS.some((endpoint) => path.startsWith(endpoint));
 };
 
 // Mutex để tránh multiple refresh token calls
@@ -72,15 +87,14 @@ export const clearAccessToken = () => {
 // --- Interceptors ---
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  const url = config?.url || '';
+  const url = config?.url || "";
+  const path = getRequestPath(url);
 
   if (isPublicUrl(url)) {
-    // Nếu Authorization header đã được set trong config.headers (như OTP token cho reset-password), giữ nguyên
-    // Chỉ xóa nếu nó đến từ defaults.headers.common (access token)
-    const hasCustomAuth = config.headers && config.headers.Authorization && 
-                         config.headers.Authorization.startsWith('Bearer ');
-    if (!hasCustomAuth && config.headers && config.headers.Authorization) {
-      // Xóa Authorization từ defaults nếu không phải là custom auth
+    const allowCustomAuth = CUSTOM_AUTH_PUBLIC_ENDPOINTS.some((endpoint) =>
+      path.startsWith(endpoint),
+    );
+    if (!allowCustomAuth && config.headers?.Authorization) {
       delete config.headers.Authorization;
     }
     return config;
