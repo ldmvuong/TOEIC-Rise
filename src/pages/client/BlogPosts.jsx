@@ -15,6 +15,7 @@ import {
   ArrowLeftOutlined,
   CalendarOutlined,
   EyeOutlined,
+  RightOutlined,
   SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -25,12 +26,6 @@ import {
 } from "@/api/api";
 
 const { Title, Text } = Typography;
-
-const STATUS_COLOR = {
-  DRAFT: "default",
-  PUBLISHED: "green",
-  ARCHIVED: "orange",
-};
 
 function formatUpdatedAt(value) {
   if (!value) return "—";
@@ -136,11 +131,6 @@ const BlogPostsPage = () => {
               <Title level={2} style={{ marginBottom: 6 }}>
                 {activeCategory?.name || "Category posts"}
               </Title>
-              <Text type="secondary" className="text-base">
-                {activeCategory
-                  ? `Category: ${activeCategory.slug}`
-                  : `Category: ${slug}`}
-              </Text>
             </div>
 
             <Card
@@ -167,16 +157,6 @@ const BlogPostsPage = () => {
                   className="rounded-xl"
                 />
                 <div className="flex gap-2 justify-end">
-                  <Button
-                    size="large"
-                    onClick={() => {
-                      setQ("");
-                      setAppliedQ("");
-                      setMeta((m) => ({ ...m, page: 0 }));
-                    }}
-                  >
-                    Reset
-                  </Button>
                   <Button
                     type="primary"
                     size="large"
@@ -211,39 +191,56 @@ const BlogPostsPage = () => {
             ) : (
               <div className="space-y-4">
                 {posts.map((p) => {
-                  const status = p.status;
-                  const statusColor = STATUS_COLOR[status] ?? "default";
                   return (
                     <Card
                       key={p.id}
                       hoverable
-                      className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                      className={`rounded-2xl border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-300 transition-all ${p?.slug ? "cursor-pointer" : ""}`}
                       styles={{ body: { padding: 16 } }}
+                      onClick={() => {
+                        if (p?.slug) navigate(`/blog/posts/${p.slug}`);
+                      }}
+                      onKeyDown={(e) => {
+                        if (!p?.slug) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(`/blog/posts/${p.slug}`);
+                        }
+                      }}
+                      role={p?.slug ? "link" : undefined}
+                      tabIndex={p?.slug ? 0 : -1}
                     >
                       <div className="flex flex-col sm:flex-row gap-4">
                         <div className="sm:w-[210px] w-full">
                           {p.thumbnailUrl ? (
-                            <div className="rounded-xl overflow-hidden bg-slate-100">
+                            <div className="rounded-xl overflow-hidden bg-slate-100 relative">
                               <Image
                                 src={p.thumbnailUrl}
                                 alt=""
                                 className="w-full object-cover"
-                                style={{ height: 120, width: "100%", objectFit: "cover" }}
+                                style={{
+                                  height: 120,
+                                  width: "100%",
+                                  objectFit: "cover",
+                                  objectPosition: "center",
+                                }}
                                 preview={false}
                               />
+                              <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
+                                Featured
+                              </div>
                             </div>
                           ) : (
-                            <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200" />
+                            <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 relative">
+                              <div className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
+                                Featured
+                              </div>
+                            </div>
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
-                            {status ? (
-                              <Tag color={statusColor} className="text-xs">
-                                {status}
-                              </Tag>
-                            ) : null}
                             {p.categoryName ? (
                               <Tag color="blue" className="text-xs">
                                 {p.categoryName}
@@ -279,11 +276,12 @@ const BlogPostsPage = () => {
                             ) : null}
                           </div>
 
-                          <div className="mt-4 flex justify-end">
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-sm font-medium text-indigo-600">
+                              Read article
+                            </span>
                             {p?.slug ? (
-                              <Link to={`/blog/posts/${p.slug}`}>
-                                <Button type="primary">Read</Button>
-                              </Link>
+                              <Button type="primary">Read</Button>
                             ) : (
                               <Button disabled>Read</Button>
                             )}
@@ -315,7 +313,14 @@ const BlogPostsPage = () => {
           <div className="lg:col-span-4">
             <Card
               className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4"
-              title="Browse categories"
+              title={
+                <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 border border-indigo-100 px-3 py-2 -mx-1">
+                  <div className="text-slate-900 font-semibold">Browse categories</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    Pick a topic and explore related posts
+                  </div>
+                </div>
+              }
               styles={{ body: { padding: 16 } }}
             >
               {categoriesLoading ? (
@@ -326,8 +331,8 @@ const BlogPostsPage = () => {
                 <Empty description="No categories" />
               ) : (
                 <div className="flex flex-col gap-2">
-                  <div className="mt-2 text-xs text-slate-500">
-                    Categories
+                  <div className="mt-1 text-xs text-slate-500">
+                    {categories.filter((c) => (c?.isActive ?? true) === true).length} categories
                   </div>
                   <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-2">
                     {categories
@@ -337,15 +342,18 @@ const BlogPostsPage = () => {
                         return (
                           <Button
                             key={c.id ?? c.slug}
-                            type={active ? "primary" : "default"}
                             onClick={() => navigate(`/blog/categories/${c.slug}`)}
-                            className="text-left w-full"
+                            className={`text-left w-full h-auto py-2.5 px-3 rounded-xl border transition-all ${
+                              active
+                                ? "bg-indigo-600 border-indigo-600 text-white shadow-sm hover:!bg-indigo-600 hover:!text-white"
+                                : "bg-white border-slate-200 text-slate-700 hover:!border-indigo-300 hover:!text-indigo-600 hover:!bg-indigo-50"
+                            }`}
                           >
                             <div className="flex items-center justify-between gap-2 w-full">
-                              <span className="truncate">{c.name}</span>
-                              <span className="text-xs text-slate-400">
-                                {c.slug}
-                              </span>
+                              <span className="truncate font-medium">{c.name}</span>
+                              <RightOutlined
+                                className={active ? "text-white/90 text-xs" : "text-slate-400 text-xs"}
+                              />
                             </div>
                           </Button>
                         );

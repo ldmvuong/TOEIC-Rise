@@ -6,6 +6,7 @@ import {
   ArrowLeftOutlined,
   CalendarOutlined,
   EyeOutlined,
+  ReadOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -157,34 +158,35 @@ const BlogPostDetailPublicPage = () => {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <Space wrap className="mb-5">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-            Back
-          </Button>
-          {post.categorySlug ? (
-            <Link to={`/blog/categories/${post.categorySlug}`}>
-              <Button type="link">
-                Category: {post.categoryName || post.categorySlug}
-              </Button>
-            </Link>
-          ) : null}
-        </Space>
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3 mb-5">
+          <Space wrap>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+              Back
+            </Button>
+            {post.categorySlug ? (
+              <Link to={`/blog/categories/${post.categorySlug}`}>
+                <Button type="link">
+                  Category: {post.categoryName || post.categorySlug}
+                </Button>
+              </Link>
+            ) : null}
+          </Space>
+        </div>
 
         <Card
           className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
           styles={{ body: { padding: 0 } }}
         >
           {post.thumbnailUrl ? (
-            <div className="bg-slate-100 max-h-[420px] overflow-hidden flex items-center justify-center">
+            <div className="bg-slate-100">
               <Image
                 src={post.thumbnailUrl}
                 alt=""
-                className="w-full object-cover"
+                className="w-full"
                 style={{
                   width: "100%",
-                  maxHeight: 420,
-                  objectFit: "cover",
-                  objectPosition: "center center",
+                  height: "auto",
+                  display: "block",
                 }}
                 preview
               />
@@ -193,20 +195,20 @@ const BlogPostDetailPublicPage = () => {
             <div className="h-[180px] bg-gradient-to-br from-slate-100 via-white to-indigo-50 border-b border-slate-200" />
           )}
 
-          <div className="p-6 md:p-8">
-            <div className="flex flex-wrap items-center gap-3 mb-3 text-sm text-slate-600">
+          <div className="p-6 md:p-8 bg-gradient-to-b from-white to-slate-50/50">
+            <div className="flex flex-wrap items-center gap-2 mb-3 text-sm text-slate-600">
               {post.authorName ? (
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-2.5 py-1">
                   <UserOutlined />
                   {post.authorName}
                 </span>
               ) : null}
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-2.5 py-1">
                 <CalendarOutlined />
                 {formatDate(post.updatedAt)}
               </span>
               {post.views != null ? (
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-2.5 py-1">
                   <EyeOutlined />
                   {Number(post.views).toLocaleString()} views
                 </span>
@@ -228,8 +230,15 @@ const BlogPostDetailPublicPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           <div className="lg:col-span-9">
             <Card
-              className="rounded-2xl border-slate-200 shadow-sm"
-              title="Article"
+              className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
+              title={
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800">Article</span>
+                  <span className="text-xs text-slate-500">
+                    {tocItems.length > 0 ? `${tocItems.length} sections` : "Reading mode"}
+                  </span>
+                </div>
+              }
               styles={{ body: { padding: 18 } }}
             >
               <div
@@ -324,8 +333,15 @@ const BlogPostDetailPublicPage = () => {
         </div>
 
         <Card
-          className="rounded-2xl border-slate-200 shadow-sm mt-6"
-          title="Related posts"
+          className="rounded-2xl border-slate-200 shadow-sm mt-6 overflow-hidden"
+          title={
+            <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 border border-indigo-100 px-3 py-2 -mx-1">
+              <div className="text-slate-900 font-semibold">Related posts</div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                Continue reading similar content
+              </div>
+            </div>
+          }
           styles={{ body: { padding: 16 } }}
         >
           {relatedLoading ? (
@@ -340,8 +356,20 @@ const BlogPostDetailPublicPage = () => {
                 <Card
                   key={rp.id}
                   hoverable
-                  className="rounded-xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                  className={`rounded-xl border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-300 transition-all ${rp?.slug ? "cursor-pointer" : ""}`}
                   styles={{ body: { padding: 12 } }}
+                  onClick={() => {
+                    if (rp?.slug) navigate(`/blog/posts/${rp.slug}`);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!rp?.slug) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/blog/posts/${rp.slug}`);
+                    }
+                  }}
+                  role={rp?.slug ? "link" : undefined}
+                  tabIndex={rp?.slug ? 0 : -1}
                 >
                   {rp.thumbnailUrl ? (
                     <div className="rounded-lg overflow-hidden bg-slate-100 mb-3">
@@ -350,7 +378,12 @@ const BlogPostDetailPublicPage = () => {
                         alt=""
                         preview={false}
                         className="w-full object-cover"
-                        style={{ height: 130, width: "100%", objectFit: "cover" }}
+                        style={{
+                          height: 130,
+                          width: "100%",
+                          objectFit: "cover",
+                          objectPosition: "center",
+                        }}
                       />
                     </div>
                   ) : (
@@ -364,13 +397,12 @@ const BlogPostDetailPublicPage = () => {
                       {rp.summary}
                     </div>
                   ) : null}
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-medium text-indigo-600">Read article</span>
                     {rp.slug ? (
-                      <Link to={`/blog/posts/${rp.slug}`}>
-                        <Button size="small" type="primary">
-                          Read
-                        </Button>
-                      </Link>
+                      <Button size="small" type="primary">
+                        Read
+                      </Button>
                     ) : (
                       <Button size="small" disabled>
                         Read

@@ -23,12 +23,6 @@ import { searchPublicBlogs } from "@/api/api";
 
 const { Title, Text } = Typography;
 
-const STATUS_COLOR = {
-  DRAFT: "default",
-  PUBLISHED: "green",
-  ARCHIVED: "orange",
-};
-
 function formatUpdatedAt(value) {
   if (!value) return "—";
   const normalized = typeof value === "string" ? value.replace(" ", "T") : value;
@@ -149,34 +143,62 @@ const BlogSearchPage = () => {
         ) : (
           <div className="space-y-4">
             {posts.map((p) => {
-              const statusColor = STATUS_COLOR[p.status] ?? "default";
+              const displayAuthor =
+                p?.authorName ||
+                p?.author?.fullName ||
+                p?.author?.name ||
+                p?.createdByName ||
+                p?.createdBy;
               return (
                 <Card
                   key={p.id}
                   hoverable
-                  className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                  className={`rounded-2xl border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-300 transition-all ${p?.slug ? "cursor-pointer" : ""}`}
                   styles={{ body: { padding: 16 } }}
+                  onClick={() => {
+                    if (p?.slug) navigate(`/blog/posts/${p.slug}`);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!p?.slug) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/blog/posts/${p.slug}`);
+                    }
+                  }}
+                  role={p?.slug ? "link" : undefined}
+                  tabIndex={p?.slug ? 0 : -1}
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="sm:w-[210px] w-full">
                       {p.thumbnailUrl ? (
-                        <div className="rounded-xl overflow-hidden bg-slate-100">
+                        <div className="rounded-xl overflow-hidden bg-slate-100 relative">
                           <Image
                             src={p.thumbnailUrl}
                             alt=""
                             className="w-full object-cover"
-                            style={{ height: 120, width: "100%", objectFit: "cover" }}
+                            style={{
+                              height: 120,
+                              width: "100%",
+                              objectFit: "cover",
+                              objectPosition: "center",
+                            }}
                             preview={false}
                           />
+                          <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
+                            Match
+                          </div>
                         </div>
                       ) : (
-                        <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200" />
+                        <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 relative">
+                          <div className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
+                            Match
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        {p.status ? <Tag color={statusColor}>{p.status}</Tag> : null}
                         {p.categoryName ? <Tag color="blue">{p.categoryName}</Tag> : null}
                       </div>
                       <div className="text-lg font-semibold text-slate-900 line-clamp-2">
@@ -189,10 +211,10 @@ const BlogSearchPage = () => {
                       ) : null}
 
                       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                        {p.authorName ? (
+                        {displayAuthor ? (
                           <span className="inline-flex items-center gap-1">
                             <UserOutlined />
-                            {p.authorName}
+                            {displayAuthor}
                           </span>
                         ) : null}
                         <span className="inline-flex items-center gap-1">
@@ -207,11 +229,12 @@ const BlogSearchPage = () => {
                         ) : null}
                       </div>
 
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-sm font-medium text-indigo-600">
+                          Read article
+                        </span>
                         {p?.slug ? (
-                          <Link to={`/blog/posts/${p.slug}`}>
-                            <Button type="primary">Read</Button>
-                          </Link>
+                          <Button type="primary">Read</Button>
                         ) : (
                           <Button disabled>Read</Button>
                         )}
