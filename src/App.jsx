@@ -272,6 +272,14 @@ export default function App() {
             </ProtectedRoute>
           ),
         },
+        {
+          path: "dictation/practice/:testId/part/:partId",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <DictationPractice />
+            </ProtectedRoute>
+          ),
+        },
       ],
     },
     {

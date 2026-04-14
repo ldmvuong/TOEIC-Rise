@@ -53,12 +53,9 @@ export default function DictationLibrary() {
   }, []);
 
   const handlePickPart = (testId, partRaw) => {
-    if (!testId || !partRaw) return;
-    const params = new URLSearchParams({
-      testId: String(testId),
-      part: String(partRaw),
-    });
-    navigate(`/dictation/practice?${params.toString()}`);
+    const parsed = normalizePart(partRaw);
+    if (!testId || !parsed?.no) return;
+    navigate(`/dictation/practice/${testId}/part/${parsed.no}`);
   };
 
   return (
@@ -105,9 +102,6 @@ export default function DictationLibrary() {
                           <div className="text-base font-semibold text-slate-900 truncate">
                             {set?.name || "Untitled"}
                           </div>
-                          <div className="text-sm text-slate-600 mt-1">
-                            {tests.length} bài thi đã có phần chép chính tả
-                          </div>
                         </div>
                         <div
                           className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold border ${
@@ -141,15 +135,12 @@ export default function DictationLibrary() {
                         <div className="text-xl font-bold text-slate-900 truncate">
                           {activeSet?.name || "Untitled"}
                         </div>
-                        <div className="text-sm text-slate-600 shrink-0">
-                          {tests.length} bài test
-                        </div>
                       </div>
                     </div>
 
                     <div className="p-5 sm:p-6">
                       {!tests.length ? (
-                        <Empty description="Bộ đề này chưa có bài test sẵn sàng" />
+                        <Empty description="Bộ đề này chưa có nội dung" />
                       ) : (
                         <div className="space-y-3">
                           {tests.map((t) => {
@@ -164,15 +155,12 @@ export default function DictationLibrary() {
                                     <div className="text-base font-semibold text-slate-900 truncate">
                                       {t?.name || "Untitled test"}
                                     </div>
-                                    <div className="text-sm text-slate-600 mt-1">
-                                      Chọn Part để bắt đầu
-                                    </div>
                                   </div>
 
                                   <div className="flex flex-wrap gap-2">
                                     {parts.map((p) => (
                                       <button
-                                        key={p.raw}
+                                        key={String(p.no)}
                                         type="button"
                                         onClick={() => handlePickPart(t?.id, p.raw)}
                                         className="px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition"

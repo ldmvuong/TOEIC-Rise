@@ -339,6 +339,8 @@ export const submitMiniTest = (payload) => {
 
 // Dictation (Learner)
 export const getDictationLibrary = () => api.get("/learner/dictation/library");
+export const getDictationPart = (testId, partId) =>
+  api.get(`/learner/dictation/test/${testId}/part/${partId}`);
 
 // === FLASHCARD APIs ===
 
