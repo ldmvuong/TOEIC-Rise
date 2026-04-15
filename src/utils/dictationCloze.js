@@ -26,10 +26,38 @@ function isWordToken(token) {
 export function tokenizeText(text) {
   const raw = String(text ?? "");
   // Split while keeping separators (spaces/punct) as tokens
-  const tokens = raw
-    .split(/(\s+|[^A-Za-z0-9\s]+)/g)
+  const splitTokens = raw
+    // Keep English contractions as one token: I'm, I'll, don't, we're...
+    // Also keep hyphenated words together: state-of-the-art
+    .split(/(\s+|[^A-Za-z0-9’'\-\s]+)/g)
     .filter((t) => t !== "");
-  return tokens;
+
+  // Merge time-like tokens: "3:30", "12:05", "1:02:03" should be treated as a single token.
+  // After split, ":" is usually its own token, so we stitch number ":" number (repeatable).
+  const merged = [];
+  for (let i = 0; i < splitTokens.length; i++) {
+    const cur = splitTokens[i];
+    if (!/^\d+$/.test(cur)) {
+      merged.push(cur);
+      continue;
+    }
+
+    let acc = cur;
+    let j = i;
+    while (
+      splitTokens[j + 1] === ":" &&
+      typeof splitTokens[j + 2] === "string" &&
+      /^\d+$/.test(splitTokens[j + 2])
+    ) {
+      acc = `${acc}:${splitTokens[j + 2]}`;
+      j += 2;
+    }
+
+    merged.push(acc);
+    i = j;
+  }
+
+  return merged;
 }
 
 export function buildCloze(text, ratio, seedKey) {

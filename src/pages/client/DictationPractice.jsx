@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Empty, Spin, message } from "antd";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Drawer, Empty, Modal, Spin, message } from "antd";
 import { getDictationPart } from "../../api/api";
 import { buildCloze, normalizeAnswer } from "../../utils/dictationCloze";
+import DictationAudioPlayer from "../../components/dictation/DictationAudioPlayer";
+import { IconCheckCircle, IconPencil, IconSparkles } from "../../components/icons";
 
 function clamp01(n) {
   const x = Number(n);
@@ -21,10 +23,12 @@ function getCorrectLetter(group) {
 }
 
 export default function DictationPractice() {
+  const navigate = useNavigate();
   const routeParams = useParams();
   const [params] = useSearchParams();
   const testId = routeParams?.testId ?? params.get("testId");
   const partId = routeParams?.partId ?? params.get("partId");
+  const [navOpen, setNavOpen] = useState(false);
 
   const partNo = useMemo(() => {
     const n = Number(partId);
@@ -36,15 +40,18 @@ export default function DictationPractice() {
 
   const [mode, setMode] = useState("FILL"); // FILL | FLIP
   const [ratio, setRatio] = useState(0.3); // 0.3 | 0.5 | 0.7
-  const [autoPlay, setAutoPlay] = useState(false);
 
   // Per group state
   const [selectedByGroupId, setSelectedByGroupId] = useState({});
   const [revealAllByGroupId, setRevealAllByGroupId] = useState({});
   const [flipReveal, setFlipReveal] = useState({}); // { [groupId]: { [tokenKey]: true } }
   const [fillAnswers, setFillAnswers] = useState({}); // { [groupId]: { [tokenKey]: string } }
+  const [selectedByQuestionId, setSelectedByQuestionId] = useState({});
+  const [expandedExplainByQuestionId, setExpandedExplainByQuestionId] = useState({});
 
-  const audioRef = useRef(null);
+  const rootRef = useRef(null);
+  const audioCtlRef = useRef(null);
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const fetchPart = async () => {
@@ -84,24 +91,13 @@ export default function DictationPractice() {
     setRevealAllByGroupId({});
     setFlipReveal({});
     setFillAnswers({});
+    setSelectedByQuestionId({});
+    setExpandedExplainByQuestionId({});
   }, [testId, partId]);
 
   const total = groups.length;
   const currentGroup = total ? groups[Math.min(Math.max(currentIndex, 0), total - 1)] : null;
   const currentGroupId = currentGroup?.id ?? currentIndex;
-
-  useEffect(() => {
-    if (!autoPlay) return;
-    // Play audio when switching question
-    const t = window.setTimeout(() => {
-      try {
-        audioRef.current?.play?.();
-      } catch {
-        // ignore autoplay restrictions
-      }
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, [autoPlay, currentIndex]);
 
   const renderClozeLine = (groupId, text, seedKey) => {
     const effectiveRatio = clamp01(ratio);
@@ -140,6 +136,8 @@ export default function DictationPractice() {
               <button
                 key={tk.key}
                 type="button"
+                data-cloze-flip="1"
+                data-revealed={isRevealed ? "1" : "0"}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   if (revealAll) return;
@@ -172,6 +170,10 @@ export default function DictationPractice() {
             <span key={tk.key} className="inline-block align-baseline mx-0.5">
               <input
                 value={typed}
+                data-cloze-input="1"
+                data-filled={typed ? "1" : "0"}
+                data-cloze-key={tk.key}
+                data-correct={String(tk.t ?? "")}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
                 readOnly={revealAll}
@@ -207,20 +209,247 @@ export default function DictationPractice() {
     setSelectedByGroupId((prev) => ({ ...prev, [groupId]: letter }));
   };
 
-  const answeredCount = useMemo(() => {
-    let c = 0;
-    for (const g of groups) {
-      const gid = g?.id;
-      if (gid && selectedByGroupId[gid]) c += 1;
+  const handleSelectQuestionOption = (questionId, letter) => {
+    if (!questionId || !letter) return;
+    setSelectedByQuestionId((prev) => {
+      if (prev[questionId]) return prev; // lock after selecting
+      return { ...prev, [questionId]: letter };
+    });
+  };
+
+  const handleBack = () => {
+    Modal.confirm({
+      title: "Quay lại thư viện?",
+      content: "Bạn có thể mất tiến độ đang làm ở câu hiện tại.",
+      okText: "Quay lại",
+      cancelText: "Ở lại",
+      centered: true,
+      onOk: () => navigate("/dictation"),
+    });
+  };
+
+  const runHint = () => {
+    const root = rootRef.current || document;
+    if (mode === "FLIP") {
+      const btn = root.querySelector('button[data-cloze-flip="1"][data-revealed="0"]');
+      btn?.click?.();
+      return;
     }
-    return c;
-  }, [groups, selectedByGroupId]);
+
+    const groupId = currentGroupId;
+    const revealAll = !!revealAllByGroupId[groupId];
+    if (revealAll) return;
+
+    const inputs = Array.from(root.querySelectorAll('input[data-cloze-input="1"]'));
+    const next = inputs.find((el) => {
+      const correct = el.getAttribute("data-correct") || "";
+      const typedNow = el.value || "";
+      if (!typedNow) return true;
+      return normalizeAnswer(typedNow) !== normalizeAnswer(correct);
+    });
+    if (!next) return;
+
+    const tokenKey = next.getAttribute("data-cloze-key");
+    const correct = next.getAttribute("data-correct") || "";
+    if (!tokenKey) return;
+
+    setFillAnswers((prev) => ({
+      ...prev,
+      [groupId]: { ...(prev[groupId] || {}), [tokenKey]: correct },
+    }));
+    next.focus?.();
+    next.select?.();
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      // Avoid hijacking shortcuts while typing in an input, except Tab hint.
+      const tag = (e.target?.tagName || "").toLowerCase();
+      const isTyping = tag === "input" || tag === "textarea";
+
+      if (e.key === "Control") {
+        if (isTyping) return;
+        e.preventDefault();
+        audioCtlRef.current?.togglePlay?.();
+        return;
+      }
+      if (e.key === "Shift") {
+        if (isTyping) return;
+        e.preventDefault();
+        audioCtlRef.current?.seekBy?.(-3);
+        return;
+      }
+      if (e.key === "Tab") {
+        // "Gợi ý": FLIP => reveal next hidden; FILL => reveal next blank (or fix wrong) in order
+        e.preventDefault();
+        runHint();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mode, currentGroupId, revealAllByGroupId]);
+
+  const scoreStats = useMemo(() => {
+    const partN = Number(partId);
+    const isPart34 = partN === 3 || partN === 4;
+
+    let totalQ = 0;
+    let correctQ = 0;
+
+    for (let gi = 0; gi < groups.length; gi++) {
+      const g = groups[gi];
+      const gid = g?.id ?? gi;
+
+      if (isPart34) {
+        const qs = Array.isArray(g?.questions) ? g.questions : [];
+        totalQ += qs.length;
+        for (let qi = 0; qi < qs.length; qi++) {
+          const q = qs[qi];
+          const qId = q?.id ?? `${gid}-q-${qi}`;
+          const picked = selectedByQuestionId[qId] || null;
+          const correctLetter =
+            typeof q?.correctOption === "string" ? q.correctOption.trim().toUpperCase() : null;
+          if (picked && correctLetter && picked === correctLetter) correctQ += 1;
+        }
+      } else {
+        totalQ += 1;
+        const picked = selectedByGroupId[gid] || null;
+        const correctLetter = getCorrectLetter(g);
+        if (picked && correctLetter && picked === correctLetter) correctQ += 1;
+      }
+    }
+
+    return { correctQ, totalQ };
+  }, [groups, partId, selectedByGroupId, selectedByQuestionId]);
+
+  const navItems = useMemo(() => {
+    const partN = Number(partId);
+    const isPart34 = partN === 3 || partN === 4;
+    const items = [];
+
+    for (let gi = 0; gi < groups.length; gi++) {
+      const g = groups[gi];
+      const gid = g?.id ?? gi;
+
+      if (isPart34) {
+        const qs = Array.isArray(g?.questions) ? g.questions : [];
+        for (let qi = 0; qi < qs.length; qi++) {
+          const q = qs[qi];
+          const qId = q?.id ?? `${gid}-q-${qi}`;
+          const posRaw = q?.position ?? q?.questionPosition;
+          const position = Number.isFinite(Number(posRaw)) ? Number(posRaw) : items.length + 1;
+          const picked = selectedByQuestionId[qId] || null;
+          const correctLetter =
+            typeof q?.correctOption === "string" ? q.correctOption.trim().toUpperCase() : null;
+          const status = !picked ? "UNANSWERED" : picked === correctLetter ? "CORRECT" : "WRONG";
+          items.push({ key: String(qId), position, groupIndex: gi, questionIndex: qi, status });
+        }
+      } else {
+        const q0 = Array.isArray(g?.questions) ? g.questions[0] : null;
+        const posRaw = q0?.position ?? q0?.questionPosition ?? gi + 1;
+        const position = Number.isFinite(Number(posRaw)) ? Number(posRaw) : gi + 1;
+        const picked = selectedByGroupId[gid] || null;
+        const correctLetter = getCorrectLetter(g);
+        const status = !picked ? "UNANSWERED" : picked === correctLetter ? "CORRECT" : "WRONG";
+        items.push({ key: String(gid), position, groupIndex: gi, questionIndex: null, status });
+      }
+    }
+
+    items.sort((a, b) => a.position - b.position);
+    return items;
+  }, [groups, partId, selectedByGroupId, selectedByQuestionId]);
+
+  const currentNavPos = useMemo(() => {
+    const partN = Number(partId);
+    const isPart34 = partN === 3 || partN === 4;
+    if (!navItems.length) return null;
+
+    if (!isPart34) {
+      const gid = currentGroup?.id ?? currentIndex;
+      const hit = navItems.find((x) => String(x.key) === String(gid));
+      return hit?.position ?? null;
+    }
+
+    // Part 3/4: best effort - pick the first question's position in current group
+    const qs = Array.isArray(currentGroup?.questions) ? currentGroup.questions : [];
+    const q0 = qs[0];
+    const gid = currentGroup?.id ?? currentIndex;
+    const qId = q0?.id ?? `${gid}-q-0`;
+    const hit = navItems.find((x) => String(x.key) === String(qId));
+    return hit?.position ?? null;
+  }, [navItems, partId, currentGroup, currentIndex]);
+
+  const navStats = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    let unanswered = 0;
+    for (const it of navItems) {
+      if (it.status === "CORRECT") correct += 1;
+      else if (it.status === "WRONG") wrong += 1;
+      else unanswered += 1;
+    }
+    return { correct, wrong, unanswered, total: navItems.length };
+  }, [navItems]);
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="sticky top-16 z-10 mb-6">
-          <div className="rounded-2xl border border-gray-200 bg-white/95 backdrop-blur shadow-sm px-3 sm:px-4 py-2.5">
+    <div className="container mx-auto px-4 pt-4 pb-5 min-h-screen bg-gray-50">
+      <Drawer
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        title="Danh sách câu hỏi"
+        placement="right"
+        width={360}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-xs text-slate-700 flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-emerald-500 bg-emerald-500/10" />
+              {navStats.correct} Đúng
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-rose-500 bg-rose-500/10" />
+              {navStats.wrong} Sai
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-gray-300 bg-gray-100" />
+              {navStats.unanswered} Chưa làm
+            </span>
+          </div>
+
+          <div className="grid grid-cols-6 gap-2">
+            {navItems.map((it) => {
+              const isCurrent = currentNavPos != null && it.position === currentNavPos;
+              const tone =
+                it.status === "CORRECT"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                  : it.status === "WRONG"
+                    ? "border-rose-500 bg-rose-50 text-rose-700"
+                    : "border-gray-200 bg-white text-slate-700 hover:bg-gray-50";
+              return (
+                <button
+                  key={it.key}
+                  type="button"
+                  onClick={() => {
+                    setCurrentIndex(it.groupIndex);
+                    setNavOpen(false);
+                  }}
+                  className={`h-9 rounded-lg border text-xs font-semibold ${tone} ${
+                    isCurrent ? "ring-2 ring-indigo-200 border-indigo-400" : ""
+                  }`}
+                  title={`Câu ${it.position}`}
+                >
+                  {it.position}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </Drawer>
+
+      <div className="max-w-6xl mx-auto flex flex-col lg:h-[calc(100vh-64px)] lg:overflow-hidden">
+        <div className="mb-4 flex-shrink-0">
+          <div className="rounded-2xl border border-gray-200 bg-white/95 backdrop-blur shadow-sm px-3 sm:px-4 py-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="min-w-0">
                 <div className="text-slate-900 font-semibold text-sm sm:text-base truncate">
@@ -241,7 +470,10 @@ export default function DictationPractice() {
                       : "bg-white border-gray-200 text-slate-700 hover:border-gray-300"
                   }`}
                 >
-                  Điền từ
+                  <span className="inline-flex items-center gap-1.5">
+                    <IconPencil className={mode === "FILL" ? "text-slate-900" : "text-slate-500"} />
+                    Điền từ
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -252,7 +484,10 @@ export default function DictationPractice() {
                       : "bg-white border-gray-200 text-slate-700 hover:border-gray-300"
                   }`}
                 >
-                  Lật từ
+                  <span className="inline-flex items-center gap-1.5">
+                    <IconSparkles className={mode === "FLIP" ? "text-white" : "text-slate-500"} />
+                    Lật từ
+                  </span>
                 </button>
                 {[0.3, 0.5, 0.7].map((r) => (
                   <button
@@ -268,44 +503,81 @@ export default function DictationPractice() {
                     {Math.round(r * 100)}%
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setAutoPlay((v) => !v)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
-                    autoPlay
-                      ? "bg-emerald-600 border-emerald-600 text-white"
-                      : "bg-white border-gray-200 text-slate-700 hover:border-gray-300"
-                  }`}
-                >
-                  Auto
-                </button>
-                <div className="px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-xs font-semibold text-slate-700">
-                  {answeredCount}/{Math.max(total, 1)}
+                <div className="px-2.5 py-1 rounded-lg bg-emerald-500 border border-emerald-600 text-xs font-semibold text-white inline-flex items-center gap-1.5">
+                  <IconCheckCircle className="text-white" />
+                  {scoreStats.correctQ}/{Math.max(scoreStats.totalQ, 1)}
                 </div>
                 <div className="px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-xs font-semibold text-slate-700">
                   Câu {total ? currentIndex + 1 : 0}/{Math.max(total, 0)}
                 </div>
-                <Link
-                  to="/dictation"
+                <button
+                  type="button"
+                  onClick={() => setNavOpen(true)}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs font-semibold shadow-sm inline-flex items-center gap-2"
+                  title="Mở danh sách câu hỏi"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 4h6v6H4V4z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M14 4h6v6h-6V4z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M4 14h6v6H4v-6z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M14 14h6v6h-6v-6z" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-0.5">
+                  <button
+                    type="button"
+                    disabled={currentIndex <= 0}
+                    onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                    className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                      currentIndex <= 0
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-slate-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Trước
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentIndex >= total - 1}
+                    onClick={() => setCurrentIndex((i) => Math.min(total - 1, i + 1))}
+                    className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                      currentIndex >= total - 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-slate-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Sau
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBack}
                   className="px-3 py-1 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs font-semibold shadow-sm"
                 >
                   Quay lại
-                </Link>
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
+          <div className="flex-1 min-h-0 flex justify-center items-center py-10">
             <Spin size="large" />
           </div>
         ) : !groups.length ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+          <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
             <Empty description="Không có nội dung chép chính tả cho part này" />
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="flex-1 min-h-0" ref={rootRef}>
             {(() => {
               const correct = getCorrectLetter(currentGroup);
               const selected = selectedByGroupId[currentGroupId] || null;
@@ -319,24 +591,79 @@ export default function DictationPractice() {
               const isPart1 = partN === 1;
               const isPart2 = partN === 2;
               const isPart12 = isPart1 || isPart2;
+              const isPart34 = partN === 3 || partN === 4;
+
+          const effectiveRatio = clamp01(ratio);
+          const getPendingCountForLine = (text, seedKey) => {
+            if (!text) return 0;
+            const revealAll = !!revealAllByGroupId[currentGroupId];
+            if (revealAll) return 0;
+
+            const { tokens } = buildCloze(text, effectiveRatio, seedKey);
+            const revealedMap = flipReveal[currentGroupId] || {};
+            const fillMap = fillAnswers[currentGroupId] || {};
+            let pending = 0;
+            for (const tk of tokens) {
+              if (!tk.isWord || !tk.hidden) continue;
+              if (mode === "FLIP") {
+                if (!revealedMap[tk.key]) pending += 1;
+              } else {
+                const typed = fillMap[tk.key] ?? "";
+                if (normalizeAnswer(typed) !== normalizeAnswer(tk.t)) pending += 1;
+              }
+            }
+            return pending;
+          };
+
+          const clozePendingCount = (() => {
+            // Determine which lines are clozed for this screen
+            if (isPart34) {
+              return getPendingCountForLine(
+                currentGroup?.passageText || "",
+                `${currentGroupId}-passage`,
+              );
+            }
+
+            if (!isPart12 && !isPart34) {
+              return getPendingCountForLine(dictationText, `${currentGroupId}-dictation`);
+            }
+
+            // Part 1/2
+            let c = 0;
+            if (isPart2 && currentGroup?.questionText) {
+              c += getPendingCountForLine(currentGroup.questionText, `${currentGroupId}-q`);
+            }
+            // options are clozed for both Part 1 and Part 2
+            for (let oi = 0; oi < options.length; oi++) {
+              const letter = optionLetter(oi);
+              c += getPendingCountForLine(options[oi], `${currentGroupId}-opt-${letter}`);
+            }
+            return c;
+          })();
+
+          const canHint = clozePendingCount > 0 && !revealAllByGroupId[currentGroupId];
+          const canRevealAll = clozePendingCount > 0 && !revealAllByGroupId[currentGroupId];
 
               return (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full min-h-0 overflow-hidden">
                   {/* LEFT: media (audio/image) */}
-                  <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
-                      <div className="text-sm font-semibold text-slate-900">
-                        Nội dung nghe
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        {currentGroup?.audioUrl ? "Audio" : "Không có audio"}
-                      </div>
-                    </div>
-
+                  <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full min-h-0 overflow-x-hidden overflow-y-auto">
                     <div className="p-4">
                       {currentGroup?.audioUrl ? (
                         <div className="mb-4">
-                          <audio ref={audioRef} controls src={currentGroup.audioUrl} className="w-full" />
+                          <DictationAudioPlayer ref={audioCtlRef} src={currentGroup.audioUrl} />
+                          <div className="mt-1 text-[11px] text-slate-500">
+                            <span className="font-semibold text-slate-600 mr-2">Phím tắt</span>
+                            <span className="mr-2">
+                              <span className="font-semibold">Tab</span> gợi ý
+                            </span>
+                            <span className="mr-2">
+                              <span className="font-semibold">Ctrl</span> phát/dừng
+                            </span>
+                            <span>
+                              <span className="font-semibold">Shift</span> tua lại 3s
+                            </span>
+                          </div>
                         </div>
                       ) : null}
 
@@ -350,7 +677,75 @@ export default function DictationPractice() {
                         </div>
                       ) : null}
 
-                      {!isPart12 && (
+                      {/* Part 3/4: dictation panel (passageText) on the left */}
+                      {isPart34 ? (
+                        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-bold text-indigo-700">
+                                {mode === "FILL" ? "Nghe & Điền từ:" : "Nghe & Lật từ:"}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={!canHint}
+                                onClick={() => {
+                                  if (!canHint) return;
+                                  runHint();
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                                  canHint
+                                    ? "bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200/60"
+                                    : "bg-indigo-100 text-indigo-400 border-indigo-100 cursor-not-allowed opacity-60"
+                                }`}
+                              >
+                                Gợi ý{" "}
+                                <span className="ml-1 px-2 py-0.5 rounded-lg bg-indigo-200/60">
+                                  Tab
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!canRevealAll}
+                                onClick={() => {
+                                  if (!canRevealAll) return;
+                                  setRevealAllByGroupId((prev) => ({ ...prev, [currentGroupId]: true }));
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                                  canRevealAll
+                                    ? "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200/60"
+                                    : "bg-amber-50 text-amber-300 border-amber-100 cursor-not-allowed opacity-60"
+                                }`}
+                              >
+                                Mở tất cả
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 rounded-2xl bg-white/60 border border-blue-200 px-3 py-3">
+                            {currentGroup?.passageText ? (
+                              <div className="text-slate-900 text-sm leading-7">
+                                {renderClozeLine(
+                                  currentGroupId,
+                                  currentGroup.passageText,
+                                  `${currentGroupId}-passage`,
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-slate-600">
+                                Không có passage để chép.
+                              </div>
+                            )}
+                          </div>
+
+                          {/* shortcuts moved under audio player */}
+                        </div>
+                      ) : null}
+
+                      {/* Other parts: keep legacy transcript/passage display (not used for Part 1/2/3/4) */}
+                      {!isPart12 && !isPart34 && (
                         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                           {dictationText ? (
                             <div className="text-slate-900">
@@ -364,12 +759,130 @@ export default function DictationPractice() {
                     </div>
                   </div>
 
-                  {/* RIGHT: answer + dictation UI */}
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                      {/* Blue dictation panel (match design) */}
-                      <div className="p-4">
-                        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                  {/* RIGHT: Part 3/4 question list OR Part 1/2 answering panel */}
+                  {isPart34 ? (
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full min-h-0 overflow-x-hidden overflow-y-auto">
+                      <div className="p-4 space-y-4">
+                        {(Array.isArray(currentGroup?.questions) ? currentGroup.questions : []).map((q, qi) => {
+                          const qOptions = (Array.isArray(q?.options) ? q.options : []).filter(
+                            (x) => typeof x === "string" && x.trim(),
+                          );
+                          const qId = q?.id ?? `${currentGroupId}-q-${qi}`;
+                          const selectedLetter = selectedByQuestionId[qId] || null;
+                          const correctLetter =
+                            typeof q?.correctOption === "string"
+                              ? q.correctOption.trim().toUpperCase()
+                              : null;
+                          const isLocked = !!selectedLetter;
+                          const isCorrectPick =
+                            isLocked && correctLetter && selectedLetter === correctLetter;
+                          const canExplain =
+                            isLocked && typeof q?.explanation === "string" && q.explanation.trim();
+                          const isExplainOpen = !!expandedExplainByQuestionId[qId];
+
+                          const pickTone = isLocked
+                            ? isCorrectPick
+                              ? "border-emerald-200 bg-emerald-50/40"
+                              : "border-rose-200 bg-rose-50/40"
+                            : "border-gray-200 bg-white";
+                          return (
+                            <div
+                              key={q?.id ?? qi}
+                              className={`rounded-2xl border p-4 ${pickTone}`}
+                            >
+                              <div className="text-sm font-semibold text-slate-900">
+                                {q?.position ? `Câu ${q.position}` : `Câu ${qi + 1}`}
+                              </div>
+                              <div className="text-sm text-slate-700 mt-2">
+                                {q?.content || "—"}
+                              </div>
+
+                              {qOptions.length ? (
+                                <div className="mt-3 space-y-2">
+                                  {qOptions.map((opt, oi) => {
+                                    const letter = optionLetter(oi);
+                                    const isPicked = selectedLetter === letter;
+                                    const isCorrect = correctLetter && letter === correctLetter;
+                                    const showCorrect =
+                                      isLocked && !isCorrectPick && isCorrect;
+
+                                    const tone = (() => {
+                                      if (!isLocked) {
+                                        return "border-gray-200 bg-white hover:bg-gray-50/60";
+                                      }
+                                      if (isPicked && isCorrect) {
+                                        return "border-emerald-200 bg-emerald-50/60";
+                                      }
+                                      if (isPicked && !isCorrect) {
+                                        return "border-rose-200 bg-rose-50/60";
+                                      }
+                                      if (showCorrect) {
+                                        return "border-emerald-200/70 bg-emerald-50/30";
+                                      }
+                                      return "border-gray-200 bg-white opacity-70";
+                                    })();
+
+                                    return (
+                                      <button
+                                        key={oi}
+                                        type="button"
+                                        disabled={isLocked}
+                                        onClick={() => handleSelectQuestionOption(qId, letter)}
+                                        className={`w-full text-left rounded-xl border px-3 py-2 text-sm text-slate-700 transition ${tone} ${
+                                          isLocked ? "cursor-not-allowed" : ""
+                                        }`}
+                                      >
+                                        <span className="font-semibold mr-2">
+                                          {letter}
+                                        </span>
+                                        {opt}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : null}
+
+                              {isLocked && correctLetter ? (
+                                <div className="mt-3 text-xs text-slate-600">
+                                  Đáp án đúng:{" "}
+                                  <span className="font-semibold text-slate-900">
+                                    {correctLetter}
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              {canExplain ? (
+                                <div className="mt-3">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setExpandedExplainByQuestionId((prev) => ({
+                                        ...prev,
+                                        [qId]: !prev[qId],
+                                      }))
+                                    }
+                                    className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-slate-700 hover:border-gray-300"
+                                  >
+                                    {isExplainOpen ? "Ẩn giải thích" : "Xem giải thích"}
+                                  </button>
+                                  {isExplainOpen ? (
+                                    <div className="mt-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap leading-5">
+                                      {q.explanation}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 h-full min-h-0 overflow-x-hidden overflow-y-auto">
+                      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                        {/* Blue dictation panel (match design) */}
+                        <div className="p-4">
+                          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-bold text-indigo-700">
@@ -380,26 +893,54 @@ export default function DictationPractice() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              disabled
-                              className="px-3 py-1.5 rounded-xl bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200 cursor-not-allowed"
-                              title="Demo UI"
+                              disabled={!canHint}
+                              onClick={() => {
+                                if (!canHint) return;
+                                runHint();
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                                canHint
+                                  ? "bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200/60"
+                                  : "bg-indigo-100 text-indigo-400 border-indigo-100 cursor-not-allowed opacity-60"
+                              }`}
                             >
                               Gợi ý <span className="ml-1 px-2 py-0.5 rounded-lg bg-indigo-200/60">Tab</span>
                             </button>
                             <button
                               type="button"
-                              onClick={() =>
-                                setRevealAllByGroupId((prev) => ({
-                                  ...prev,
-                                  [currentGroupId]: !prev[currentGroupId],
-                                }))
-                              }
-                              className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200 hover:bg-amber-200/60"
+                              disabled={!canRevealAll}
+                              onClick={() => {
+                                if (!canRevealAll) return;
+                                setRevealAllByGroupId((prev) => ({ ...prev, [currentGroupId]: true }));
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                                canRevealAll
+                                  ? "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200/60"
+                                  : "bg-amber-50 text-amber-300 border-amber-100 cursor-not-allowed opacity-60"
+                              }`}
                             >
-                              {revealAllByGroupId[currentGroupId] ? "Ẩn lại" : "Mở tất cả"}
+                              Mở tất cả
                             </button>
                           </div>
                         </div>
+
+                        {/* Question (Part 2) */}
+                        {isPart2 && currentGroup?.questionText ? (
+                          <div className="mt-3 rounded-2xl bg-white/60 border border-blue-200 px-3 py-2">
+                            <div className="flex items-start gap-3">
+                              <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold border border-gray-200 text-slate-600 bg-white">
+                                Q
+                              </div>
+                              <div className="text-slate-900 text-sm leading-7">
+                                {renderClozeLine(
+                                  currentGroupId,
+                                  currentGroup.questionText,
+                                  `${currentGroupId}-q`,
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
 
                         {/* Options list inside ONE panel */}
                         <div className="mt-3 space-y-2">
@@ -450,7 +991,7 @@ export default function DictationPractice() {
                                       {letter}
                                     </div>
                                     <div className="text-slate-900 text-sm leading-7">
-                                      {isPart1
+                                      {isPart1 || isPart2
                                         ? renderClozeLine(currentGroupId, opt, `${currentGroupId}-opt-${letter}`)
                                         : opt}
                                     </div>
@@ -463,74 +1004,29 @@ export default function DictationPractice() {
                           )}
                         </div>
 
-                        {/* Footer shortcuts (visual) */}
-                        <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-100/40 px-4 py-3 text-sm text-indigo-700">
-                          <span className="font-semibold mr-2">Phím tắt:</span>
-                          <span className="inline-flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 rounded-lg bg-white border border-blue-200 text-xs font-semibold">
-                              Tab
-                            </span>
-                            <span className="text-xs">gợi ý từ</span>
-                            <span className="px-2 py-0.5 rounded-lg bg-white border border-blue-200 text-xs font-semibold">
-                              Ctrl
-                            </span>
-                            <span className="text-xs">phát/dừng</span>
-                            <span className="px-2 py-0.5 rounded-lg bg-white border border-blue-200 text-xs font-semibold">
-                              Shift
-                            </span>
-                            <span className="text-xs">tua lại 3s</span>
-                          </span>
-                        </div>
-                        </div>
+                        {/* shortcuts moved under audio player */}
                       </div>
                     </div>
-
-                    {selectedByGroupId[currentGroupId] &&
-                    Array.isArray(currentGroup?.questions) &&
-                    currentGroup.questions[0]?.explanation ? (
-                      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-                        <div className="text-sm font-semibold text-slate-900 mb-2">
-                          Giải thích đáp án
-                        </div>
-                        <div className="text-sm text-slate-700 whitespace-pre-wrap leading-6">
-                          {currentGroup.questions[0].explanation}
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
+
+                      {selectedByGroupId[currentGroupId] &&
+                      Array.isArray(currentGroup?.questions) &&
+                      currentGroup.questions[0]?.explanation ? (
+                        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+                          <div className="text-sm font-semibold text-slate-900 mb-2">
+                            Giải thích đáp án
+                          </div>
+                          <div className="text-sm text-slate-700 whitespace-pre-wrap leading-6">
+                            {currentGroup.questions[0].explanation}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               );
             })()}
 
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                disabled={currentIndex <= 0}
-                onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-                className={`px-4 py-2 rounded-xl border font-semibold ${
-                  currentIndex <= 0
-                    ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white border-gray-200 text-slate-700 hover:border-gray-300"
-                }`}
-              >
-                Trước
-              </button>
-              <div className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold">
-                {total ? currentIndex + 1 : 0}/{total}
-              </div>
-              <button
-                type="button"
-                disabled={currentIndex >= total - 1}
-                onClick={() => setCurrentIndex((i) => Math.min(total - 1, i + 1))}
-                className={`px-4 py-2 rounded-xl border font-semibold ${
-                  currentIndex >= total - 1
-                    ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white border-gray-200 text-slate-700 hover:border-gray-300"
-                }`}
-              >
-                Sau
-              </button>
-            </div>
           </div>
         )}
       </div>
