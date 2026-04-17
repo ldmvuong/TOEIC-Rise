@@ -46,8 +46,10 @@ export default function DictationPractice() {
   const [revealAllByGroupId, setRevealAllByGroupId] = useState({});
   const [flipReveal, setFlipReveal] = useState({}); // { [groupId]: { [tokenKey]: true } }
   const [fillAnswers, setFillAnswers] = useState({}); // { [groupId]: { [tokenKey]: string } }
+  const [fillTouched, setFillTouched] = useState({}); // { [groupId]: { [tokenKey]: true } }
   const [selectedByQuestionId, setSelectedByQuestionId] = useState({});
   const [expandedExplainByQuestionId, setExpandedExplainByQuestionId] = useState({});
+  const [showTranscriptByGroupId, setShowTranscriptByGroupId] = useState({});
 
   const rootRef = useRef(null);
   const audioCtlRef = useRef(null);
@@ -91,8 +93,10 @@ export default function DictationPractice() {
     setRevealAllByGroupId({});
     setFlipReveal({});
     setFillAnswers({});
+    setFillTouched({});
     setSelectedByQuestionId({});
     setExpandedExplainByQuestionId({});
+    setShowTranscriptByGroupId({});
   }, [testId, partId]);
 
   const total = groups.length;
@@ -105,6 +109,7 @@ export default function DictationPractice() {
     const revealAll = !!revealAllByGroupId[groupId];
     const revealedMap = flipReveal[groupId] || {};
     const fillMap = fillAnswers[groupId] || {};
+    const touchedMap = fillTouched[groupId] || {};
     const dotCount = (word) => {
       const n = Math.max(1, String(word ?? "").length);
       return Math.min(18, n);
@@ -163,6 +168,8 @@ export default function DictationPractice() {
           // FILL mode
           const typed = revealAll ? String(tk.t ?? "") : (fillMap[tk.key] ?? "");
           const isCorrect = normalizeAnswer(typed) === normalizeAnswer(tk.t);
+          const isTouched = !!touchedMap[tk.key];
+          const showWrong = !revealAll && isTouched && !!typed && !isCorrect;
           const d = dotCount(tk.t);
           const widthCh = boxWidthCh(d);
           const placeholder = "•".repeat(d);
@@ -177,17 +184,36 @@ export default function DictationPractice() {
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
                 readOnly={revealAll}
+                onBlur={() => {
+                  if (revealAll) return;
+                  setFillTouched((prev) => ({
+                    ...prev,
+                    [groupId]: { ...(prev[groupId] || {}), [tk.key]: true },
+                  }));
+                }}
                 onChange={(e) => {
                   if (revealAll) return;
+                  const nextVal = e.target.value;
                   setFillAnswers((prev) => ({
                     ...prev,
-                    [groupId]: { ...(prev[groupId] || {}), [tk.key]: e.target.value },
+                    [groupId]: { ...(prev[groupId] || {}), [tk.key]: nextVal },
                   }));
+
+                  // If user fixed it, drop wrong state immediately
+                  if (normalizeAnswer(nextVal) === normalizeAnswer(tk.t)) {
+                    setFillTouched((prev) => {
+                      const g = prev[groupId] || {};
+                      if (!g[tk.key]) return prev;
+                      return { ...prev, [groupId]: { ...g, [tk.key]: false } };
+                    });
+                  }
                 }}
                 style={{ width: `${widthCh}ch` }}
                 className={`h-10 px-2 rounded-xl border outline-none transition text-sm font-medium text-slate-900 placeholder:text-slate-400 font-mono text-center ${
                   isCorrect
                     ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                    : showWrong
+                      ? "bg-rose-50 border-rose-300 text-rose-900 hover:border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
                     : revealAll
                       ? "bg-white border-blue-200"
                       : "bg-white border-blue-200 hover:border-blue-300 hover:ring-2 hover:ring-blue-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -256,6 +282,10 @@ export default function DictationPractice() {
     setFillAnswers((prev) => ({
       ...prev,
       [groupId]: { ...(prev[groupId] || {}), [tokenKey]: correct },
+    }));
+    setFillTouched((prev) => ({
+      ...prev,
+      [groupId]: { ...(prev[groupId] || {}), [tokenKey]: false },
     }));
     next.focus?.();
     next.select?.();
@@ -643,6 +673,10 @@ export default function DictationPractice() {
 
           const canHint = clozePendingCount > 0 && !revealAllByGroupId[currentGroupId];
           const canRevealAll = clozePendingCount > 0 && !revealAllByGroupId[currentGroupId];
+          const canShowTranscript =
+            (!!revealAllByGroupId[currentGroupId] || clozePendingCount === 0) &&
+            typeof currentGroup?.transcript === "string" &&
+            !!currentGroup.transcript.trim();
 
               return (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full min-h-0 overflow-hidden">
@@ -756,6 +790,34 @@ export default function DictationPractice() {
                           )}
                         </div>
                       )}
+
+                      {/* Transcript (after "Mở tất cả" OR when all blanks are correct) */}
+                      {canShowTranscript ? (
+                        <div className="mt-4 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowTranscriptByGroupId((prev) => ({
+                                ...prev,
+                                [currentGroupId]: !prev[currentGroupId],
+                              }))
+                            }
+                            className="w-full px-4 py-2.5 border-b border-gray-100 flex items-center justify-between text-left"
+                          >
+                            <div className="text-xs font-semibold text-slate-700">
+                              Transcript
+                            </div>
+                            <div className="text-xs font-semibold text-slate-600">
+                              {showTranscriptByGroupId[currentGroupId] ? "Ẩn" : "Hiện"}
+                            </div>
+                          </button>
+                          {showTranscriptByGroupId[currentGroupId] ? (
+                            <div className="px-4 py-3 text-sm text-slate-800 leading-7 whitespace-pre-wrap">
+                              {currentGroup.transcript}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -972,24 +1034,27 @@ export default function DictationPractice() {
                               })();
 
                               return (
-                                <button
+                                <div
                                   key={letter}
-                                  type="button"
-                                  disabled={locked}
-                                  onClick={() => {
-                                    if (locked) return;
-                                    handleSelectOption(currentGroup)(oi);
-                                  }}
                                   className={`w-full text-left transition rounded-2xl px-3 py-1.5 border border-transparent ${
-                                    rowTone || (locked ? "opacity-70 cursor-not-allowed" : "hover:bg-white/70")
+                                    rowTone || (locked ? "opacity-70" : "hover:bg-white/70")
                                   }`}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div
-                                      className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold border ${badgeTone}`}
+                                    <button
+                                      type="button"
+                                      disabled={locked}
+                                      onClick={() => {
+                                        if (locked) return;
+                                        handleSelectOption(currentGroup)(oi);
+                                      }}
+                                      className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold border ${badgeTone} ${
+                                        locked ? "cursor-not-allowed" : "hover:border-gray-300"
+                                      }`}
+                                      aria-label={`Chọn đáp án ${letter}`}
                                     >
                                       {letter}
-                                    </div>
+                                    </button>
                                     <div className="text-slate-900 text-sm leading-7">
                                       {isPart1 || isPart2
                                         ? renderClozeLine(currentGroupId, opt, `${currentGroupId}-opt-${letter}`)
@@ -998,7 +1063,7 @@ export default function DictationPractice() {
                                   </div>
 
                                   {/* Color feedback is enough (no text). */}
-                                </button>
+                                </div>
                               );
                             })
                           )}
