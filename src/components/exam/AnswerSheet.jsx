@@ -1,10 +1,91 @@
 import { useEffect, useState } from 'react';
-import { getUserTestAnswersOverall, getWrongAnswerExam, getDoWrongAnswer } from '../../api/api';
+import {
+    getUserTestAnswersOverall,
+    getWrongAnswerExam,
+    getDoWrongAnswer,
+    viewTestResultDetails,
+} from '../../api/api';
 import { message, Modal } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
+
+function isWritingListeningOrSpeakingPartName(partName) {
+    return /writing|listening|speaking/i.test(String(partName || ''));
+}
+
+function extractPartOrderNumber(partName) {
+    const m = String(partName || '').match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+}
+
+/**
+ * Learner answer id for GET /learner/user-answers/{userAnswerId}.
+ * Matches TestResultDetail.prepareQuestionData and answers-overall variants.
+ */
+function resolveUserAnswerIdFromRow(q) {
+    if (!q || typeof q !== 'object') return null;
+    const direct =
+        q.userAnswerId ??
+        q.userAnswerID ??
+        q.learnerAnswerId ??
+        q.learnerAnswerID;
+    if (direct != null && direct !== '') return direct;
+    const nested =
+        q.userAnswer && typeof q.userAnswer === 'object'
+            ? q.userAnswer.id ?? q.userAnswer.userAnswerId
+            : null;
+    if (nested != null && nested !== '') return nested;
+    if (q.id != null && q.id !== '') return q.id;
+    return null;
+}
+
+function normalizeAnswersDataByPart(map) {
+    if (!map || typeof map !== 'object') return map;
+    const out = {};
+    for (const [partName, questions] of Object.entries(map)) {
+        if (!Array.isArray(questions)) {
+            out[partName] = questions;
+            continue;
+        }
+        out[partName] = questions.map((q) => ({
+            ...q,
+            userAnswerId: resolveUserAnswerIdFromRow(q),
+        }));
+    }
+    return out;
+}
+
+/** Same shape as GET /learner/user-tests/answers-overall/{id} (part → question rows). */
+function mapTestDetailToAnswersByPart(detail) {
+    const parts = detail?.partResponses;
+    if (!Array.isArray(parts) || parts.length === 0) return {};
+    const out = {};
+    for (const part of parts) {
+        const partName = part.partName || 'Part';
+        const rows = [];
+        for (const group of part.questionGroups || []) {
+            for (const q of group.questions || []) {
+                rows.push({
+                    userAnswerId: resolveUserAnswerIdFromRow(q),
+                    position: q.position ?? q.questionPosition,
+                    userAnswer: q.userAnswer ?? q.selectedAnswer ?? '',
+                    userAnswerText: q.userAnswerText ?? q.userTextAnswer ?? '',
+                    userAnswerAudioUrl: q.userAnswerAudioUrl ?? '',
+                    correctAnswer: q.correctAnswer ?? q.correctOption ?? null,
+                });
+            }
+        }
+        rows.sort(
+            (a, b) => (Number(a.position) || 0) - (Number(b.position) || 0),
+        );
+        if (rows.length > 0) {
+            out[partName] = rows;
+        }
+    }
+    return out;
+}
 
 const AnswerSheet = ({ userTestId, testId }) => {
     const [answersData, setAnswersData] = useState(null);
@@ -19,6 +100,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
     const [isRedoWrongLoading, setIsRedoWrongLoading] = useState(false);
     const [showRedoWrongChoiceModal, setShowRedoWrongChoiceModal] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const skipAnswersForWriting = searchParams.get('writing') === '1';
 
     useEffect(() => {
         if (!userTestId) {
@@ -26,10 +110,37 @@ const AnswerSheet = ({ userTestId, testId }) => {
             return;
         }
 
+        if (skipAnswersForWriting) {
+            setHasFetched(false);
+            setAnswersData(null);
+            const fetchWritingFromDetail = async () => {
+                try {
+                    const response = await viewTestResultDetails(userTestId);
+                    const mapped = mapTestDetailToAnswersByPart(response?.data);
+                    setAnswersData(
+                        mapped && Object.keys(mapped).length > 0 ? mapped : null,
+                    );
+                } catch (error) {
+                    console.error('Error fetching writing test detail:', error);
+                    message.error(
+                        error?.message ||
+                            'Không thể tải chi tiết bài Writing (đáp án).',
+                    );
+                    setAnswersData(null);
+                } finally {
+                    setHasFetched(true);
+                }
+            };
+            void fetchWritingFromDetail();
+            return;
+        }
+
         const fetchAnswers = async () => {
             try {
                 const response = await getUserTestAnswersOverall(userTestId);
-                setAnswersData(response.data || {});
+                setAnswersData(
+                    normalizeAnswersDataByPart(response.data || {}),
+                );
             } catch (error) {
                 console.error('Error fetching answers:', error);
                 message.error('Không thể tải đáp án');
@@ -39,37 +150,88 @@ const AnswerSheet = ({ userTestId, testId }) => {
         };
 
         fetchAnswers();
-    }, [userTestId]);
+    }, [userTestId, skipAnswersForWriting]);
 
     // Helper function to determine question status
     const getQuestionStatus = (question) => {
-        if (!question.userAnswer || question.userAnswer === '') {
+        const hasChoiceAnswer =
+            question.userAnswer != null && String(question.userAnswer).trim() !== '';
+        const hasTextAnswer =
+            question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
+        const hasAudioAnswer =
+            question.userAnswerAudioUrl != null &&
+            String(question.userAnswerAudioUrl).trim() !== '';
+
+        if (!hasChoiceAnswer && !hasTextAnswer && !hasAudioAnswer) {
             return 'skipped'; // Chưa trả lời
         }
-        if (question.userAnswer === question.correctAnswer) {
+        if (hasAudioAnswer) {
+            return 'answered'; // Đã nộp file âm thanh (Speaking)
+        }
+        if (hasTextAnswer && !question.correctAnswer) {
+            return 'answered'; // Đã trả lời dạng text (writing)
+        }
+        if (hasChoiceAnswer && question.userAnswer === question.correctAnswer) {
             return 'correct'; // Đúng
         }
         return 'incorrect'; // Sai
     };
 
     // Render question answer display with clear structure
-    const renderQuestionAnswer = (question) => {
+    const renderQuestionAnswer = (question, partName) => {
         const status = getQuestionStatus(question);
         const userAnswer = question.userAnswer || '';
+        const userAnswerText = question.userAnswerText || '';
+        const userAnswerAudioUrl = question.userAnswerAudioUrl || '';
         const correctAnswer = question.correctAnswer;
+        const hasTextAnswer = String(userAnswerText).trim() !== '';
+        const hasAudioAnswer = String(userAnswerAudioUrl).trim() !== '';
+        const hideCorrectKey = isWritingListeningOrSpeakingPartName(partName);
+
+        if (hasAudioAnswer) {
+            return (
+                <div className="flex flex-col gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500 font-medium">Bản ghi:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Đã nộp</span>
+                    </div>
+                    <audio
+                        controls
+                        src={userAnswerAudioUrl}
+                        className="w-full max-h-9"
+                        preload="metadata"
+                    />
+                </div>
+            );
+        }
+
+        if (hasTextAnswer) {
+            return (
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500 font-medium">Câu trả lời:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Đã nhập</span>
+                    </div>
+                    <p className="text-xs text-gray-700 line-clamp-2 whitespace-pre-wrap">
+                        {userAnswerText}
+                    </p>
+                </div>
+            );
+        }
 
         return (
             <div className="flex items-center gap-2 flex-wrap">
-                {/* Đáp án đúng */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-gray-500 font-medium">Đáp án:</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-semibold text-xs min-w-[28px] text-center">
-                        {correctAnswer}
-                    </span>
-                </div>
-
-                {/* Separator */}
-                <span className="text-gray-300">|</span>
+                {!hideCorrectKey && (
+                    <>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-500 font-medium">Đáp án:</span>
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-semibold text-xs min-w-[28px] text-center">
+                                {correctAnswer}
+                            </span>
+                        </div>
+                        <span className="text-gray-300">|</span>
+                    </>
+                )}
 
                 {/* Câu trả lời của bạn */}
                 <div className="flex items-center gap-1.5">
@@ -99,6 +261,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     {status === 'incorrect' && (
                         <span className="text-lg text-red-600 font-bold">✗</span>
                     )}
+                    {status === 'answered' && (
+                        <span className="text-base text-emerald-600 font-bold">●</span>
+                    )}
                     {status === 'skipped' && (
                         <span className="text-base text-gray-400 font-bold">—</span>
                     )}
@@ -107,12 +272,24 @@ const AnswerSheet = ({ userTestId, testId }) => {
         );
     };
 
+    if (skipAnswersForWriting && !hasFetched) {
+        return (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="text-center py-12 text-gray-500">
+                    Đang tải đáp án Writing...
+                </div>
+            </div>
+        );
+    }
+
     // Only show "no data" message after fetch is complete
     if (hasFetched && (!answersData || Object.keys(answersData).length === 0)) {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
-                    Không có dữ liệu đáp án
+                    {skipAnswersForWriting
+                        ? 'Không có dữ liệu chi tiết bài Writing. Bạn vẫn có thể xem thống kê phía trên hoặc mở trang chi tiết đáp án.'
+                        : 'Không có dữ liệu đáp án'}
                 </div>
             </div>
         );
@@ -123,20 +300,47 @@ const AnswerSheet = ({ userTestId, testId }) => {
         return null;
     }
 
-    // Sort parts in order: Part 1, Part 2, ..., Part 7
+    const partKeys = Object.keys(answersData);
+    const needsWritingListeningSort = partKeys.some((k) =>
+        isWritingListeningOrSpeakingPartName(k),
+    );
     const partOrder = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5', 'Part 6', 'Part 7'];
-    const sortedParts = Object.keys(answersData).sort((a, b) => {
-        const indexA = partOrder.indexOf(a);
-        const indexB = partOrder.indexOf(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-    });
+    const sortedParts = needsWritingListeningSort
+        ? [...partKeys].sort((a, b) => {
+              const na = extractPartOrderNumber(a);
+              const nb = extractPartOrderNumber(b);
+              if (na !== nb) return na - nb;
+              return String(a).localeCompare(String(b), 'vi');
+          })
+        : [...partKeys].sort((a, b) => {
+              const indexA = partOrder.indexOf(a);
+              const indexB = partOrder.indexOf(b);
+              if (indexA === -1) return 1;
+              if (indexB === -1) return -1;
+              return indexA - indexB;
+          });
+
+    const hideRedoWrong = partKeys.some((k) =>
+        isWritingListeningOrSpeakingPartName(k),
+    );
+
+    const openAnswerDetailModal = (question) => {
+        const id = resolveUserAnswerIdFromRow(question);
+        if (id == null || id === '') {
+            message.warning(
+                'Không tìm thấy mã câu trả lời để xem chi tiết.',
+            );
+            return;
+        }
+        setSelectedQuestionId(id);
+        setIsAnswerModalOpen(true);
+    };
 
     const handleViewDetails = () => {
-        // Navigate to detailed answer view
         if (userTestId) {
-            navigate(`/test-result-detail/${userTestId}`);
+            navigate(
+                `/test-result-detail/${userTestId}${location.search || ''}`,
+            );
         } else {
             message.error('Không tìm thấy ID bài thi');
         }
@@ -237,17 +441,19 @@ const AnswerSheet = ({ userTestId, testId }) => {
             >
               Xem chi tiết đáp án
             </button>
-            <button
-              onClick={openRedoWrongModal}
-              disabled={isRedoWrongLoading}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                activeView === "detailed"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
-            </button>
+            {!hideRedoWrong && (
+              <button
+                onClick={openRedoWrongModal}
+                disabled={isRedoWrongLoading}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeView === "detailed"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -272,8 +478,6 @@ const AnswerSheet = ({ userTestId, testId }) => {
               const questions = answersData[partName] || [];
               if (questions.length === 0) return null;
 
-              // Determine part number for grouping
-              const partNumber = parseInt(partName.replace("Part ", ""));
               const questionsPerColumn = Math.ceil(questions.length / 2);
 
               return (
@@ -293,7 +497,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
                           const status = getQuestionStatus(question);
                           return (
                             <div
-                              key={question.userAnswerId}
+                              key={
+                                resolveUserAnswerIdFromRow(question) ??
+                                `${partName}-${question.position}-l`
+                              }
                               className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
                                 status === "correct"
                                   ? "bg-green-50 border-green-200"
@@ -310,17 +517,15 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Answer Info */}
                                 <div className="flex-1 min-w-0">
-                                  {renderQuestionAnswer(question)}
+                                  {renderQuestionAnswer(question, partName)}
                                 </div>
 
                                 {/* Detail Button */}
                                 <button
-                                  onClick={() => {
-                                    setSelectedQuestionId(
-                                      question.userAnswerId,
-                                    );
-                                    setIsAnswerModalOpen(true);
-                                  }}
+                                  type="button"
+                                  onClick={() =>
+                                    openAnswerDetailModal(question)
+                                  }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
                                   Chi tiết
@@ -338,7 +543,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
                           const status = getQuestionStatus(question);
                           return (
                             <div
-                              key={question.userAnswerId}
+                              key={
+                                resolveUserAnswerIdFromRow(question) ??
+                                `${partName}-${question.position}-r`
+                              }
                               className={`p-2 rounded-lg border-2 transition-all hover:shadow-md ${
                                 status === "correct"
                                   ? "bg-green-50 border-green-200"
@@ -355,17 +563,15 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                                 {/* Answer Info */}
                                 <div className="flex-1 min-w-0">
-                                  {renderQuestionAnswer(question)}
+                                  {renderQuestionAnswer(question, partName)}
                                 </div>
 
                                 {/* Detail Button */}
                                 <button
-                                  onClick={() => {
-                                    setSelectedQuestionId(
-                                      question.userAnswerId,
-                                    );
-                                    setIsAnswerModalOpen(true);
-                                  }}
+                                  type="button"
+                                  onClick={() =>
+                                    openAnswerDetailModal(question)
+                                  }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
                                   Chi tiết
@@ -428,34 +634,35 @@ const AnswerSheet = ({ userTestId, testId }) => {
           questionData={reportQuestionData}
         />
 
-        {/* Modal chọn chế độ làm lại câu sai */}
-        <Modal
-          title="Làm lại câu sai"
-          open={showRedoWrongChoiceModal}
-          onCancel={() => setShowRedoWrongChoiceModal(false)}
-          footer={null}
-          centered
-          width={420}
-        >
-          <div className="py-2 space-y-3">
-            <button
-              type="button"
-              onClick={handleFixOneByOne}
-              disabled={isRedoWrongLoading}
-              className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRedoWrongAnswers}
-              disabled={isRedoWrongLoading}
-              className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              Làm lại toàn bộ câu sai
-            </button>
-          </div>
-        </Modal>
+        {!hideRedoWrong && (
+          <Modal
+            title="Làm lại câu sai"
+            open={showRedoWrongChoiceModal}
+            onCancel={() => setShowRedoWrongChoiceModal(false)}
+            footer={null}
+            centered
+            width={420}
+          >
+            <div className="py-2 space-y-3">
+              <button
+                type="button"
+                onClick={handleFixOneByOne}
+                disabled={isRedoWrongLoading}
+                className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
+              </button>
+              <button
+                type="button"
+                onClick={handleRedoWrongAnswers}
+                disabled={isRedoWrongLoading}
+                className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                Làm lại toàn bộ câu sai
+              </button>
+            </div>
+          </Modal>
+        )}
       </div>
     );
 };

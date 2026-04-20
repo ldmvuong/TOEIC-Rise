@@ -1,11 +1,20 @@
 import { ModalForm, ProForm, ProFormSelect, ProFormText } from "@ant-design/pro-components";
 import { Col, Form, Row, message, notification } from "antd";
 import { useState, useEffect } from "react";
-import { createTestSet, updateTestSet } from "@/api/api";
+import { createTestSet as apiCreateTestSet, updateTestSet as apiUpdateTestSet } from "@/api/api";
 import { TEST_SET_NAME_REGEX } from "@/utils/validation";
 
 const ModalTestSet = (props) => {
-    const { openModal, setOpenModal, reloadTable, dataInit, setDataInit, onUpdateSuccess } = props;
+    const {
+        openModal,
+        setOpenModal,
+        reloadTable,
+        dataInit,
+        setDataInit,
+        onUpdateSuccess,
+        createTestSet: createTestSetApi = apiCreateTestSet,
+        updateTestSet: updateTestSetApi = apiUpdateTestSet,
+    } = props;
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -32,7 +41,7 @@ const ModalTestSet = (props) => {
             };
 
             try {
-                const res = await updateTestSet(testSet);
+                const res = await updateTestSetApi(testSet);
                 if (res.data) {
                     message.success("Test set updated successfully");
                     handleReset();
@@ -57,7 +66,7 @@ const ModalTestSet = (props) => {
             };
 
             try {
-                const res = await createTestSet(testSet);
+                const res = await createTestSetApi(testSet);
                 if (res.data) {
                     message.success("Test set created successfully");
                     handleReset();

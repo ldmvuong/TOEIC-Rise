@@ -1,10 +1,10 @@
 import { ModalForm, ProFormText } from "@ant-design/pro-components";
 import { Form, message, notification } from "antd";
 import { useEffect } from "react";
-import { updateTest } from "@/api/api";
+import { updateTest as defaultUpdateTest } from "@/api/api";
 import { TEST_NAME_REGEX } from "@/utils/validation";
 
-const EditTestNameModal = ({ open, onClose, test, onSuccess }) => {
+const EditTestNameModal = ({ open, onClose, test, onSuccess, updateTestFn = defaultUpdateTest }) => {
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -19,7 +19,7 @@ const EditTestNameModal = ({ open, onClose, test, onSuccess }) => {
 
     const handleFinish = async (values) => {
         try {
-            await updateTest(test.id, {
+            await updateTestFn(test.id, {
                 name: values.name,
             });
             message.success("Test name updated successfully");

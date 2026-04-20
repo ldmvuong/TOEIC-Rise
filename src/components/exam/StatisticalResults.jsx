@@ -1,12 +1,68 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircleOutlined, CloseCircleOutlined, FlagOutlined } from '@ant-design/icons';
-import { getUserTestStatisticsResult } from '../../api/api';
+import {
+    getUserTestStatisticsResult,
+    getWritingTestStatisticsResult,
+    getSpeakingTestStatisticsResult,
+} from '../../api/api';
 import { message } from 'antd';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
 import { toSlug } from '../../utils/slug';
+
+/** Map WritingTestResultResponse into the shape this page expects for summary cards. */
+function writingStatsResponseToViewModel(w) {
+    const totalQ = Number(w?.totalQuestions) || 0;
+    const totalA = Number(w?.totalAnswers) || 0;
+    return {
+        ...w,
+        correctAnswers: totalA,
+        correctPercent: totalQ > 0 ? (100 * totalA) / totalQ : 0,
+        isWritingSummary: true,
+        userAnswersByPart: null,
+        parts: Array.isArray(w.parts) ? w.parts : [],
+    };
+}
+
+function shouldPreferWritingStatisticsApi(data) {
+    if (!data) return false;
+    if (
+        Array.isArray(data.parts) &&
+        data.parts.some((p) => /writing/i.test(String(p)))
+    ) {
+        return true;
+    }
+    if (
+        data.userAnswersByPart &&
+        Object.keys(data.userAnswersByPart).some((k) =>
+            /writing/i.test(String(k)),
+        )
+    ) {
+        return true;
+    }
+    return false;
+}
+
+function shouldPreferSpeakingStatisticsApi(data) {
+    if (!data) return false;
+    if (
+        Array.isArray(data.parts) &&
+        data.parts.some((p) => /speaking/i.test(String(p)))
+    ) {
+        return true;
+    }
+    if (
+        data.userAnswersByPart &&
+        Object.keys(data.userAnswersByPart).some((k) =>
+            /speaking/i.test(String(k)),
+        )
+    ) {
+        return true;
+    }
+    return false;
+}
 
 const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [activePartTab, setActivePartTab] = useState(null);
@@ -19,6 +75,9 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reportQuestionData, setReportQuestionData] = useState(null);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const writingFromUrl = searchParams.get('writing') === '1';
+    const speakingFromUrl = searchParams.get('speaking') === '1';
 
     // Fetch data from API
     useEffect(() => {
@@ -29,10 +88,52 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
 
         const fetchData = async () => {
             try {
+                if (writingFromUrl) {
+                    const res = await getWritingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(res.data));
+                    return;
+                }
+                if (speakingFromUrl) {
+                    const res = await getSpeakingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(res.data));
+                    return;
+                }
                 const response = await getUserTestStatisticsResult(userTestId);
                 const responseData = response.data;
+                if (shouldPreferWritingStatisticsApi(responseData)) {
+                    const wRes = await getWritingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(wRes.data));
+                    return;
+                }
+                if (shouldPreferSpeakingStatisticsApi(responseData)) {
+                    const sRes = await getSpeakingTestStatisticsResult(userTestId);
+                    setData(writingStatsResponseToViewModel(sRes.data));
+                    return;
+                }
                 setData(responseData);
             } catch (error) {
+                if (!writingFromUrl) {
+                    try {
+                        const wRes = await getWritingTestStatisticsResult(
+                            userTestId,
+                        );
+                        setData(writingStatsResponseToViewModel(wRes.data));
+                        return;
+                    } catch {
+                        /* fall through */
+                    }
+                }
+                if (!speakingFromUrl) {
+                    try {
+                        const sRes = await getSpeakingTestStatisticsResult(
+                            userTestId,
+                        );
+                        setData(writingStatsResponseToViewModel(sRes.data));
+                        return;
+                    } catch {
+                        /* fall through */
+                    }
+                }
                 console.error('Error fetching statistics:', error);
                 message.error('Không thể tải thống kê kết quả');
             } finally {
@@ -41,7 +142,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
         };
 
         fetchData();
-    }, [userTestId]);
+    }, [userTestId, writingFromUrl, speakingFromUrl]);
 
     // Get parts list - memoized to use in multiple places
     const partsList = useMemo(() => {
@@ -102,6 +203,12 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
 
     const incorrectAnswers = useMemo(() => {
         if (!data) return 0;
+        if (data.isWritingSummary) {
+            return Math.max(
+                0,
+                (data.totalQuestions ?? 0) - (data.totalAnswers ?? 0),
+            );
+        }
         if (fullTest) {
             // For full test: sum wrongAnswers from all parts' Total
             let totalIncorrect = 0;
@@ -212,6 +319,15 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     )}
                     <button 
                         onClick={() => {
+                            if (data.isWritingSummary && data.testId != null) {
+                                const slug = toSlug(data.testName || 'test');
+                                if (speakingFromUrl) {
+                                    navigate(`/speaking-tests/${data.testId}/${slug}`);
+                                    return;
+                                }
+                                navigate(`/writing-tests/${data.testId}/${slug}`);
+                                return;
+                            }
                             if (testId && data?.testName) {
                                 const slug = toSlug(data.testName);
                                 navigate(`/online-tests/${testId}/${slug}`);
@@ -235,7 +351,11 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     </div>
                 </div>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Độ chính xác</div>
+                    <div className="text-sm text-gray-600 mb-1">
+                        {data.isWritingSummary
+                            ? 'Tỷ lệ hoàn thành'
+                            : 'Độ chính xác'}
+                    </div>
                     <div className="text-2xl font-bold text-gray-900">
                         {data.correctPercent?.toFixed(1) || '0.0'}%
                     </div>
@@ -260,7 +380,11 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
                     <CloseCircleOutlined className="text-3xl text-red-600" />
                     <div>
-                        <div className="text-sm text-gray-600">Trả lời sai</div>
+                        <div className="text-sm text-gray-600">
+                            {data.isWritingSummary
+                                ? 'Chưa trả lời'
+                                : 'Trả lời sai'}
+                        </div>
                         <div className="text-xl font-bold text-gray-900">{incorrectAnswers} câu hỏi</div>
                     </div>
                 </div>
@@ -299,8 +423,8 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 </div>
             )}
 
-            {/* Phân tích chi tiết */}
-            {parts.length > 0 && (
+            {/* Phân tích chi tiết (không áp dụng cho tóm tắt Writing từ API riêng) */}
+            {parts.length > 0 && !data.isWritingSummary && (
                 <div className="border-t border-gray-200 pt-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Phân tích chi tiết</h2>
                     

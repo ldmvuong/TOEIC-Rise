@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Modal } from 'antd';
-import { viewAnswersQuestionDetail } from '../../../api/api';
+import {
+    viewAnswersQuestionDetail,
+    getOrGenerateWritingFeedback,
+    getOrGenerateSpeakingFeedback,
+} from '../../../api/api';
 import { message } from 'antd';
 import parse from 'html-react-parser';
 import AudioPlayerUI from './AudioPlayerUI';
@@ -21,24 +25,42 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     const [loading, setLoading] = useState(false);
     const [showTranscript, setShowTranscript] = useState(false);
     const [showExplanation, setShowExplanation] = useState(false);
+    const [writingFeedbackLoading, setWritingFeedbackLoading] = useState(false);
+    const [fetchedWritingFeedback, setFetchedWritingFeedback] = useState(null);
+    const [speakingFeedbackLoading, setSpeakingFeedbackLoading] = useState(false);
+    const [fetchedSpeakingFeedback, setFetchedSpeakingFeedback] = useState(null);
 
     useEffect(() => {
-        if (open && userAnswerId) {
-            fetchQuestionDetails();
+        const resolvedId =
+            userAnswerId != null && userAnswerId !== ''
+                ? String(userAnswerId).trim()
+                : '';
+        if (open && resolvedId) {
+            fetchQuestionDetails(resolvedId);
         } else {
             // Reset state when modal closes
             setQuestionData(null);
             setShowTranscript(false);
             setShowExplanation(false);
+            setFetchedWritingFeedback(null);
+            setFetchedSpeakingFeedback(null);
         }
     }, [open, userAnswerId]);
 
-    const fetchQuestionDetails = async () => {
-        if (!userAnswerId) return;
+    const fetchQuestionDetails = async (resolvedUserAnswerIdParam) => {
+        const id =
+            resolvedUserAnswerIdParam != null && resolvedUserAnswerIdParam !== ''
+                ? String(resolvedUserAnswerIdParam).trim()
+                : userAnswerId != null && userAnswerId !== ''
+                  ? String(userAnswerId).trim()
+                  : '';
+        if (!id) return;
 
         setLoading(true);
+        setFetchedWritingFeedback(null);
+        setFetchedSpeakingFeedback(null);
         try {
-            const response = await viewAnswersQuestionDetail(userAnswerId);
+            const response = await viewAnswersQuestionDetail(id);
             const data = response.data || null;
             
             // Ensure options is always an array (keep null values for rendering)
@@ -51,7 +73,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             if (data) {
                 setQuestionData({
                     ...data,
-                    userAnswerId: data.userAnswerId ?? userAnswerId
+                    userAnswerId: data.userAnswerId ?? id,
                 });
             } else {
                 setQuestionData(null);
@@ -62,6 +84,62 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             setQuestionData(null);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const resolvedUserAnswerId = questionData?.userAnswerId ?? userAnswerId;
+
+    const handleFetchWritingFeedback = async () => {
+        if (!resolvedUserAnswerId) {
+            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            return;
+        }
+        setWritingFeedbackLoading(true);
+        try {
+            const res = await getOrGenerateWritingFeedback(resolvedUserAnswerId);
+            const text =
+                typeof res?.data === 'string'
+                    ? res.data
+                    : res?.data != null
+                      ? String(res.data)
+                      : '';
+            setFetchedWritingFeedback(text);
+        } catch (error) {
+            console.error('Writing feedback error:', error);
+            message.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể lấy nhận xét Writing.',
+            );
+        } finally {
+            setWritingFeedbackLoading(false);
+        }
+    };
+
+    const handleFetchSpeakingFeedback = async () => {
+        if (!resolvedUserAnswerId) {
+            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            return;
+        }
+        setSpeakingFeedbackLoading(true);
+        try {
+            const res = await getOrGenerateSpeakingFeedback(resolvedUserAnswerId);
+            const text =
+                typeof res?.data === 'string'
+                    ? res.data
+                    : res?.data != null
+                      ? String(res.data)
+                      : '';
+            setFetchedSpeakingFeedback(text);
+        } catch (error) {
+            console.error('Speaking feedback error:', error);
+            message.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể lấy nhận xét Speaking.',
+            );
+        } finally {
+            setSpeakingFeedbackLoading(false);
         }
     };
 
@@ -79,6 +157,9 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
         options = [],
         correctOption,
         userAnswer = '',
+        userAnswerText,
+        userAnswerAudioUrl = '',
+        feedback,
         explanation,
     } = questionData || {};
 
@@ -89,6 +170,25 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
     // API already handles the options array (Part 2 has 3, other parts have 4)
     const maxOptions = allOptions.length > 0 ? allOptions.length : 0;
     const shouldShowOptions = maxOptions > 0;
+
+    const hasUserAnswerText =
+        userAnswerText != null && String(userAnswerText).trim() !== '';
+    const hasUserAnswerAudio =
+        userAnswerAudioUrl != null && String(userAnswerAudioUrl).trim() !== '';
+    const speakingFeedbackPicked =
+        fetchedSpeakingFeedback != null &&
+        String(fetchedSpeakingFeedback).trim() !== ''
+            ? fetchedSpeakingFeedback
+            : null;
+    const writingFeedbackPicked =
+        fetchedWritingFeedback != null &&
+        String(fetchedWritingFeedback).trim() !== ''
+            ? fetchedWritingFeedback
+            : null;
+    const effectiveFeedback =
+        speakingFeedbackPicked ?? writingFeedbackPicked ?? feedback;
+    const showFeedbackBlock =
+        effectiveFeedback != null && String(effectiveFeedback).trim() !== '';
 
     return (
         <Modal
@@ -304,6 +404,68 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         <div className="mt-4 ml-11">
                             <p className="text-sm font-semibold text-green-600">
                                 Đáp án đúng: {correctOption}
+                            </p>
+                        </div>
+                    )}
+
+                    {hasUserAnswerText && (
+                        <div className="mt-4 ml-11 space-y-3">
+                            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                                <p className="text-sm font-semibold text-blue-700 mb-1">
+                                    Câu trả lời của bạn:
+                                </p>
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                    {userAnswerText}
+                                </p>
+                            </div>
+                            {resolvedUserAnswerId ? (
+                                <button
+                                    type="button"
+                                    onClick={handleFetchWritingFeedback}
+                                    disabled={writingFeedbackLoading}
+                                    className="px-4 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-sm font-medium hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {writingFeedbackLoading
+                                        ? 'Đang lấy nhận xét...'
+                                        : 'Lấy nhận xét Writing từ AI'}
+                                </button>
+                            ) : null}
+                        </div>
+                    )}
+
+                    {hasUserAnswerAudio && (
+                        <div className="mt-4 ml-11 space-y-3">
+                            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                                <p className="text-sm font-semibold text-emerald-800 mb-2">
+                                    Bản ghi trả lời của bạn:
+                                </p>
+                                <audio
+                                    controls
+                                    src={String(userAnswerAudioUrl).trim()}
+                                    className="w-full max-h-10"
+                                    preload="metadata"
+                                />
+                            </div>
+                            {resolvedUserAnswerId ? (
+                                <button
+                                    type="button"
+                                    onClick={handleFetchSpeakingFeedback}
+                                    disabled={speakingFeedbackLoading}
+                                    className="px-4 py-2 rounded-lg border border-teal-300 bg-teal-50 text-teal-900 text-sm font-medium hover:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {speakingFeedbackLoading
+                                        ? 'Đang lấy nhận xét...'
+                                        : 'Lấy nhận xét Speaking từ AI'}
+                                </button>
+                            ) : null}
+                        </div>
+                    )}
+
+                    {showFeedbackBlock && (
+                        <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                            <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                {effectiveFeedback}
                             </p>
                         </div>
                     )}

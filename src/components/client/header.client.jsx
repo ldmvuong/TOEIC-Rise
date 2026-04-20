@@ -20,6 +20,9 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
+    { name: "Đề thi Speaking", href: "/speaking-tests" },
+    { name: "Đề thi Writing", href: "/writing-tests" },
+    { name: "Blog", href: "/blog" },
     { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
@@ -75,14 +78,17 @@ export default function Header({ currentPath }) {
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-8">
+          <nav className="flex items-center gap-4 lg:gap-6">
             {nav.map((item) => {
-              const isActive = activePath === item.href
+              const isActive =
+                item.href === "/"
+                  ? activePath === "/"
+                  : activePath === item.href || activePath.startsWith(`${item.href}/`)
               return (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive
                       ? "text-blue-600 border-b-2 border-blue-600 pb-1"
                       : "text-gray-700 hover:text-blue-600"

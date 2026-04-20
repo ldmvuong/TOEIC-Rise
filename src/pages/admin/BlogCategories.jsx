@@ -1,0 +1,272 @@
+import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, message, notification, Space, Switch } from "antd";
+import { EditOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
+import DataTable from "@/components/admin/data-table";
+import queryString from "query-string";
+import {
+  getAllBlogCategories,
+  inactiveBlogCategory,
+  updateBlogCategory,
+} from "@/api/api";
+import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
+import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
+
+const BlogCategoriesPage = () => {
+  const navigate = useNavigate();
+  const tableRef = useRef();
+  const formRef = useRef();
+
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [meta, setMeta] = useState({ page: 0, pageSize: 10, total: 0 });
+
+  const handleActiveChange = async (record, checked) => {
+    const id = record?.id;
+    if (id == null) return;
+
+    setTogglingId(id);
+    try {
+      if (!checked) {
+        await inactiveBlogCategory(id);
+        message.success("Blog category set to inactive");
+      } else {
+        await updateBlogCategory(id, {
+          name: record.name?.trim(),
+          slug: String(record.slug ?? "")
+            .trim()
+            .toLowerCase(),
+          active: true,
+        });
+        message.success("Blog category set to active");
+      }
+      reloadTable();
+    } catch (e) {
+      const errorMessage =
+        e?.message ||
+        e?.response?.data?.message ||
+        "Could not update active status";
+      notification.error({
+        message: "Update failed",
+        description: errorMessage,
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const columns = [
+    {
+      title: "No.",
+      key: "index",
+      width: 70,
+      align: "center",
+      render: (_text, _record, index) => (
+        <>{index + 1 + meta.page * meta.pageSize}</>
+      ),
+      hideInSearch: true,
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      ellipsis: true,
+      sorter: true,
+    },
+    {
+      title: "Slug",
+      dataIndex: "slug",
+      ellipsis: true,
+      sorter: true,
+    },
+    {
+      title: "Posts",
+      dataIndex: "numberOfPosts",
+      ellipsis: true,
+      align: "center",
+      hideInSearch: true,
+      render: (text) => <>{text ?? 0}</>,
+    },
+    {
+      title: "Active",
+      key: "isActiveSwitch",
+      width: 120,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => {
+        const on = record.active ?? record.isActive;
+        if (on === undefined || on === null) return "—";
+        const checked = Boolean(on);
+        return (
+          <Switch
+            checked={checked}
+            checkedChildren="On"
+            unCheckedChildren="Off"
+            loading={togglingId === record.id}
+            disabled={togglingId !== null && togglingId !== record.id}
+            onChange={(next) => handleActiveChange(record, next)}
+          />
+        );
+      },
+    },
+    {
+      title: "Active",
+      dataIndex: "isActive",
+      hideInTable: true,
+      valueType: "select",
+      valueEnum: {
+        true: { text: "Active" },
+        false: { text: "Inactive" },
+      },
+      fieldProps: {
+        allowClear: true,
+        placeholder: "All",
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      width: 180,
+      align: "center",
+      hideInSearch: true,
+      render: (_text, record) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => navigate(`/admin/blog-categories/${record.id}`)}
+          >
+            View
+          </Button>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setSelectedCategory(record);
+              setOpenUpdateModal(true);
+            }}
+          >
+            Edit
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  const buildQuery = (params, sort) => {
+    const clone = { ...params };
+    const q = {
+      page: clone.current - 1,
+      size: clone.pageSize,
+    };
+
+    if (clone.name) {
+      q.name = clone.name;
+    }
+    if (clone.slug) {
+      q.slug = clone.slug;
+    }
+
+    const rawActive = clone.isActive;
+    if (rawActive !== undefined && rawActive !== null && rawActive !== "") {
+      if (rawActive === true || rawActive === "true") {
+        q.isActive = true;
+      } else if (rawActive === false || rawActive === "false") {
+        q.isActive = false;
+      }
+    }
+
+    let temp = queryString.stringify(q);
+
+    let sortBy = "updatedAt";
+    let direction = "DESC";
+
+    if (sort?.name) {
+      sortBy = "name";
+      direction = sort.name === "ascend" ? "ASC" : "DESC";
+    } else if (sort?.slug) {
+      sortBy = "slug";
+      direction = sort.slug === "ascend" ? "ASC" : "DESC";
+    }
+
+    temp = `${temp}&sortBy=${sortBy}&direction=${direction}`;
+    return temp;
+  };
+
+  const reloadTable = () => {
+    tableRef.current?.reload();
+  };
+
+  return (
+    <div>
+      <DataTable
+        actionRef={tableRef}
+        formRef={formRef}
+        headerTitle="Blog categories"
+        rowKey="id"
+        loading={loading}
+        columns={columns}
+        dataSource={categories}
+        request={async (params, sort) => {
+          setLoading(true);
+          try {
+            const query = buildQuery(params, sort);
+            const response = await getAllBlogCategories(query);
+            const data = response?.data || {};
+            setCategories(data.result || []);
+            setMeta({
+              page: data.meta?.page ?? 0,
+              pageSize: data.meta?.pageSize ?? 10,
+              total: data.meta?.total ?? 0,
+            });
+          } catch (error) {
+            console.error("Failed to fetch blog categories", error);
+            setCategories([]);
+            setMeta({ page: 0, pageSize: 10, total: 0 });
+          } finally {
+            setLoading(false);
+          }
+        }}
+        pagination={{
+          current: meta.page + 1,
+          pageSize: meta.pageSize,
+          total: meta.total,
+          showSizeChanger: true,
+          showTotal: (total, range) => (
+            <div>
+              {range[0]}-{range[1]} of {total} rows
+            </div>
+          ),
+        }}
+        scroll={{ x: true }}
+        rowSelection={false}
+        toolBarRender={() => [
+          <Button
+            key="create"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setOpenCreateModal(true)}
+          >
+            Create category
+          </Button>,
+        ]}
+      />
+      <ModalCreateBlogCategory
+        openModal={openCreateModal}
+        setOpenModal={setOpenCreateModal}
+        reloadTable={reloadTable}
+      />
+      <ModalUpdateBlogCategory
+        openModal={openUpdateModal}
+        setOpenModal={setOpenUpdateModal}
+        reloadTable={reloadTable}
+        categoryData={selectedCategory}
+      />
+    </div>
+  );
+};
+
+export default BlogCategoriesPage;

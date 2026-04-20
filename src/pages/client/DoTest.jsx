@@ -16,6 +16,14 @@ import { message, Modal } from "antd";
 
 const FULL_TEST_STORAGE_KEY_PREFIX = "toeic_full_test_progress_";
 
+/** Matches LearnerTypedTestDetail / TestDetail modal keys so progress does not collide across exam types. */
+function getFullTestStorageKey(testId, learnerTestType) {
+  if (learnerTestType === "speaking" || learnerTestType === "writing") {
+    return `${FULL_TEST_STORAGE_KEY_PREFIX}${learnerTestType}_${testId}`;
+  }
+  return `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+}
+
 const DoTest = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,6 +46,7 @@ const DoTest = () => {
           .map((id) => parseInt(id.trim()))
       : [1, 2, 3, 4, 5, 6, 7]);
   const timeLimit = state.timeLimit || searchParams.get("timeLimit");
+  const learnerTestType = state.learnerTestType || null;
   const timeLimitMinutes =
     timeLimit !== undefined && timeLimit !== null && timeLimit !== ""
       ? Number(timeLimit)
@@ -201,7 +210,7 @@ const DoTest = () => {
 
       // Case 2: full test - khôi phục progress từ localStorage
       if (isFullTest) {
-        const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+        const key = getFullTestStorageKey(testId, learnerTestType);
         try {
           const raw = localStorage.getItem(key);
           const hasProgress = typeof raw === "string" && raw.trim() !== "";
@@ -293,6 +302,7 @@ const DoTest = () => {
     navigate,
     preloadedTestData,
     isFullTest,
+    learnerTestType,
   ]);
 
   // Hàm dừng tất cả audio
@@ -385,7 +395,7 @@ const DoTest = () => {
           if (isFullTest && testId) {
             try {
               localStorage.removeItem(
-                `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`,
+                getFullTestStorageKey(testId, learnerTestType),
               );
             } catch (e) {
               console.error("Xóa tiến độ full test thất bại:", e);
@@ -415,6 +425,7 @@ const DoTest = () => {
     isRedoWrongMode,
     wrongUserTestId,
     navigate,
+    learnerTestType,
   ]);
 
   // Cập nhật ref mỗi khi submitTest thay đổi
@@ -445,9 +456,10 @@ const DoTest = () => {
     setShowLeaveConfirm(false);
     // Nếu là full test thì lưu tiến độ vào localStorage trước khi thoát
     if (isFullTest && testId && testData) {
-      const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${testId}`;
+      const key = getFullTestStorageKey(testId, learnerTestType);
       const payload = {
         testId,
+        learnerTestType,
         mode: "full",
         partIds: partIds || [1, 2, 3, 4, 5, 6, 7],
         timeLimit: null,
@@ -504,6 +516,7 @@ const DoTest = () => {
     }
     fullTestProgressRef.current = {
       testId,
+      learnerTestType,
       mode: "full",
       partIds: partIds || [1, 2, 3, 4, 5, 6, 7],
       timeLimit: null,
@@ -520,6 +533,7 @@ const DoTest = () => {
   }, [
     isFullTest,
     testId,
+    learnerTestType,
     testData,
     isTestSubmitted,
     partIds,
@@ -597,7 +611,10 @@ const DoTest = () => {
       // Full test: lưu tiến độ trước khi hiện dialog (đóng tab/F5 vẫn giữ bài làm)
       if (isFullTest && fullTestProgressRef.current) {
         try {
-          const key = `${FULL_TEST_STORAGE_KEY_PREFIX}${fullTestProgressRef.current.testId}`;
+          const key = getFullTestStorageKey(
+            fullTestProgressRef.current.testId,
+            fullTestProgressRef.current.learnerTestType,
+          );
           const payload = {
             ...fullTestProgressRef.current,
             savedAt: Date.now(),

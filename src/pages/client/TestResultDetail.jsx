@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { viewTestResultDetails } from '../../api/api';
@@ -9,6 +9,16 @@ import PassageDisplay from '../../components/exam/PassageDisplay';
 import ChatQuestion from '../../components/client/modal/ChatQuestion';
 import ReportQuestion from '../../components/client/modal/ReportQuestion';
 import DictionaryText from '../../components/shared/DictionaryText';
+
+/** Part names like "Listening Part 1" / "Writing Part 2" / "Speaking Part 1" need special ordering and no public correct key. */
+function isWritingListeningOrSpeakingPartName(partName) {
+    return /writing|listening|speaking/i.test(String(partName || ''));
+}
+
+function extractPartOrderNumber(partName) {
+    const m = String(partName || '').match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+}
 
 const TestResultDetail = () => {
     const { userTestId } = useParams();
@@ -46,24 +56,27 @@ const TestResultDetail = () => {
         fetchTestData();
     }, [userTestId, navigate]);
 
-    // Get all questions from all parts for sidebar
-    const getAllQuestions = () => {
-        if (!testData?.partResponses) return [];
-        
-        const allQuestions = [];
-        testData.partResponses.forEach((part) => {
-            part.questionGroups?.forEach((group) => {
-                group.questions?.forEach((question) => {
-                    allQuestions.push({
-                        ...question,
-                        partName: part.partName,
-                        partNumber: parseInt(part.partName.replace('Part ', ''))
-                    });
-                });
-            });
+    const sortedPartResponses = useMemo(() => {
+        const parts = testData?.partResponses;
+        if (!parts?.length) return [];
+        const needsSort = parts.some((p) => isWritingListeningOrSpeakingPartName(p.partName));
+        if (!needsSort) return parts;
+        return [...parts].sort((a, b) => {
+            const na = extractPartOrderNumber(a.partName);
+            const nb = extractPartOrderNumber(b.partName);
+            if (na !== nb) return na - nb;
+            return String(a.partName || '').localeCompare(String(b.partName || ''), 'vi');
         });
-        return allQuestions;
-    };
+    }, [testData]);
+
+    useEffect(() => {
+        if (
+            sortedPartResponses.length > 0 &&
+            selectedPartIndex >= sortedPartResponses.length
+        ) {
+            setSelectedPartIndex(0);
+        }
+    }, [sortedPartResponses.length, selectedPartIndex]);
 
     // Scroll to question
     const scrollToQuestion = (position) => {
@@ -93,6 +106,12 @@ const TestResultDetail = () => {
             tags: question.tags ?? group?.tags ?? [],
             correctOption: question.correctOption ?? question.correctAnswer ?? null,
             userAnswer: question.userAnswer ?? question.selectedAnswer ?? '',
+            userAnswerText: question.userAnswerText ?? question.userTextAnswer ?? '',
+            userAnswerAudioUrl:
+                question.userAnswerAudioUrl != null
+                    ? String(question.userAnswerAudioUrl)
+                    : '',
+            feedback: question.feedback ?? null,
             explanation: question.explanation ?? group?.explanation ?? null,
             partName: part?.partName ?? question.partName ?? null,
             questionId: question.questionId ?? question.id ?? null,
@@ -130,11 +149,17 @@ const TestResultDetail = () => {
 
     // Render question with answer status
     const renderQuestion = (question, partNumber, group, part) => {
+        const hideCorrectAnswerLine = isWritingListeningOrSpeakingPartName(part?.partName);
         const isPart2 = partNumber === 2;
         const isPart6Or7 = partNumber === 6 || partNumber === 7;
         const maxOptions = isPart2 ? 3 : 4;
         const options = question.options || [];
         const preparedQuestion = prepareQuestionData(question, group, part);
+        const hasWritingAnswer =
+            question.userAnswerText != null && String(question.userAnswerText).trim() !== '';
+        const hasSpeakingAudio =
+            question.userAnswerAudioUrl != null &&
+            String(question.userAnswerAudioUrl).trim() !== '';
 
         return (
             <div id={`question-${question.position}`} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
@@ -227,12 +252,43 @@ const TestResultDetail = () => {
                     </div>
                 )}
 
-                {/* Correct Answer Display */}
-                {question.correctOption && (!question.userAnswer || question.userAnswer !== question.correctOption) && (
-                    <div className="mt-4 ml-11">
-                        <p className="text-sm font-semibold text-green-600">
-                            Đáp án đúng: {question.correctOption}
-                        </p>
+                {/* Correct Answer Display — hidden for Listening / Writing parts */}
+                {!hideCorrectAnswerLine &&
+                    question.correctOption &&
+                    (!question.userAnswer || question.userAnswer !== question.correctOption) && (
+                        <div className="mt-4 ml-11">
+                            <p className="text-sm font-semibold text-green-600">
+                                Đáp án đúng: {question.correctOption}
+                            </p>
+                        </div>
+                    )}
+
+                {/* Writing Answer Text */}
+                {hasWritingAnswer && (
+                    <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                        <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.userAnswerText}</p>
+                    </div>
+                )}
+
+                {/* Speaking — learner recording */}
+                {hasSpeakingAudio && (
+                    <div className="mt-4 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <p className="text-sm font-semibold text-emerald-800 mb-2">Bản ghi trả lời của bạn:</p>
+                        <audio
+                            controls
+                            src={String(question.userAnswerAudioUrl).trim()}
+                            className="w-full max-h-10"
+                            preload="metadata"
+                        />
+                    </div>
+                )}
+
+                {/* Writing Feedback */}
+                {question.feedback != null && String(question.feedback).trim() !== '' && (
+                    <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.feedback}</p>
                     </div>
                 )}
 
@@ -402,7 +458,7 @@ const TestResultDetail = () => {
         );
     }
 
-    if (!testData || !testData.partResponses || testData.partResponses.length === 0) {
+    if (!testData || !sortedPartResponses.length) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-gray-500">Không có dữ liệu bài thi</div>
@@ -410,9 +466,8 @@ const TestResultDetail = () => {
         );
     }
 
-    const selectedPart = testData.partResponses[selectedPartIndex];
-    const allQuestions = getAllQuestions();
-    const partNumber = selectedPart ? parseInt(selectedPart.partName.replace('Part ', '')) : null;
+    const selectedPart = sortedPartResponses[selectedPartIndex];
+    const partNumber = selectedPart ? extractPartOrderNumber(selectedPart.partName) : null;
 
     return (
         <>
@@ -440,7 +495,7 @@ const TestResultDetail = () => {
                     <div className="max-w-7xl mx-auto px-6 py-6">
                         {/* Part Tabs */}
                         <div className="mb-6 flex gap-2 border-b border-gray-200">
-                            {testData.partResponses.map((part, index) => (
+                            {sortedPartResponses.map((part, index) => (
                                 <button
                                     key={part.id}
                                     onClick={() => setSelectedPartIndex(index)}
@@ -476,7 +531,7 @@ const TestResultDetail = () => {
                         <h3 className="text-sm font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
                         
                         {/* Group by Part */}
-                        {testData.partResponses.map((part) => (
+                        {sortedPartResponses.map((part) => (
                             <div key={part.id} className="mb-6">
                                 <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase">
                                     {part.partName}
@@ -484,9 +539,16 @@ const TestResultDetail = () => {
                                 <div className="grid grid-cols-5 gap-1">
                                     {part.questionGroups?.map((group) =>
                                         group.questions?.map((question) => {
+                                            const hasAnswered =
+                                                (question.userAnswer != null &&
+                                                    String(question.userAnswer).trim() !== '') ||
+                                                (question.userAnswerText != null &&
+                                                    String(question.userAnswerText).trim() !== '') ||
+                                                (question.userAnswerAudioUrl != null &&
+                                                    String(question.userAnswerAudioUrl).trim() !== '');
                                             const status = question.isCorrect
                                                 ? 'correct'
-                                                : question.userAnswer
+                                                : hasAnswered
                                                 ? 'incorrect'
                                                 : 'skipped';
 
@@ -494,8 +556,7 @@ const TestResultDetail = () => {
                                                 <button
                                                     key={question.id}
                                                     onClick={() => {
-                                                        // Find part index and switch to it
-                                                        const partIndex = testData.partResponses.findIndex(
+                                                        const partIndex = sortedPartResponses.findIndex(
                                                             (p) => p.id === part.id
                                                         );
                                                         if (partIndex !== -1) {

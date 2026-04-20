@@ -4,12 +4,20 @@ import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import TestList from './pages/client/TestList.jsx';
+import LearnerTypedTestList from "./pages/client/LearnerTypedTestList.jsx";
+import LearnerTypedTestDetail from "./pages/client/LearnerTypedTestDetail.jsx";
 import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
+import SpeakingTestSetPage from "./pages/admin/SpeakingTestSet.jsx";
+import WritingTestSetPage from "./pages/admin/WritingTestSet.jsx";
 import TestDetailPage from "./pages/admin/TestDetail.jsx";
+import SpeakingTestDetailPage from "./pages/admin/SpeakingTestDetail.jsx";
+import WritingTestDetailPage from "./pages/admin/WritingTestDetail.jsx";
 import TestPage from "./pages/admin/Test.jsx";
+import SpeakingTestPage from "./pages/admin/SpeakingTest.jsx";
+import WritingTestPage from "./pages/admin/WritingTest.jsx";
 import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
@@ -21,10 +29,23 @@ import UserPage from "./pages/admin/User.jsx";
 import ReportPage from "./pages/admin/Report.jsx";
 import ReportDetailPage from "./pages/admin/ReportDetail.jsx";
 import QuestionGroupPage from "./pages/admin/QuestionGroup.jsx";
+import SpeakingQuestionGroupPage from "./pages/admin/SpeakingQuestionGroupPage.jsx";
+import WritingQuestionGroupPage from "./pages/admin/WritingQuestionGroupPage.jsx";
 import AnalyticsPage from "./pages/admin/Analytics.jsx";
 import TagsPage from "./pages/admin/Tags.jsx";
+import BlogCategoriesPage from "./pages/admin/BlogCategories.jsx";
+import BlogCategoryDetailPage from "./pages/admin/BlogCategoryDetail.jsx";
+import BlogPostCreatePage from "./pages/admin/BlogPostCreate.jsx";
+import BlogPostDetailPage from "./pages/admin/BlogPostDetail.jsx";
+import BlogPostUpdatePage from "./pages/admin/BlogPostUpdate.jsx";
+import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
+import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
+import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
+import BlogSearchPage from "./pages/client/BlogSearch.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
+import DoSpeakingTest from "./pages/client/DoSpeakingTest.jsx";
+import DoWritingTest from "./pages/client/DoWritingTest.jsx";
 import DoMiniTest from "./pages/client/DoMiniTest.jsx";
 import MiniTestResult from "./pages/client/MiniTestResult.jsx";
 import TestResult from "./pages/client/TestResult.jsx";
@@ -47,6 +68,9 @@ import SystemPromptsChatbot from "./pages/admin/SystemPromptsChatbot.jsx";
 import SystemPromptsQAndA from "./pages/admin/SystemPromptsQAndA.jsx";
 import SystemPromptsExplanation from "./pages/admin/SystemPromptsExplanation.jsx";
 import SystemPromptsSentenceAssessment from "./pages/admin/SystemPromptsSentenceAssessment.jsx";
+import SystemPromptsWritingAssessment from "./pages/admin/SystemPromptsWritingAssessment.jsx";
+import SystemPromptsSpeakingAssessment from "./pages/admin/SystemPromptsSpeakingAssessment.jsx";
+import SystemPromptsBlogSummarization from "./pages/admin/SystemPromptsBlogSummarization.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
 
 
@@ -71,6 +95,26 @@ export default function App() {
       children: [
         { index: true, element: <HomePage /> },
         {
+          path: "blog",
+          element: <BlogCategoriesPublicPage />,
+        },
+        {
+          path: "blog/categories",
+          element: <BlogCategoriesPublicPage />,
+        },
+        {
+          path: "blog/categories/:slug",
+          element: <BlogPostsPublicPage />,
+        },
+        {
+          path: "blog/search",
+          element: <BlogSearchPage />,
+        },
+        {
+          path: "blog/posts/:slug",
+          element: <BlogPostDetailPublicPage />,
+        },
+        {
           path: 'exam-structure',
           element: <ExamStructure />
         },
@@ -83,10 +127,42 @@ export default function App() {
           element: <TestDetail />
         },
         {
+          path: "speaking-tests",
+          element: <LearnerTypedTestList variant="speaking" />,
+        },
+        {
+          path: "speaking-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="speaking" />,
+        },
+        {
+          path: "writing-tests",
+          element: <LearnerTypedTestList variant="writing" />,
+        },
+        {
+          path: "writing-tests/:id/:slug?",
+          element: <LearnerTypedTestDetail variant="writing" />,
+        },
+        {
           path: 'do-test',
           element: (
             <ProtectedRoute allowedRoles={['LEARNER']}>
               <DoTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'do-speaking-test',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <DoSpeakingTest />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'do-writing-test',
+          element: (
+            <ProtectedRoute allowedRoles={['LEARNER']}>
+              <DoWritingTest />
             </ProtectedRoute>
           )
         },
@@ -313,6 +389,54 @@ export default function App() {
           ),
         },
         {
+          path: 'speaking-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-test-sets',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestSetPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'speaking-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingTestDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-tests/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingTestDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: 'tests',
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
@@ -361,6 +485,22 @@ export default function App() {
           ),
         },
         {
+          path: 'speaking-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <SpeakingQuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'writing-question-groups/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <WritingQuestionGroupPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: 'analytics',
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
@@ -373,6 +513,46 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
               <TagsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-categories',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogCategoriesPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-categories/:id/posts/new',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogPostCreatePage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-posts/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogPostDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-posts/:id/edit',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogPostUpdatePage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'blog-categories/:id',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BlogCategoryDetailPage />
             </ProtectedRoute>
           ),
         },
@@ -405,6 +585,30 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptsSentenceAssessment />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/writing-assessment',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsWritingAssessment />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/speaking-assessment',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsSpeakingAssessment />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'system-prompts/blog-summarization',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SystemPromptsBlogSummarization />
             </ProtectedRoute>
           ),
         },
