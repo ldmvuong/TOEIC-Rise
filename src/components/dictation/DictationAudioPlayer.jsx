@@ -182,10 +182,10 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
             <button
               type="button"
               onClick={() => setShowVolume((v) => !v)}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900"
+              className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-gray-50 leading-none"
               title="Âm lượng"
             >
-              <IconVolume className={volume > 0 ? "text-slate-700" : "text-slate-400"} />
+              <IconVolume className={`shrink-0 ${volume > 0 ? "text-slate-700" : "text-slate-400"}`} />
               {Math.round(volume * 100)}%
             </button>
 
@@ -221,10 +221,10 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
               const next = speeds[(idx + 1) % speeds.length];
               setPlaybackRate(next);
             }}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900"
+            className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-gray-50 leading-none"
             title="Tốc độ phát"
           >
-            <IconClock className="text-slate-700" />
+            <IconClock className="shrink-0 text-slate-700" />
             {formatRate(rate)}x
           </button>
         </div>

@@ -5,6 +5,7 @@ import { getDictationPart } from "../../api/api";
 import { buildCloze, normalizeAnswer } from "../../utils/dictationCloze";
 import DictationAudioPlayer from "../../components/dictation/DictationAudioPlayer";
 import { IconCheckCircle, IconPencil, IconSparkles } from "../../components/icons";
+import parse from "html-react-parser";
 
 function clamp01(n) {
   const x = Number(n);
@@ -813,7 +814,7 @@ export default function DictationPractice() {
                           </button>
                           {showTranscriptByGroupId[currentGroupId] ? (
                             <div className="px-4 py-3 text-sm text-slate-800 leading-7 whitespace-pre-wrap">
-                              {currentGroup.transcript}
+                              {parse(String(currentGroup.transcript || ""))}
                             </div>
                           ) : null}
                         </div>

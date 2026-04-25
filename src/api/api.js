@@ -42,7 +42,7 @@ export const getTestSetDictation = () => api.get(`/staff/test-sets/dictation`);
 export const getTestSetDictationDetail = (id) => api.get(`/staff/test-sets/dictation/${id}/tests`);
 
 export const generateDictationPreview = (testId, partId) =>
-  api.get(`/staff/chatbot/generate-preview`, {
+  api.get(`/staff/chatbot/generate-dictation`, {
     params: { testId, partId },
   });
 
