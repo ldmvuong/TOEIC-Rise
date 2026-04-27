@@ -16,6 +16,9 @@ import {
     FileTextOutlined,
     BarChartOutlined,
     TagOutlined,
+    BookOutlined,
+    AudioOutlined,
+    FormOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -25,19 +28,118 @@ import { logout as logoutApi } from "../api/api";
 
 const { Content, Sider } = Layout;
 
+/** Submenu key (not a route) — keep in sync with Menu `openKeys` below */
+const TEST_SETS_SUBMENU_KEY = "admin-test-sets-submenu";
+
+const TEST_SET_ROUTES = [
+    "/admin/test-sets",
+    "/admin/speaking-test-sets",
+    "/admin/writing-test-sets",
+];
+
+/** Submenu for system prompts — open for list + detail URLs under this prefix */
+const PROMPTS_SUBMENU_KEY = "admin-system-prompts-submenu";
+const PROMPT_ROUTE_PREFIX = "/admin/system-prompts";
+
+const TESTS_SUBMENU_KEY = "admin-tests-submenu";
+
 const STATIC_MENU = [
     { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/analytics">Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/test-sets">Test Sets</Link>, key: "/admin/test-sets", icon: <BankOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/tests">Tests</Link>, key: "/admin/tests", icon: <BugOutlined />, roles: ["ADMIN", "STAFF"] },
+    {
+        key: TEST_SETS_SUBMENU_KEY,
+        label: "Test sets",
+        icon: <BankOutlined />,
+        roles: ["ADMIN"],
+        children: [
+            {
+                key: "/admin/test-sets",
+                label: <Link to="/admin/test-sets">Test Sets</Link>,
+                icon: <BankOutlined />,
+            },
+            {
+                key: "/admin/speaking-test-sets",
+                label: <Link to="/admin/speaking-test-sets">Speaking Test Sets</Link>,
+                icon: <AudioOutlined />,
+            },
+            {
+                key: "/admin/writing-test-sets",
+                label: <Link to="/admin/writing-test-sets">Writing Test Sets</Link>,
+                icon: <FormOutlined />,
+            },
+        ],
+    },
+    {
+        key: TESTS_SUBMENU_KEY,
+        label: "Tests",
+        icon: <BugOutlined />,
+        roles: ["ADMIN", "STAFF"],
+        children: [
+            {
+                key: "/admin/tests",
+                label: <Link to="/admin/tests">Listening & reading</Link>,
+                icon: <BugOutlined />,
+            },
+            {
+                key: "/admin/speaking-tests",
+                label: <Link to="/admin/speaking-tests">Speaking</Link>,
+                icon: <AudioOutlined />,
+            },
+            {
+                key: "/admin/writing-tests",
+                label: <Link to="/admin/writing-tests">Writing</Link>,
+                icon: <FormOutlined />,
+            },
+        ],
+    },
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>, key: "/admin/system-prompts/chatbot", icon: <ApiOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>, key: "/admin/system-prompts/q-and-a", icon: <ApiOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>, key: "/admin/system-prompts/explanation", icon: <ApiOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>, key: "/admin/system-prompts/sentence-assessment", icon: <ApiOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/dictation">Dictation</Link>, key: "/admin/dictation", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/blog-categories">Blog categories</Link>, key: "/admin/blog-categories", icon: <BookOutlined />, roles: ["ADMIN", "STAFF"] },
+    {
+        key: PROMPTS_SUBMENU_KEY,
+        label: "Prompts",
+        icon: <ApiOutlined />,
+        roles: ["ADMIN"],
+        children: [
+            {
+                key: "/admin/system-prompts/chatbot",
+                label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/q-and-a",
+                label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/explanation",
+                label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/sentence-assessment",
+                label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/writing-assessment",
+                label: <Link to="/admin/system-prompts/writing-assessment">Writing Assessment Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/speaking-assessment",
+                label: <Link to="/admin/system-prompts/speaking-assessment">Speaking Assessment Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+            {
+                key: "/admin/system-prompts/blog-summarization",
+                label: <Link to="/admin/system-prompts/blog-summarization">Blog Summarization Prompts</Link>,
+                icon: <ApiOutlined />,
+            },
+        ],
+    },
 ];
 
 export default function AdminLayout() {
@@ -46,6 +148,7 @@ export default function AdminLayout() {
     const dispatch = useAppDispatch();
     const [collapsed, setCollapsed] = useState(false);
     const [activeMenu, setActiveMenu] = useState("/admin");
+    const [openKeys, setOpenKeys] = useState([]);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     // Redux state
@@ -55,6 +158,32 @@ export default function AdminLayout() {
     useEffect(() => {
         const path = location.pathname.startsWith("/admin") ? location.pathname : "/admin";
         setActiveMenu(path);
+        setOpenKeys((prev) => {
+            let next = [...prev];
+            if (TEST_SET_ROUTES.includes(path)) {
+                if (!next.includes(TEST_SETS_SUBMENU_KEY)) next.push(TEST_SETS_SUBMENU_KEY);
+            } else {
+                next = next.filter((k) => k !== TEST_SETS_SUBMENU_KEY);
+            }
+            if (path.startsWith(PROMPT_ROUTE_PREFIX)) {
+                if (!next.includes(PROMPTS_SUBMENU_KEY)) next.push(PROMPTS_SUBMENU_KEY);
+            } else {
+                next = next.filter((k) => k !== PROMPTS_SUBMENU_KEY);
+            }
+            const inTestsSection =
+                path === "/admin/tests" ||
+                path.startsWith("/admin/tests/") ||
+                path === "/admin/speaking-tests" ||
+                path.startsWith("/admin/speaking-tests/") ||
+                path === "/admin/writing-tests" ||
+                path.startsWith("/admin/writing-tests/");
+            if (inTestsSection) {
+                if (!next.includes(TESTS_SUBMENU_KEY)) next.push(TESTS_SUBMENU_KEY);
+            } else {
+                next = next.filter((k) => k !== TESTS_SUBMENU_KEY);
+            }
+            return next;
+        });
     }, [location.pathname]);
 
     const handleLogout = async () => {
@@ -122,9 +251,16 @@ export default function AdminLayout() {
                 </div>
                 <Menu
                     selectedKeys={[activeMenu]}
+                    openKeys={openKeys}
+                    onOpenChange={setOpenKeys}
                     mode="inline"
                     items={filteredMenu}
-                    onClick={(e) => setActiveMenu(e.key)}
+                    onClick={(e) => {
+                        const { key } = e;
+                        if (key === "/admin" || key.startsWith("/admin/")) {
+                            setActiveMenu(key);
+                        }
+                    }}
                 />
             </Sider>
 

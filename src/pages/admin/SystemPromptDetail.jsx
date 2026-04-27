@@ -18,12 +18,16 @@ import { SYSTEM_PROMPT_CONTENT_REGEX } from "@/utils/validation";
 import SystemPromptTestModal from "@/components/admin/system-prompts/SystemPromptTestModal";
 import SystemPromptQAndATestModal from "@/components/admin/system-prompts/SystemPromptQAndATestModal";
 import SystemPromptExplanationTestModal from "@/components/admin/system-prompts/SystemPromptExplanationTestModal";
+import SystemPromptBlogSummarizationTestModal from "@/components/admin/system-prompts/SystemPromptBlogSummarizationTestModal";
 
 const typeToEnumMap = {
   chatbot: "CHATBOT",
   "q-and-a": "Q_AND_A",
   explanation: "EXPLANATION_GENERATION",
   "sentence-assessment": "SENTENCE_ASSESSMENT",
+  "writing-assessment": "WRITING_ASSESSMENT",
+  "speaking-assessment": "SPEAKING_ASSESSMENT",
+  "blog-summarization": "BLOG_SUMMARIZATION",
 };
 
 const typeToLabelMap = {
@@ -31,6 +35,9 @@ const typeToLabelMap = {
   "q-and-a": "Q & A",
   explanation: "Explanation Generation",
   "sentence-assessment": "Sentence Assessment",
+  "writing-assessment": "Writing Assessment",
+  "speaking-assessment": "Speaking Assessment",
+  "blog-summarization": "Blog Summarization",
 };
 
 const SystemPromptDetailPage = () => {
@@ -46,6 +53,8 @@ const SystemPromptDetailPage = () => {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [qnaTestModalOpen, setQnaTestModalOpen] = useState(false);
   const [explainTestModalOpen, setExplainTestModalOpen] = useState(false);
+  const [blogSummaryTestModalOpen, setBlogSummaryTestModalOpen] =
+    useState(false);
 
   const featureTypeEnum = useMemo(() => {
     if (!type) return null;
@@ -231,6 +240,11 @@ const SystemPromptDetailPage = () => {
               Test Explanation
             </Button>
           )}
+          {featureTypeEnum === "BLOG_SUMMARIZATION" && (
+            <Button onClick={() => setBlogSummaryTestModalOpen(true)}>
+              Test Blog Summary
+            </Button>
+          )}
           <Button type="primary" onClick={handleStartEdit}>
             Edit
           </Button>
@@ -283,6 +297,14 @@ const SystemPromptDetailPage = () => {
         <SystemPromptExplanationTestModal
           open={explainTestModalOpen}
           onClose={() => setExplainTestModalOpen(false)}
+          systemPromptContent={prompt.content || ""}
+        />
+      )}
+
+      {featureTypeEnum === "BLOG_SUMMARIZATION" && (
+        <SystemPromptBlogSummarizationTestModal
+          open={blogSummaryTestModalOpen}
+          onClose={() => setBlogSummaryTestModalOpen(false)}
           systemPromptContent={prompt.content || ""}
         />
       )}

@@ -30,7 +30,7 @@ export const loginWithGoogle = () => {
   window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/auth/login/google?callback=${callbackUrl}`;
 };
 
-export const refreshToken = () => api.post("/auth/refresh-token");
+export const refreshToken = () => api.get("/auth/refresh-token");
 
 // Admin Test Sets
 
@@ -53,11 +53,31 @@ export const getDictationDetail = (testId, partId) =>
 
 export const updateDictationTranscript = (payload) => api.put(`/staff/dictation`, payload);
 export const getAllTestSets = (query) => {
-  return api.get(`/staff/test-sets?${query}`);
+  return api.get(`/staff/test-sets/listening-reading?${query}`);
 };
 
 export const getTestInTestSet = (id, query) =>
   api.get(`/admin/test-sets/${id}?${query}`);
+
+// Admin Speaking Test Sets
+export const createSpeakingTestSet = (payload) =>
+  api.post("/admin/speaking-test-sets", payload);
+export const updateSpeakingTestSet = (payload) =>
+  api.put("/admin/speaking-test-sets", payload);
+export const getAllSpeakingTestSets = (query) =>
+  api.get(`/staff/test-sets/speaking?${query}`);
+export const getTestInSpeakingTestSet = (id, query) =>
+  api.get(`/admin/speaking-test-sets/${id}?${query}`);
+
+// Admin Writing Test Sets
+export const createWritingTestSet = (payload) =>
+  api.post("/admin/writing-test-sets", payload);
+export const updateWritingTestSet = (payload) =>
+  api.put("/admin/writing-test-sets", payload);
+export const getAllWritingTestSets = (query) =>
+  api.get(`/staff/test-sets/writing?${query}`);
+export const getTestInWritingTestSet = (id, query) =>
+  api.get(`/admin/writing-test-sets/${id}?${query}`);
 
 // Admin/Staff Tests
 export const getAllTests = (query) => api.get(`/staff/tests?${query}`);
@@ -77,6 +97,36 @@ export const changeTestStatus = (id, status) => {
   return api.patch(`/admin/tests/${id}?${params.toString()}`);
 };
 
+// Staff Speaking Tests
+export const getAllSpeakingTests = (query) =>
+  api.get(`/staff/speaking-tests?${query}`);
+
+export const importSpeakingTests = (formData) =>
+  api.post("/staff/speaking-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getSpeakingTestById = (id) =>
+  api.get(`/staff/speaking-tests/${id}`);
+
+export const updateSpeakingTest = (id, payload) =>
+  api.put(`/staff/speaking-tests/${id}`, payload);
+
+// Staff Writing Tests
+export const getAllWritingTests = (query) =>
+  api.get(`/staff/writing-tests?${query}`);
+
+export const importWritingTests = (formData) =>
+  api.post("/staff/writing-tests/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingTestById = (id) =>
+  api.get(`/staff/writing-tests/${id}`);
+
+export const updateWritingTest = (id, payload) =>
+  api.put(`/staff/writing-tests/${id}`, payload);
+
 export const getQuestionGroup = (id) => api.get(`/staff/question-groups/${id}`);
 
 export const updateQuestionGroup = (id, formData) =>
@@ -85,6 +135,30 @@ export const updateQuestionGroup = (id, formData) =>
   });
 
 export const updateQuestion = (payload) => api.put("/staff/questions", payload);
+
+// Staff Speaking / Writing question groups (SWQuestionGroupUpdateRequest: image, imageUrl, passage)
+export const getSpeakingQuestionGroup = (id) =>
+  api.get(`/staff/speaking-question-groups/${id}`);
+
+export const updateSpeakingQuestionGroup = (id, formData) =>
+  api.put(`/staff/speaking-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getWritingQuestionGroup = (id) =>
+  api.get(`/staff/writing-question-groups/${id}`);
+
+export const updateWritingQuestionGroup = (id, formData) =>
+  api.put(`/staff/writing-question-groups/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+// Staff Speaking questions
+export const getSpeakingQuestionById = (id) =>
+  api.get(`/staff/speaking-questions/${id}`);
+
+export const updateSpeakingQuestion = (payload) =>
+  api.put("/staff/speaking-questions", payload);
 
 // Profile
 
@@ -110,6 +184,64 @@ export const getPublicTest = (query) => {
 
 export const getPublicTestById = (id) => {
   return api.get(`/tests/${id}`);
+};
+
+// Learner Speaking / Writing (public — same shapes as listening test sets / tests)
+export const getLearnerSpeakingTestSets = () => api.get("/speaking-test-sets");
+
+export const getLearnerSpeakingTests = (query) =>
+  api.get(`/speaking-tests?${query}`);
+
+export const getLearnerSpeakingTestById = (id) =>
+  api.get(`/speaking-tests/${id}`);
+
+export const getLearnerWritingTestSets = () => api.get("/writing-test-sets");
+
+export const getLearnerWritingTests = (query) =>
+  api.get(`/writing-tests?${query}`);
+
+export const getLearnerWritingTestById = (id) =>
+  api.get(`/writing-tests/${id}`);
+
+// === Learner Blog APIs (public) ===
+export const getPublicBlogCategories = () => api.get("/blog-categories");
+
+export const getNewestPublicBlogPosts = ({ title = "", page = 0, size = 10 } = {}) => {
+  const params = new URLSearchParams();
+  if (title) params.append("title", title);
+  params.append("page", String(page));
+  params.append("size", String(size));
+  return api.get(`/blog-posts/newest?${params.toString()}`);
+};
+
+export const getPublicBlogPostsByCategorySlug = (
+  categorySlug,
+  { title = "", page = 0, size = 10 } = {},
+) => {
+  const params = new URLSearchParams();
+  if (title) params.append("title", title);
+  params.append("page", String(page));
+  params.append("size", String(size));
+  const encoded = encodeURIComponent(categorySlug);
+  return api.get(`/blog-posts/categories/${encoded}?${params.toString()}`);
+};
+
+export const getPublicBlogPostDetailBySlug = (slug) => {
+  const encoded = encodeURIComponent(slug);
+  return api.get(`/blog-posts/${encoded}`);
+};
+
+export const searchPublicBlogs = ({ keyword, page = 0, size = 10 }) => {
+  const params = new URLSearchParams();
+  params.append("keyword", String(keyword ?? ""));
+  params.append("page", String(page));
+  params.append("size", String(size));
+  return api.get(`/blog-posts/search?${params.toString()}`);
+};
+
+export const getPublicRelatedBlogPosts = (id, limit = 5) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return api.get(`/blog-posts/relate/${id}?${params.toString()}`);
 };
 
 // Admin users
@@ -140,6 +272,52 @@ export const getTagDashboard = (query) =>
 export const createTag = (payload) => api.post(`/staff/tags`, payload);
 export const updateTag = (tagId, payload) =>
   api.put(`/staff/tags/${tagId}`, payload);
+
+// Staff Blog categories
+export const getAllBlogCategories = (query) =>
+  api.get(`/staff/blog-categories?${query}`);
+
+export const createBlogCategory = (payload) =>
+  api.post("/staff/blog-categories", payload);
+
+export const updateBlogCategory = (id, payload) =>
+  api.put(`/staff/blog-categories/${id}`, payload);
+
+export const inactiveBlogCategory = (id) =>
+  api.patch(`/staff/blog-categories/${id}`);
+
+export const getBlogCategoryById = (id) =>
+  api.get(`/staff/blog-categories/${id}`);
+
+export const getBlogPostsByCategorySlug = (categorySlug, query) => {
+  const encoded = encodeURIComponent(categorySlug);
+  return api.get(`/staff/blog-posts/categories/${encoded}?${query}`);
+};
+
+export const createBlogPost = (categorySlug, formData) => {
+  const encoded = encodeURIComponent(categorySlug);
+  // Let axios set multipart boundary for FormData
+  return api.post(`/staff/blog-posts/${encoded}`, formData);
+};
+
+export const getBlogPostDetailForStaff = (id) =>
+  api.get(`/staff/blog-posts/${id}`);
+
+export const uploadBlogPostImage = (formData) =>
+  api.post("/staff/blog-posts/upload-image", formData);
+
+export const deleteBlogPostImage = (imageUrl) =>
+  api.delete("/staff/blog-posts/delete-image", {
+    data: { imageUrl },
+  });
+
+export const changeBlogPostStatus = (id, status) => {
+  const params = new URLSearchParams({ status });
+  return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);
+};
+
+export const updateBlogPost = (id, payload) =>
+  api.put(`/staff/blog-posts/${id}`, payload);
 
 // Admin System Prompts (admin only)
 export const getSystemPrompts = (query) =>
@@ -262,6 +440,97 @@ export const generateExplanationStream = (
     });
 };
 
+export const generateBlogSummaryStream = (
+  payload,
+  { onChunk, onDone, onError },
+) => {
+  const backendUrl =
+    api?.defaults?.baseURL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    window.location.origin;
+  const token = localStorage.getItem("access_token");
+
+  const formData = new FormData();
+  formData.append("title", payload?.title ?? "");
+  formData.append("content", payload?.content ?? "");
+
+  fetch(`${backendUrl}/staff/chatbot/generate-blog-summary`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: "text/event-stream, application/json",
+    },
+    body: formData,
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        onError?.(
+          new Error(response.statusText || "Generate blog summary failed"),
+        );
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      const processBuffer = () => {
+        const findBoundary = () => {
+          const doubleNewLine = buffer.indexOf("\n\n");
+          const doubleCarriage = buffer.indexOf("\r\n\r\n");
+          if (doubleNewLine === -1 && doubleCarriage === -1) return null;
+          if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
+          if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
+          return doubleNewLine < doubleCarriage
+            ? { index: doubleNewLine, length: 2 }
+            : { index: doubleCarriage, length: 4 };
+        };
+
+        let boundary;
+        while ((boundary = findBoundary()) !== null) {
+          const rawEvent = buffer.slice(0, boundary.index).trim();
+          buffer = buffer.slice(boundary.index + boundary.length);
+          if (!rawEvent.startsWith("data:")) continue;
+          const payloadStr = rawEvent.replace(/^data:\s*/, "");
+          if (!payloadStr || payloadStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(payloadStr);
+            if (parsed.content) {
+              onChunk?.(parsed.content);
+            }
+          } catch (err) {
+            console.error("Parse blog summary stream chunk:", err);
+          }
+        }
+      };
+
+      try {
+        while (true) {
+          let readResult;
+          try {
+            readResult = await reader.read();
+          } catch (readError) {
+            console.warn("Blog summary stream closed unexpectedly:", readError);
+            break;
+          }
+          const { value, done } = readResult;
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          processBuffer();
+        }
+        buffer += decoder.decode();
+        processBuffer();
+      } finally {
+        reader.releaseLock();
+      }
+      onDone?.();
+    })
+    .catch((err) => {
+      onError?.(err);
+    });
+};
+
 //Admin Staff Dashboard
 export const getDashboardStatistics = () =>
   api.get("/staff/stats/system-overview");
@@ -281,20 +550,86 @@ export const getTestExam = (id, parts) => {
   });
 };
 
+export const getSpeakingExam = (id, parts) => {
+  const partsArray = Array.isArray(parts) ? parts : [parts];
+  return api.get(`/learner/user-tests/speaking-exam/${id}`, {
+    params: {
+      parts: partsArray.join(","),
+    },
+  });
+};
+
+export const getWritingExam = (id, parts) => {
+  const partsArray = Array.isArray(parts) ? parts : [parts];
+  return api.get(`/learner/user-tests/writing-exam/${id}`, {
+    params: {
+      parts: partsArray.join(","),
+    },
+  });
+};
+
 export const getUserTestHistory = (testId) =>
   api.get(`/learner/user-tests/view-histories/${testId}`);
 
 export const submitTestExam = (payload) =>
   api.post("/learner/user-tests", payload);
 
+export const submitWritingTestExam = (payload) =>
+  api.post("/learner/user-tests/submit-writing-test", payload);
+
+/**
+ * Multipart body for POST /learner/user-tests/submit-speaking-test
+ * (Spring @ModelAttribute SpeakingTestSubmissionRequest).
+ * Omit `parts` fields when parts is null/undefined (full test).
+ */
+export function buildSpeakingTestSubmissionFormData({
+  testId,
+  timeSpent,
+  parts,
+  answers,
+}) {
+  const fd = new FormData();
+  fd.append("testId", String(testId));
+  fd.append("timeSpent", String(Math.max(1, Number(timeSpent) || 0)));
+  if (parts != null && Array.isArray(parts)) {
+    parts.forEach((p) => fd.append("parts", String(p)));
+  }
+  answers.forEach((a, i) => {
+    fd.append(`answers[${i}].questionId`, String(a.questionId));
+    if (a.blob instanceof Blob && a.blob.size > 0) {
+      fd.append(
+        `answers[${i}].answerAudio`,
+        a.blob,
+        a.filename || `speaking-q${a.questionId}.mp3`,
+      );
+    }
+  });
+  return fd;
+}
+
+export const submitSpeakingTestExam = (formData) =>
+  api.post("/learner/user-tests/submit-speaking-test", formData);
+
 export const getUserTestStatisticsResult = (userTestId) =>
   api.get(`/learner/user-tests/${userTestId}`);
+
+export const getWritingTestStatisticsResult = (userTestId) =>
+  api.get(`/learner/user-tests/writing/${userTestId}`);
+
+export const getSpeakingTestStatisticsResult = (userTestId) =>
+  api.get(`/learner/user-tests/speaking/${userTestId}`);
 
 export const getUserTestAnswersOverall = (userTestId) =>
   api.get(`/learner/user-tests/answers-overall/${userTestId}`);
 
 export const viewAnswersQuestionDetail = (userAnswerId) =>
   api.get(`/learner/user-answers/${userAnswerId}`);
+
+export const getOrGenerateWritingFeedback = (userAnswerId) =>
+  api.get(`/learner/user-answers/writing-feedback/${userAnswerId}`);
+
+export const getOrGenerateSpeakingFeedback = (userAnswerId) =>
+  api.get(`/learner/user-answers/speaking-feedback/${userAnswerId}`);
 
 export const viewTestResultDetails = (userTestId) =>
   api.get(`/learner/user-tests/detail/${userTestId}`);

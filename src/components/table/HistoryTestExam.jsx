@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildTestResultPath } from '../../utils/testResultNavigation';
 import { getUserTestHistory } from '../../api/api';
 import dayjs from 'dayjs';
 import { message } from 'antd';
 import { useAppSelector } from '../../redux/hooks';
 
-const HistoryTestExam = ({ testId, isAuthenticated }) => {
+const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [historyData, setHistoryData] = useState([]);
@@ -138,7 +139,20 @@ const HistoryTestExam = ({ testId, isAuthenticated }) => {
                                             <button
                                                 onClick={() => {
                                                     if (item.id) {
-                                                        navigate(`/test-result/${item.id}`);
+                                                        navigate(
+                                                            buildTestResultPath(
+                                                                item.id,
+                                                                {
+                                                                    parts: item.parts,
+                                                                    forceWriting:
+                                                                        variant ===
+                                                                        'writing',
+                                                                    forceSpeaking:
+                                                                        variant ===
+                                                                        'speaking',
+                                                                },
+                                                            ),
+                                                        );
                                                     } else {
                                                         message.error('Không tìm thấy ID bài thi');
                                                     }

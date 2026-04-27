@@ -12,13 +12,34 @@ const PUBLIC_ENDPOINTS = [
   "/auth/forgot-password",
   "/auth/verify-otp",
   "/auth/reset-password",
-  "/test-sets", 
-  "/tests" 
+  "/test-sets",
+  "/tests",
+  "/speaking-test-sets",
+  "/speaking-tests",
+  "/writing-test-sets",
+  "/writing-tests",
+  "/blog-categories",
+  "/blog-posts",
 ];
+
+const CUSTOM_AUTH_PUBLIC_ENDPOINTS = ["/auth/reset-password"];
+
+const getRequestPath = (url = "") => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  }
+  return url.split("?")[0];
+};
 
 // Helper check URL
 const isPublicUrl = (url) => {
-  return PUBLIC_ENDPOINTS.some((endpoint) => url.startsWith(endpoint));
+  const path = getRequestPath(url);
+  return PUBLIC_ENDPOINTS.some((endpoint) => path.startsWith(endpoint));
 };
 
 // Mutex để tránh multiple refresh token calls
@@ -66,15 +87,14 @@ export const clearAccessToken = () => {
 // --- Interceptors ---
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  const url = config?.url || '';
+  const url = config?.url || "";
+  const path = getRequestPath(url);
 
   if (isPublicUrl(url)) {
-    // Nếu Authorization header đã được set trong config.headers (như OTP token cho reset-password), giữ nguyên
-    // Chỉ xóa nếu nó đến từ defaults.headers.common (access token)
-    const hasCustomAuth = config.headers && config.headers.Authorization && 
-                         config.headers.Authorization.startsWith('Bearer ');
-    if (!hasCustomAuth && config.headers && config.headers.Authorization) {
-      // Xóa Authorization từ defaults nếu không phải là custom auth
+    const allowCustomAuth = CUSTOM_AUTH_PUBLIC_ENDPOINTS.some((endpoint) =>
+      path.startsWith(endpoint),
+    );
+    if (!allowCustomAuth && config.headers?.Authorization) {
       delete config.headers.Authorization;
     }
     return config;
@@ -88,6 +108,14 @@ api.interceptors.request.use((config) => {
       delete config.headers.Authorization;
     }
   }
+
+  // Multipart: default axios Content-Type is application/json — that breaks FormData
+  // (Spring @ModelAttribute + MultipartFile). Let the browser set boundary.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+  }
+
   return config;
 });
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { message, Spin, Tooltip as AntTooltip } from 'antd';
 import { getHistoryTest, getTestAnalytics, getScoreStatistics, getTagsByPart, createMiniTest } from '../../api/api';
 import { secondsToMinutes } from '../../utils/timeUtils';
+import { buildTestResultPath } from '../../utils/testResultNavigation';
 import {
     LineChart,
     BarChart,
@@ -1185,7 +1186,16 @@ const TestAnalytics = () => {
                                             </td>
                                         <td className="px-4 py-3 text-center">
                                                 <button
-                                                    onClick={() => navigate(`/test-result/${item.id}`)}
+                                                    onClick={() =>
+                                                        navigate(
+                                                            buildTestResultPath(
+                                                                item.id,
+                                                                {
+                                                                    parts: item.parts,
+                                                                },
+                                                            ),
+                                                        )
+                                                    }
                                                     className="text-blue-600 hover:text-blue-700 font-medium"
                                                 >
                                                     Xem chi tiết
