@@ -20,6 +20,7 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
+    { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
     { name: "Đề thi Speaking", href: "/speaking-tests" },
     { name: "Đề thi Writing", href: "/writing-tests" },
     { name: "Blog", href: "/blog" },

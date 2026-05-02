@@ -72,6 +72,12 @@ import SystemPromptsWritingAssessment from "./pages/admin/SystemPromptsWritingAs
 import SystemPromptsSpeakingAssessment from "./pages/admin/SystemPromptsSpeakingAssessment.jsx";
 import SystemPromptsBlogSummarization from "./pages/admin/SystemPromptsBlogSummarization.jsx";
 import SystemPromptDetailPage from "./pages/admin/SystemPromptDetail.jsx";
+import Dictation from "./pages/admin/Dictation.jsx";
+import TestSetDictation from "./pages/admin/TestSetDictation.jsx";
+import DictationExport from "./pages/admin/DictationExport.jsx";
+import DictationDetail from "./pages/admin/DictationDetail.jsx";
+import DictationLibrary from "./pages/client/Dictation.jsx";
+import DictationPractice from "./pages/client/DictationPractice.jsx";
 
 
 export default function App() {
@@ -325,6 +331,30 @@ export default function App() {
               <FlashcardViewPage />
             </ProtectedRoute>
           )
+        },
+        {
+          path: "dictation",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <DictationLibrary />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/practice",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <DictationPractice />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/practice/:testId/part/:partId",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <DictationPractice />
+            </ProtectedRoute>
+          ),
         },
       ],
     },
@@ -617,6 +647,38 @@ export default function App() {
           element: (
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <SystemPromptDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'dictation',
+          element: (
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <Dictation />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: "dictation/:id",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <TestSetDictation />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/export",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <DictationExport />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "dictation/detail",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <DictationDetail />
             </ProtectedRoute>
           ),
         },

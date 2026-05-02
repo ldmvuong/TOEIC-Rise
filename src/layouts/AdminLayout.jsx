@@ -95,6 +95,7 @@ const STATIC_MENU = [
     { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
     { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
+    { label: <Link to="/admin/dictation">Dictation</Link>, key: "/admin/dictation", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
     { label: <Link to="/admin/blog-categories">Blog categories</Link>, key: "/admin/blog-categories", icon: <BookOutlined />, roles: ["ADMIN", "STAFF"] },
     {
         key: PROMPTS_SUBMENU_KEY,

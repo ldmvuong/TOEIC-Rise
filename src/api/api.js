@@ -37,6 +37,21 @@ export const refreshToken = () => api.get("/auth/refresh-token");
 export const createTestSet = (payload) => api.post("/admin/test-sets", payload);
 export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
+export const getTestSetDictation = () => api.get(`/staff/test-sets/dictation`);
+
+export const getTestSetDictationDetail = (id) => api.get(`/staff/test-sets/dictation/${id}/tests`);
+
+export const generateDictationPreview = (testId, partId) =>
+  api.get(`/staff/chatbot/generate-dictation`, {
+    params: { testId, partId },
+  });
+
+export const importDictation = (payload) => api.post(`/staff/dictation/import`, payload);
+
+export const getDictationDetail = (testId, partId) =>
+  api.get(`/staff/dictation/test/${testId}/part/${partId}`);
+
+export const updateDictationTranscript = (payload) => api.put(`/staff/dictation`, payload);
 export const getAllTestSets = (query) => {
   return api.get(`/staff/test-sets/listening-reading?${query}`);
 };
@@ -656,6 +671,11 @@ export const createMiniTest = (partId, tagIds, numberQuestion) => {
 export const submitMiniTest = (payload) => {
   return api.post("/learner/mini-tests", payload);
 };
+
+// Dictation (Learner)
+export const getDictationLibrary = () => api.get("/learner/dictation/library");
+export const getDictationPart = (testId, partId) =>
+  api.get(`/learner/dictation/test/${testId}/part/${partId}`);
 
 // === FLASHCARD APIs ===
 
