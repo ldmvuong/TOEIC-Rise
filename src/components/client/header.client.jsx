@@ -20,9 +20,9 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
-    { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
     { name: "Đề thi Speaking", href: "/speaking-tests" },
     { name: "Đề thi Writing", href: "/writing-tests" },
+    { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
     { name: "Blog", href: "/blog" },
     { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
@@ -63,10 +63,10 @@ export default function Header({ currentPath }) {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="flex h-16 items-center gap-3 lg:gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/" className="flex shrink-0 items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
                 <div className="h-3 w-3 rounded-full bg-green-600" />
@@ -79,30 +79,34 @@ export default function Header({ currentPath }) {
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-4 lg:gap-6">
-            {nav.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? activePath === "/"
-                  : activePath === item.href || activePath.startsWith(`${item.href}/`)
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "text-blue-600 border-b-2 border-blue-600 pb-1"
-                      : "text-gray-700 hover:text-blue-600"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              )
-            })}
+          <nav className="hidden min-w-0 flex-1 md:block">
+            <div className="overflow-x-auto">
+              <div className="flex w-max min-w-full items-center justify-center gap-4 lg:gap-6">
+                {nav.map((item) => {
+                  const isActive =
+                    item.href === "/"
+                      ? activePath === "/"
+                      : activePath === item.href || activePath.startsWith(`${item.href}/`)
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                        isActive
+                          ? "text-blue-600 border-b-2 border-blue-600 pb-1"
+                          : "text-gray-700 hover:text-blue-600"
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           </nav>
 
           {/* User / Auth */}
-          <div className="flex items-center gap-4">
+          <div className="ml-auto flex shrink-0 items-center gap-4">
             {isAuthenticated && user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -118,7 +122,7 @@ export default function Header({ currentPath }) {
                       </div>
                     )}
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{user.fullName}</span>
+                  <span className="hidden text-sm font-medium text-gray-700 lg:inline">{user.fullName}</span>
                 </button>
 
                 {isUserOpen && (
