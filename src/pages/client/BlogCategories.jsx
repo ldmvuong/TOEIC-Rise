@@ -1,27 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode, Mousewheel } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/free-mode";
 import {
   Button,
   Card,
   Input,
   Spin,
-  Tag,
   Typography,
   Empty,
-  Image,
   Space,
   Pagination,
 } from "antd";
 import {
-  ArrowRightOutlined,
   BookOutlined,
   CalendarOutlined,
-  EyeOutlined,
   SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getPublicBlogCategories, getNewestPublicBlogPosts } from "@/api/api";
+import BlogPostCard from "@/components/card/blog-post.card.jsx";
 
 const { Title, Text } = Typography;
 
@@ -106,52 +107,47 @@ const BlogCategoriesPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 p-5 md:p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <div className="max-w-6xl mx-auto px-4 py-7">
+        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 p-4 md:p-5 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs text-indigo-600 border border-indigo-100 mb-3">
-                <BookOutlined />
-                Learning resources
-              </div>
               <Title level={2} style={{ marginBottom: 6 }}>
-                Blog categories
+                Danh mục bài viết
               </Title>
               <Text type="secondary" className="text-base">
-                Explore TOEIC tips, strategies, and learning resources.
+                Khám phá các chủ đề TOEIC, mẹo học và tài liệu hữu ích.
               </Text>
             </div>
 
             <div className="w-full md:w-[420px]">
-              <Input
-                allowClear
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onPressEnter={() => {
-                  const keyword = q.trim();
-                  if (!keyword) return;
-                  navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
-                }}
-                prefix={<SearchOutlined className="text-slate-400" />}
-                placeholder="Search posts by keyword"
-                size="large"
-                className="rounded-xl"
-              />
-              <div className="mt-2 flex justify-end">
-                <Space>
-                  <Button
-                    type="default"
-                    onClick={() => {
-                      const keyword = q.trim();
-                      if (!keyword) return;
-                      navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
-                    }}
-                    disabled={!q.trim()}
-                  >
-                    Search posts
-                  </Button>
-                </Space>
-              </div>
+              <Space.Compact className="w-full">
+                <Input
+                  allowClear
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  onPressEnter={() => {
+                    const keyword = q.trim();
+                    if (!keyword) return;
+                    navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
+                  }}
+                  prefix={<SearchOutlined className="text-slate-400" />}
+                  placeholder="Tìm bài viết theo từ khóa"
+                  size="large"
+                  className="rounded-xl"
+                />
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={() => {
+                    const keyword = q.trim();
+                    if (!keyword) return;
+                    navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
+                  }}
+                  disabled={!q.trim()}
+                >
+                  Tìm
+                </Button>
+              </Space.Compact>
             </div>
           </div>
         </div>
@@ -166,55 +162,59 @@ const BlogCategoriesPage = () => {
           </Card>
         ) : categories.length === 0 ? (
           <Card className="rounded-2xl border-slate-200 shadow-sm">
-            <Empty description="No categories found" />
+            <Empty description="Không tìm thấy danh mục nào" />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {categories.map((c) => {
-              const isActive = c?.isActive ?? true;
-              return (
+          <Swiper
+            modules={[FreeMode, Mousewheel]}
+            spaceBetween={16}
+            slidesPerView="auto"
+            freeMode
+            mousewheel={{ forceToAxis: true }}
+            grabCursor
+            className="!pb-2"
+          >
+            {categories.map((c) => (
+              <SwiperSlide
+                key={c.id ?? c.slug}
+                className="!w-[230px] sm:!w-[260px] lg:!w-[280px]"
+              >
                 <Link
-                  key={c.id ?? c.slug}
                   to={`/blog/categories/${c.slug}`}
-                  className="no-underline"
+                  className="no-underline block"
                 >
                   <Card
                     hoverable
                     className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all"
-                    styles={{ body: { padding: 18 } }}
+                    styles={{ body: { padding: 14 } }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-600 border border-indigo-100">
                           <BookOutlined />
-                          Category
+                          Danh mục
                         </div>
-                        <div className="text-base font-semibold text-slate-900 line-clamp-2">
-                          {c?.name || "Untitled category"}
+                        <div className="text-[15px] font-semibold text-slate-900 line-clamp-2">
+                          {c?.name || "Chưa có tên"}
                         </div>
                       </div>
                     </div>
-
-                    <div className="mt-5 flex items-center justify-between">
-                      <span className="text-sm text-slate-600 font-medium">
-                        View posts
-                      </span>
-                      <ArrowRightOutlined className="text-indigo-400" />
-                    </div>
                   </Card>
                 </Link>
-              );
-            })}
-          </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         )}
 
-        <div className="mt-10">
+        <div className="mt-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <Title level={3} style={{ margin: 0 }}>
-              Newest posts
+              Bài viết mới nhất
             </Title>
             <span className="text-xs text-slate-500">
-              {newestMeta.total > 0 ? `${newestMeta.total} posts` : "Fresh content"}
+              {newestMeta.total > 0
+                ? `${newestMeta.total} bài viết`
+                : "Nội dung mới"}
             </span>
           </div>
 
@@ -224,90 +224,20 @@ const BlogCategoriesPage = () => {
             </div>
           ) : newestPosts.length === 0 ? (
             <Card className="rounded-2xl border-slate-200 shadow-sm">
-              <Empty description="No newest posts yet" />
+              <Empty description="Chưa có bài viết mới" />
             </Card>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {newestPosts.map((p) => (
-                  <Card
+                  <BlogPostCard
                     key={p.id}
-                    hoverable
-                    className={`rounded-2xl border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all ${p?.slug ? "cursor-pointer" : ""}`}
-                    styles={{ body: { padding: 14 } }}
-                    onClick={() => {
-                      if (p?.slug) navigate(`/blog/posts/${p.slug}`);
-                    }}
-                    onKeyDown={(e) => {
-                      if (!p?.slug) return;
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        navigate(`/blog/posts/${p.slug}`);
-                      }
-                    }}
-                    role={p?.slug ? "link" : undefined}
-                    tabIndex={p?.slug ? 0 : -1}
-                  >
-                    {p.thumbnailUrl ? (
-                      <div className="rounded-xl overflow-hidden bg-slate-100 mb-3 relative">
-                        <Image
-                          src={p.thumbnailUrl}
-                          alt=""
-                          preview={false}
-                          className="w-full object-cover"
-                          style={{
-                            height: 150,
-                            width: "100%",
-                            objectFit: "cover",
-                            objectPosition: "center",
-                          }}
-                        />
-                        <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                          New
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="h-[150px] rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 mb-3 relative">
-                        <div className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                          New
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="text-base font-semibold text-slate-900 line-clamp-2">
-                      {p.title || "Untitled"}
-                    </div>
-                    {p.summary ? (
-                      <div className="mt-1 text-sm text-slate-600 line-clamp-3">
-                        {p.summary}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                      {p.authorName ? (
-                        <span className="inline-flex items-center gap-1">
-                          <UserOutlined />
-                          {p.authorName}
-                        </span>
-                      ) : null}
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarOutlined />
-                        {formatUpdatedAt(p.updatedAt)}
-                      </span>
-                      {p.views != null ? (
-                        <span className="inline-flex items-center gap-1">
-                          <EyeOutlined />
-                          {Number(p.views).toLocaleString()}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-sm font-medium text-indigo-600">
-                        Read article
-                      </span>
-                      <ArrowRightOutlined className="text-indigo-400" />
-                    </div>
-                  </Card>
+                    post={p}
+                    showNewBadge
+                    onClick={
+                      p?.slug ? () => navigate(`/blog/posts/${p.slug}`) : undefined
+                    }
+                  />
                 ))}
               </div>
               {newestMeta.total > 0 ? (
