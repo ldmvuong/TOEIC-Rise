@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import parse from "html-react-parser";
-import { Button, Card, Empty, Image, Space, Spin, Tag, Typography } from "antd";
+import { Button, Card, Empty, Image, Spin, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
   EyeOutlined,
-  ReadOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getPublicBlogPostDetailBySlug, getPublicRelatedBlogPosts } from "@/api/api";
+import BlogPostCard from "@/components/card/blog-post.card.jsx";
 
 const { Title, Text } = Typography;
 
@@ -79,7 +79,7 @@ const BlogPostDetailPublicPage = () => {
 
   const load = useCallback(async () => {
     if (!slug) {
-      setError("Invalid post slug");
+      setError("Slug bài viết không hợp lệ");
       setLoading(false);
       return;
     }
@@ -90,7 +90,7 @@ const BlogPostDetailPublicPage = () => {
       setPost(res?.data ?? null);
     } catch (e) {
       setPost(null);
-      setError(e?.message || "Unable to load post");
+      setError(e?.message || "Không thể tải bài viết");
     } finally {
       setLoading(false);
     }
@@ -144,10 +144,10 @@ const BlogPostDetailPublicPage = () => {
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Card className="rounded-2xl border-slate-200 shadow-sm">
-          <Text type="danger">{error || "Post not found"}</Text>
+          <Text type="danger">{error || "Không tìm thấy bài viết"}</Text>
           <div className="mt-4">
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-              Back
+              Quay lại
             </Button>
           </div>
         </Card>
@@ -158,19 +158,23 @@ const BlogPostDetailPublicPage = () => {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3 mb-5">
-          <Space wrap>
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-              Back
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              className="rounded-xl"
+            >
+              Quay lại
             </Button>
             {post.categorySlug ? (
               <Link to={`/blog/categories/${post.categorySlug}`}>
-                <Button type="link">
-                  Category: {post.categoryName || post.categorySlug}
-                </Button>
+                <Tag color="blue" className="cursor-pointer m-0">
+                  Danh mục: {post.categoryName || post.categorySlug}
+                </Tag>
               </Link>
             ) : null}
-          </Space>
+          </div>
         </div>
 
         <Card
@@ -178,17 +182,13 @@ const BlogPostDetailPublicPage = () => {
           styles={{ body: { padding: 0 } }}
         >
           {post.thumbnailUrl ? (
-            <div className="bg-slate-100">
-              <Image
+            <div className="bg-slate-100 h-[200px] sm:h-[280px] lg:h-[340px]">
+              <img
                 src={post.thumbnailUrl}
                 alt=""
-                className="w-full"
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  display: "block",
-                }}
-                preview
+                className="w-full h-full block"
+                style={{ objectFit: "cover", objectPosition: "center" }}
+                loading="lazy"
               />
             </div>
           ) : (
@@ -210,14 +210,14 @@ const BlogPostDetailPublicPage = () => {
               {post.views != null ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-2.5 py-1">
                   <EyeOutlined />
-                  {Number(post.views).toLocaleString()} views
+                  {Number(post.views).toLocaleString()} lượt xem
                 </span>
               ) : null}
               {post.categoryName ? <Tag color="blue">{post.categoryName}</Tag> : null}
             </div>
 
             <Title level={2} style={{ marginBottom: 8 }}>
-              {post.title || "Untitled"}
+              {post.title || "Chưa có tiêu đề"}
             </Title>
             {post.summary ? (
               <Text type="secondary" className="text-base block">
@@ -233,9 +233,11 @@ const BlogPostDetailPublicPage = () => {
               className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
               title={
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-800">Article</span>
+                  <span className="font-semibold text-slate-800">Nội dung</span>
                   <span className="text-xs text-slate-500">
-                    {tocItems.length > 0 ? `${tocItems.length} sections` : "Reading mode"}
+                    {tocItems.length > 0
+                      ? `${tocItems.length} mục`
+                      : "Chế độ đọc"}
                   </span>
                 </div>
               }
@@ -254,7 +256,7 @@ const BlogPostDetailPublicPage = () => {
                   [&_blockquote]:border-l-4 [&_blockquote]:border-indigo-300 [&_blockquote]:bg-indigo-50 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:rounded-r-xl
                   [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded"
               >
-                {contentHtml ? parse(contentHtml) : <Text type="secondary">No content</Text>}
+                {contentHtml ? parse(contentHtml) : <Text type="secondary">Chưa có nội dung</Text>}
               </div>
             </Card>
           </div>
@@ -263,7 +265,7 @@ const BlogPostDetailPublicPage = () => {
             {tocItems.length > 0 ? (
               <Card
                 className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
-                title="On this page"
+                title="Mục lục"
                 styles={{
                   header: {
                     background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
@@ -326,7 +328,7 @@ const BlogPostDetailPublicPage = () => {
               </Card>
             ) : (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
-                <Text type="secondary">No headings found.</Text>
+                <Text type="secondary">Không tìm thấy mục lục.</Text>
               </Card>
             )}
           </div>
@@ -335,81 +337,42 @@ const BlogPostDetailPublicPage = () => {
         <Card
           className="rounded-2xl border-slate-200 shadow-sm mt-6 overflow-hidden"
           title={
-            <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 border border-indigo-100 px-3 py-2 -mx-1">
-              <div className="text-slate-900 font-semibold">Related posts</div>
+            <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3">
+              <div className="text-slate-900 font-semibold">Bài viết liên quan</div>
               <div className="text-xs text-slate-500 mt-0.5">
-                Continue reading similar content
+                Gợi ý nội dung tương tự để bạn đọc tiếp
               </div>
             </div>
           }
-          styles={{ body: { padding: 16 } }}
+          styles={{
+            header: {
+              padding: 0,
+              borderBottom: "1px solid #e2e8f0",
+            },
+            title: { padding: 0 },
+            body: { padding: 16 },
+          }}
         >
           {relatedLoading ? (
             <div className="py-8 flex justify-center">
               <Spin />
             </div>
           ) : relatedPosts.length === 0 ? (
-            <Empty description="No related posts found" />
+            <Empty description="Không có bài viết liên quan" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {relatedPosts.map((rp) => (
-                <Card
+                <BlogPostCard
                   key={rp.id}
-                  hoverable
-                  className={`rounded-xl border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-300 transition-all ${rp?.slug ? "cursor-pointer" : ""}`}
-                  styles={{ body: { padding: 12 } }}
-                  onClick={() => {
-                    if (rp?.slug) navigate(`/blog/posts/${rp.slug}`);
-                  }}
-                  onKeyDown={(e) => {
-                    if (!rp?.slug) return;
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/blog/posts/${rp.slug}`);
-                    }
-                  }}
-                  role={rp?.slug ? "link" : undefined}
-                  tabIndex={rp?.slug ? 0 : -1}
-                >
-                  {rp.thumbnailUrl ? (
-                    <div className="rounded-lg overflow-hidden bg-slate-100 mb-3">
-                      <Image
-                        src={rp.thumbnailUrl}
-                        alt=""
-                        preview={false}
-                        className="w-full object-cover"
-                        style={{
-                          height: 130,
-                          width: "100%",
-                          objectFit: "cover",
-                          objectPosition: "center",
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-[130px] rounded-lg bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 mb-3" />
-                  )}
-                  <div className="text-sm font-semibold text-slate-900 line-clamp-2">
-                    {rp.title || "Untitled"}
-                  </div>
-                  {rp.summary ? (
-                    <div className="mt-1 text-xs text-slate-600 line-clamp-3">
-                      {rp.summary}
-                    </div>
-                  ) : null}
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-medium text-indigo-600">Read article</span>
-                    {rp.slug ? (
-                      <Button size="small" type="primary">
-                        Read
-                      </Button>
-                    ) : (
-                      <Button size="small" disabled>
-                        Read
-                      </Button>
-                    )}
-                  </div>
-                </Card>
+                  post={rp}
+                  showNewBadge={false}
+                  onClick={
+                    rp?.slug ? () => navigate(`/blog/posts/${rp.slug}`) : undefined
+                  }
+                  bodyPadding={12}
+                  imageHeight={130}
+                  className="rounded-xl hover:border-indigo-300"
+                />
               ))}
             </div>
           )}
