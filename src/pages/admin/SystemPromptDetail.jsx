@@ -186,7 +186,7 @@ const SystemPromptDetailPage = () => {
 
   if (error || !prompt) {
     return (
-      <div className="p-4 max-w-3xl mx-auto">
+      <div className="p-4 max-w-6xl mx-auto">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
@@ -206,7 +206,7 @@ const SystemPromptDetailPage = () => {
   const { content, version, isActive, createdAt, updatedAt } = prompt;
 
   return (
-    <div className="p-4 max-w-3xl mx-auto space-y-6">
+    <div className="p-4 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Button
           shape="circle"
@@ -222,9 +222,6 @@ const SystemPromptDetailPage = () => {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <Tag color={isActive ? "green" : "red"}>
-            {isActive ? "Active" : "Inactive"}
-          </Tag>
           {featureTypeEnum === "CHATBOT" && (
             <Button onClick={() => setTestModalOpen(true)}>
               Test Chatbot
@@ -252,11 +249,16 @@ const SystemPromptDetailPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
           <h2 className="text-lg font-semibold text-gray-900">Metadata</h2>
         </div>
-        <div className="p-6">
-          <Descriptions column={1} size="middle" bordered>
+        <div className="p-5">
+          <Descriptions
+            size="small"
+            bordered
+            column={{ xs: 1, sm: 2, md: 2, lg: 3 }}
+            labelStyle={{ width: 140, whiteSpace: "nowrap" }}
+          >
             <Descriptions.Item label="ID">{prompt.id}</Descriptions.Item>
             <Descriptions.Item label="Feature Type">
               {featureTypeEnum}
