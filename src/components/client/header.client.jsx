@@ -20,13 +20,11 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
-    { name: "Đề thi Speaking", href: "/speaking-tests" },
-    { name: "Đề thi Writing", href: "/writing-tests" },
     { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
-    { name: "Blog", href: "/blog" },
     { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
+    { name: "Blog", href: "/blog" },
   ]
 
   const nav = navItems.filter(item => {
@@ -83,10 +81,19 @@ export default function Header({ currentPath }) {
             <div className="overflow-x-auto">
               <div className="flex w-max min-w-full items-center justify-center gap-4 lg:gap-6">
                 {nav.map((item) => {
+                  const isTestHub =
+                    item.href === "/online-tests" &&
+                    (activePath === "/online-tests" ||
+                      activePath.startsWith("/online-tests/") ||
+                      activePath === "/speaking-tests" ||
+                      activePath.startsWith("/speaking-tests/") ||
+                      activePath === "/writing-tests" ||
+                      activePath.startsWith("/writing-tests/"))
                   const isActive =
-                    item.href === "/"
+                    isTestHub ||
+                    (item.href === "/"
                       ? activePath === "/"
-                      : activePath === item.href || activePath.startsWith(`${item.href}/`)
+                      : activePath === item.href || activePath.startsWith(`${item.href}/`))
                   return (
                     <Link
                       key={item.name}
