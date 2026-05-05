@@ -39,19 +39,22 @@ export const updateTestSet = (payload) => api.put("/admin/test-sets", payload);
 
 export const getTestSetDictation = () => api.get(`/staff/test-sets/dictation`);
 
-export const getTestSetDictationDetail = (id) => api.get(`/staff/test-sets/dictation/${id}/tests`);
+export const getTestSetDictationDetail = (id) =>
+  api.get(`/staff/test-sets/dictation/${id}/tests`);
 
 export const generateDictationPreview = (testId, partId) =>
   api.get(`/staff/chatbot/generate-dictation`, {
     params: { testId, partId },
   });
 
-export const importDictation = (payload) => api.post(`/staff/dictation/import`, payload);
+export const importDictation = (payload) =>
+  api.post(`/staff/dictation/import`, payload);
 
 export const getDictationDetail = (testId, partId) =>
   api.get(`/staff/dictation/test/${testId}/part/${partId}`);
 
-export const updateDictationTranscript = (payload) => api.put(`/staff/dictation`, payload);
+export const updateDictationTranscript = (payload) =>
+  api.put(`/staff/dictation`, payload);
 export const getAllTestSets = (query) => {
   return api.get(`/staff/test-sets/listening-reading?${query}`);
 };
@@ -121,8 +124,7 @@ export const importWritingTests = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const getWritingTestById = (id) =>
-  api.get(`/staff/writing-tests/${id}`);
+export const getWritingTestById = (id) => api.get(`/staff/writing-tests/${id}`);
 
 export const updateWritingTest = (id, payload) =>
   api.put(`/staff/writing-tests/${id}`, payload);
@@ -206,7 +208,11 @@ export const getLearnerWritingTestById = (id) =>
 // === Learner Blog APIs (public) ===
 export const getPublicBlogCategories = () => api.get("/blog-categories");
 
-export const getNewestPublicBlogPosts = ({ title = "", page = 0, size = 10 } = {}) => {
+export const getNewestPublicBlogPosts = ({
+  title = "",
+  page = 0,
+  size = 10,
+} = {}) => {
   const params = new URLSearchParams();
   if (title) params.append("title", title);
   params.append("page", String(page));
@@ -752,7 +758,9 @@ export const callDeleteComment = (commentId) => {
 };
 
 export const callFetchReplies = (commentId, page = 0, size = 5) => {
-  return api.get(`/learner/comments/${commentId}/replies?page=${page}&size=${size}`);
+  return api.get(
+    `/learner/comments/${commentId}/replies?page=${page}&size=${size}`,
+  );
 };
 
 export const getQuestionMap = (testId) => {
@@ -901,3 +909,127 @@ export const callFetchFlashcardsForPopup = (params = {}) => {
 export const callAddFlashcardItemToPopup = (payload) => {
   return api.post("/learner/flashcards/popup", payload);
 };
+
+export const getAdminLessons = (params = {}) =>
+  api.get("/admin/lessons", { params });
+
+export const createAdminLesson = (payload) =>
+  api.post("/admin/lessons", payload);
+
+/** Keys mirrored on LessonUpdateRequest (multipart parts). Omit keys you do not intend to patch. */
+const LESSON_UPDATE_FORM_KEYS = [
+  "title",
+  "slug",
+  "practice",
+  "videoUrl",
+  "topic",
+  "level",
+  "content",
+  "orderIndex",
+  "isActive",
+];
+
+/**
+ * @param {Record<string, unknown>} payload Plain fields for lesson update (not every key required).
+ * @param {{ video?: File } | Record<string, File>} [files] Optional multipart parts (e.g. `video`).
+ */
+export function lessonUpdatePayloadToFormData(payload, files) {
+  const fd = new FormData();
+
+  if (payload instanceof FormData) return payload;
+
+  for (const key of LESSON_UPDATE_FORM_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(payload, key)) continue;
+    const val = payload[key];
+    if (val === undefined) continue;
+    if (key === "isActive") {
+      const on =
+        val === true ||
+        val === 1 ||
+        String(val).toLowerCase() === "true";
+      fd.append(key, on ? "true" : "false");
+      continue;
+    }
+    if (key === "orderIndex") {
+      fd.append(key, String(Number(val)));
+      continue;
+    }
+    fd.append(key, val === null ? "" : String(val));
+  }
+
+  if (files && typeof files === "object") {
+    for (const [key, file] of Object.entries(files)) {
+      if (!file) continue;
+      if (file instanceof File || file instanceof Blob) {
+        fd.append(key, file);
+      }
+    }
+  }
+
+  return fd;
+}
+
+/** PUT /admin/lessons/:id — backend consumes multipart/form-data. */
+export const updateAdminLesson = (id, payload, fileOptions) => {
+  const body =
+    payload instanceof FormData
+      ? payload
+      : lessonUpdatePayloadToFormData(payload, fileOptions);
+  return api.put(`/admin/lessons/${id}`, body);
+};
+
+export const getAdminLessonDetail = (id) =>
+  api.get(`/admin/lessons/${id}`);
+
+export const getAdminLearningPathDetailBySlug = (slug, params = {}) =>
+  api.get(`/admin/lessons/learning-path/${slug}`, { params });
+
+export const setAdminLessonActive = (id, isActive) =>
+  api.patch(
+    `/admin/lessons/${id}/active?${new URLSearchParams({ isActive: String(Boolean(isActive)) }).toString()}`,
+  );
+
+export const deleteAdminLesson = (id) => api.delete(`/admin/lessons/${id}`);
+
+export const getAdminLearningPaths = (params = {}) => {
+  const {
+    name,
+    page = 0,
+    size = 10,
+    sortBy = "updatedAt",
+    direction = "DESC",
+  } = params;
+  return api.get("/admin/learning-paths", {
+    params: { name, page, size, sortBy, direction },
+  });
+};
+
+export const getAdminLearningPathDetail = (id) =>
+  api.get(`/admin/learning-paths/${id}`);
+
+export const createAdminLearningPath = (payload) =>
+  api.post("/admin/learning-paths", payload);
+
+export const updateAdminLearningPath = (id, payload) =>
+  api.put(`/admin/learning-paths/${id}`, payload);
+
+export const createLearningPathLesson = (learningPathId, payload) =>
+  api.post(`/admin/learning-paths/${learningPathId}/lessons`, payload);
+
+export const reorderLearningPathLessons = (learningPathId, payload) =>
+  api.post(`/admin/learning-paths/${learningPathId}/lessons/reorder`, payload);
+
+export const getLearningPaths = (params = {}) =>
+  api.get("/learner/learning-paths", { params });
+
+export const getLearningPathDetail = (id) =>
+  api.get(`/learner/learning-paths/${id}`);
+
+export const getLearnerLesson = (lessonId) =>
+  api.get(`/learner/learning-paths/lessons/${lessonId}`);
+
+export const getLearningPathLessons = (id, params = {}) =>
+  api.get(`/learner/learning-paths/${id}/lessons`, { params });
+
+export const upsertUserLessonProgress = (payload) =>
+  api.post("/learner/lesson-progress", payload);

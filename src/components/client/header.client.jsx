@@ -20,14 +20,15 @@ export default function Header({ currentPath }) {
   const navItems = [
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
+    { name: "Learning Path", href: "/learning-paths", roles: ["LEARNER"] },
     { name: "Đề thi Speaking", href: "/speaking-tests" },
     { name: "Đề thi Writing", href: "/writing-tests" },
     { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
     { name: "Blog", href: "/blog" },
-    { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
-    { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
+    { name: "Flashcard", href: "/flashcards", roles: ["LEARNER"] },
+    { name: "Thống kê kết quả", href: "/statistics", roles: ["LEARNER"] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
-  ]
+  ];
 
   const nav = navItems.filter(item => {
     if (!item.roles || item.roles.length === 0) return true

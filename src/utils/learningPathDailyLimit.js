@@ -1,0 +1,256 @@
+export const MIN_PROGRESS_TO_UNLOCK_NEXT = 80;
+
+/** @typedef {{ lesson?: { id?: number|string, createdAt?: string|null }, progressUpdatedAt?: string|null }} LessonProgressLike */
+
+export function formatLocalYYYYMMDD(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseFlexibleDate(raw) {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+export function sameLocalCalendarDay(dateA, dateB) {
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  );
+}
+
+export function isCreatedAtLocalToday(isoLike, reference = new Date()) {
+  const d = parseFlexibleDate(isoLike);
+  if (!d) return false;
+  return sameLocalCalendarDay(d, reference);
+}
+
+export function getProgressCreatedAt(item) {
+  const candidates = [item?.createdAt, item?.lesson?.createdAt];
+  for (const c of candidates) {
+    if (c == null) continue;
+    if (typeof c === "string" && !String(c).trim()) continue;
+    if (parseFlexibleDate(c) != null) return c;
+  }
+  return null;
+}
+
+export function lessonWasEverOpened(item) {
+  return getProgressCreatedAt(item) != null;
+}
+
+export function previousLessonMeetsAdvanceGate(prevItem) {
+  if (!prevItem) return true;
+  if (Boolean(prevItem.isCompleted)) return true;
+  const pct = Math.min(
+    100,
+    Math.max(0, Number(prevItem.progressPercentage ?? 0)),
+  );
+  return pct >= MIN_PROGRESS_TO_UNLOCK_NEXT;
+}
+
+function sortLessonProgressItems(items) {
+  return [...(items || [])].sort((a, b) => {
+    const oa = a?.lesson?.orderIndex ?? 0;
+    const ob = b?.lesson?.orderIndex ?? 0;
+    return oa - ob;
+  });
+}
+
+export function findNextEnterableNewLessonId(lessonItems) {
+  const sorted = sortLessonProgressItems(lessonItems);
+  for (let i = 0; i < sorted.length; i++) {
+    const it = sorted[i];
+    if (lessonWasEverOpened(it)) continue;
+    const gatedPrev = i === 0 || previousLessonMeetsAdvanceGate(sorted[i - 1]);
+    if (gatedPrev) return sorted[i]?.lesson?.id ?? null;
+    return null;
+  }
+  return null;
+}
+
+export function canAccessSequentialLesson(lessonItems, targetLessonId) {
+  const sorted = sortLessonProgressItems(lessonItems);
+  const idx = sorted.findIndex(
+    (x) => Number(x?.lesson?.id) === Number(targetLessonId),
+  );
+  if (idx < 0) return { ok: false, reason: "not_in_path" };
+  const it = sorted[idx];
+  if (lessonWasEverOpened(it)) return { ok: true };
+  if (idx === 0) return { ok: true };
+  if (previousLessonMeetsAdvanceGate(sorted[idx - 1])) return { ok: true };
+  return { ok: false, reason: "need_prev_progress" };
+}
+
+export function dailyVideoSessionKey(learningPathId) {
+  return `toeic.rise.lp.daily_video.${learningPathId}.${formatLocalYYYYMMDD()}`;
+}
+
+export function getStoredTodayPlayedLessonId(learningPathId) {
+  try {
+    return sessionStorage.getItem(dailyVideoSessionKey(learningPathId));
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredTodayPlayedLessonIfAny(learningPathId) {
+  try {
+    sessionStorage.removeItem(dailyVideoSessionKey(learningPathId));
+  } catch {
+    /* noop */
+  }
+}
+
+export function markTodayPlayedLessonIfFirst(
+  learningPathId,
+  lessonId,
+  lessonWasAlreadyOpened = false,
+) {
+  if (!learningPathId || lessonId == null) return;
+  if (lessonWasAlreadyOpened) return;
+  try {
+    const key = dailyVideoSessionKey(learningPathId);
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, String(lessonId));
+  } catch {
+    /* private mode etc. */
+  }
+}
+
+export function coerceLessonProgressList(apiLessons) {
+  const rows = Array.isArray(apiLessons)
+    ? apiLessons
+    : apiLessons &&
+        typeof apiLessons === "object" &&
+        Array.isArray(apiLessons.result)
+      ? apiLessons.result
+      : [];
+  return rows.map((raw) => {
+    const nested = raw?.lesson != null && typeof raw.lesson === "object";
+    const lessonObj = nested ? raw.lesson : raw;
+    const id = nested ? lessonObj?.id : (lessonObj?.id ?? raw?.id);
+    const orderIndex =
+      lessonObj?.orderIndex != null
+        ? Number(lessonObj.orderIndex)
+        : Number(raw?.orderIndex ?? 0) || 0;
+    const fromLesson =
+      nested &&
+      lessonObj?.createdAt != null &&
+      String(lessonObj.createdAt).trim() !== ""
+        ? lessonObj.createdAt
+        : null;
+    const wrapperCreatedAt =
+      raw?.createdAt != null && String(raw.createdAt).trim() !== ""
+        ? raw.createdAt
+        : null;
+    const mergedCreatedAt = fromLesson ?? wrapperCreatedAt ?? null;
+
+    const progressPercentage =
+      typeof raw?.progressPercentage === "number" &&
+      Number.isFinite(raw.progressPercentage)
+        ? raw.progressPercentage
+        : 0;
+    const isCompleted = Boolean(raw?.isCompleted);
+
+    return {
+      lesson:
+        id != null
+          ? { id, createdAt: mergedCreatedAt, orderIndex }
+          : {
+              createdAt: mergedCreatedAt,
+              orderIndex,
+            },
+      createdAt: wrapperCreatedAt,
+      progressUpdatedAt: raw?.progressUpdatedAt ?? null,
+      progressPercentage,
+      isCompleted,
+    };
+  });
+}
+
+export function describeDailyLessonBlock(check) {
+  if (check.ok) return "";
+  if (check.reason === "session_video") {
+    return "Mỗi ngày chỉ mở mới được một bài trong lộ trình. Hôm nay bạn đã phát video một bài khác — vui lòng quay lại vào ngày mai hoặc xem lại đúng bài đó.";
+  }
+  if (check.reason === "server_lesson_opened_today") {
+    return "Mỗi ngày chỉ mở mới được một bài trong lộ trình. Hôm nay bạn đã mở một bài khác — vui lòng quay lại vào ngày mai hoặc xem lại bài đó.";
+  }
+  return "Không thể mở bài học này hôm nay.";
+}
+
+export function describeSequentialLessonBlock(check) {
+  if (check.ok) return "";
+  if (check.reason === "need_prev_progress") {
+    return `Đạt ít nhất ${MIN_PROGRESS_TO_UNLOCK_NEXT}% tiến độ (hoặc hoàn thành) bài trước trong lộ trình để mở bài này.`;
+  }
+  if (check.reason === "not_in_path")
+    return "Bài học không thuộc lộ trình này.";
+  return "Không thể mở bài học này.";
+}
+
+function otherLessonOpenedNewToday(items, targetLessonId, ref = new Date()) {
+  const tgt = Number(targetLessonId);
+  for (const item of items || []) {
+    const lid = item?.lesson?.id;
+    if (lid == null || Number(lid) === tgt) continue;
+    const ca = getProgressCreatedAt(item);
+    if (!ca || (typeof ca === "string" && !ca.trim())) continue;
+    if (isCreatedAtLocalToday(ca, ref)) return true;
+  }
+  return false;
+}
+
+export function canOpenLessonToday(
+  learningPathId,
+  targetLessonId,
+  lessonItems,
+  ref = new Date(),
+) {
+  const tgt = Number(targetLessonId);
+  const targetItem = (lessonItems || []).find(
+    (x) => Number(x?.lesson?.id) === tgt,
+  );
+
+  if (lessonWasEverOpened(targetItem)) {
+    return { ok: true };
+  }
+
+  if (otherLessonOpenedNewToday(lessonItems, tgt)) {
+    return { ok: false, reason: "server_lesson_opened_today" };
+  }
+
+  const played = getStoredTodayPlayedLessonId(learningPathId);
+  if (played && Number(played) !== tgt && !Number.isNaN(tgt)) {
+    const playedId = Number(played);
+    const playedItem = (lessonItems || []).find(
+      (x) => Number(x?.lesson?.id) === playedId,
+    );
+    const playedCa = playedItem ? getProgressCreatedAt(playedItem) : null;
+    const sessionIsStaleReplayGate =
+      playedCa != null &&
+      String(playedCa).trim() !== "" &&
+      parseFlexibleDate(playedCa) != null &&
+      !isCreatedAtLocalToday(playedCa, ref);
+
+    if (sessionIsStaleReplayGate) {
+      clearStoredTodayPlayedLessonIfAny(learningPathId);
+    } else {
+      return {
+        ok: false,
+        reason: "session_video",
+        otherLessonId: playedId,
+      };
+    }
+  }
+
+  return { ok: true };
+}

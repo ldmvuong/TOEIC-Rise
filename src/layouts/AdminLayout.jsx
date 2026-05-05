@@ -1,24 +1,25 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
-    AppstoreOutlined,
-    ExceptionOutlined,
-    ApiOutlined,
-    UserOutlined,
-    BankOutlined,
-    MenuFoldOutlined,
-    MenuUnfoldOutlined,
-    AliwangwangOutlined,
-    ScheduleOutlined,
-    BugOutlined,
-    LogoutOutlined,
-    SettingOutlined,
-    HomeOutlined,
-    FileTextOutlined,
-    BarChartOutlined,
-    TagOutlined,
-    BookOutlined,
-    AudioOutlined,
-    FormOutlined,
+  AppstoreOutlined,
+  ExceptionOutlined,
+  ApiOutlined,
+  UserOutlined,
+  BankOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  AliwangwangOutlined,
+  ScheduleOutlined,
+  BugOutlined,
+  LogoutOutlined,
+  SettingOutlined,
+  HomeOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
+  TagOutlined,
+  BookOutlined,
+  VideoCameraOutlined,
+  AudioOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Dropdown, Space, Avatar, Button, message } from "antd";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
@@ -44,102 +45,163 @@ const PROMPT_ROUTE_PREFIX = "/admin/system-prompts";
 const TESTS_SUBMENU_KEY = "admin-tests-submenu";
 
 const STATIC_MENU = [
-    { label: <Link to="/admin">Dashboard</Link>, key: "/admin", icon: <AppstoreOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/analytics">Analytics</Link>, key: "/admin/analytics", icon: <BarChartOutlined />, roles: ["ADMIN", "STAFF"] },
-    {
-        key: TEST_SETS_SUBMENU_KEY,
-        label: "Test sets",
+  {
+    label: <Link to="/admin">Dashboard</Link>,
+    key: "/admin",
+    icon: <AppstoreOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    label: <Link to="/admin/analytics">Analytics</Link>,
+    key: "/admin/analytics",
+    icon: <BarChartOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    key: TEST_SETS_SUBMENU_KEY,
+    label: "Test sets",
+    icon: <BankOutlined />,
+    roles: ["ADMIN"],
+    children: [
+      {
+        key: "/admin/test-sets",
+        label: <Link to="/admin/test-sets">Test Sets</Link>,
         icon: <BankOutlined />,
-        roles: ["ADMIN"],
-        children: [
-            {
-                key: "/admin/test-sets",
-                label: <Link to="/admin/test-sets">Test Sets</Link>,
-                icon: <BankOutlined />,
-            },
-            {
-                key: "/admin/speaking-test-sets",
-                label: <Link to="/admin/speaking-test-sets">Speaking Test Sets</Link>,
-                icon: <AudioOutlined />,
-            },
-            {
-                key: "/admin/writing-test-sets",
-                label: <Link to="/admin/writing-test-sets">Writing Test Sets</Link>,
-                icon: <FormOutlined />,
-            },
-        ],
-    },
-    {
-        key: TESTS_SUBMENU_KEY,
-        label: "Tests",
+      },
+      {
+        key: "/admin/speaking-test-sets",
+        label: <Link to="/admin/speaking-test-sets">Speaking Test Sets</Link>,
+        icon: <AudioOutlined />,
+      },
+      {
+        key: "/admin/writing-test-sets",
+        label: <Link to="/admin/writing-test-sets">Writing Test Sets</Link>,
+        icon: <FormOutlined />,
+      },
+    ],
+  },
+  {
+    key: TESTS_SUBMENU_KEY,
+    label: "Tests",
+    icon: <BugOutlined />,
+    roles: ["ADMIN", "STAFF"],
+    children: [
+      {
+        key: "/admin/tests",
+        label: <Link to="/admin/tests">Listening & reading</Link>,
         icon: <BugOutlined />,
-        roles: ["ADMIN", "STAFF"],
-        children: [
-            {
-                key: "/admin/tests",
-                label: <Link to="/admin/tests">Listening & reading</Link>,
-                icon: <BugOutlined />,
-            },
-            {
-                key: "/admin/speaking-tests",
-                label: <Link to="/admin/speaking-tests">Speaking</Link>,
-                icon: <AudioOutlined />,
-            },
-            {
-                key: "/admin/writing-tests",
-                label: <Link to="/admin/writing-tests">Writing</Link>,
-                icon: <FormOutlined />,
-            },
-        ],
-    },
-    { label: <Link to="/admin/users">User</Link>, key: "/admin/users", icon: <UserOutlined />, roles: ["ADMIN"] },
-    { label: <Link to="/admin/reports">Reports</Link>, key: "/admin/reports", icon: <FileTextOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/tags">Tags</Link>, key: "/admin/tags", icon: <TagOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/dictation">Dictation</Link>, key: "/admin/dictation", icon: <ScheduleOutlined />, roles: ["ADMIN", "STAFF"] },
-    { label: <Link to="/admin/blog-categories">Blog categories</Link>, key: "/admin/blog-categories", icon: <BookOutlined />, roles: ["ADMIN", "STAFF"] },
-    {
-        key: PROMPTS_SUBMENU_KEY,
-        label: "Prompts",
+      },
+      {
+        key: "/admin/speaking-tests",
+        label: <Link to="/admin/speaking-tests">Speaking</Link>,
+        icon: <AudioOutlined />,
+      },
+      {
+        key: "/admin/writing-tests",
+        label: <Link to="/admin/writing-tests">Writing</Link>,
+        icon: <FormOutlined />,
+      },
+    ],
+  },
+  {
+    label: <Link to="/admin/users">User</Link>,
+    key: "/admin/users",
+    icon: <UserOutlined />,
+    roles: ["ADMIN"],
+  },
+  {
+    label: <Link to="/admin/reports">Reports</Link>,
+    key: "/admin/reports",
+    icon: <FileTextOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    label: <Link to="/admin/tags">Tags</Link>,
+    key: "/admin/tags",
+    icon: <TagOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    label: <Link to="/admin/dictation">Dictation</Link>,
+    key: "/admin/dictation",
+    icon: <ScheduleOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    label: <Link to="/admin/learning-paths">Learning Path</Link>,
+    key: "/admin/learning-paths",
+    icon: <VideoCameraOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    label: <Link to="/admin/blog-categories">Blog categories</Link>,
+    key: "/admin/blog-categories",
+    icon: <BookOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    key: PROMPTS_SUBMENU_KEY,
+    label: "Prompts",
+    icon: <ApiOutlined />,
+    roles: ["ADMIN"],
+    children: [
+      {
+        key: "/admin/system-prompts/chatbot",
+        label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>,
         icon: <ApiOutlined />,
-        roles: ["ADMIN"],
-        children: [
-            {
-                key: "/admin/system-prompts/chatbot",
-                label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/q-and-a",
-                label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/explanation",
-                label: <Link to="/admin/system-prompts/explanation">Explanation Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/sentence-assessment",
-                label: <Link to="/admin/system-prompts/sentence-assessment">Sentence Assessment Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/writing-assessment",
-                label: <Link to="/admin/system-prompts/writing-assessment">Writing Assessment Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/speaking-assessment",
-                label: <Link to="/admin/system-prompts/speaking-assessment">Speaking Assessment Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-            {
-                key: "/admin/system-prompts/blog-summarization",
-                label: <Link to="/admin/system-prompts/blog-summarization">Blog Summarization Prompts</Link>,
-                icon: <ApiOutlined />,
-            },
-        ],
-    },
+      },
+      {
+        key: "/admin/system-prompts/q-and-a",
+        label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>,
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/explanation",
+        label: (
+          <Link to="/admin/system-prompts/explanation">
+            Explanation Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/sentence-assessment",
+        label: (
+          <Link to="/admin/system-prompts/sentence-assessment">
+            Sentence Assessment Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/writing-assessment",
+        label: (
+          <Link to="/admin/system-prompts/writing-assessment">
+            Writing Assessment Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/speaking-assessment",
+        label: (
+          <Link to="/admin/system-prompts/speaking-assessment">
+            Speaking Assessment Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/blog-summarization",
+        label: (
+          <Link to="/admin/system-prompts/blog-summarization">
+            Blog Summarization Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+    ],
+  },
 ];
 
 export default function AdminLayout() {

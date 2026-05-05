@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  .ck-content ul,
+  .ck-editor__editable ul {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    padding-left: 1.5rem !important;
+    margin-left: 0 !important;
+  }
+
+  .ck-content ol,
+  .ck-editor__editable ol {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    padding-left: 1.5rem !important;
+    margin-left: 0 !important;
+  }
+
+  .ck-content li,
+  .ck-editor__editable li {
+    margin-left: 0.25rem;
+  }
+}
+
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;

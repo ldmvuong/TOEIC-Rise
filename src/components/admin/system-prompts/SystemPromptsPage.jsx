@@ -284,7 +284,7 @@ const SystemPromptsPage = ({ featureType, title }) => {
         okText="Create"
         cancelText="Cancel"
         confirmLoading={submitting}
-        destroyOnClose
+        destroyOnHidden
         width={720}
       >
         <Form form={form} layout="vertical">
