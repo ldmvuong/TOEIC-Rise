@@ -21,10 +21,10 @@ export default function Header({ currentPath }) {
     { name: "Trang chủ", href: "/" },
     { name: "Đề thi online", href: "/online-tests" },
     { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
-    { name: "Blog", href: "/blog" },
     { name: "Flashcard", href: "/flashcards", roles: ['LEARNER'] },
     { name: "Thống kê kết quả", href: "/statistics", roles: ['LEARNER'] },
     { name: "Cấu trúc đề thi", href: "/exam-structure" },
+    { name: "Blog", href: "/blog" },
   ]
 
   const nav = navItems.filter(item => {

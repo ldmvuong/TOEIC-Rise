@@ -4,7 +4,7 @@ import NotFound from '../src/components/shared/not.found.jsx'
 import ClientLayout from "./layouts/ClientLayout.jsx";
 import HomePage from './pages/client/HomePage.jsx';
 import TestList from './pages/client/TestList.jsx';
-import LearnerTypedTestDetail from "./pages/client/LearnerTypedTestDetail.jsx";
+import TestDetail from "./pages/client/TestDetail.jsx";
 import ClientProfile from './pages/client/Profile.jsx';
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
@@ -41,7 +41,6 @@ import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
 import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
 import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
 import BlogSearchPage from "./pages/client/BlogSearch.jsx";
-import TestDetail from "./pages/client/TestDetail.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoSpeakingTest from "./pages/client/DoSpeakingTest.jsx";
 import DoWritingTest from "./pages/client/DoWritingTest.jsx";
@@ -129,7 +128,7 @@ export default function App() {
         },
         {
           path: 'online-tests/:id/:slug?',
-          element: <TestDetail />
+          element: <TestDetail variant="readingListening" />
         },
         {
           path: "speaking-tests",
@@ -137,7 +136,7 @@ export default function App() {
         },
         {
           path: "speaking-tests/:id/:slug?",
-          element: <LearnerTypedTestDetail variant="speaking" />,
+          element: <TestDetail variant="speaking" />,
         },
         {
           path: "writing-tests",
@@ -145,7 +144,7 @@ export default function App() {
         },
         {
           path: "writing-tests/:id/:slug?",
-          element: <LearnerTypedTestDetail variant="writing" />,
+          element: <TestDetail variant="writing" />,
         },
         {
           path: 'do-test',
