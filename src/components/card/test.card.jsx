@@ -1,7 +1,18 @@
-import React from 'react';
-import { ClockCircleOutlined, UserOutlined, MessageOutlined } from '@ant-design/icons';
+import React, { useMemo } from "react";
+import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
 
-const TestCard = ({ test, onClick }) => {
+const DEFAULT_DURATION_MINUTES = {
+    readingListening: 120,
+    speaking: 20,
+    writing: 60,
+};
+
+const TestCard = ({ test, onClick, variant = "readingListening" }) => {
+    const durationMinutes = useMemo(() => {
+        const v = variant in DEFAULT_DURATION_MINUTES ? variant : "readingListening";
+        return DEFAULT_DURATION_MINUTES[v];
+    }, [variant]);
+
     return (
         <div
             onClick={onClick}
@@ -28,7 +39,7 @@ const TestCard = ({ test, onClick }) => {
                     {/* Duration */}
                     <div className="flex items-center text-gray-600 text-sm">
                         <ClockCircleOutlined className="mr-2 text-blue-500" />
-                        <span>120 phút</span>
+                        <span>{durationMinutes} phút</span>
                     </div>
 
                     {/* Learners Count */}
