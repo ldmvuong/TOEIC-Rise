@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { message } from 'antd';
+import { Drawer, Modal, message } from 'antd';
 import parse from 'html-react-parser';
 import PassageDisplay from '../../components/exam/PassageDisplay';
 import ImageDisplay from '../../components/exam/ImageDisplay';
 import DictionaryText from '../../components/shared/DictionaryText';
 import AudioPlayerUI from '../../components/client/modal/AudioPlayerUI';
+import { formatTime } from '../../utils/timeUtils';
+import { IconCheckCircle } from '../../components/icons';
 
 /**
  * Build steps for fixing wrong answers.
@@ -64,6 +66,15 @@ const FixWrongOneByOne = () => {
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({}); // { questionId: 'A' | 'B' | 'C' | 'D' }
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const currentStep = fixSteps[currentStepIndex];
   const isLast = currentStepIndex >= fixSteps.length - 1;
@@ -81,7 +92,126 @@ const FixWrongOneByOne = () => {
       currentGroup?.questions?.length > 0 &&
       currentGroup.questions.every((q) => userAnswers[q.id] !== undefined);
 
-  const canGoNext = currentStep?.type === 'question' ? !!isAnswered : !!isGroupAnswered;
+  const canGoNext = currentStepIndex < fixSteps.length - 1;
+
+  const stats = useMemo(() => {
+    const partResponses = fixOneByOneData?.partResponses || [];
+    let total = 0;
+    let answered = 0;
+    let correct = 0;
+
+    for (const part of partResponses) {
+      for (const group of part.questionGroups || []) {
+        for (const q of group.questions || []) {
+          total += 1;
+          const picked = userAnswers[q.id];
+          if (picked === undefined) continue;
+          answered += 1;
+          const correctOption = q.correctOption ?? q.correctAnswer ?? q.correct_option ?? null;
+          if (picked && correctOption && picked === correctOption) {
+            correct += 1;
+          }
+        }
+      }
+    }
+
+    return { total, answered, correct };
+  }, [fixOneByOneData, userAnswers]);
+
+  const navItems = useMemo(() => {
+    const items = [];
+    for (let i = 0; i < fixSteps.length; i += 1) {
+      const step = fixSteps[i];
+      const partName = step?.part?.partName || '';
+      const group = step?.group || null;
+      if (step?.type === 'question') {
+        const q = step.question;
+        const position = q?.position ?? null;
+        const correctOption = q?.correctOption ?? q?.correctAnswer ?? q?.correct_option ?? null;
+        const picked = userAnswers[q?.id];
+        const status =
+          picked === undefined
+            ? 'UNANSWERED'
+            : picked && correctOption && picked === correctOption
+              ? 'CORRECT'
+              : 'WRONG';
+        items.push({
+          key: q?.id ?? `step-${i}`,
+          stepIndex: i,
+          position,
+          partName,
+          status,
+        });
+      } else if (group?.questions?.length) {
+        for (const q of group.questions) {
+          const position = q?.position ?? null;
+          const correctOption = q?.correctOption ?? q?.correctAnswer ?? q?.correct_option ?? null;
+          const picked = userAnswers[q?.id];
+          const status =
+            picked === undefined
+              ? 'UNANSWERED'
+              : picked && correctOption && picked === correctOption
+                ? 'CORRECT'
+                : 'WRONG';
+          items.push({
+            key: q?.id ?? `step-${i}-q-${position ?? 'x'}`,
+            stepIndex: i,
+            position,
+            partName,
+            status,
+          });
+        }
+      }
+    }
+
+    const withPos = items.filter((x) => x.position != null);
+    withPos.sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0));
+    return withPos;
+  }, [fixSteps, userAnswers]);
+
+  const navStats = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    let unanswered = 0;
+    for (const it of navItems) {
+      if (it.status === 'CORRECT') correct += 1;
+      else if (it.status === 'WRONG') wrong += 1;
+      else unanswered += 1;
+    }
+    return { correct, wrong, unanswered, total: navItems.length };
+  }, [navItems]);
+
+  const currentNavPos = useMemo(() => {
+    const step = fixSteps[currentStepIndex];
+    if (!step) return null;
+    if (step.type === 'question') return step?.question?.position ?? null;
+    const qs = Array.isArray(step?.group?.questions) ? step.group.questions : [];
+    const q0 = qs[0];
+    return q0?.position ?? null;
+  }, [fixSteps, currentStepIndex]);
+
+  const navByPart = useMemo(() => {
+    const map = new Map();
+    for (const it of navItems) {
+      const key = it.partName || 'Khác';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(it);
+    }
+    for (const arr of map.values()) {
+      arr.sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0));
+    }
+    const partOrder = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5', 'Part 6', 'Part 7'];
+    const keys = Array.from(map.keys());
+    keys.sort((a, b) => {
+      const ia = partOrder.indexOf(a);
+      const ib = partOrder.indexOf(b);
+      if (ia === -1 && ib === -1) return String(a).localeCompare(String(b), 'vi');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    return keys.map((k) => ({ partName: k, items: map.get(k) || [] }));
+  }, [navItems]);
 
   const buildRedoResultFromFixing = () => {
     const cloned = fixOneByOneData ? JSON.parse(JSON.stringify(fixOneByOneData)) : null;
@@ -117,7 +247,7 @@ const FixWrongOneByOne = () => {
     return {
       totalQuestions: total,
       correctAnswers: correct,
-      timeSpent: 0,
+      timeSpent: elapsedSeconds,
       learnerTestPartsResponse: cloned,
     };
   };
@@ -146,6 +276,31 @@ const FixWrongOneByOne = () => {
     setCurrentStepIndex((i) => i + 1);
   };
 
+  const handlePrev = () => {
+    setCurrentStepIndex((i) => (i > 0 ? i - 1 : 0));
+  };
+
+  const handleSubmit = () => {
+    Modal.confirm({
+      title: 'Xác nhận nộp bài',
+      content: 'Bạn có chắc muốn nộp bài và xem kết quả làm lại câu sai?',
+      okText: 'Nộp bài',
+      cancelText: 'Hủy',
+      okButtonProps: { className: 'bg-indigo-600 hover:bg-indigo-700' },
+      onOk: () => {
+        const redoResult = buildRedoResultFromFixing();
+        if (!redoResult) {
+          navigate(`/test-result/${userTestId}`, { replace: true });
+          return;
+        }
+        navigate(`/redo-wrong/${userTestId}`, {
+          replace: true,
+          state: { redoResult },
+        });
+      },
+    });
+  };
+
   if (!fixOneByOneData) {
     message.error('Không có dữ liệu. Vui lòng bắt đầu từ trang kết quả bài thi.');
     navigate(`/test-result/${userTestId}`);
@@ -172,20 +327,167 @@ const FixWrongOneByOne = () => {
   const maxOptions = isPart2 ? 3 : 4;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <Drawer
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        title="Danh sách câu hỏi"
+        placement="right"
+        width={360}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-xs text-slate-700 flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-emerald-500 bg-emerald-500/10" />
+              {navStats.correct} Đúng
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-rose-500 bg-rose-500/10" />
+              {navStats.wrong} Sai
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border border-gray-300 bg-gray-100" />
+              {navStats.unanswered} Chưa làm
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {navByPart.map((section) => (
+              <div key={section.partName}>
+                <div className="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                  {section.partName}
+                </div>
+                <div className="grid grid-cols-6 gap-2">
+                  {section.items.map((it) => {
+                    const isCurrent = currentNavPos != null && it.position === currentNavPos;
+                    const tone =
+                      it.status === 'CORRECT'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : it.status === 'WRONG'
+                          ? 'border-rose-500 bg-rose-50 text-rose-700'
+                          : 'border-gray-200 bg-white text-slate-700 hover:bg-gray-50';
+                    return (
+                      <button
+                        key={it.key}
+                        type="button"
+                        onClick={() => {
+                          setCurrentStepIndex(it.stepIndex);
+                          setNavOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={`h-9 rounded-lg border text-xs font-semibold ${tone} ${
+                          isCurrent ? 'ring-2 ring-indigo-200 border-indigo-400' : ''
+                        }`}
+                        title={`Câu ${it.position}`}
+                      >
+                        {it.position}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Drawer>
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Sửa lỗi từng câu</h1>
-          <div className="text-sm font-medium text-gray-600">
-            {currentStep?.type === 'group'
-              ? `Group ${currentStepIndex + 1} / ${fixSteps.length}`
-              : `Câu ${currentStepIndex + 1} / ${fixSteps.length}`}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-gray-50/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-2">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm px-4 sm:px-4 py-2.5">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <div className="text-slate-900 font-semibold text-sm sm:text-base truncate">
+                  {fixOneByOneData?.testName
+                    ? `${fixOneByOneData.testName} - Làm lại câu sai`
+                    : 'Làm lại câu sai'}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 flex-wrap">
+                <div className="px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+                  {formatTime(elapsedSeconds)}
+                </div>
+
+                <div className="px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+                  Câu {fixSteps.length ? currentStepIndex + 1 : 0}/{Math.max(fixSteps.length, 0)}
+                </div>
+
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-500 border border-emerald-600 text-xs sm:text-sm font-semibold text-white inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <IconCheckCircle className="text-white" />
+                  {stats.correct}/{Math.max(stats.total, 1)}
+                </div>
+
+                <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-0.5">
+                  <button
+                    type="button"
+                    disabled={currentStepIndex <= 0}
+                    onClick={handlePrev}
+                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold ${
+                      currentStepIndex <= 0
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-slate-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Trước
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canGoNext}
+                    onClick={handleNext}
+                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold ${
+                      !canGoNext
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-slate-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Sau
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setNavOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm inline-flex items-center gap-2"
+                  title="Mở danh sách câu hỏi"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 4h6v6H4V4z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M14 4h6v6h-6V4z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M4 14h6v6H4v-6z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M14 14h6v6h-6v-6z" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/test-result/${userTestId}`, { replace: true })}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm whitespace-nowrap"
+                >
+                  Quay lại
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm whitespace-nowrap"
+                >
+                  Nộp bài
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 pt-4 pb-8">
         {/* Audio (Part 1-4) */}
         {partNumber >= 1 && partNumber <= 4 && currentGroup?.audioUrl && (
           <div className="mb-6">
@@ -213,9 +515,9 @@ const FixWrongOneByOne = () => {
 
         {/* Nội dung theo kiểu step */}
         {currentStep?.type === 'question' ? (
-          <div className="rounded-xl bg-white shadow-md border border-gray-200 overflow-hidden mb-6">
+          <div className="rounded-2xl bg-white shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               {/* Số câu + nội dung */}
               <div className="flex items-start gap-3 mb-4">
                 <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
@@ -229,7 +531,7 @@ const FixWrongOneByOne = () => {
               </div>
 
               {/* Options */}
-              <div className="space-y-2 ml-12">
+              <div className="space-y-2.5 ml-12">
                 {Array.from({ length: maxOptions }, (_, index) => {
                   const optionLetter = String.fromCharCode(65 + index);
                   const options = currentQuestion?.options || [];
@@ -241,19 +543,19 @@ const FixWrongOneByOne = () => {
                   const showResult = isAnswered;
 
                   let buttonClass =
-                    'w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left transition-colors ';
+                    'w-full flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all bg-white ';
                   if (!showResult) {
                     buttonClass +=
-                      'border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer';
+                      'border-gray-200 hover:border-indigo-300 hover:shadow-sm hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-200';
                   } else {
                     if (isUserChoice && isCorrectOption) {
-                      buttonClass += 'border-green-500 bg-green-50';
+                      buttonClass += 'border-emerald-400 bg-emerald-50 shadow-sm';
                     } else if (isUserChoice && !isCorrectOption) {
-                      buttonClass += 'border-red-500 bg-red-50';
+                      buttonClass += 'border-rose-400 bg-rose-50 shadow-sm';
                     } else if (isCorrectOption) {
-                      buttonClass += 'border-green-300 bg-green-50/70';
+                      buttonClass += 'border-emerald-200 bg-emerald-50/60';
                     } else {
-                      buttonClass += 'border-gray-200 bg-gray-50';
+                      buttonClass += 'border-gray-200 bg-white';
                     }
                   }
 
@@ -266,16 +568,16 @@ const FixWrongOneByOne = () => {
                       className={buttonClass}
                     >
                       <span
-                        className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold ${
+                        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
                           showResult
                             ? isUserChoice && isCorrectOption
-                              ? 'bg-green-500 text-white'
+                              ? 'bg-emerald-600 text-white'
                               : isUserChoice && !isCorrectOption
-                              ? 'bg-red-500 text-white'
+                              ? 'bg-rose-600 text-white'
                               : isCorrectOption
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-200 text-gray-600'
-                            : 'bg-gray-200 text-gray-700'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-gray-100 text-gray-600'
+                            : 'bg-gray-100 text-gray-700'
                         }`}
                       >
                         {optionLetter}
@@ -284,13 +586,13 @@ const FixWrongOneByOne = () => {
                         className={`flex-1 text-sm ${
                           showResult
                             ? isUserChoice && isCorrectOption
-                              ? 'text-green-800 font-medium'
+                              ? 'text-emerald-800 font-semibold'
                               : isUserChoice && !isCorrectOption
-                              ? 'text-red-800 font-medium'
+                              ? 'text-rose-800 font-semibold'
                               : isCorrectOption
-                              ? 'text-green-800'
+                              ? 'text-emerald-800'
                               : 'text-gray-700'
-                            : 'text-gray-800'
+                            : 'text-slate-800'
                         }`}
                       >
                         {optionText}
@@ -310,7 +612,7 @@ const FixWrongOneByOne = () => {
                       </p>
                     )}
                     {currentQuestion?.explanation && (
-                      <details className="cursor-pointer" open>
+                      <details className="cursor-pointer">
                         <summary className="text-sm font-medium text-gray-800 mb-2">
                           Giải thích chi tiết đáp án
                         </summary>
@@ -341,9 +643,9 @@ const FixWrongOneByOne = () => {
               const showResult = userAnswers[question.id] !== undefined;
 
               return (
-                <div key={question.id} className="rounded-xl bg-white shadow-md border border-gray-200 overflow-hidden">
+                <div key={question.id} className="rounded-2xl bg-white shadow-sm border border-gray-200 overflow-hidden">
                   <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
-                  <div className="p-6">
+                  <div className="p-5 sm:p-6">
                     <div className="flex items-start gap-3 mb-4">
                       <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
                         {question.position}
@@ -355,7 +657,7 @@ const FixWrongOneByOne = () => {
                       )}
                     </div>
 
-                    <div className="space-y-2 ml-12">
+                    <div className="space-y-2.5 ml-12">
                       {Array.from({ length: maxOptions }, (_, index) => {
                         const optionLetter = String.fromCharCode(65 + index);
                         const optionText =
@@ -367,20 +669,20 @@ const FixWrongOneByOne = () => {
                         const isUserChoice = userAnswers[question?.id] === optionLetter;
 
                         let buttonClass =
-                          'w-full flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left transition-colors ';
+                          'w-full flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all bg-white ';
 
                         if (!showResult) {
                           buttonClass +=
-                            'border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer';
+                            'border-gray-200 hover:border-indigo-300 hover:shadow-sm hover:bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-200';
                         } else {
                           if (isUserChoice && isCorrectOption) {
-                            buttonClass += 'border-green-500 bg-green-50';
+                            buttonClass += 'border-emerald-400 bg-emerald-50 shadow-sm';
                           } else if (isUserChoice && !isCorrectOption) {
-                            buttonClass += 'border-red-500 bg-red-50';
+                            buttonClass += 'border-rose-400 bg-rose-50 shadow-sm';
                           } else if (isCorrectOption) {
-                            buttonClass += 'border-green-300 bg-green-50/70';
+                            buttonClass += 'border-emerald-200 bg-emerald-50/60';
                           } else {
-                            buttonClass += 'border-gray-200 bg-gray-50';
+                            buttonClass += 'border-gray-200 bg-white';
                           }
                         }
 
@@ -393,16 +695,16 @@ const FixWrongOneByOne = () => {
                             className={buttonClass}
                           >
                             <span
-                              className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold ${
+                              className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
                                 showResult
                                   ? isUserChoice && isCorrectOption
-                                    ? 'bg-green-500 text-white'
+                                    ? 'bg-emerald-600 text-white'
                                     : isUserChoice && !isCorrectOption
-                                    ? 'bg-red-500 text-white'
+                                    ? 'bg-rose-600 text-white'
                                     : isCorrectOption
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-gray-200 text-gray-600'
-                                  : 'bg-gray-200 text-gray-700'
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 text-gray-600'
+                                  : 'bg-gray-100 text-gray-700'
                               }`}
                             >
                               {optionLetter}
@@ -411,13 +713,13 @@ const FixWrongOneByOne = () => {
                               className={`flex-1 text-sm ${
                                 showResult
                                   ? isUserChoice && isCorrectOption
-                                    ? 'text-green-800 font-medium'
+                                    ? 'text-emerald-800 font-semibold'
                                     : isUserChoice && !isCorrectOption
-                                    ? 'text-red-800 font-medium'
+                                    ? 'text-rose-800 font-semibold'
                                     : isCorrectOption
-                                    ? 'text-green-800'
+                                    ? 'text-emerald-800'
                                     : 'text-gray-700'
-                                  : 'text-gray-800'
+                                  : 'text-slate-800'
                               }`}
                             >
                               {optionText}
@@ -436,7 +738,7 @@ const FixWrongOneByOne = () => {
                             </p>
                           )}
                           {question?.explanation && (
-                            <details className="cursor-pointer" open>
+                            <details className="cursor-pointer">
                               <summary className="text-sm font-medium text-gray-800 mb-2">
                                 Giải thích chi tiết đáp án
                               </summary>

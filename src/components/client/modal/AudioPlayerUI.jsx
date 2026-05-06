@@ -178,7 +178,7 @@ const AudioPlayerUI = ({
                             )}
                         </button>
                         {showVolumeSlider && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-gray-200 rounded-lg p-2 shadow-lg">
                                 <input
                                     type="range"
                                     min="0"
