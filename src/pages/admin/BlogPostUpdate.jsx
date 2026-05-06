@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -145,6 +145,40 @@ const BlogPostUpdatePage = () => {
     useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [generatedSummaryText, setGeneratedSummaryText] = useState("");
+  const allowNavigationRef = useRef(false);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !allowNavigationRef.current &&
+      currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  const confirmLeavePage = useCallback(
+    (onOk, onCancel) => {
+      Modal.confirm({
+        title: "Leave this page?",
+        content: "Your current input may be lost if you go back now.",
+        okText: "Leave",
+        cancelText: "Stay",
+        okButtonProps: { danger: true },
+        onOk: () => {
+          allowNavigationRef.current = true;
+          onOk?.();
+        },
+        onCancel,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      confirmLeavePage(
+        () => blocker.proceed(),
+        () => blocker.reset(),
+      );
+    }
+  }, [blocker, confirmLeavePage]);
 
   const outline = useMemo(
     () => extractHeadingOutline(contentHtml),
@@ -448,6 +482,7 @@ const BlogPostUpdatePage = () => {
     try {
       await updateBlogPost(id, fd);
       message.success("Blog post updated");
+      allowNavigationRef.current = true;
       navigate(`/admin/blog-posts/${id}`);
     } catch (e) {
       notification.error({
@@ -490,7 +525,10 @@ const BlogPostUpdatePage = () => {
     <div className="max-w-[1500px] mx-auto p-4 pb-12">
       <Space direction="vertical" size="large" className="w-full">
         <Space wrap align="center">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => confirmLeavePage(() => navigate(-1))}
+          >
             Back
           </Button>
           <Title level={3} style={{ margin: 0 }}>
@@ -627,6 +665,22 @@ const BlogPostUpdatePage = () => {
                     <style>{`
                       .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
                       .ckeditor-wrapper .ck-editor { min-height: 480px; }
+                      .ckeditor-wrapper .ck-content .table { overflow-x: auto; }
+                      .ckeditor-wrapper .ck-content .table table,
+                      .ckeditor-wrapper .ck-content table {
+                        width: auto !important;
+                        max-width: 100%;
+                        table-layout: auto !important;
+                        border-collapse: separate;
+                        border-spacing: 0;
+                      }
+                      .ckeditor-wrapper .ck-content table td,
+                      .ckeditor-wrapper .ck-content table th {
+                        width: auto !important;
+                        min-width: 0;
+                        white-space: normal;
+                        word-break: break-word;
+                      }
                     `}</style>
                     <CKEditor
                       editor={ClassicEditor}
@@ -686,7 +740,11 @@ const BlogPostUpdatePage = () => {
                     >
                       Save changes
                     </Button>
-                    <Button onClick={() => navigate(`/admin/blog-posts/${id}`)}>
+                    <Button
+                      onClick={() =>
+                        confirmLeavePage(() => navigate(`/admin/blog-posts/${id}`))
+                      }
+                    >
                       Cancel
                     </Button>
                   </Space>

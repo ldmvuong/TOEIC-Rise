@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -128,6 +128,40 @@ const BlogPostCreatePage = () => {
     useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [generatedSummaryText, setGeneratedSummaryText] = useState("");
+  const allowNavigationRef = useRef(false);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !allowNavigationRef.current &&
+      currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  const confirmLeavePage = useCallback(
+    (onOk, onCancel) => {
+      Modal.confirm({
+        title: "Leave this page?",
+        content: "Your current input may be lost if you go back now.",
+        okText: "Leave",
+        cancelText: "Stay",
+        okButtonProps: { danger: true },
+        onOk: () => {
+          allowNavigationRef.current = true;
+          onOk?.();
+        },
+        onCancel,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      confirmLeavePage(
+        () => blocker.proceed(),
+        () => blocker.reset(),
+      );
+    }
+  }, [blocker, confirmLeavePage]);
 
   const outline = useMemo(
     () => extractHeadingOutline(contentHtml),
@@ -311,6 +345,7 @@ const BlogPostCreatePage = () => {
     try {
       await createBlogPost(category.slug, fd);
       message.success("Blog post created");
+      allowNavigationRef.current = true;
       navigate(`/admin/blog-categories/${id}`);
     } catch (e) {
       notification.error({
@@ -443,7 +478,9 @@ const BlogPostCreatePage = () => {
         <Space wrap align="center">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(`/admin/blog-categories/${id}`)}
+            onClick={() =>
+              confirmLeavePage(() => navigate(`/admin/blog-categories/${id}`))
+            }
           >
             Back
           </Button>
@@ -659,8 +696,14 @@ const BlogPostCreatePage = () => {
                         border-radius: 10px;
                         color: #334155;
                       }
+                      .ckeditor-wrapper .ck-content .table {
+                        overflow-x: auto;
+                      }
+                      .ckeditor-wrapper .ck-content .table table,
                       .ckeditor-wrapper .ck-content table {
-                        width: 100%;
+                        width: auto !important;
+                        max-width: 100%;
+                        table-layout: auto !important;
                         border-collapse: separate;
                         border-spacing: 0;
                         margin: 1rem 0;
@@ -672,9 +715,13 @@ const BlogPostCreatePage = () => {
                       }
                       .ckeditor-wrapper .ck-content table td,
                       .ckeditor-wrapper .ck-content table th {
+                        width: auto !important;
+                        min-width: 0;
                         border: 1px solid #e5e7eb;
                         padding: 10px 12px;
                         vertical-align: top;
+                        white-space: normal;
+                        word-break: break-word;
                       }
                       .ckeditor-wrapper .ck-content pre {
                         background: #0b1220;
@@ -743,7 +790,9 @@ const BlogPostCreatePage = () => {
                       Publish post
                     </Button>
                     <Button
-                      onClick={() => navigate(`/admin/blog-categories/${id}`)}
+                      onClick={() =>
+                        confirmLeavePage(() => navigate(`/admin/blog-categories/${id}`))
+                      }
                     >
                       Cancel
                     </Button>
