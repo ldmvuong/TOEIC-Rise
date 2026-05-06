@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -128,6 +128,40 @@ const BlogPostCreatePage = () => {
     useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [generatedSummaryText, setGeneratedSummaryText] = useState("");
+  const allowNavigationRef = useRef(false);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !allowNavigationRef.current &&
+      currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  const confirmLeavePage = useCallback(
+    (onOk, onCancel) => {
+      Modal.confirm({
+        title: "Leave this page?",
+        content: "Your current input may be lost if you go back now.",
+        okText: "Leave",
+        cancelText: "Stay",
+        okButtonProps: { danger: true },
+        onOk: () => {
+          allowNavigationRef.current = true;
+          onOk?.();
+        },
+        onCancel,
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      confirmLeavePage(
+        () => blocker.proceed(),
+        () => blocker.reset(),
+      );
+    }
+  }, [blocker, confirmLeavePage]);
 
   const outline = useMemo(
     () => extractHeadingOutline(contentHtml),
@@ -311,6 +345,7 @@ const BlogPostCreatePage = () => {
     try {
       await createBlogPost(category.slug, fd);
       message.success("Blog post created");
+      allowNavigationRef.current = true;
       navigate(`/admin/blog-categories/${id}`);
     } catch (e) {
       notification.error({
@@ -443,7 +478,9 @@ const BlogPostCreatePage = () => {
         <Space wrap align="center">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(`/admin/blog-categories/${id}`)}
+            onClick={() =>
+              confirmLeavePage(() => navigate(`/admin/blog-categories/${id}`))
+            }
           >
             Back
           </Button>
@@ -659,8 +696,14 @@ const BlogPostCreatePage = () => {
                         border-radius: 10px;
                         color: #334155;
                       }
+                      .ckeditor-wrapper .ck-content .table {
+                        overflow-x: auto;
+                      }
+                      .ckeditor-wrapper .ck-content .table table,
                       .ckeditor-wrapper .ck-content table {
-                        width: 100%;
+                        width: auto !important;
+                        max-width: 100%;
+                        table-layout: auto !important;
                         border-collapse: separate;
                         border-spacing: 0;
                         margin: 1rem 0;
@@ -672,9 +715,13 @@ const BlogPostCreatePage = () => {
                       }
                       .ckeditor-wrapper .ck-content table td,
                       .ckeditor-wrapper .ck-content table th {
+                        width: auto !important;
+                        min-width: 0;
                         border: 1px solid #e5e7eb;
                         padding: 10px 12px;
                         vertical-align: top;
+                        white-space: normal;
+                        word-break: break-word;
                       }
                       .ckeditor-wrapper .ck-content pre {
                         background: #0b1220;
@@ -743,7 +790,9 @@ const BlogPostCreatePage = () => {
                       Publish post
                     </Button>
                     <Button
-                      onClick={() => navigate(`/admin/blog-categories/${id}`)}
+                      onClick={() =>
+                        confirmLeavePage(() => navigate(`/admin/blog-categories/${id}`))
+                      }
                     >
                       Cancel
                     </Button>
@@ -755,44 +804,69 @@ const BlogPostCreatePage = () => {
             <Col xs={24} lg={6}>
               <Card
                 title="Outline (from headings)"
-                className="shadow-sm lg:sticky lg:top-4"
-                styles={{ body: { maxHeight: "70vh", overflowY: "auto" } }}
+                className="shadow-sm lg:sticky lg:top-4 rounded-2xl border-slate-200 overflow-hidden"
+                styles={{
+                  header: {
+                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderBottom: "1px solid #e2e8f0",
+                  },
+                  body: { maxHeight: "70vh", overflowY: "auto", padding: 12 },
+                }}
               >
                 {outline.length === 0 ? (
-                  <Text type="secondary">
-                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>,
-                    or <strong>Heading 3</strong> in the editor to see the
-                    outline here.
-                  </Text>
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500 leading-relaxed">
+                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>, or{" "}
+                    <strong>Heading 3</strong> in the editor to build the outline.
+                  </div>
                 ) : (
-                  <ul className="list-none pl-0 m-0 space-y-2">
+                  <div>
+                    <div className="mb-2 px-1 text-xs font-medium text-slate-500">
+                      {outline.length} heading{outline.length > 1 ? "s" : ""}
+                    </div>
+                    <ul className="list-none pl-0 m-0 space-y-1.5">
                     {outline.map((item, idx) => (
                       <li
                         key={`${idx}-${item.text}`}
-                        className="text-sm border-l-2 border-indigo-200 pl-3"
-                        style={{
-                          marginLeft: (item.level - 1) * 12,
-                        }}
+                        style={{ marginLeft: (item.level - 1) * 10 }}
+                        className={`group rounded-lg border px-2.5 py-2 transition-colors ${
+                          item.level === 1
+                            ? "border-indigo-200 bg-indigo-50/70"
+                            : item.level === 2
+                              ? "border-slate-200 bg-white hover:bg-slate-50"
+                              : "border-transparent bg-slate-50/40 hover:bg-slate-100/60"
+                        }`}
                       >
-                        <Text
-                          type={
-                            item.level === 1
-                              ? undefined
-                              : item.level === 2
-                                ? "secondary"
-                                : "secondary"
-                          }
-                          className={
-                            item.level === 1
-                              ? "font-semibold text-slate-900"
-                              : ""
-                          }
-                        >
-                          H{item.level}: {item.text}
-                        </Text>
+                        <div className="flex items-start gap-2">
+                          <span
+                            className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                              item.level === 1
+                                ? "bg-indigo-500"
+                                : item.level === 2
+                                  ? "bg-slate-400"
+                                  : "bg-slate-300"
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 mb-0.5">
+                              H{item.level}
+                            </div>
+                            <Text
+                              className={`block break-words leading-snug ${
+                                item.level === 1
+                                  ? "font-semibold text-slate-900"
+                                  : item.level === 2
+                                    ? "text-slate-700"
+                                    : "text-slate-600 text-[13px]"
+                              }`}
+                            >
+                              {item.text}
+                            </Text>
+                          </div>
+                        </div>
                       </li>
                     ))}
-                  </ul>
+                    </ul>
+                  </div>
                 )}
               </Card>
             </Col>

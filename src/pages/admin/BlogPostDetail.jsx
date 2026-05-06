@@ -1,16 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import parse from "html-react-parser";
-import {
-  Button,
-  Card,
-  Col,
-  Image,
-  Row,
-  Space,
-  Tag,
-  Typography,
-} from "antd";
+import { Button, Card, Col, Image, Row, Space, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -18,10 +9,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import {
-  changeBlogPostStatus,
-  getBlogPostDetailForStaff,
-} from "@/api/api";
+import { changeBlogPostStatus, getBlogPostDetailForStaff } from "@/api/api";
 import { message, Popconfirm } from "antd";
 
 const { Title, Text } = Typography;
@@ -188,7 +176,9 @@ const BlogPostDetailPage = () => {
           </Button>
           {post.categoryId != null && (
             <Link to={`/admin/blog-categories/${post.categoryId}`}>
-              <Button type="link">Category: {post.categoryName || "View"}</Button>
+              <Button type="link">
+                Category: {post.categoryName || "View"}
+              </Button>
             </Link>
           )}
         </Space>
@@ -196,14 +186,37 @@ const BlogPostDetailPage = () => {
         <Card className="shadow-sm">
           <Space direction="vertical" size="middle" className="w-full">
             {post.thumbnailUrl ? (
-              <div className="rounded-lg overflow-hidden bg-slate-100 max-h-[360px]">
+              <div className="relative rounded-lg overflow-hidden bg-slate-100 h-[360px] max-h-[360px]">
                 <Image
                   src={post.thumbnailUrl}
                   alt=""
-                  className="w-full object-cover"
-                  style={{ maxHeight: 360 }}
-                  preview
+                  preview={false}
+                  className="pointer-events-none absolute inset-0 !h-full !w-full scale-105"
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                    filter: "blur(14px)",
+                    opacity: 0.78,
+                  }}
                 />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Image
+                    src={post.thumbnailUrl}
+                    alt=""
+                    className="max-h-full max-w-full"
+                    style={{
+                      height: "auto",
+                      width: "auto",
+                      maxHeight: "100%",
+                      maxWidth: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                    preview
+                  />
+                </div>
               </div>
             ) : null}
 
@@ -258,7 +271,10 @@ const BlogPostDetailPage = () => {
               </div>
               {status ? (
                 <Space direction="vertical" size={12} className="w-full">
-                  <Tag color={statusColor} className="m-0 px-2.5 py-0.5 text-sm">
+                  <Tag
+                    color={statusColor}
+                    className="m-0 px-2.5 py-0.5 text-sm"
+                  >
                     {String(status)}
                   </Tag>
                   <div className="flex flex-wrap gap-2">
@@ -321,7 +337,9 @@ const BlogPostDetailPage = () => {
               <div className="flex items-center gap-2 text-slate-800">
                 <EyeOutlined className="text-slate-400" />
                 <span className="text-base font-medium tabular-nums">
-                  {post.views != null ? Number(post.views).toLocaleString() : "—"}
+                  {post.views != null
+                    ? Number(post.views).toLocaleString()
+                    : "—"}
                 </span>
               </div>
             </div>
@@ -395,7 +413,9 @@ const BlogPostDetailPage = () => {
                     color={post.categoryIsActive ? "green" : "default"}
                     className="mt-2 m-0"
                   >
-                    {post.categoryIsActive ? "Category active" : "Category inactive"}
+                    {post.categoryIsActive
+                      ? "Category active"
+                      : "Category inactive"}
                   </Tag>
                 ) : null}
               </div>
@@ -432,7 +452,8 @@ const BlogPostDetailPage = () => {
                 className="rounded-2xl border-slate-200 shadow-sm mb-4 lg:sticky lg:top-4 lg:z-10 overflow-hidden"
                 styles={{
                   header: {
-                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                    background:
+                      "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
                     borderBottom: "1px solid #e2e8f0",
                   },
                   body: {

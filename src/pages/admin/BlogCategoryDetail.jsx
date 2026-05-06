@@ -399,19 +399,35 @@ const BlogCategoryDetailPage = () => {
                       }}
                       cover={
                         post.thumbnailUrl ? (
-                          <div className="h-44 w-full overflow-hidden bg-slate-100">
+                          <div className="relative h-44 w-full overflow-hidden bg-slate-100">
                             <Image
                               alt=""
                               src={post.thumbnailUrl}
-                              className="object-cover"
+                              preview={false}
+                              className="pointer-events-none absolute inset-0 !h-full !w-full scale-110"
                               style={{
                                 height: 176,
                                 width: "100%",
                                 objectFit: "cover",
                                 display: "block",
+                                filter: "blur(14px)",
+                                opacity: 0.75,
                               }}
-                              preview={{ mask: "Preview" }}
                             />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Image
+                                alt=""
+                                src={post.thumbnailUrl}
+                                className="!h-full !w-full"
+                                style={{
+                                  height: 176,
+                                  width: "100%",
+                                  objectFit: "contain",
+                                  display: "block",
+                                }}
+                                preview={{ mask: "Preview" }}
+                              />
+                            </div>
                           </div>
                         ) : (
                           <div className="flex h-44 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-indigo-50/80 text-slate-400">
