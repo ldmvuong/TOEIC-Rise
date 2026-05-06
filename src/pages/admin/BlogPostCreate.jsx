@@ -804,44 +804,69 @@ const BlogPostCreatePage = () => {
             <Col xs={24} lg={6}>
               <Card
                 title="Outline (from headings)"
-                className="shadow-sm lg:sticky lg:top-4"
-                styles={{ body: { maxHeight: "70vh", overflowY: "auto" } }}
+                className="shadow-sm lg:sticky lg:top-4 rounded-2xl border-slate-200 overflow-hidden"
+                styles={{
+                  header: {
+                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderBottom: "1px solid #e2e8f0",
+                  },
+                  body: { maxHeight: "70vh", overflowY: "auto", padding: 12 },
+                }}
               >
                 {outline.length === 0 ? (
-                  <Text type="secondary">
-                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>,
-                    or <strong>Heading 3</strong> in the editor to see the
-                    outline here.
-                  </Text>
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500 leading-relaxed">
+                    Add <strong>Heading 1</strong>, <strong>Heading 2</strong>, or{" "}
+                    <strong>Heading 3</strong> in the editor to build the outline.
+                  </div>
                 ) : (
-                  <ul className="list-none pl-0 m-0 space-y-2">
+                  <div>
+                    <div className="mb-2 px-1 text-xs font-medium text-slate-500">
+                      {outline.length} heading{outline.length > 1 ? "s" : ""}
+                    </div>
+                    <ul className="list-none pl-0 m-0 space-y-1.5">
                     {outline.map((item, idx) => (
                       <li
                         key={`${idx}-${item.text}`}
-                        className="text-sm border-l-2 border-indigo-200 pl-3"
-                        style={{
-                          marginLeft: (item.level - 1) * 12,
-                        }}
+                        style={{ marginLeft: (item.level - 1) * 10 }}
+                        className={`group rounded-lg border px-2.5 py-2 transition-colors ${
+                          item.level === 1
+                            ? "border-indigo-200 bg-indigo-50/70"
+                            : item.level === 2
+                              ? "border-slate-200 bg-white hover:bg-slate-50"
+                              : "border-transparent bg-slate-50/40 hover:bg-slate-100/60"
+                        }`}
                       >
-                        <Text
-                          type={
-                            item.level === 1
-                              ? undefined
-                              : item.level === 2
-                                ? "secondary"
-                                : "secondary"
-                          }
-                          className={
-                            item.level === 1
-                              ? "font-semibold text-slate-900"
-                              : ""
-                          }
-                        >
-                          H{item.level}: {item.text}
-                        </Text>
+                        <div className="flex items-start gap-2">
+                          <span
+                            className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                              item.level === 1
+                                ? "bg-indigo-500"
+                                : item.level === 2
+                                  ? "bg-slate-400"
+                                  : "bg-slate-300"
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 mb-0.5">
+                              H{item.level}
+                            </div>
+                            <Text
+                              className={`block break-words leading-snug ${
+                                item.level === 1
+                                  ? "font-semibold text-slate-900"
+                                  : item.level === 2
+                                    ? "text-slate-700"
+                                    : "text-slate-600 text-[13px]"
+                              }`}
+                            >
+                              {item.text}
+                            </Text>
+                          </div>
+                        </div>
                       </li>
                     ))}
-                  </ul>
+                    </ul>
+                  </div>
                 )}
               </Card>
             </Col>
