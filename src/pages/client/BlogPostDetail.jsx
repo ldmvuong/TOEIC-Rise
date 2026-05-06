@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import parse from "html-react-parser";
 import { Button, Card, Empty, Image, Space, Spin, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
@@ -11,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getPublicBlogPostDetailBySlug, getPublicRelatedBlogPosts } from "@/api/api";
+import { renderBlogHtml } from "@/utils/blogContent.jsx";
 
 const { Title, Text } = Typography;
 
@@ -242,7 +242,7 @@ const BlogPostDetailPublicPage = () => {
               styles={{ body: { padding: 18 } }}
             >
               <div
-                className="blog-post-reader-content text-slate-800 leading-relaxed
+                className="blog-post-reader-content text-slate-800 leading-relaxed overflow-x-hidden
                   [&_table]:border-collapse [&_table]:border [&_table]:border-slate-200 [&_table]:my-4
                   [&_td]:border [&_td]:border-slate-200 [&_td]:p-2
                   [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50
@@ -254,7 +254,7 @@ const BlogPostDetailPublicPage = () => {
                   [&_blockquote]:border-l-4 [&_blockquote]:border-indigo-300 [&_blockquote]:bg-indigo-50 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:rounded-r-xl
                   [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded"
               >
-                {contentHtml ? parse(contentHtml) : <Text type="secondary">No content</Text>}
+                {contentHtml ? renderBlogHtml(contentHtml) : <Text type="secondary">No content</Text>}
               </div>
             </Card>
           </div>

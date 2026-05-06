@@ -33,9 +33,12 @@ function metaPages(body) {
  * — Xem thêm: page++, cộng dồn.
  * — Gõ ô tìm: debounce DEBOUNCE_MS, tagName, page 0 (thay thế).
  *
+ * Giá trị Select (value / onChange) là **tag name** (string),
+ * để backend có thể nhận trực tiếp vào trường `practice`.
+ *
  * @param {object} props
- * @param {string | number | null | undefined} props.value Tag id đã chọn
- * @param {(id: string | number | null) => void} props.onChange
+ * @param {string | null | undefined} props.value Tag name đã chọn
+ * @param {(name: string | null) => void} props.onChange
  */
 export default function StaffTagPaginatedSelect({
   value,
@@ -121,10 +124,10 @@ export default function StaffTagPaginatedSelect({
         } else {
           setTags((prev) => {
             const map = new Map(
-              prev.map((x) => [String(x.id), x]),
+              prev.map((x) => [x.name, x]),
             );
             for (const item of chunk) {
-              map.set(String(item.id), item);
+              map.set(item.name, item);
             }
             return [...map.values()];
           });
@@ -164,21 +167,21 @@ export default function StaffTagPaginatedSelect({
     fetchSlice(page + 1, { append: true });
   }, [open, loadingMore, loadingInitial, hasMore, page, fetchSlice]);
 
-  const selectedSnap = tags.find((t) => String(t.id) === String(value));
+  const selectedSnap = tags.find((t) => t.name === value);
 
   const options = useMemo(() => {
     const base = tags.map((t) => ({
-      value: t.id,
-      label: t.name || String(t.id),
+      value: t.name,
+      label: t.name,
     }));
     if (
       value != null &&
-      !base.some((o) => String(o.value) === String(value))
+      !base.some((o) => o.value === value)
     ) {
       return [
         {
           value,
-          label: selectedSnap?.name || `Tag #${value}`,
+          label: selectedSnap?.name || String(value),
         },
         ...base,
       ];

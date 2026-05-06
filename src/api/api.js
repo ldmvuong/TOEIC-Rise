@@ -687,6 +687,12 @@ export const submitMiniTest = (payload) => {
   return api.post("/learner/mini-tests", payload);
 };
 
+// MiniTest practice by slug (force encode special chars like [] )
+export const getMiniTestPracticeBySlug = (practiceSlug) => {
+  const slug = encodeURIComponent(String(practiceSlug ?? ""));
+  return api.get(`/learner/mini-tests/practice-slug?slug=${slug}`);
+};
+
 // Dictation (Learner)
 export const getDictationLibrary = () => api.get("/learner/dictation/library");
 export const getDictationPart = (testId, partId) =>
@@ -1031,14 +1037,15 @@ export const reorderLearningPathLessons = (learningPathId, payload) =>
 export const getLearningPaths = (params = {}) =>
   api.get("/learner/learning-paths", { params });
 
-export const getLearningPathDetail = (id) =>
-  api.get(`/learner/learning-paths/${id}`);
+export const getLearningPathDetail = (learningPathSlug) =>
+  api.get(`/learner/learning-paths/${learningPathSlug}`);
 
-export const getLearnerLesson = (lessonId) =>
-  api.get(`/learner/learning-paths/lessons/${lessonId}`);
+export const getLearnerLesson = (lessonSlug) =>
+  api.get(`/learner/learning-paths/lessons/${lessonSlug}`);
 
-export const getLearningPathLessons = (id, params = {}) =>
-  api.get(`/learner/learning-paths/${id}/lessons`, { params });
+// Deprecated in current learner controller (detail already returns lessons).
+export const getLearningPathLessons = (learningPathSlug, params = {}) =>
+  api.get(`/learner/learning-paths/${learningPathSlug}/lessons`, { params });
 
 export const upsertUserLessonProgress = (payload) =>
   api.post("/learner/lesson-progress", payload);

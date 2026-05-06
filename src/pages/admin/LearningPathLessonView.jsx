@@ -17,6 +17,7 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  Card,
   Empty,
   Form,
   Input,
@@ -34,6 +35,7 @@ import {
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
+import StaffTagPaginatedSelect from "@/components/admin/lessons/StaffTagPaginatedSelect";
 import { getAdminLessonDetail, updateAdminLesson } from "@/api/api";
 import { deleteCloudinaryImage } from "@/api/api";
 import { createCloudinaryImageUploadAdapterPlugin } from "@/utils/ckeditorCloudinaryUploadAdapter";
@@ -60,10 +62,20 @@ const LEVEL_OPTIONS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"].map((v) => ({
   label: v,
 }));
 
+function normalizeLessonHtml(html) {
+  const raw = String(html ?? "");
+  // Some contents are stored with escaped quotes like: src=\"https://...png\"
+  // Browsers treat that backslash as part of the attribute value, breaking images.
+  return raw.replace(/\\"/g, '"');
+}
+
 function extractHeadingOutline(html) {
   if (!html || typeof window === "undefined") return [];
   try {
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParser().parseFromString(
+      normalizeLessonHtml(html),
+      "text/html",
+    );
     const headings = doc.querySelectorAll("h1, h2, h3");
     const out = [];
     headings.forEach((el, index) => {
@@ -72,6 +84,7 @@ function extractHeadingOutline(html) {
       out.push({
         level,
         text: el.textContent?.trim() || "(empty heading)",
+        domIndex: index,
         key: `${level}-${index}`,
       });
     });
@@ -81,10 +94,34 @@ function extractHeadingOutline(html) {
   }
 }
 
+function scrollToHeadingInCkEditor(editorWrapperEl, domIndex) {
+  if (!editorWrapperEl) return false;
+  const idx = Number(domIndex);
+  if (!Number.isFinite(idx) || idx < 0) return false;
+
+  const editable =
+    editorWrapperEl.querySelector(".ck-editor__editable") ||
+    editorWrapperEl.querySelector(".ck-content");
+  if (!editable) return false;
+
+  const headings = editable.querySelectorAll("h1, h2, h3");
+  const el = headings?.[idx];
+  if (!el) return false;
+  try {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function extractImageUrlsFromHtml(html) {
   if (!html || typeof window === "undefined") return [];
   try {
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const doc = new DOMParser().parseFromString(
+      normalizeLessonHtml(html),
+      "text/html",
+    );
     const urls = [...doc.querySelectorAll("img")]
       .map((img) => img.getAttribute("src"))
       .filter(Boolean)
@@ -204,6 +241,7 @@ export default function AdminLearningPathLessonViewPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [contentInitial, setContentInitial] = useState("");
   const [contentHtml, setContentHtml] = useState("");
+  const editorWrapperRef = useRef(null);
   const [editorMountKey, setEditorMountKey] = useState(0);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailFileList, setThumbnailFileList] = useState([]);
@@ -368,11 +406,12 @@ export default function AdminLearningPathLessonViewPage() {
       try {
         setRemovingImageSrc(src);
         await deleteCloudinaryImage(src);
-        const raw = String(contentRef.current || contentHtml || "");
+        const raw = normalizeLessonHtml(contentRef.current || contentHtml || "");
         const doc = new DOMParser().parseFromString(raw, "text/html");
         const imgs = [...doc.querySelectorAll("img")];
         imgs.forEach((img) => {
-          if (String(img.getAttribute("src") || "").trim() === src) {
+          const currentSrc = String(img.getAttribute("src") || "").trim();
+          if (currentSrc === src || normalizeLessonHtml(currentSrc) === src) {
             img.remove();
           }
         });
@@ -672,10 +711,7 @@ export default function AdminLearningPathLessonViewPage() {
                       </Form.Item>
                       <div className="sm:col-span-2">
                         <Form.Item name="practice" label="Bài tập (Practice)">
-                          <Input.TextArea
-                            rows={4}
-                            placeholder="Ví dụ: 0 (hoặc mô tả bài tập)"
-                          />
+                          <StaffTagPaginatedSelect placeholder="Chọn tag cho bài tập" />
                         </Form.Item>
                       </div>
                       <div className="sm:col-span-2">
@@ -812,7 +848,10 @@ export default function AdminLearningPathLessonViewPage() {
                         Manage images ({imageUrls.length})
                       </Button>
                     </div>
-                    <div className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white">
+                    <div
+                      ref={editorWrapperRef}
+                      className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white"
+                    >
                       <style>{`
                         .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
                         .ckeditor-wrapper .ck-editor { min-height: 480px; }
@@ -962,43 +1001,91 @@ export default function AdminLearningPathLessonViewPage() {
                   </div>
 
                   <div className="lg:col-span-3">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-4">
-                      <div className="mb-2 text-sm font-semibold text-slate-900">
-                        Outline (from headings)
-                      </div>
-                      <div className="max-h-[70vh] overflow-y-auto">
-                        {outline.length === 0 ? (
-                          <Text type="secondary">
-                            Thêm <strong>Heading 1</strong>,{" "}
-                            <strong>Heading 2</strong> hoặc{" "}
-                            <strong>Heading 3</strong> để thấy outline.
-                          </Text>
-                        ) : (
-                          <ul className="list-none pl-0 m-0 space-y-2">
+                    <Card
+                      className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
+                      title={
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-800">
+                            On this page
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {outline.length > 0
+                              ? `${outline.length} sections`
+                              : "—"}
+                          </span>
+                        </div>
+                      }
+                      styles={{
+                        header: {
+                          background:
+                            "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                          borderBottom: "1px solid #e2e8f0",
+                        },
+                        body: {
+                          maxHeight: "min(70vh, 520px)",
+                          overflowY: "auto",
+                          padding: "12px",
+                        },
+                      }}
+                    >
+                      {outline.length === 0 ? (
+                        <Text type="secondary" className="block text-sm">
+                          Thêm <strong>Heading 1</strong>,{" "}
+                          <strong>Heading 2</strong> hoặc{" "}
+                          <strong>Heading 3</strong> để thấy mục lục.
+                        </Text>
+                      ) : (
+                        <nav aria-label="Table of contents">
+                          <ul className="list-none m-0 p-0 space-y-1.5">
                             {outline.map((item) => (
                               <li
                                 key={item.key}
-                                className="text-sm border-l-2 border-indigo-200 pl-3"
-                                style={{ marginLeft: (item.level - 1) * 12 }}
+                                style={{ marginLeft: (item.level - 1) * 10 }}
+                                className="text-sm"
                               >
-                                <Text
-                                  type={
-                                    item.level === 1 ? undefined : "secondary"
-                                  }
-                                  className={
+                                <button
+                                  type="button"
+                                  className={`group flex w-full items-start gap-2 rounded-lg px-2.5 py-2 border transition-all text-left hover:shadow-sm ${
                                     item.level === 1
-                                      ? "font-semibold text-slate-900"
-                                      : ""
-                                  }
+                                      ? "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70"
+                                      : item.level === 2
+                                        ? "border-slate-200 bg-white hover:bg-slate-50"
+                                        : "border-transparent bg-transparent hover:bg-slate-50"
+                                  }`}
+                                  onClick={() => {
+                                    scrollToHeadingInCkEditor(
+                                      editorWrapperRef.current,
+                                      item.domIndex,
+                                    );
+                                  }}
                                 >
-                                  H{item.level}: {item.text}
-                                </Text>
+                                  <span
+                                    className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                                      item.level === 1
+                                        ? "bg-indigo-500"
+                                        : item.level === 2
+                                          ? "bg-slate-400"
+                                          : "bg-slate-300"
+                                    }`}
+                                  />
+                                  <span
+                                    className={`break-words leading-snug ${
+                                      item.level === 1
+                                        ? "text-indigo-900 font-semibold group-hover:text-indigo-700"
+                                        : item.level === 2
+                                          ? "text-slate-700 font-medium group-hover:text-slate-900"
+                                          : "text-slate-600 group-hover:text-slate-800"
+                                    }`}
+                                  >
+                                    {item.text}
+                                  </span>
+                                </button>
                               </li>
                             ))}
                           </ul>
-                        )}
-                      </div>
-                    </div>
+                        </nav>
+                      )}
+                    </Card>
                   </div>
                 </div>
               ) : (
@@ -1007,7 +1094,7 @@ export default function AdminLearningPathLessonViewPage() {
                     <div
                       className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-indigo-600"
                       dangerouslySetInnerHTML={{
-                        __html: String(lesson.content),
+                        __html: normalizeLessonHtml(lesson.content),
                       }}
                     />
                   ) : (

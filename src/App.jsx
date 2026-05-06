@@ -269,18 +269,18 @@ export default function App() {
           ),
         },
         {
-          path: "learning-paths/:id",
+          path: "learning-paths/:learningPathSlug/lessons/:lessonSlug",
           element: (
             <ProtectedRoute allowedRoles={["LEARNER"]}>
-              <LearningPathDetailPage />
+              <LearningPathLessonPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: "learning-paths/:id/lessons/:lessonId",
+          path: "learning-paths/:learningPathSlug",
           element: (
             <ProtectedRoute allowedRoles={["LEARNER"]}>
-              <LearningPathLessonPage />
+              <LearningPathDetailPage />
             </ProtectedRoute>
           ),
         },

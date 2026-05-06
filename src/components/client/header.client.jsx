@@ -42,7 +42,7 @@ export default function Header({ currentPath }) {
     setIsLoggingOut(true)
     try {
       await logoutApi()
-    } catch (error) {
+    } catch {
       // Vẫn tiếp tục logout local dù API có lỗi
     } finally {
       dispatch(setLogoutAction())
@@ -63,7 +63,7 @@ export default function Header({ currentPath }) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
       <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="flex h-16 items-center gap-3 lg:gap-6">
           {/* Logo */}
@@ -82,7 +82,7 @@ export default function Header({ currentPath }) {
           {/* Navigation */}
           <nav className="hidden min-w-0 flex-1 md:block">
             <div className="overflow-x-auto">
-              <div className="flex w-max min-w-full items-center justify-center gap-4 lg:gap-6">
+              <div className="flex w-max min-w-full items-center justify-center gap-1.5 lg:gap-2">
                 {nav.map((item) => {
                   const isActive =
                     item.href === "/"
@@ -92,11 +92,12 @@ export default function Header({ currentPath }) {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`text-sm font-medium transition-colors whitespace-nowrap ${
+                      className={[
+                        "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition",
                         isActive
-                          ? "text-blue-600 border-b-2 border-blue-600 pb-1"
-                          : "text-gray-700 hover:text-blue-600"
-                      }`}
+                          ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-emerald-700",
+                      ].join(" ")}
                     >
                       {item.name}
                     </Link>

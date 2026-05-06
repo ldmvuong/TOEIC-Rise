@@ -38,7 +38,7 @@ export default function LearningPathsPage() {
           {(paths || []).map((p) => (
             <Link
               key={p.id}
-              to={`/learning-paths/${p.id}`}
+              to={`/learning-paths/${p.slug ?? p.id}`}
               className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-3">

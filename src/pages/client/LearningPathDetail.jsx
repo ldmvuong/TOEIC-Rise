@@ -234,9 +234,12 @@ function BranchCard({
 }
 
 export default function LearningPathDetailPage() {
-  const { id } = useParams();
+  const { learningPathSlug, id } = useParams();
   const navigate = useNavigate();
-  const learningPathId = useMemo(() => id, [id]);
+  const learningPathId = useMemo(
+    () => learningPathSlug ?? id,
+    [learningPathSlug, id],
+  );
 
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null);
@@ -306,7 +309,11 @@ export default function LearningPathDetailPage() {
         lessonItems,
       );
       if (!check.ok) return;
-      navigate(`/learning-paths/${learningPathId}/lessons/${clickedLessonId}`);
+      const row = lessonItems.find((x) => x?.lesson?.id === clickedLessonId);
+      const lessonSlug = row?.lesson?.slug;
+      navigate(
+        `/learning-paths/${learningPathId}/lessons/${lessonSlug ?? clickedLessonId}`,
+      );
     },
     [learningPathId, lessonItems, navigate],
   );
