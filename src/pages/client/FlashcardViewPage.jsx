@@ -363,7 +363,7 @@ const FlashcardViewPage = () => {
                                             )}
                                             {item.audioUrl && (
                                                 <div className="mt-3 max-w-md">
-                                                    <AudioPlayerUI audioUrl={item.audioUrl} />
+                                                    <AudioPlayerUI audioUrl={item.audioUrl} playButtonOnly />
                                                 </div>
                                             )}
                                         </div>
