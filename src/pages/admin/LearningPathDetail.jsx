@@ -552,11 +552,18 @@ export default function AdminLearningPathDetailPage() {
             <Button
               type="text"
               icon={<EditOutlined />}
-              onClick={() =>
+              onClick={() => {
+                if (!learningPathId || !row?.id) return;
                 navigate(
-                  `/admin/learning-paths/${learningPathId}/lessons/${row.id}/edit`,
-                )
-              }
+                  `/admin/learning-paths/${learningPathId}/lessons/${row.id}`,
+                  {
+                    state: {
+                      referrer: `/admin/learning-paths/${learningPathSlug}`,
+                      autoEdit: true,
+                    },
+                  },
+                );
+              }}
             />
           </Space>
         ),
@@ -575,10 +582,6 @@ export default function AdminLearningPathDetailPage() {
 
   const lessonRows = useMemo(
     () => toLessonRows(detail?.lessons),
-    [detail?.lessons],
-  );
-  const totalLessons = useMemo(
-    () => toPaginationFromLessons(detail?.lessons, { total: 0 }).total,
     [detail?.lessons],
   );
 

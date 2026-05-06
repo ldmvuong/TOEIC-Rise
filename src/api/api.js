@@ -317,6 +317,15 @@ export const deleteBlogPostImage = (imageUrl) =>
     data: { imageUrl },
   });
 
+// Staff Cloudinary
+export const uploadCloudinaryImage = (formData) =>
+  api.post("/staff/cloudinary/upload-image", formData);
+
+export const deleteCloudinaryImage = (imageUrl) =>
+  api.delete("/staff/cloudinary/delete-image", {
+    data: { imageUrl },
+  });
+
 export const changeBlogPostStatus = (id, status) => {
   const params = new URLSearchParams({ status });
   return api.patch(`/staff/blog-posts/${id}?${params.toString()}`);

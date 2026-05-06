@@ -15,7 +15,7 @@ import {
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
-import { registerBase64UploadAdapter } from "@/utils/ckeditorBase64UploadAdapter";
+import { createCloudinaryImageUploadAdapterPlugin } from "@/utils/ckeditorCloudinaryUploadAdapter";
 import {
   createLearningPathLesson,
   getAdminLearningPathDetail,
@@ -68,6 +68,8 @@ export default function AdminLearningPathLessonEditorPage() {
         const nextOrder = nextLessonOrderIndex(detail);
         form.setFieldsValue({
           title: "",
+          slug: "",
+          practice: "",
           videoUrl: "",
           topic: "VOCABULARY",
           level: "BEGINNER",
@@ -86,6 +88,8 @@ export default function AdminLearningPathLessonEditorPage() {
         setPathName(`Learning Path #${learningPathId}`);
         form.setFieldsValue({
           title: "",
+          slug: "",
+          practice: "",
           videoUrl: "",
           topic: "VOCABULARY",
           level: "BEGINNER",
@@ -116,6 +120,8 @@ export default function AdminLearningPathLessonEditorPage() {
       }
       form.setFieldsValue({
         title: lesson?.title ?? "",
+        slug: lesson?.slug ?? "",
+        practice: lesson?.practice ?? "",
         videoUrl: lesson?.videoUrl ?? "",
         topic: lesson?.topic ?? "",
         level: lesson?.level ?? "",
@@ -157,6 +163,8 @@ export default function AdminLearningPathLessonEditorPage() {
       if (isEdit) {
         await updateAdminLesson(lessonId, {
           title: values.title,
+          slug: (values.slug || "").trim(),
+          practice: values.practice ?? "",
           ...(videoUrl ? { videoUrl } : {}),
           topic: values.topic,
           level: values.level,
@@ -171,6 +179,8 @@ export default function AdminLearningPathLessonEditorPage() {
         const orderIndex = nextLessonOrderIndex(detail);
         await createLearningPathLesson(Number(learningPathId), {
           title: values.title,
+          slug: (values.slug || "").trim(),
+          practice: values.practice ?? "",
           ...(videoUrl ? { videoUrl } : {}),
           topic: values.topic,
           level: values.level,
@@ -216,6 +226,25 @@ export default function AdminLearningPathLessonEditorPage() {
             <Input placeholder="Lesson title" />
           </Form.Item>
 
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Form.Item
+              label="Slug"
+              name="slug"
+              rules={[
+                { required: true, message: "Slug is required" },
+                {
+                  pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
+                  message: "Slug only allows letters, digits, and '-'",
+                },
+              ]}
+            >
+              <Input placeholder="lesson-7" />
+            </Form.Item>
+            <Form.Item label="Practice" name="practice">
+              <Input placeholder="0" />
+            </Form.Item>
+          </div>
+
           <Form.Item name="videoUrl">
             <LessonVideoUrlField
               value={form.getFieldValue("videoUrl")}
@@ -251,9 +280,11 @@ export default function AdminLearningPathLessonEditorPage() {
                 key={`${learningPathId || "lp"}-${lessonId || "new"}-${isEdit ? "edit" : "create"}`}
                 editor={ClassicEditor}
                 data={contentInitial}
-                config={{ licenseKey: "GPL" }}
+                config={{
+                  licenseKey: "GPL",
+                  extraPlugins: [createCloudinaryImageUploadAdapterPlugin()],
+                }}
                 onReady={(editor) => {
-                  registerBase64UploadAdapter(editor);
                   // Keep a local ref so we can sync to antd Form without re-rendering editor on every keystroke.
                   contentRef.current = editor.getData() || "";
                 }}

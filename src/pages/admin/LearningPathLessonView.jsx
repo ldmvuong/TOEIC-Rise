@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ApartmentOutlined,
@@ -23,9 +17,12 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  Empty,
   Form,
   Input,
   InputNumber,
+  Modal,
+  Popconfirm,
   Select,
   Spin,
   Space,
@@ -37,9 +34,9 @@ import {
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
-import StaffTagPaginatedSelect from "@/components/admin/lessons/StaffTagPaginatedSelect";
-import { registerBase64UploadAdapter } from "@/utils/ckeditorBase64UploadAdapter";
 import { getAdminLessonDetail, updateAdminLesson } from "@/api/api";
+import { deleteCloudinaryImage } from "@/api/api";
+import { createCloudinaryImageUploadAdapterPlugin } from "@/utils/ckeditorCloudinaryUploadAdapter";
 import {
   BLOG_POST_THUMBNAIL_MAX_SIZE,
   isValidBlogPostThumbnailSize,
@@ -79,6 +76,21 @@ function extractHeadingOutline(html) {
       });
     });
     return out;
+  } catch {
+    return [];
+  }
+}
+
+function extractImageUrlsFromHtml(html) {
+  if (!html || typeof window === "undefined") return [];
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const urls = [...doc.querySelectorAll("img")]
+      .map((img) => img.getAttribute("src"))
+      .filter(Boolean)
+      .map((s) => String(s).trim())
+      .filter(Boolean);
+    return [...new Set(urls)];
   } catch {
     return [];
   }
@@ -173,6 +185,7 @@ export default function AdminLearningPathLessonViewPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const referrer = location.state?.referrer;
+  const autoEdit = Boolean(location.state?.autoEdit);
 
   const backHref = useMemo(
     () => referrer || `/admin/learning-paths/${learningPathId ?? ""}`,
@@ -183,6 +196,7 @@ export default function AdminLearningPathLessonViewPage() {
   const contentRef = useRef("");
   const contentSyncTimerRef = useRef(null);
   const ckSessionRef = useRef(0);
+  const editorInstanceRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -193,6 +207,8 @@ export default function AdminLearningPathLessonViewPage() {
   const [editorMountKey, setEditorMountKey] = useState(0);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailFileList, setThumbnailFileList] = useState([]);
+  const [manageImagesOpen, setManageImagesOpen] = useState(false);
+  const [removingImageSrc, setRemovingImageSrc] = useState(null);
 
   const load = useCallback(async () => {
     if (!lessonId) return;
@@ -215,6 +231,16 @@ export default function AdminLearningPathLessonViewPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // If navigated from list "Edit" icon, auto-enter edit mode after detail is loaded.
+  useEffect(() => {
+    if (!autoEdit) return;
+    if (loading) return;
+    if (!lesson) return;
+    if (isEditing) return;
+    beginEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoEdit, loading, lesson, isEditing]);
 
   useEffect(
     () => () => {
@@ -323,12 +349,50 @@ export default function AdminLearningPathLessonViewPage() {
   }, [isEditing, lesson?.videoUrl, videoUrlLive]);
 
   const ytEmbed = useMemo(
-    () =>
-      videoUrlDisplay ? getYoutubeEmbedUrl(videoUrlDisplay) : null,
+    () => (videoUrlDisplay ? getYoutubeEmbedUrl(videoUrlDisplay) : null),
     [videoUrlDisplay],
   );
 
-  const outline = useMemo(() => extractHeadingOutline(contentHtml), [contentHtml]);
+  const outline = useMemo(
+    () => extractHeadingOutline(contentHtml),
+    [contentHtml],
+  );
+  const imageUrls = useMemo(
+    () => extractImageUrlsFromHtml(contentHtml),
+    [contentHtml],
+  );
+
+  const handleRemoveImageFromContent = useCallback(
+    async (src) => {
+      if (!src) return;
+      try {
+        setRemovingImageSrc(src);
+        await deleteCloudinaryImage(src);
+        const raw = String(contentRef.current || contentHtml || "");
+        const doc = new DOMParser().parseFromString(raw, "text/html");
+        const imgs = [...doc.querySelectorAll("img")];
+        imgs.forEach((img) => {
+          if (String(img.getAttribute("src") || "").trim() === src) {
+            img.remove();
+          }
+        });
+        const next = doc.body?.innerHTML || "";
+        contentRef.current = next;
+        setContentHtml(next);
+        setContentInitial(next);
+        form.setFieldValue("content", next);
+        editorInstanceRef.current?.setData?.(next);
+        message.success("Đã gỡ ảnh khỏi nội dung");
+      } catch (e) {
+        message.error(
+          e?.response?.data?.message || e?.message || "Không xoá được ảnh",
+        );
+      } finally {
+        setRemovingImageSrc(null);
+      }
+    },
+    [contentHtml, form],
+  );
 
   const beforeThumbnailUpload = useCallback((file) => {
     if (!isValidImageExtension(file?.name)) {
@@ -425,7 +489,11 @@ export default function AdminLearningPathLessonViewPage() {
                   {isEditing ? (
                     <Form.Item
                       name="title"
-                      label={<span className="font-semibold text-slate-800">Tiêu đề</span>}
+                      label={
+                        <span className="font-semibold text-slate-800">
+                          Tiêu đề
+                        </span>
+                      }
                       rules={[
                         {
                           required: true,
@@ -471,13 +539,6 @@ export default function AdminLearningPathLessonViewPage() {
                       </Button>
                     ) : (
                       <>
-                        <Button
-                          size="large"
-                          onClick={cancelEdit}
-                          disabled={saving}
-                        >
-                          Hủy
-                        </Button>
                         <Button
                           type="primary"
                           size="large"
@@ -585,14 +646,12 @@ export default function AdminLearningPathLessonViewPage() {
                           },
                         ]}
                       >
-                        <InputNumber min={0} className="!w-full" />
+                        <InputNumber min={1} className="!w-full" />
                       </Form.Item>
                       <Form.Item
                         name="topic"
                         label="Chủ đề"
-                        rules={[
-                          { required: true, message: "Chọn chủ đề" },
-                        ]}
+                        rules={[{ required: true, message: "Chọn chủ đề" }]}
                       >
                         <Select
                           options={TOPIC_OPTIONS}
@@ -613,7 +672,10 @@ export default function AdminLearningPathLessonViewPage() {
                       </Form.Item>
                       <div className="sm:col-span-2">
                         <Form.Item name="practice" label="Bài tập (Practice)">
-                          <StaffTagPaginatedSelect placeholder="Chọn tag cho bài tập" />
+                          <Input.TextArea
+                            rows={4}
+                            placeholder="Ví dụ: 0 (hoặc mô tả bài tập)"
+                          />
                         </Form.Item>
                       </div>
                       <div className="sm:col-span-2">
@@ -741,6 +803,15 @@ export default function AdminLearningPathLessonViewPage() {
                         bên phải). Có thể upload ảnh trong toolbar.
                       </Text>
                     </div>
+                    <div className="mb-2 flex items-center justify-end">
+                      <Button
+                        size="small"
+                        onClick={() => setManageImagesOpen(true)}
+                        disabled={imageUrls.length === 0}
+                      >
+                        Manage images ({imageUrls.length})
+                      </Button>
+                    </div>
                     <div className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white">
                       <style>{`
                         .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
@@ -824,9 +895,14 @@ export default function AdminLearningPathLessonViewPage() {
                         key={`${lesson.id}-${lessonId}-ck-${editorMountKey}`}
                         editor={ClassicEditor}
                         data={contentInitial}
-                        config={{ licenseKey: "GPL" }}
+                        config={{
+                          licenseKey: "GPL",
+                          extraPlugins: [
+                            createCloudinaryImageUploadAdapterPlugin(),
+                          ],
+                        }}
                         onReady={(editorEd) => {
-                          registerBase64UploadAdapter(editorEd);
+                          editorInstanceRef.current = editorEd;
                           const next = editorEd.getData() || "";
                           contentRef.current = next;
                           setContentHtml(next);
@@ -849,7 +925,10 @@ export default function AdminLearningPathLessonViewPage() {
                           if (contentSyncTimerRef.current) {
                             clearTimeout(contentSyncTimerRef.current);
                           }
-                          form.setFieldValue("content", contentRef.current || "");
+                          form.setFieldValue(
+                            "content",
+                            contentRef.current || "",
+                          );
                         }}
                       />
                     </div>
@@ -903,7 +982,9 @@ export default function AdminLearningPathLessonViewPage() {
                                 style={{ marginLeft: (item.level - 1) * 12 }}
                               >
                                 <Text
-                                  type={item.level === 1 ? undefined : "secondary"}
+                                  type={
+                                    item.level === 1 ? undefined : "secondary"
+                                  }
                                   className={
                                     item.level === 1
                                       ? "font-semibold text-slate-900"
@@ -940,6 +1021,61 @@ export default function AdminLearningPathLessonViewPage() {
                 </div>
               )}
             </SectionShell>
+
+            <Modal
+              open={manageImagesOpen}
+              onCancel={() => setManageImagesOpen(false)}
+              title="Manage images"
+              footer={null}
+              width={920}
+              destroyOnClose
+            >
+              {imageUrls.length === 0 ? (
+                <Empty description="No images found in this lesson content." />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {imageUrls.map((url) => (
+                    <div
+                      key={url}
+                      className="border border-slate-200 rounded-xl overflow-hidden bg-white"
+                    >
+                      <div className="bg-slate-50">
+                        <img
+                          src={url}
+                          alt="Lesson content image"
+                          className="w-full h-36 object-cover"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <div className="text-xs text-slate-500 line-clamp-2">
+                          {url}
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                          <Popconfirm
+                            title="Remove this image from content?"
+                            okText="Remove"
+                            cancelText="Cancel"
+                            onConfirm={() => handleRemoveImageFromContent(url)}
+                            disabled={removingImageSrc === url}
+                          >
+                            <Button
+                              size="small"
+                              danger
+                              disabled={removingImageSrc === url}
+                              onMouseDown={(e) => e.preventDefault()}
+                            >
+                              {removingImageSrc === url
+                                ? "Removing..."
+                                : "Remove"}
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Modal>
           </Form>
         )}
       </div>
