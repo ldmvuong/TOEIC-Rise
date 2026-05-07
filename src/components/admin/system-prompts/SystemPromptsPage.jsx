@@ -1,6 +1,17 @@
 import React, { useRef, useState, useMemo } from "react";
 import DataTable from "@/components/admin/data-table";
-import { Tag, Button, Modal, Form, Input, Switch, message, notification } from "antd";
+import {
+  Tag,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Switch,
+  Tooltip,
+  Typography,
+  message,
+  notification,
+} from "antd";
 import queryString from "query-string";
 import { getSystemPrompts, createSystemPrompt, changeSystemPromptActive } from "@/api/api";
 import { useNavigate } from "react-router-dom";
@@ -54,29 +65,56 @@ const SystemPromptsPage = ({ featureType, title }) => {
     {
       title: "Version",
       dataIndex: "version",
-      width: 90,
+      width: 80,
       sorter: true,
     },
     {
       title: "Content",
       dataIndex: "content",
+      width: 360,
       ellipsis: true,
-      render: (text) => (
-        <div
-          style={{
-            maxWidth: 700,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
-        >
-          {text}
-        </div>
-      ),
+      render: (_dom, record) => {
+        const value = (record?.content ?? "").toString();
+        return (
+          <Tooltip
+            title={
+              value ? (
+                <Typography.Text style={{ whiteSpace: "pre-wrap", color: "#111" }}>
+                  {value}
+                </Typography.Text>
+              ) : null
+            }
+            placement="topLeft"
+            color="#fff"
+            overlayInnerStyle={{
+              maxWidth: 520,
+              padding: 12,
+              fontSize: 14,
+              lineHeight: 1.45,
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12)",
+            }}
+          >
+            <div
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+                whiteSpace: "normal",
+              }}
+            >
+              {value || "-"}
+            </div>
+          </Tooltip>
+        );
+      },
     },
     {
       title: "Active",
       dataIndex: "isActive",
-      width: 120,
+      width: 110,
       align: "center",
       sorter: true,
       render: (val, record) => {
@@ -116,20 +154,46 @@ const SystemPromptsPage = ({ featureType, title }) => {
     {
       title: "Updated At",
       dataIndex: "updatedAt",
-      width: 200,
+      width: 160,
+      ellipsis: true,
       sorter: true,
-      render: (val) => {
+      render: (_dom, record) => {
+        const val = record?.updatedAt;
         if (!val) return "-";
         const date = new Date(val);
         // Fallback if invalid date
         if (Number.isNaN(date.getTime())) return val;
-        return date.toLocaleString();
+        const short = date.toLocaleString(undefined, {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const full = date.toLocaleString();
+        return (
+          <Tooltip
+            title={<span style={{ color: "#111" }}>{full}</span>}
+            placement="topLeft"
+            color="#fff"
+            overlayInnerStyle={{
+              maxWidth: 360,
+              padding: 10,
+              fontSize: 13,
+              lineHeight: 1.35,
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12)",
+            }}
+          >
+            <span>{short}</span>
+          </Tooltip>
+        );
       },
     },
     {
       title: "Action",
       key: "action",
-      width: 120,
+      width: 90,
       align: "center",
       hideInSearch: true,
       render: (_text, record) => (
@@ -266,7 +330,6 @@ const SystemPromptsPage = ({ featureType, title }) => {
             </div>
           ),
         }}
-        scroll={{ x: true }}
         rowSelection={false}
         search={false}
         toolBarRender={() => [

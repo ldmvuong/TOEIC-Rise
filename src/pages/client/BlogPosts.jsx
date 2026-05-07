@@ -7,6 +7,7 @@ import {
   Image,
   Input,
   Pagination,
+  Space,
   Spin,
   Tag,
   Typography,
@@ -99,7 +100,7 @@ const BlogPostsPage = () => {
         pageSize: data.meta?.pageSize ?? m.pageSize,
       }));
     } catch (e) {
-      setError(e?.message || "Unable to load blog posts");
+      setError(e?.message || "Không thể tải danh sách bài viết");
       setPosts([]);
       setMeta((m) => ({ ...m, total: 0, pages: 0 }));
     } finally {
@@ -120,58 +121,68 @@ const BlogPostsPage = () => {
               icon={<ArrowLeftOutlined />}
               onClick={() => navigate("/blog")}
             >
-              Categories
+              Danh mục
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8">
-            <div className="mb-5">
-              <Title level={2} style={{ marginBottom: 6 }}>
-                {activeCategory?.name || "Category posts"}
-              </Title>
-            </div>
-
             <Card
-              className="rounded-2xl border-slate-200 shadow-sm mb-5"
+              className="rounded-2xl border-slate-200 shadow-sm mb-5 overflow-hidden"
               styles={{ body: { padding: 16 } }}
             >
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onPressEnter={() => {
-                    const keyword = q.trim();
-                    if (!keyword) {
-                      setMeta((m) => ({ ...m, page: 0 }));
-                      setAppliedQ("");
-                      return;
-                    }
-                    navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
-                  }}
-                  allowClear
-                  size="large"
-                  prefix={<SearchOutlined className="text-slate-400" />}
-                  placeholder="Search posts by title"
-                  className="rounded-xl"
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="primary"
-                    size="large"
-                    onClick={() => {
-                      const keyword = q.trim();
-                      if (!keyword) {
-                        setMeta((m) => ({ ...m, page: 0 }));
-                        setAppliedQ("");
-                        return;
-                      }
-                      navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
-                    }}
-                  >
-                    Search
-                  </Button>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div className="min-w-0">
+                  <Title level={3} style={{ margin: 0 }}>
+                    {activeCategory?.name || "Bài viết theo danh mục"}
+                  </Title>
+                  <Text type="secondary" className="text-sm">
+                    Chọn bài viết để xem nội dung chi tiết.
+                  </Text>
+                </div>
+
+                <div className="w-full lg:w-[420px]">
+                  <Space.Compact className="w-full">
+                    <Input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      onPressEnter={() => {
+                        const keyword = q.trim();
+                        if (!keyword) {
+                          setMeta((m) => ({ ...m, page: 0 }));
+                          setAppliedQ("");
+                          return;
+                        }
+                        navigate(
+                          `/blog/search?keyword=${encodeURIComponent(keyword)}`
+                        );
+                      }}
+                      allowClear
+                      size="large"
+                      prefix={<SearchOutlined className="text-slate-400" />}
+                      placeholder="Tìm bài viết theo tiêu đề"
+                      className="rounded-xl"
+                    />
+                    <Button
+                      type="primary"
+                      size="large"
+                      onClick={() => {
+                        const keyword = q.trim();
+                        if (!keyword) {
+                          setMeta((m) => ({ ...m, page: 0 }));
+                          setAppliedQ("");
+                          return;
+                        }
+                        navigate(
+                          `/blog/search?keyword=${encodeURIComponent(keyword)}`
+                        );
+                      }}
+                      disabled={!q.trim()}
+                    >
+                      Tìm
+                    </Button>
+                  </Space.Compact>
                 </div>
               </div>
             </Card>
@@ -186,7 +197,7 @@ const BlogPostsPage = () => {
               </Card>
             ) : posts.length === 0 ? (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
-                <Empty description="No posts found" />
+                <Empty description="Không có bài viết nào" />
               </Card>
             ) : (
               <div className="space-y-4">
@@ -227,13 +238,13 @@ const BlogPostsPage = () => {
                                 preview={false}
                               />
                               <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                                Featured
+                                Nổi bật
                               </div>
                             </div>
                           ) : (
                             <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 relative">
                               <div className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                                Featured
+                                Nổi bật
                               </div>
                             </div>
                           )}
@@ -249,7 +260,7 @@ const BlogPostsPage = () => {
                           </div>
 
                           <div className="text-lg font-semibold text-slate-900 line-clamp-2">
-                            {p.title || "Untitled"}
+                            {p.title || "Chưa có tiêu đề"}
                           </div>
                           {p.summary ? (
                             <div className="mt-1 text-sm text-slate-600 line-clamp-3">
@@ -271,20 +282,9 @@ const BlogPostsPage = () => {
                             {p.views != null ? (
                               <span className="inline-flex items-center gap-1">
                                 <EyeOutlined />
-                                {Number(p.views).toLocaleString()} views
+                                {Number(p.views).toLocaleString()} lượt xem
                               </span>
                             ) : null}
-                          </div>
-
-                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span className="text-sm font-medium text-indigo-600">
-                              Read article
-                            </span>
-                            {p?.slug ? (
-                              <Button type="primary">Read</Button>
-                            ) : (
-                              <Button disabled>Read</Button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -312,27 +312,37 @@ const BlogPostsPage = () => {
 
           <div className="lg:col-span-4">
             <Card
-              className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4"
+              className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
               title={
-                <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 border border-indigo-100 px-3 py-2 -mx-1">
-                  <div className="text-slate-900 font-semibold">Browse categories</div>
+                <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3 rounded-t-2xl">
+                  <div className="text-slate-900 font-semibold">Duyệt danh mục</div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    Pick a topic and explore related posts
+                    Chọn một chủ đề để xem các bài viết liên quan
                   </div>
                 </div>
               }
-              styles={{ body: { padding: 16 } }}
+              styles={{
+                header: {
+                  padding: 0,
+                  borderBottom: "1px solid #e2e8f0",
+                  overflow: "hidden",
+                  borderRadius: "16px 16px 0 0",
+                },
+                title: { padding: 0 },
+                body: { padding: 16 },
+              }}
             >
               {categoriesLoading ? (
                 <div className="py-6 flex justify-center">
                   <Spin />
                 </div>
               ) : categories.length === 0 ? (
-                <Empty description="No categories" />
+                <Empty description="Không có danh mục" />
               ) : (
                 <div className="flex flex-col gap-2">
                   <div className="mt-1 text-xs text-slate-500">
-                    {categories.filter((c) => (c?.isActive ?? true) === true).length} categories
+                    {categories.filter((c) => (c?.isActive ?? true) === true).length}{" "}
+                    danh mục
                   </div>
                   <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-2">
                     {categories

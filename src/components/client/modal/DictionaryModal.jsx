@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Spin, message } from 'antd';
+import { Modal, Spin, message, Tooltip } from 'antd';
 
 const API_BASE_URL = 'https://dict.minhqnd.com';
 
@@ -123,15 +123,17 @@ const DictionaryModal = ({ open, onClose, word }) => {
                                     {dictionaryData.word}
                                 </h2>
                                 {audioUrl && (
-                                    <button
-                                        onClick={playAudio}
-                                        className="flex-shrink-0 w-8 h-8 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full flex items-center justify-center transition-colors"
-                                        title="Play pronunciation"
-                                    >
-                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                                        </svg>
-                                    </button>
+                                    <Tooltip title="Phát cách phát âm">
+                                        <button
+                                            onClick={playAudio}
+                                            className="flex-shrink-0 w-8 h-8 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full flex items-center justify-center transition-colors"
+                                            aria-label="Phát cách phát âm"
+                                        >
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                            </svg>
+                                        </button>
+                                    </Tooltip>
                                 )}
                                 <audio ref={audioRef} src={audioUrl} preload="none" />
                             </div>
@@ -246,12 +248,13 @@ const DictionaryModal = ({ open, onClose, word }) => {
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {words.map((word, wordIndex) => (
-                                                                        <span
-                                                                            key={wordIndex}
-                                                                            className="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
-                                                                        >
-                                                                            {word}
-                                                                        </span>
+                                                                        <Tooltip key={wordIndex} title="Từ liên quan">
+                                                                            <span
+                                                                                className="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
+                                                                            >
+                                                                                {word}
+                                                                            </span>
+                                                                        </Tooltip>
                                                                     ))}
                                                                 </div>
                                                             </div>

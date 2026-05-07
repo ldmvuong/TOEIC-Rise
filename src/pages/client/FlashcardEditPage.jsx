@@ -554,7 +554,7 @@ const FlashcardEditPage = () => {
                                 {/* Nếu có audioUrl thì hiển thị player xem trước */}
                                 {item.audioUrl && (
                                     <div className="md:col-span-2 mt-2 max-w-md">
-                                        <AudioPlayerUI audioUrl={item.audioUrl} />
+                                        <AudioPlayerUI audioUrl={item.audioUrl} playButtonOnly />
                                     </div>
                                 )}
                             </div>

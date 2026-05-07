@@ -9,6 +9,7 @@ const AudioPlayerUI = ({
     volume: volumeValue,
     onVolumeChange,
     showVolumeControl = true,
+    playButtonOnly = false,
 }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -117,6 +118,32 @@ const AudioPlayerUI = ({
     };
 
     if (!audioUrl) return null;
+
+    if (playButtonOnly) {
+        return (
+            <div className="mb-4">
+                {!audioId && (
+                    <audio ref={audioRef} src={audioUrl} preload="metadata" key={audioUrl} />
+                )}
+                <button
+                    type="button"
+                    onClick={togglePlayPause}
+                    className="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors"
+                    aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
+                >
+                    {isPlaying ? (
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                        </svg>
+                    )}
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="mb-4">

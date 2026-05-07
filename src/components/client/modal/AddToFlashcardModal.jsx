@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Input, List, Spin, Empty, message, Tag } from 'antd';
+import { Modal, List, Spin, Empty, message, Tag, Tooltip } from 'antd';
 import { callFetchFlashcardsForPopup, callAddFlashcardItemToPopup } from '../../../api/api';
 
 const DICT_API_BASE_URL = 'https://dict.minhqnd.com';
@@ -157,9 +157,11 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
         <div className="flex items-center gap-2">
           <span className="font-semibold text-gray-800">Thêm từ vào flashcard</span>
           {word && (
-            <Tag color="blue" className="text-xs">
-              {word}
-            </Tag>
+            <Tooltip title="Từ đang được thêm vào flashcard">
+              <Tag color="blue" className="text-xs">
+                {word}
+              </Tag>
+            </Tooltip>
           )}
         </div>
       }
@@ -182,27 +184,29 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
             <List
               dataSource={flashcards}
               renderItem={(item) => (
-                <List.Item
-                  key={item.id}
-                  className="cursor-pointer hover:bg-blue-50 transition-colors rounded-md px-3"
-                  onClick={() => handleSelectFlashcard(item)}
-                >
-                  <List.Item.Meta
-                    title={
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-800">{item.name}</span>
+                <Tooltip title="Nhấn để thêm từ này vào bộ flashcard">
+                  <List.Item
+                    key={item.id}
+                    className="cursor-pointer hover:bg-blue-50 transition-colors rounded-md px-3"
+                    onClick={() => handleSelectFlashcard(item)}
+                  >
+                    <List.Item.Meta
+                      title={
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-gray-800">{item.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {item.itemCount ?? 0} từ
+                          </span>
+                        </div>
+                      }
+                      description={
                         <span className="text-xs text-gray-500">
-                          {item.itemCount ?? 0} từ
+                          {item.description || 'Không có mô tả'}
                         </span>
-                      </div>
-                    }
-                    description={
-                      <span className="text-xs text-gray-500">
-                        {item.description || 'Không có mô tả'}
-                      </span>
-                    }
-                  />
-                </List.Item>
+                      }
+                    />
+                  </List.Item>
+                </Tooltip>
               )}
             />
           )}
