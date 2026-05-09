@@ -643,23 +643,29 @@ const AnswerSheet = ({ userTestId, testId }) => {
             centered
             width={420}
           >
-            <div className="py-2 space-y-3">
+            <div className="pt-1 pb-2">
+              <p className="text-sm text-gray-600 mb-4">
+                Chọn cách hiển thị đáp án khi làm lại các câu sai.
+              </p>
+
+              <div className="space-y-3">
               <button
                 type="button"
                 onClick={handleFixOneByOne}
                 disabled={isRedoWrongLoading}
-                className="w-full py-3 px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="w-full py-3.5 px-4 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                {isRedoWrongLoading ? 'Đang tải...' : 'Sửa lỗi từng câu'}
+                {isRedoWrongLoading ? 'Đang tải...' : 'Hiển thị đáp án ngay'}
               </button>
               <button
                 type="button"
                 onClick={handleRedoWrongAnswers}
                 disabled={isRedoWrongLoading}
-                className="w-full py-3 px-4 rounded-lg font-medium bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                className="w-full py-3.5 px-4 rounded-xl font-semibold bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
               >
-                Làm lại toàn bộ câu sai
+                Hiển thị đáp án sau khi hoàn thành
               </button>
+              </div>
             </div>
           </Modal>
         )}

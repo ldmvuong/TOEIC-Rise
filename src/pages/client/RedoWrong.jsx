@@ -313,10 +313,9 @@ const RedoWrong = () => {
             <h1 className="text-2xl font-bold text-gray-900">
               Kết quả làm lại câu sai: {testData.testName || ''}
             </h1>
-            <p className="text-sm text-gray-600 mt-1">Mã bài thi: {userTestId}</p>
           </div>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/test-result/${userTestId}`, { replace: true })}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
           >
             Quay lại
