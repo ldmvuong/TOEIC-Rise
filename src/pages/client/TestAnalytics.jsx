@@ -703,14 +703,23 @@ const TestAnalytics = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-10">
             <div className="max-w-6xl mx-auto px-4 space-y-8">
-                <div className="rounded-3xl bg-gradient-to-b from-indigo-50 to-white border border-indigo-100 p-8 shadow-sm">
-                    <div className="flex items-center gap-3 text-indigo-700 mb-2">
+                <div className="rounded-3xl bg-gradient-to-b from-indigo-50 to-white border border-indigo-100 p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 text-indigo-700 mb-2 sm:mb-0">
                         <span className="text-3xl">📈</span>
                         <div>
                             <p className="text-sm tracking-wide uppercase font-semibold text-indigo-500">TOEIC</p>
                             <h1 className="text-3xl font-bold text-gray-900">Thống kê kết quả luyện thi</h1>
                         </div>
                     </div>
+                    <button
+                        onClick={() => navigate('/learning-paths')}
+                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-sm transition-all flex items-center justify-center gap-2"
+                    >
+                        <span>Xem lộ trình học của tôi</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </button>
                 </div>
 
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
