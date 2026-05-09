@@ -1,11 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useEffect } from "react";
-import NotFound from '../src/components/shared/not.found.jsx'
+import NotFound from "../src/components/shared/not.found.jsx";
 import ClientLayout from "./layouts/ClientLayout.jsx";
-import HomePage from './pages/client/HomePage.jsx';
-import TestList from './pages/client/TestList.jsx';
+import HomePage from "./pages/client/HomePage.jsx";
+import TestList from "./pages/client/TestList.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
-import ClientProfile from './pages/client/Profile.jsx';
+import ClientProfile from "./pages/client/Profile.jsx";
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
@@ -19,7 +19,9 @@ import SpeakingTestPage from "./pages/admin/SpeakingTest.jsx";
 import WritingTestPage from "./pages/admin/WritingTest.jsx";
 import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
-import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
+import ProtectedRoute, {
+  GuestOnlyRoute,
+} from "./components/shared/protected-route/index.jsx";
 import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
 import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
 import LessonsPage from "./pages/admin/Lessons.jsx";
@@ -46,7 +48,6 @@ import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
 import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
 import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
 import BlogSearchPage from "./pages/client/BlogSearch.jsx";
-import TestDetail from "./pages/client/TestDetail.jsx";
 import LearningPathsPage from "./pages/client/LearningPaths.jsx";
 import LearningPathDetailPage from "./pages/client/LearningPathDetail.jsx";
 import LearningPathLessonPage from "./pages/client/LearningPathLesson.jsx";
@@ -85,7 +86,6 @@ import DictationExport from "./pages/admin/DictationExport.jsx";
 import DictationDetail from "./pages/admin/DictationDetail.jsx";
 import DictationLibrary from "./pages/client/Dictation.jsx";
 import DictationPractice from "./pages/client/DictationPractice.jsx";
-
 
 export default function App() {
   const dispatch = useAppDispatch();
