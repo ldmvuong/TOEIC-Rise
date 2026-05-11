@@ -15,6 +15,7 @@ import {
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
+import StaffTagPaginatedSelect from "@/components/admin/lessons/StaffTagPaginatedSelect";
 import { createCloudinaryImageUploadAdapterPlugin } from "@/utils/ckeditorCloudinaryUploadAdapter";
 import {
   createLearningPathLesson,
@@ -53,6 +54,7 @@ export default function AdminLearningPathLessonEditorPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [pathName, setPathName] = useState("");
+  const [learningPathSlug, setLearningPathSlug] = useState("");
   const [contentInitial, setContentInitial] = useState("");
   const contentRef = useRef("");
   const contentSyncTimerRef = useRef(null);
@@ -65,6 +67,7 @@ export default function AdminLearningPathLessonEditorPage() {
         const res = await getAdminLearningPathDetail(learningPathId);
         const detail = res?.data ?? {};
         setPathName(detail?.name || `Learning Path #${learningPathId}`);
+        setLearningPathSlug(detail?.slug || "");
         const nextOrder = nextLessonOrderIndex(detail);
         form.setFieldsValue({
           title: "",
@@ -110,12 +113,13 @@ export default function AdminLearningPathLessonEditorPage() {
       const res = await getAdminLearningPathDetail(learningPathId);
       const detail = res?.data ?? {};
       setPathName(detail?.name || `Learning Path #${learningPathId}`);
+      setLearningPathSlug(detail?.slug || "");
       const lesson = Array.isArray(detail?.lessons)
         ? detail.lessons.find((l) => String(l.id) === String(lessonId))
         : null;
       if (!lesson) {
         message.error("Lesson not found");
-        navigate(`/admin/learning-paths/${learningPathId}`);
+        navigate(`/admin/learning-paths/${detail?.slug || learningPathId}`);
         return;
       }
       form.setFieldsValue({
@@ -191,19 +195,19 @@ export default function AdminLearningPathLessonEditorPage() {
         message.success("Created lesson");
       }
 
-      navigate(`/admin/learning-paths/${learningPathId}`);
+      navigate(`/admin/learning-paths/${learningPathSlug || learningPathId}`);
     } catch (e) {
       message.error(e?.response?.data?.message || e?.message || "Save failed");
     } finally {
       setLoading(false);
     }
-  }, [form, isEdit, learningPathId, lessonId, navigate]);
+  }, [form, isEdit, learningPathId, learningPathSlug, lessonId, navigate]);
 
   return (
     <div style={{ padding: 16 }}>
       <div className="mb-4">
         <Link
-          to={`/admin/learning-paths/${learningPathId}`}
+          to={`/admin/learning-paths/${learningPathSlug || learningPathId}`}
           className="text-sm font-medium text-blue-700 hover:underline"
         >
           ← Back to detail
@@ -241,7 +245,7 @@ export default function AdminLearningPathLessonEditorPage() {
               <Input placeholder="lesson-7" />
             </Form.Item>
             <Form.Item label="Practice" name="practice">
-              <Input placeholder="0" />
+              <StaffTagPaginatedSelect placeholder="Select practice tag" />
             </Form.Item>
           </div>
 
@@ -326,7 +330,9 @@ export default function AdminLearningPathLessonEditorPage() {
             </Button>
             <Button
               onClick={() =>
-                navigate(`/admin/learning-paths/${learningPathId}`)
+                navigate(
+                  `/admin/learning-paths/${learningPathSlug || learningPathId}`,
+                )
               }
               disabled={loading}
             >
