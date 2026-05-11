@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { setLogoutAction } from "../../redux/slices/accountSlide";
 import { logout as logoutApi } from "../../api/api";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 
 export default function Header({ currentPath }) {
   const [isUserOpen, setIsUserOpen] = useState(false);
@@ -122,9 +123,17 @@ export default function Header({ currentPath }) {
 
           {/* User / Auth */}
           <div className="ml-auto flex shrink-0 items-center gap-4">
+            <button
+              onClick={() => window.dispatchEvent(new Event("open-tour"))}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
+              title="Hướng dẫn"
+            >
+              <QuestionMarkCircleIcon className="h-6 w-6" />
+            </button>
             {isAuthenticated && user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
+                  id="user-menu-btn"
                   onClick={() => setIsUserOpen((v) => !v)}
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50"
                 >
@@ -181,6 +190,7 @@ export default function Header({ currentPath }) {
               </div>
             ) : (
               <button
+                id="login-btn"
                 onClick={() => navigate("/auth")}
                 className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
