@@ -1,4 +1,5 @@
 export const MIN_PROGRESS_TO_UNLOCK_NEXT = 80;
+export const MAX_NEW_LESSONS_PER_DAY = 5;
 
 /** @typedef {{ lesson?: { id?: number|string, createdAt?: string|null }, progressUpdatedAt?: string|null }} LessonProgressLike */
 
@@ -93,11 +94,35 @@ export function dailyVideoSessionKey(learningPathId) {
   return `toeic.rise.lp.daily_video.${learningPathId}.${formatLocalYYYYMMDD()}`;
 }
 
-export function getStoredTodayPlayedLessonId(learningPathId) {
+function parseStoredLessonIds(raw) {
+  if (raw == null) return [];
+  const text = String(raw).trim();
+  if (!text) return [];
   try {
-    return sessionStorage.getItem(dailyVideoSessionKey(learningPathId));
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((x) => Number(x))
+      .filter((x) => Number.isFinite(x));
   } catch {
-    return null;
+    const asNum = Number(text);
+    return Number.isFinite(asNum) ? [asNum] : [];
+  }
+}
+
+function stringifyStoredLessonIds(ids) {
+  return JSON.stringify(
+    [...new Set((ids || []).map((x) => Number(x)).filter((x) => Number.isFinite(x)))],
+  );
+}
+
+export function getStoredTodayPlayedLessonIds(learningPathId) {
+  try {
+    return parseStoredLessonIds(
+      sessionStorage.getItem(dailyVideoSessionKey(learningPathId)),
+    );
+  } catch {
+    return [];
   }
 }
 
@@ -118,8 +143,12 @@ export function markTodayPlayedLessonIfFirst(
   if (lessonWasAlreadyOpened) return;
   try {
     const key = dailyVideoSessionKey(learningPathId);
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, String(lessonId));
+    const current = parseStoredLessonIds(sessionStorage.getItem(key));
+    const lid = Number(lessonId);
+    if (!Number.isFinite(lid)) return;
+    if (current.includes(lid)) return;
+    if (current.length >= MAX_NEW_LESSONS_PER_DAY) return;
+    sessionStorage.setItem(key, stringifyStoredLessonIds([...current, lid]));
   } catch {
     /* private mode etc. */
   }
@@ -179,10 +208,10 @@ export function coerceLessonProgressList(apiLessons) {
 export function describeDailyLessonBlock(check) {
   if (check.ok) return "";
   if (check.reason === "session_video") {
-    return "Mỗi ngày chỉ mở mới được một bài trong lộ trình. Hôm nay bạn đã phát video một bài khác — vui lòng quay lại vào ngày mai hoặc xem lại đúng bài đó.";
+    return `Mỗi ngày chỉ mở mới tối đa ${MAX_NEW_LESSONS_PER_DAY} bài trong lộ trình. Hôm nay bạn đã chạm giới hạn — vui lòng quay lại vào ngày mai hoặc xem lại các bài đã mở.`;
   }
   if (check.reason === "server_lesson_opened_today") {
-    return "Mỗi ngày chỉ mở mới được một bài trong lộ trình. Hôm nay bạn đã mở một bài khác — vui lòng quay lại vào ngày mai hoặc xem lại bài đó.";
+    return `Mỗi ngày chỉ mở mới tối đa ${MAX_NEW_LESSONS_PER_DAY} bài trong lộ trình. Hôm nay bạn đã chạm giới hạn — vui lòng quay lại vào ngày mai hoặc xem lại các bài đã mở.`;
   }
   return "Không thể mở bài học này hôm nay.";
 }
@@ -197,16 +226,21 @@ export function describeSequentialLessonBlock(check) {
   return "Không thể mở bài học này.";
 }
 
-function otherLessonOpenedNewToday(items, targetLessonId, ref = new Date()) {
+function countDistinctLessonsOpenedNewToday(
+  items,
+  targetLessonId,
+  ref = new Date(),
+) {
   const tgt = Number(targetLessonId);
+  const openedToday = new Set();
   for (const item of items || []) {
     const lid = item?.lesson?.id;
     if (lid == null || Number(lid) === tgt) continue;
     const ca = getProgressCreatedAt(item);
     if (!ca || (typeof ca === "string" && !ca.trim())) continue;
-    if (isCreatedAtLocalToday(ca, ref)) return true;
+    if (isCreatedAtLocalToday(ca, ref)) openedToday.add(Number(lid));
   }
-  return false;
+  return openedToday.size;
 }
 
 export function canOpenLessonToday(
@@ -224,32 +258,50 @@ export function canOpenLessonToday(
     return { ok: true };
   }
 
-  if (otherLessonOpenedNewToday(lessonItems, tgt)) {
+  if (
+    countDistinctLessonsOpenedNewToday(lessonItems, tgt, ref) >=
+    MAX_NEW_LESSONS_PER_DAY
+  ) {
     return { ok: false, reason: "server_lesson_opened_today" };
   }
 
-  const played = getStoredTodayPlayedLessonId(learningPathId);
-  if (played && Number(played) !== tgt && !Number.isNaN(tgt)) {
-    const playedId = Number(played);
-    const playedItem = (lessonItems || []).find(
-      (x) => Number(x?.lesson?.id) === playedId,
+  const playedIds = getStoredTodayPlayedLessonIds(learningPathId);
+  const freshPlayedIds = playedIds.filter((id) => {
+    const item = (lessonItems || []).find(
+      (x) => Number(x?.lesson?.id) === Number(id),
     );
-    const playedCa = playedItem ? getProgressCreatedAt(playedItem) : null;
-    const sessionIsStaleReplayGate =
-      playedCa != null &&
-      String(playedCa).trim() !== "" &&
-      parseFlexibleDate(playedCa) != null &&
-      !isCreatedAtLocalToday(playedCa, ref);
+    const createdAt = item ? getProgressCreatedAt(item) : null;
+    return (
+      createdAt != null &&
+      String(createdAt).trim() !== "" &&
+      parseFlexibleDate(createdAt) != null &&
+      isCreatedAtLocalToday(createdAt, ref)
+    );
+  });
 
-    if (sessionIsStaleReplayGate) {
+  if (freshPlayedIds.length !== playedIds.length) {
+    if (freshPlayedIds.length === 0) {
       clearStoredTodayPlayedLessonIfAny(learningPathId);
     } else {
-      return {
-        ok: false,
-        reason: "session_video",
-        otherLessonId: playedId,
-      };
+      try {
+        sessionStorage.setItem(
+          dailyVideoSessionKey(learningPathId),
+          stringifyStoredLessonIds(freshPlayedIds),
+        );
+      } catch {
+        /* noop */
+      }
     }
+  }
+
+  if (
+    freshPlayedIds.length >= MAX_NEW_LESSONS_PER_DAY &&
+    !freshPlayedIds.includes(tgt)
+  ) {
+    return {
+      ok: false,
+      reason: "session_video",
+    };
   }
 
   return { ok: true };
