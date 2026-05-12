@@ -22,6 +22,7 @@ import {
   getLearningPathDetail,
   getMiniTestPracticeBySlug,
   upsertUserLessonProgress,
+  upsertUserLessonProgressKeepalive,
 } from "@/api/api";
 import {
   canAccessSequentialLesson,
@@ -43,17 +44,11 @@ function normalizeLessonHtml(html) {
   // Browsers treat that backslash as part of the attribute value, breaking images.
   const fixedDanglingSlash = raw
     // Handle urls that end with image ext and have a stray "\" before an escaped quote: ...png\"
-    .replace(
-      /(\.(?:png|jpe?g|gif|webp|svg)(?:\?[^\\"]*)?)\\+(?=\\")/gi,
-      "$1",
-    )
+    .replace(/(\.(?:png|jpe?g|gif|webp|svg)(?:\?[^\\"]*)?)\\+(?=\\")/gi, "$1")
     // Then unescape quotes so html-react-parser can parse proper attributes
     .replace(/\\"/g, '"')
     // Safety: if a stray "\" still remains before a real quote after unescape: ...png\"
-    .replace(
-      /(\.(?:png|jpe?g|gif|webp|svg)(?:\?[^"']*)?)\\+(?=["'])/gi,
-      "$1",
-    );
+    .replace(/(\.(?:png|jpe?g|gif|webp|svg)(?:\?[^"']*)?)\\+(?=["'])/gi, "$1");
   return fixedDanglingSlash;
 }
 
@@ -120,7 +115,8 @@ function safeTrim(s) {
 }
 
 function injectHeadingIds(html) {
-  if (!html || typeof window === "undefined") return { html: String(html || ""), headings: [] };
+  if (!html || typeof window === "undefined")
+    return { html: String(html || ""), headings: [] };
   try {
     const doc = new DOMParser().parseFromString(
       normalizeLessonHtml(html),
@@ -176,7 +172,12 @@ function extractVocabulary(html) {
         );
         if (cells.length < 1) return;
         const line = cells.join(" ").toLowerCase();
-        if (idx === 0 && (line.includes("word") || line.includes("từ") || line.includes("meaning")))
+        if (
+          idx === 0 &&
+          (line.includes("word") ||
+            line.includes("từ") ||
+            line.includes("meaning"))
+        )
           return; // header row
         const word = cells[0] || "";
         if (!word) return;
@@ -221,7 +222,8 @@ function speakWord(word) {
   if (!w) return false;
   if (typeof window === "undefined") return false;
   const synth = window.speechSynthesis;
-  if (!synth || typeof window.SpeechSynthesisUtterance !== "function") return false;
+  if (!synth || typeof window.SpeechSynthesisUtterance !== "function")
+    return false;
   try {
     synth.cancel();
     const u = new window.SpeechSynthesisUtterance(w);
@@ -240,8 +242,12 @@ function scrollToHeading(id) {
 }
 
 export default function LearningPathLessonPage() {
-  const { learningPathSlug, id: legacyId, lessonSlug, lessonId: legacyLessonId } =
-    useParams();
+  const {
+    learningPathSlug,
+    id: legacyId,
+    lessonSlug,
+    lessonId: legacyLessonId,
+  } = useParams();
   const learningPathId = learningPathSlug ?? legacyId;
   const lessonId = lessonSlug ?? legacyLessonId;
   const navigate = useNavigate();
@@ -250,6 +256,13 @@ export default function LearningPathLessonPage() {
   const ytPlayerRef = useRef(null);
   const ytPlayerDestroyRef = useRef(null);
   const lessonWasOpenedBeforePlaybackRef = useRef(false);
+  const getPlaybackPayloadRef = useRef(null);
+  const noticeRef = useRef("");
+  const lastLoadedProgressFlushRef = useRef(null);
+  const playbackSnapshotRef = useRef({
+    lastWatchedTimeMs: 0,
+    progressPercentage: 0,
+  });
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
@@ -281,7 +294,9 @@ export default function LearningPathLessonPage() {
         const resolvedRow = findPathLessonRow(pathRes?.data?.lessons, lessonId);
         const resolvedLessonId = Number(resolvedRow?.lesson?.id);
         const resolvedLessonIdOk = Number.isFinite(resolvedLessonId);
-        const gatingLessonId = resolvedLessonIdOk ? resolvedLessonId : Number(lessonId);
+        const gatingLessonId = resolvedLessonIdOk
+          ? resolvedLessonId
+          : Number(lessonId);
 
         const openedRow = items.find(
           (x) => Number(x?.lesson?.id) === Number(gatingLessonId),
@@ -306,12 +321,14 @@ export default function LearningPathLessonPage() {
 
         // Lesson API expects lessonSlug; fallback to param if slug not present.
         const apiLessonSlug =
-          (typeof resolvedRow?.lesson?.slug === "string" && resolvedRow.lesson.slug.trim()) ||
+          (typeof resolvedRow?.lesson?.slug === "string" &&
+            resolvedRow.lesson.slug.trim()) ||
           (typeof lessonId === "string" ? lessonId : String(lessonId));
 
         const res = await getLearnerLesson(apiLessonSlug);
         if (cancelled) return;
-        const pathRow = resolvedRow ?? findPathLessonRow(pathRes?.data?.lessons, lessonId);
+        const pathRow =
+          resolvedRow ?? findPathLessonRow(pathRes?.data?.lessons, lessonId);
         const base = res?.data ?? null;
         const merged =
           base && typeof base === "object"
@@ -377,8 +394,9 @@ export default function LearningPathLessonPage() {
       .filter((x) => x != null)
       .map((x) => Number(x))
       .filter((x) => Number.isFinite(x));
-    const lid =
-      Number.isFinite(Number(lesson?.id)) ? Number(lesson.id) : Number(lessonId);
+    const lid = Number.isFinite(Number(lesson?.id))
+      ? Number(lesson.id)
+      : Number(lessonId);
     const idx = ids.findIndex((x) => x === lid);
     if (idx < 0) return null;
     return { index: idx + 1, total: ids.length };
@@ -429,7 +447,9 @@ export default function LearningPathLessonPage() {
   }, [lesson?.content]);
 
   const tocItems = useMemo(() => {
-    const hs = Array.isArray(contentWithIds?.headings) ? contentWithIds.headings : [];
+    const hs = Array.isArray(contentWithIds?.headings)
+      ? contentWithIds.headings
+      : [];
     return hs
       .map((h) => ({
         id: h.id,
@@ -447,11 +467,67 @@ export default function LearningPathLessonPage() {
     [lesson?.content],
   );
 
+  const readLivePlayback = useCallback(() => {
+    const html5 = videoRef.current;
+    if (html5) {
+      const cur = html5.currentTime ?? 0;
+      const dur = html5.duration;
+      return computePlaybackProgress(cur, dur);
+    }
+    const yt = ytPlayerRef.current;
+    if (yt?.getCurrentTime && yt?.getDuration) {
+      try {
+        const cur = yt.getCurrentTime();
+        const dur = yt.getDuration();
+        return computePlaybackProgress(cur, dur);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, []);
+
+  const getPlaybackPayload = useCallback(() => {
+    const live = readLivePlayback();
+    if (live != null) {
+      playbackSnapshotRef.current = live;
+      return live;
+    }
+    return { ...playbackSnapshotRef.current };
+  }, [readLivePlayback]);
+
+  useEffect(() => {
+    if (!lesson || loading || error) return;
+    const msRaw =
+      lesson.lastWatchedTimeMs ??
+      lesson.lessonProgress?.lastWatchedTimeMs ??
+      lesson.progress?.lastWatchedTimeMs ??
+      lesson.userLessonProgress?.lastWatchedTimeMs;
+    const pctRaw =
+      typeof lesson.progressPercentage === "number"
+        ? lesson.progressPercentage
+        : typeof lesson.lessonProgress?.progressPercentage === "number"
+          ? lesson.lessonProgress.progressPercentage
+          : typeof lesson.progress?.progressPercentage === "number"
+            ? lesson.progress.progressPercentage
+            : undefined;
+    const ms = msRaw != null ? Math.max(0, Math.round(Number(msRaw))) : 0;
+    const pct =
+      pctRaw != null && Number.isFinite(Number(pctRaw))
+        ? Math.min(100, Math.max(0, Number(pctRaw)))
+        : 0;
+    playbackSnapshotRef.current = {
+      lastWatchedTimeMs: ms,
+      progressPercentage: pct,
+    };
+  }, [lesson, loading, error]);
+
   useEffect(() => {
     const youtubeId = videoEmbedInfo.youtubeId;
     if (!youtubeId || !lesson) return;
 
     let cancelled = false;
+    let snapshotTickId = null;
 
     const init = async () => {
       await loadYouTubeIframeAPI();
@@ -488,9 +564,17 @@ export default function LearningPathLessonPage() {
                   /* noop */
                 }
               }
+              snapshotTickId = window.setInterval(() => {
+                if (cancelled) return;
+                const live = readLivePlayback();
+                if (live != null) playbackSnapshotRef.current = live;
+              }, 1500);
             },
             onStateChange: (e) => {
-              if (!cancelled && e.data === YT_STATE_PLAYING && pathId && lid) {
+              if (cancelled) return;
+              const live = readLivePlayback();
+              if (live != null) playbackSnapshotRef.current = live;
+              if (e.data === YT_STATE_PLAYING && pathId && lid) {
                 markTodayPlayedLessonIfFirst(
                   pathId,
                   lid,
@@ -510,6 +594,12 @@ export default function LearningPathLessonPage() {
 
     return () => {
       cancelled = true;
+      if (snapshotTickId != null) {
+        window.clearInterval(snapshotTickId);
+        snapshotTickId = null;
+      }
+      const live = readLivePlayback();
+      if (live != null) playbackSnapshotRef.current = live;
       ytPlayerRef.current = null;
       try {
         ytPlayerDestroyRef.current?.destroy?.();
@@ -518,26 +608,56 @@ export default function LearningPathLessonPage() {
       }
       ytPlayerDestroyRef.current = null;
     };
-  }, [videoEmbedInfo.youtubeId, lesson, lessonId, learningPathId]);
+  }, [
+    videoEmbedInfo.youtubeId,
+    lesson,
+    lessonId,
+    learningPathId,
+    readLivePlayback,
+  ]);
 
-  const getPlaybackPayload = useCallback(() => {
-    const html5 = videoRef.current;
-    if (html5) {
-      const cur = html5.currentTime ?? 0;
-      const dur = html5.duration;
-      return computePlaybackProgress(cur, dur);
-    }
-    const yt = ytPlayerRef.current;
-    if (yt?.getCurrentTime && yt?.getDuration) {
-      try {
-        const cur = yt.getCurrentTime();
-        const dur = yt.getDuration();
-        return computePlaybackProgress(cur, dur);
-      } catch {
-        return { lastWatchedTimeMs: 0, progressPercentage: 0 };
-      }
-    }
-    return { lastWatchedTimeMs: 0, progressPercentage: 0 };
+  getPlaybackPayloadRef.current = getPlaybackPayload;
+  noticeRef.current = notice;
+
+  useEffect(() => {
+    if (loading || error || !lesson || isInactive) return;
+    const nid = Number(lesson.id ?? lessonId);
+    if (!Number.isFinite(nid)) return;
+    lastLoadedProgressFlushRef.current = () => {
+      const readPlayback = getPlaybackPayloadRef.current;
+      const { lastWatchedTimeMs, progressPercentage } =
+        typeof readPlayback === "function"
+          ? readPlayback()
+          : { lastWatchedTimeMs: 0, progressPercentage: 0 };
+      return {
+        lessonId: nid,
+        progressPercentage: Number(progressPercentage),
+        lastWatchedTimeMs: Math.max(0, Math.round(Number(lastWatchedTimeMs))),
+        notice: String(noticeRef.current ?? "").trim(),
+      };
+    };
+  }, [loading, error, lesson, isInactive, lessonId]);
+
+  useEffect(() => {
+    return () => {
+      const build = lastLoadedProgressFlushRef.current;
+      if (!build) return;
+      const payload = build();
+      if (!payload?.lessonId) return;
+      void upsertUserLessonProgress(payload).catch(() => {});
+    };
+  }, [lessonId, learningPathId]);
+
+  useEffect(() => {
+    const onPageHide = () => {
+      const build = lastLoadedProgressFlushRef.current;
+      if (!build) return;
+      const payload = build();
+      if (!payload?.lessonId) return;
+      void upsertUserLessonProgressKeepalive(payload);
+    };
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
   }, []);
 
   const handleCompleteLesson = useCallback(async () => {
@@ -573,10 +693,7 @@ export default function LearningPathLessonPage() {
 
   const practiceSlug = useMemo(() => {
     const raw =
-      lesson?.practiceSlug ??
-      lesson?.practice?.slug ??
-      lesson?.practice ??
-      "";
+      lesson?.practiceSlug ?? lesson?.practice?.slug ?? lesson?.practice ?? "";
     return typeof raw === "string" ? raw.trim() : "";
   }, [lesson?.practiceSlug, lesson?.practice]);
 
@@ -594,7 +711,8 @@ export default function LearningPathLessonPage() {
         state: {
           testData,
           selectedTags: [],
-          partNumber: testData?.partNumber ?? testData?.part?.number ?? undefined,
+          partNumber:
+            testData?.partNumber ?? testData?.part?.number ?? undefined,
           from: "learning-path-lesson",
           practiceSlug,
         },
@@ -714,23 +832,13 @@ export default function LearningPathLessonPage() {
                           Video bài giảng
                         </div>
                         {resumeSecondsHint != null ? (
-                          <Text type="secondary" className="!mb-0 block text-xs">
+                          <Text
+                            type="secondary"
+                            className="!mb-0 block text-xs"
+                          >
                             Phát tiếp từ vị trí đã lưu lần trước.
                           </Text>
                         ) : null}
-                      </div>
-                      <div className="shrink-0">
-                        <Button
-                          type="primary"
-                          size="middle"
-                          icon={<CheckCircleOutlined />}
-                          loading={completeSubmitting}
-                          disabled={isInactive}
-                          onClick={handleCompleteLesson}
-                          className="!border-emerald-600 !bg-emerald-600 hover:!border-emerald-700 hover:!bg-emerald-700"
-                        >
-                          Lưu tiến độ
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -739,7 +847,10 @@ export default function LearningPathLessonPage() {
                     {lesson?.videoUrl ? (
                       videoEmbedInfo.youtubeId ? (
                         <div className="aspect-video w-full overflow-hidden">
-                          <div ref={youtubeContainerRef} className="h-full w-full" />
+                          <div
+                            ref={youtubeContainerRef}
+                            className="h-full w-full"
+                          />
                         </div>
                       ) : (
                         <video
@@ -753,13 +864,25 @@ export default function LearningPathLessonPage() {
                             if (hint == null) return;
                             const v = e.currentTarget;
                             const t = clampResumeToDuration(hint, v.duration);
-                            if (t != null && Number.isFinite(v.duration) && v.duration > 0) {
+                            if (
+                              t != null &&
+                              Number.isFinite(v.duration) &&
+                              v.duration > 0
+                            ) {
                               try {
                                 v.currentTime = t;
                               } catch {
                                 /* noop */
                               }
                             }
+                          }}
+                          onTimeUpdate={(e) => {
+                            const v = e.currentTarget;
+                            const live = computePlaybackProgress(
+                              v.currentTime ?? 0,
+                              v.duration,
+                            );
+                            playbackSnapshotRef.current = live;
                           }}
                           onPlaying={() =>
                             markTodayPlayedLessonIfFirst(
@@ -787,7 +910,9 @@ export default function LearningPathLessonPage() {
                       className="rounded-2xl border-slate-200 shadow-sm"
                     >
                       <div className="prose prose-slate max-w-none prose-p:my-2 prose-headings:font-semibold">
-                        {parse(normalizeLessonHtml(String(contentWithIds.html)))}
+                        {parse(
+                          normalizeLessonHtml(String(contentWithIds.html)),
+                        )}
                       </div>
                     </Card>
                   ) : (
@@ -838,7 +963,10 @@ export default function LearningPathLessonPage() {
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                                     onClick={() => {
                                       const ok = speakWord(v.word);
-                                      if (!ok) message.info("Thiết bị không hỗ trợ phát âm.");
+                                      if (!ok)
+                                        message.info(
+                                          "Thiết bị không hỗ trợ phát âm.",
+                                        );
                                     }}
                                   >
                                     <SoundOutlined />
@@ -872,7 +1000,9 @@ export default function LearningPathLessonPage() {
                         Ghi chú của bạn
                       </div>
                       <div className="text-xs font-semibold text-slate-400">
-                        {notice.trim().length ? `${notice.trim().length} ký tự` : "—"}
+                        {notice.trim().length
+                          ? `${notice.trim().length} ký tự`
+                          : "—"}
                       </div>
                     </div>
 
@@ -880,10 +1010,12 @@ export default function LearningPathLessonPage() {
                       <Input.TextArea
                         value={notice}
                         onChange={(e) => setNotice(e.target.value)}
-                        placeholder="Ghi lại ý chính, từ mới, điểm cần nhớ… (sẽ lưu khi bạn bấm “Lưu tiến độ”)"
+                        placeholder="Ghi lại ý chính, từ mới, điểm cần nhớ… Ghi chú sẽ được lưu cùng tiến độ bài học."
                         autoSize={{ minRows: 4, maxRows: 10 }}
                         maxLength={2000}
-                        disabled={loading || Boolean(error) || completeSubmitting}
+                        disabled={
+                          loading || Boolean(error) || completeSubmitting
+                        }
                       />
                       <div className="mt-2 text-xs text-slate-400">
                         Ghi chú sẽ được lưu cùng tiến độ bài học.
@@ -976,8 +1108,8 @@ export default function LearningPathLessonPage() {
 
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <Text type="secondary" className="!mb-0 block text-sm">
-                      “Lưu tiến độ” sẽ ghi lại thời điểm đang xem trên video để
-                      bạn học tiếp lần sau.
+                      Khi thoát ra hệ thống sẽ ghi lại thời điểm đang xem trên
+                      video để bạn học tiếp lần sau.
                     </Text>
 
                     {practiceSlug ? (
@@ -992,17 +1124,6 @@ export default function LearningPathLessonPage() {
                         Luyện tập
                       </Button>
                     ) : null}
-                    <Button
-                      type="primary"
-                      size="large"
-                      icon={<CheckCircleOutlined />}
-                      loading={completeSubmitting}
-                      disabled={isInactive}
-                      onClick={handleCompleteLesson}
-                      className="mt-3 w-full !border-emerald-600 !bg-emerald-600 hover:!border-emerald-700 hover:!bg-emerald-700"
-                    >
-                      Lưu tiến độ
-                    </Button>
                   </div>
                 </div>
               </div>

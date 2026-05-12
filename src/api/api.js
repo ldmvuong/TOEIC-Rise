@@ -1049,6 +1049,31 @@ export const getLearningPathLessons = (learningPathSlug, params = {}) =>
 export const upsertUserLessonProgress = (payload) =>
   api.post("/learner/lesson-progress", payload);
 
+export function upsertUserLessonProgressKeepalive(payload) {
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  const token =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
+  const body = JSON.stringify({
+    lessonId: payload.lessonId,
+    progressPercentage: payload.progressPercentage,
+    lastWatchedTimeMs: payload.lastWatchedTimeMs,
+    notice: payload.notice ?? "",
+  });
+  return fetch(`${baseUrl}/learner/lesson-progress`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body,
+    credentials: "include",
+    keepalive: true,
+  });
+}
+
 export const getLevelLearningPath = (slug, testType) =>
   api.get(`/learner/learning-paths/${slug}/level-learning-path`, { params: { testType } });
 
