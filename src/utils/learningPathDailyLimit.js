@@ -207,11 +207,12 @@ export function coerceLessonProgressList(apiLessons) {
 
 export function describeDailyLessonBlock(check) {
   if (check.ok) return "";
+  const limitHint = `Trong một ngày bạn chỉ có thể học tối đa ${MAX_NEW_LESSONS_PER_DAY} bài mới trong lộ trình. Hôm nay bạn đã đạt giới hạn này — vui lòng quay lại vào ngày mai hoặc ôn lại các bài đã mở.`;
   if (check.reason === "session_video") {
-    return `Mỗi ngày chỉ mở mới tối đa ${MAX_NEW_LESSONS_PER_DAY} bài trong lộ trình. Hôm nay bạn đã chạm giới hạn — vui lòng quay lại vào ngày mai hoặc xem lại các bài đã mở.`;
+    return limitHint;
   }
   if (check.reason === "server_lesson_opened_today") {
-    return `Mỗi ngày chỉ mở mới tối đa ${MAX_NEW_LESSONS_PER_DAY} bài trong lộ trình. Hôm nay bạn đã chạm giới hạn — vui lòng quay lại vào ngày mai hoặc xem lại các bài đã mở.`;
+    return limitHint;
   }
   return "Không thể mở bài học này hôm nay.";
 }

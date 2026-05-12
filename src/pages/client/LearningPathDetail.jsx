@@ -6,12 +6,61 @@ import { getLearningPathDetail } from "@/api/api";
 import {
   MIN_PROGRESS_TO_UNLOCK_NEXT,
   canOpenLessonToday,
+  describeDailyLessonBlock,
   findNextEnterableNewLessonId,
   lessonWasEverOpened,
   previousLessonMeetsAdvanceGate,
 } from "@/utils/learningPathDailyLimit";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
+
+const LEVEL_ORDER = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+
+const LEVEL_SECTION_META = {
+  BEGINNER: {
+    title: "Giai đoạn cơ bản",
+    subtitle: "BEGINNER",
+    badgeClass:
+      "border-blue-200 bg-blue-50 text-blue-700 ring-blue-100/80",
+    accentLine: "from-sky-400 via-blue-500 to-blue-400/90",
+    shellClass: "border-blue-200/60 bg-gradient-to-b from-blue-50/40 to-white",
+  },
+  INTERMEDIATE: {
+    title: "Giai đoạn trung cấp",
+    subtitle: "INTERMEDIATE",
+    badgeClass:
+      "border-orange-200 bg-orange-50 text-orange-800 ring-orange-100/80",
+    accentLine: "from-amber-400 via-orange-500 to-orange-400/90",
+    shellClass:
+      "border-orange-200/60 bg-gradient-to-b from-orange-50/35 to-white",
+  },
+  ADVANCED: {
+    title: "Giai đoạn nâng cao",
+    subtitle: "ADVANCED",
+    badgeClass: "border-rose-200 bg-rose-50 text-rose-800 ring-rose-100/80",
+    accentLine: "from-rose-400 via-rose-600 to-fuchsia-500/80",
+    shellClass: "border-rose-200/60 bg-gradient-to-b from-rose-50/35 to-white",
+  },
+};
+
+function normalizeLessonLevel(raw) {
+  const s = String(raw ?? "").trim().toUpperCase();
+  if (LEVEL_ORDER.includes(s)) return s;
+  return "BEGINNER";
+}
+
+function groupLessonsByLevel(lessonList) {
+  const grouped = {
+    BEGINNER: [],
+    INTERMEDIATE: [],
+    ADVANCED: [],
+  };
+  for (const item of lessonList || []) {
+    const key = normalizeLessonLevel(item?.lesson?.level);
+    grouped[key].push(item);
+  }
+  return grouped;
+}
 
 function normalizeLessonProgress(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -280,6 +329,20 @@ export default function LearningPathDetailPage() {
     return parsed;
   }, [detail?.lessons]);
 
+  const groupedLessons = useMemo(
+    () => groupLessonsByLevel(lessonItems),
+    [lessonItems],
+  );
+
+  const globalLessonIndexById = useMemo(() => {
+    const map = new Map();
+    lessonItems.forEach((it, idx) => {
+      const id = it?.lesson?.id;
+      if (id != null) map.set(Number(id), idx);
+    });
+    return map;
+  }, [lessonItems]);
+
   const nextEnterableNewLessonId = useMemo(
     () => findNextEnterableNewLessonId(lessonItems),
     [lessonItems],
@@ -308,7 +371,10 @@ export default function LearningPathDetailPage() {
         clickedLessonId,
         lessonItems,
       );
-      if (!check.ok) return;
+      if (!check.ok) {
+        message.warning(describeDailyLessonBlock(check));
+        return;
+      }
       const row = lessonItems.find((x) => x?.lesson?.id === clickedLessonId);
       const lessonSlug = row?.lesson?.slug;
       navigate(
@@ -368,73 +434,153 @@ export default function LearningPathDetailPage() {
               </div>
             </header>
 
-            {/* Roadmap: đường thẳng nối các mốc + thẻ bài */}
+            {/* Roadmap theo từng cấp độ (BEGINNER → INTERMEDIATE → ADVANCED) */}
             <div className="mx-auto mt-12 max-w-3xl pb-16">
               {lessonItems.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white/90 p-12 text-center text-slate-500 shadow-inner">
                   Lộ trình này chưa có bài học.
                 </div>
               ) : (
-                <div className="relative rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 p-5 shadow-xl shadow-slate-200/50 sm:p-8">
-                  {/* Đường dọc nối tâm các chấm — căn theo cột timeline */}
-                  <div
-                    className="pointer-events-none absolute left-[22px] top-9 bottom-9 z-0 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-sky-400 via-blue-500 to-slate-300 sm:left-7 sm:top-11 sm:bottom-11"
-                    aria-hidden
-                  />
+                <div className="flex flex-col gap-10 sm:gap-12">
+                  {LEVEL_ORDER.map((levelKey) => {
+                    const sectionItems = groupedLessons[levelKey];
+                    if (!sectionItems?.length) return null;
+                    const meta = LEVEL_SECTION_META[levelKey];
 
-                  <ul className="relative m-0 list-none p-0">
-                    {lessonItems.map((item, index) => {
-                      const lessonId = item.lesson?.id;
-                      const roadmapBright = isLessonBright(item);
-                      const everOpened = lessonWasEverOpened(item);
-                      const prev = index > 0 ? lessonItems[index - 1] : null;
-                      const lockedHint =
-                        !everOpened &&
-                        !roadmapBright &&
-                        index > 0 &&
-                        prev &&
-                        !previousLessonMeetsAdvanceGate(prev)
-                          ? `Đạt ít nhất ${MIN_PROGRESS_TO_UNLOCK_NEXT}% tiến độ bài trước để mở bài này.`
-                          : "";
-                      const gateOk =
-                        lessonId != null &&
-                        canOpenLessonToday(
-                          String(learningPathId),
-                          lessonId,
-                          lessonItems,
-                        ).ok;
-                      const visuallyBright =
-                        roadmapBright && (everOpened || gateOk);
-                      const step = index + 1;
-
-                      return (
-                        <li
-                          key={lessonId ?? index}
-                          className="relative flex gap-4 pb-12 last:pb-0 sm:gap-6"
+                    return (
+                      <section
+                        key={levelKey}
+                        className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_8px_30px_-8px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/40"
+                        aria-labelledby={`lp-level-${levelKey}`}
+                      >
+                        <div
+                          id={`lp-level-${levelKey}`}
+                          className="border-b border-slate-200/80 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6 sm:py-5"
                         >
-                          <div className="relative z-10 flex w-11 shrink-0 justify-center sm:w-14">
-                            <RoadmapStepDot
-                              step={step}
-                              bright={visuallyBright}
-                              completed={Boolean(item.isCompleted)}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1 pt-0.5">
-                            <span className="mb-2 inline-block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                              Bước {step} / {lessonItems.length}
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                                Mốc lộ trình
+                              </div>
+                              <Title
+                                level={4}
+                                className="!mb-0 !mt-1 !text-lg !font-bold !text-slate-900 sm:!text-xl"
+                              >
+                                {meta.title}
+                              </Title>
+                              <Text type="secondary" className="!mb-0 mt-0.5 block text-xs">
+                                Cấp độ:{" "}
+                                <span className="font-semibold text-slate-700">
+                                  {meta.subtitle}
+                                </span>
+                              </Text>
+                            </div>
+                            <span
+                              className={[
+                                "shrink-0 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide shadow-sm ring-2 ring-offset-2 ring-offset-white",
+                                meta.badgeClass,
+                              ].join(" ")}
+                            >
+                              {levelKey}
                             </span>
-                            <BranchCard
-                              item={item}
-                              bright={visuallyBright}
-                              revisitOpen={everOpened && !visuallyBright}
-                              lockedByPreviousHint={lockedHint}
-                              onBrightClick={handleBrightLessonClick}
-                            />
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                        </div>
+
+                        <div
+                          className={[
+                            "relative p-5 sm:p-8",
+                            meta.shellClass,
+                          ].join(" ")}
+                        >
+                          <div
+                            className={[
+                              "pointer-events-none absolute left-[22px] top-9 bottom-9 z-0 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b sm:left-7 sm:top-11 sm:bottom-11",
+                              meta.accentLine,
+                            ].join(" ")}
+                            aria-hidden
+                          />
+
+                          <ul className="relative m-0 list-none p-0">
+                            {sectionItems.map((item, indexInSection) => {
+                              const lessonId = item.lesson?.id;
+                              const globalIndex =
+                                lessonId != null
+                                  ? (globalLessonIndexById.get(
+                                      Number(lessonId),
+                                    ) ?? 0)
+                                  : 0;
+                              const prev =
+                                globalIndex > 0
+                                  ? lessonItems[globalIndex - 1]
+                                  : null;
+                              const roadmapBright = isLessonBright(item);
+                              const everOpened = lessonWasEverOpened(item);
+                              const lockedHint =
+                                !everOpened &&
+                                !roadmapBright &&
+                                globalIndex > 0 &&
+                                prev &&
+                                !previousLessonMeetsAdvanceGate(prev)
+                                  ? `Đạt ít nhất ${MIN_PROGRESS_TO_UNLOCK_NEXT}% tiến độ bài trước để mở bài này.`
+                                  : "";
+                              const dailyCheck =
+                                lessonId != null
+                                  ? canOpenLessonToday(
+                                      String(learningPathId),
+                                      lessonId,
+                                      lessonItems,
+                                    )
+                                  : { ok: true };
+                              const gateOk = dailyCheck.ok;
+                              const visuallyBright =
+                                roadmapBright && (everOpened || gateOk);
+                              const showDailyLimitNotice =
+                                roadmapBright && !everOpened && !dailyCheck.ok;
+                              const step = globalIndex + 1;
+                              const totalSteps = lessonItems.length;
+
+                              return (
+                                <li
+                                  key={`${levelKey}-${lessonId ?? indexInSection}`}
+                                  className="relative flex gap-4 pb-12 last:pb-0 sm:gap-6"
+                                >
+                                  <div className="relative z-10 flex w-11 shrink-0 justify-center sm:w-14">
+                                    <RoadmapStepDot
+                                      step={step}
+                                      bright={visuallyBright}
+                                      completed={Boolean(item.isCompleted)}
+                                    />
+                                  </div>
+                                  <div className="min-w-0 flex-1 pt-0.5">
+                                    <span className="mb-2 inline-block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                                      Bước {step} / {totalSteps}
+                                    </span>
+                                    <BranchCard
+                                      item={item}
+                                      bright={visuallyBright}
+                                      revisitOpen={
+                                        everOpened && !visuallyBright
+                                      }
+                                      lockedByPreviousHint={lockedHint}
+                                      onBrightClick={handleBrightLessonClick}
+                                    />
+                                    {showDailyLimitNotice ? (
+                                      <div
+                                        role="status"
+                                        className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-950"
+                                      >
+                                        {describeDailyLessonBlock(dailyCheck)}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      </section>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -28,6 +28,7 @@ import {
   canAccessSequentialLesson,
   canOpenLessonToday,
   coerceLessonProgressList,
+  describeDailyLessonBlock,
   describeSequentialLessonBlock,
   lessonWasEverOpened,
   markTodayPlayedLessonIfFirst,
@@ -315,6 +316,7 @@ export default function LearningPathLessonPage() {
           items,
         );
         if (!gate.ok) {
+          message.warning(describeDailyLessonBlock(gate));
           navigate(`/learning-paths/${learningPathId}`, { replace: true });
           return;
         }
@@ -696,6 +698,21 @@ export default function LearningPathLessonPage() {
       lesson?.practiceSlug ?? lesson?.practice?.slug ?? lesson?.practice ?? "";
     return typeof raw === "string" ? raw.trim() : "";
   }, [lesson?.practiceSlug, lesson?.practice]);
+
+  const practiceTagName = useMemo(() => {
+    if (!lesson || typeof lesson !== "object") return "";
+    const fromFields =
+      lesson.practice;
+    if (fromFields != null && String(fromFields).trim() !== "") {
+      return String(fromFields).trim();
+    }
+    if (typeof lesson.practice === "string" && lesson.practice.trim() !== "") {
+      return lesson.practice.trim();
+    }
+    return "";
+  }, [lesson]);
+
+  const showPracticeButton = Boolean(practiceSlug) && Boolean(practiceTagName);
 
   const handleOpenPractice = useCallback(async () => {
     if (!practiceSlug) return;
@@ -1112,7 +1129,7 @@ export default function LearningPathLessonPage() {
                       video để bạn học tiếp lần sau.
                     </Text>
 
-                    {practiceSlug ? (
+                    {showPracticeButton ? (
                       <Button
                         type="default"
                         size="large"
