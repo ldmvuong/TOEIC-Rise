@@ -1031,8 +1031,8 @@ export const updateAdminLearningPath = (id, payload) =>
 export const createLearningPathLesson = (learningPathId, payload) =>
   api.post(`/admin/learning-paths/${learningPathId}/lessons`, payload);
 
-export const reorderLearningPathLessons = (learningPathId, payload) =>
-  api.post(`/admin/learning-paths/${learningPathId}/lessons/reorder`, payload);
+export const reorderAdminLessons = (payload) =>
+  api.post("/admin/lessons/reorder", payload);
 
 export const getLearningPaths = (params = {}) =>
   api.get("/learner/learning-paths", { params });
@@ -1043,9 +1043,18 @@ export const getLearningPathDetail = (learningPathSlug) =>
 export const getLearnerLesson = (lessonSlug) =>
   api.get(`/learner/learning-paths/lessons/${lessonSlug}`);
 
-// Deprecated in current learner controller (detail already returns lessons).
 export const getLearningPathLessons = (learningPathSlug, params = {}) =>
   api.get(`/learner/learning-paths/${learningPathSlug}/lessons`, { params });
 
 export const upsertUserLessonProgress = (payload) =>
   api.post("/learner/lesson-progress", payload);
+
+export const getLevelLearningPath = (slug, testType) =>
+  api.get(`/learner/learning-paths/${slug}/level-learning-path`, { params: { testType } });
+
+export const createUserLearningPath = (slug, level) =>
+  api.post(
+    `/learner/learning-paths/${encodeURIComponent(String(slug))}`,
+    null,
+    { params: { level } },
+  );

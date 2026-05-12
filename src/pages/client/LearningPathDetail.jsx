@@ -341,9 +341,26 @@ export default function LearningPathDetailPage() {
         ) : (
           <>
             <header className="mx-auto mt-8 max-w-3xl text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Lộ trình học
-              </p>
+              <div className="flex justify-center items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Lộ trình học
+                </p>
+                {detail?.level && (
+                  <span
+                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                      detail.level === "BEGINNER"
+                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                        : detail.level === "INTERMEDIATE"
+                        ? "bg-orange-50 text-orange-600 border-orange-200"
+                        : detail.level === "ADVANCED"
+                        ? "bg-rose-50 text-rose-600 border-rose-200"
+                        : "bg-gray-50 text-gray-600 border-gray-200"
+                    }`}
+                  >
+                    {detail.level}
+                  </span>
+                )}
+              </div>
               <div className="mt-3 rounded-3xl border border-pink-200/70 bg-gradient-to-br from-pink-100 via-rose-50 to-white px-6 py-6 shadow-[0_20px_50px_-12px_rgba(219,39,119,0.18)] sm:px-10 sm:py-8">
                 <h1 className="bg-gradient-to-r from-pink-900 via-rose-800 to-pink-900 bg-clip-text text-2xl font-bold leading-tight text-transparent sm:text-3xl">
                   {pathName}

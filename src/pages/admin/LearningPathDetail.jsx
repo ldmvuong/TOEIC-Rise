@@ -1,11 +1,12 @@
 import {
   createContext,
+  forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  useContext,
 } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -46,7 +47,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   getAdminLearningPathDetailBySlug,
-  reorderLearningPathLessons,
+  reorderAdminLessons,
   setAdminLessonActive,
 } from "@/api/api";
 
@@ -130,6 +131,21 @@ function toLessonRows(lessons) {
   return [];
 }
 
+function mergeLessonsIntoDetail(prev, nextRows) {
+  if (!prev) return prev;
+  const raw = prev.lessons;
+  if (Array.isArray(raw)) {
+    return { ...prev, lessons: nextRows };
+  }
+  if (raw && typeof raw === "object" && Array.isArray(raw.result)) {
+    return { ...prev, lessons: { ...raw, result: nextRows } };
+  }
+  if (raw && typeof raw === "object" && Array.isArray(raw.content)) {
+    return { ...prev, lessons: { ...raw, content: nextRows } };
+  }
+  return { ...prev, lessons: nextRows };
+}
+
 function TopicTag({ value }) {
   const raw = (value ?? "").toString();
   const norm = raw.toLowerCase();
@@ -186,7 +202,21 @@ function DragHandle() {
   );
 }
 
-function SortableRow(props) {
+function mergeRefs(...refs) {
+  return (node) => {
+    refs.forEach((r) => {
+      if (typeof r === "function") r(node);
+      else if (r && typeof r === "object" && "current" in r) r.current = node;
+    });
+  };
+}
+
+const SortableRow = forwardRef(function SortableRow(props, forwardedRef) {
+  const dataRowKey = props["data-row-key"];
+  const record = props.record;
+  const rawId = dataRowKey ?? record?.id;
+  const id = rawId != null && rawId !== "" ? String(rawId) : null;
+
   const {
     attributes,
     listeners,
@@ -195,7 +225,7 @@ function SortableRow(props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props["data-row-key"] });
+  } = useSortable({ id: id ?? "__row_no_id__", disabled: !id });
 
   const style = {
     ...props.style,
@@ -211,10 +241,15 @@ function SortableRow(props) {
 
   return (
     <RowDragContext.Provider value={{ listeners, setActivatorNodeRef }}>
-      <tr ref={setNodeRef} style={style} {...props} {...attributes} />
+      <tr
+        ref={mergeRefs(setNodeRef, forwardedRef)}
+        {...props}
+        {...attributes}
+        style={style}
+      />
     </RowDragContext.Provider>
   );
-}
+});
 
 export default function AdminLearningPathDetailPage() {
   const { slug } = useParams();
@@ -380,7 +415,7 @@ export default function AdminLearningPathDetailPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
+      activationConstraint: { distance: 4 },
     }),
   );
 
@@ -388,63 +423,77 @@ export default function AdminLearningPathDetailPage() {
     async ({ active, over }) => {
       if (!over || !active?.id || active.id === over.id) return;
       if (!learningPathId) return;
-      if (query.name || query.level || query.sortBy !== "orderIndex") {
+
+      const effectiveSortBy = query.sortBy ?? "orderIndex";
+      if (query.name || query.level || effectiveSortBy !== "orderIndex") {
         message.info(
           "Reorder chỉ khả dụng khi không filter và đang sort theo Index",
         );
         return;
       }
-      if (!Array.isArray(detail?.lessons)) return;
 
-      const prevLessons = detail.lessons;
-      const oldIndex = prevLessons.findIndex(
+      const prevRows = toLessonRows(detail?.lessons);
+      if (!Array.isArray(prevRows) || prevRows.length < 2) return;
+
+      const oldIndex = prevRows.findIndex(
         (i) => String(i.id) === String(active.id),
       );
-      const newIndex = prevLessons.findIndex(
+      const newIndex = prevRows.findIndex(
         (i) => String(i.id) === String(over.id),
       );
       if (oldIndex < 0 || newIndex < 0) return;
 
-      const nextLessons = arrayMove(prevLessons, oldIndex, newIndex).map(
+      const page = Number(query.page ?? 0);
+      const pageSize = Number(query.size ?? 10);
+      const indexOffset = page * pageSize;
+
+      const nextRows = arrayMove(prevRows, oldIndex, newIndex).map(
         (l, idx) => ({
           ...l,
-          orderIndex: idx + 1,
+          orderIndex: indexOffset + idx + 1,
         }),
       );
 
       const oldIndexMap = new Map(
-        prevLessons.map((l, idx) => [String(l.id), idx]),
+        prevRows.map((l, idx) => [String(l.id), idx]),
       );
-      const changed = nextLessons
+      const changed = nextRows
         .map((l, idx) => ({
           lessonId: Number(l.id),
-          orderIndex: idx + 1,
+          orderIndex: indexOffset + idx + 1,
           _changed: oldIndexMap.get(String(l.id)) !== idx,
         }))
         .filter((x) => x._changed)
         .map(({ lessonId, orderIndex }) => ({ lessonId, orderIndex }));
 
-      // optimistic UI
-      setDetail((prev) => (prev ? { ...prev, lessons: nextLessons } : prev));
+      const prevSnapshot = prevRows.map((l) => ({ ...l }));
+
+      setDetail((prev) => mergeLessonsIntoDetail(prev, nextRows));
 
       if (changed.length === 0) return;
 
       try {
         setReordering(true);
-        await reorderLearningPathLessons(Number(learningPathId), {
-          items: changed,
-        });
+        await reorderAdminLessons({ items: changed });
         message.success("Reordered lessons");
       } catch (e) {
-        setDetail((prev) => (prev ? { ...prev, lessons: prevLessons } : prev));
+        setDetail((prev) => mergeLessonsIntoDetail(prev, prevSnapshot));
         message.error(
-          e?.response?.data?.message || e?.message || "Reorder failed",
+          e?.message || e?.response?.data?.message || "Reorder failed",
         );
       } finally {
         setReordering(false);
       }
     },
-    [detail?.lessons, learningPathId, query.level, query.name, query.sortBy],
+    [
+      detail?.lessons,
+      learningPathId,
+      query.level,
+      query.name,
+      query.page,
+      query.size,
+      query.sortBy,
+    ],
   );
 
   const columns = useMemo(
@@ -605,7 +654,8 @@ export default function AdminLearningPathDetailPage() {
   }, [detail?.lessons, lessonRows.length, query.page, query.size]);
 
   const lessonIds = useMemo(
-    () => (Array.isArray(lessonRows) ? lessonRows.map((l) => l.id) : []),
+    () =>
+      Array.isArray(lessonRows) ? lessonRows.map((l) => String(l.id)) : [],
     [lessonRows],
   );
 
