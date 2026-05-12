@@ -6,7 +6,8 @@ import { getQuestionGroup, updateQuestionGroup, updateQuestion, generateExplanat
 import parse from "html-react-parser";
 import { marked } from "marked";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import { ClassicEditor, Essentials, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote } from "ckeditor5";
+import 'ckeditor5/ckeditor5.css';
 import TagsSelector from "@/components/admin/TagsSelector";
 import {
     validateQuestionGroupAudio,
@@ -407,7 +408,11 @@ const QuestionGroupPage = () => {
     };
 
     const editorConfiguration = {
+        // CKEditor 5 v44+ requires explicit licenseKey.
+        // If you use the free GPL build, keep 'GPL'. If you have a commercial key,
+        // replace this value with the key from your CKEditor account.
         licenseKey: "GPL",
+        plugins: [ Essentials, Paragraph, Bold, Italic, List, Link, Table, TableToolbar, BlockQuote ],
         toolbar: [
             "heading",
             "|",
@@ -1183,7 +1188,7 @@ const QuestionGroupPage = () => {
                 confirmLoading={savingQuestion}
                 okText="Lưu"
                 cancelText="Hủy"
-                destroyOnHidden
+                destroyOnClose
                 width={700}
             >
                 {editingQuestion && (
@@ -1309,7 +1314,7 @@ const QuestionGroupPage = () => {
                     </Button>,
                 ]}
                 width={640}
-                destroyOnHidden
+                destroyOnClose
             >
                 <div className="min-h-[200px]">
                     {generatingExplanation && !generatedExplanationText ? (
@@ -1330,4 +1335,3 @@ const QuestionGroupPage = () => {
 };
 
 export default QuestionGroupPage;
-

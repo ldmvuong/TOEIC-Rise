@@ -1,11 +1,48 @@
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import {
+  ClassicEditor,
+  Heading,
+  Essentials,
+  Paragraph,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Link,
+  Table,
+  TableToolbar,
+  BlockQuote,
+  Font,
+  Alignment,
+  Indent,
+  IndentBlock,
+  RemoveFormat,
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 
 /**
  * Same feature set as the blog post content editor (BlogPostCreate), without Image / ImageUpload or in-editor image toolbar.
  */
 const passageEditorConfiguration = {
   licenseKey: "GPL",
+  plugins: [
+    Essentials,
+    Heading,
+    Paragraph,
+    Bold,
+    Italic,
+    Underline,
+    List,
+    Link,
+    Table,
+    TableToolbar,
+    BlockQuote,
+    Font,
+    Alignment,
+    Indent,
+    IndentBlock,
+    RemoveFormat,
+  ],
   heading: {
     options: [
       {
@@ -41,6 +78,12 @@ const passageEditorConfiguration = {
     "|",
     "bold",
     "italic",
+    "underline",
+    "|",
+    "fontSize",
+    "fontFamily",
+    "fontColor",
+    "fontBackgroundColor",
     "|",
     "numberedList",
     "bulletedList",
@@ -48,6 +91,13 @@ const passageEditorConfiguration = {
     "link",
     "insertTable",
     "blockQuote",
+    "|",
+    "alignment",
+    "|",
+    "indent",
+    "outdent",
+    "|",
+    "removeFormat",
   ],
   table: {
     contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],

@@ -15,6 +15,8 @@ import {
   CheckCircleOutlined,
   SoundOutlined,
   BookOutlined,
+  HolderOutlined,
+  FullscreenExitOutlined,
 } from "@ant-design/icons";
 import parse from "html-react-parser";
 import {
@@ -37,7 +39,63 @@ import { loadYouTubeIframeAPI } from "@/utils/youtubeIframeApi";
 
 const YT_STATE_PLAYING = 1;
 
+/** Cho phép lệch nhỏ (buffer / tick) trước khi coi là tua tới. */
+const LESSON_VIDEO_MAX_PROGRESS_TOLERANCE_SEC = 0.45;
+
+const MINI_PLAYER_W_MIN = 200;
+const MINI_PLAYER_W_MAX = 560;
+const MINI_PLAYER_W_DEFAULT = 320;
+const MINI_PLAYER_TOOLBAR_PX = 36;
+
 const { Title, Text } = Typography;
+
+function clampNumber(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function miniPlayerTotalHeightPx(widthPx) {
+  return MINI_PLAYER_TOOLBAR_PX + (widthPx * 9) / 16;
+}
+
+function clampMiniPlayerInsets(rightPx, bottomPx, widthPx) {
+  if (typeof window === "undefined") {
+    return { right: rightPx, bottom: bottomPx };
+  }
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const m = 8;
+  const totalH = miniPlayerTotalHeightPx(widthPx);
+  const r = clampNumber(rightPx, m, Math.max(m, vw - widthPx - m));
+  const b = clampNumber(bottomPx, m, Math.max(m, vh - totalH - m));
+  return { right: r, bottom: b };
+}
+
+/** Delta width (px) for mini player; panel anchored bottom-right, 16:9 video. */
+function computeMiniWidthDelta(mode, startX, startY, clientX, clientY) {
+  const dx = clientX - startX;
+  const dy = clientY - startY;
+  const ry = (dy * 16) / 9;
+  switch (mode) {
+    case "e":
+      return dx;
+    case "w":
+      return -dx;
+    case "s":
+      return ry;
+    case "n":
+      return -ry;
+    case "sw":
+      return -dx + ry;
+    case "se":
+      return dx + ry;
+    case "nw":
+      return -dx - ry;
+    case "ne":
+      return dx - ry;
+    default:
+      return 0;
+  }
+}
 
 function normalizeLessonHtml(html) {
   const raw = String(html ?? "");
@@ -254,6 +312,7 @@ export default function LearningPathLessonPage() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const youtubeContainerRef = useRef(null);
+  const videoDockRef = useRef(null);
   const ytPlayerRef = useRef(null);
   const ytPlayerDestroyRef = useRef(null);
   const lessonWasOpenedBeforePlaybackRef = useRef(false);
@@ -264,6 +323,9 @@ export default function LearningPathLessonPage() {
     lastWatchedTimeMs: 0,
     progressPercentage: 0,
   });
+  /** Thời điểm xa nhất được phép xem (giây); chỉ tăng khi phát tiến tới, không giảm khi tua lùi. */
+  const lessonVideoMaxProgressRef = useRef(0);
+  const lessonVideoFenceLessonKeyRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
@@ -272,6 +334,178 @@ export default function LearningPathLessonPage() {
   const [pathLessons, setPathLessons] = useState([]);
   const [notice, setNotice] = useState("");
   const [practiceLoading, setPracticeLoading] = useState(false);
+  const [isVideoMini, setIsVideoMini] = useState(false);
+  const [videoMiniForcedInline, setVideoMiniForcedInline] = useState(false);
+  const [miniPlayerWidthPx, setMiniPlayerWidthPx] = useState(
+    MINI_PLAYER_W_DEFAULT,
+  );
+  const [miniPlayerInset, setMiniPlayerInset] = useState({
+    right: 16,
+    bottom: 16,
+  });
+
+  const showVideoMini = isVideoMini && !videoMiniForcedInline;
+
+  useEffect(() => {
+    if (!lesson?.videoUrl || loading || error) {
+      setIsVideoMini(false);
+      setVideoMiniForcedInline(false);
+      setMiniPlayerWidthPx(MINI_PLAYER_W_DEFAULT);
+      setMiniPlayerInset({ right: 16, bottom: 16 });
+      return;
+    }
+    const el = videoDockRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return;
+        // Thu nhỏ khi khối video gần hết khỏi vùng xem (tương tự YouTube mobile).
+        const mini =
+          !entry.isIntersecting || entry.intersectionRatio < 0.12;
+        setIsVideoMini(mini);
+      },
+      {
+        root: null,
+        rootMargin: "-72px 0px -12% 0px",
+        threshold: [0, 0.05, 0.1, 0.12, 0.2, 0.35, 0.5, 0.75, 1],
+      },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [lesson?.videoUrl, lessonId, loading, error]);
+
+  useEffect(() => {
+    if (!isVideoMini) {
+      setVideoMiniForcedInline(false);
+      setMiniPlayerWidthPx(MINI_PLAYER_W_DEFAULT);
+      setMiniPlayerInset({ right: 16, bottom: 16 });
+    }
+  }, [isVideoMini]);
+
+  useEffect(() => {
+    setMiniPlayerInset((prev) => {
+      const c = clampMiniPlayerInsets(
+        prev.right,
+        prev.bottom,
+        miniPlayerWidthPx,
+      );
+      if (c.right === prev.right && c.bottom === prev.bottom) return prev;
+      return { right: c.right, bottom: c.bottom };
+    });
+  }, [miniPlayerWidthPx]);
+
+  const restoreVideoInline = useCallback(() => {
+    setVideoMiniForcedInline(true);
+    requestAnimationFrame(() => {
+      videoDockRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  }, []);
+
+  const onMiniToolbarPointerDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest("button")) return;
+      const el = e.currentTarget;
+      if (typeof el.setPointerCapture === "function") {
+        el.setPointerCapture(e.pointerId);
+      }
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const r0 = miniPlayerInset.right;
+      const b0 = miniPlayerInset.bottom;
+      const w0 = miniPlayerWidthPx;
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const c = clampMiniPlayerInsets(r0 - dx, b0 - dy, w0);
+        setMiniPlayerInset({ right: c.right, bottom: c.bottom });
+      };
+      const onUp = () => {
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch {
+          /* noop */
+        }
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onUp);
+      };
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("pointercancel", onUp);
+      e.preventDefault();
+    },
+    [miniPlayerInset.right, miniPlayerInset.bottom, miniPlayerWidthPx],
+  );
+
+  const onMiniVideoResizePointerDown = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (e.button !== 0) return;
+      const mode = e.currentTarget.getAttribute("data-mini-resize");
+      if (
+        mode !== "n" &&
+        mode !== "s" &&
+        mode !== "e" &&
+        mode !== "w" &&
+        mode !== "nw" &&
+        mode !== "ne" &&
+        mode !== "sw" &&
+        mode !== "se"
+      ) {
+        return;
+      }
+      const el = e.currentTarget;
+      if (typeof el.setPointerCapture === "function") {
+        el.setPointerCapture(e.pointerId);
+      }
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const w0 = miniPlayerWidthPx;
+      const onMove = (ev) => {
+        const dw = computeMiniWidthDelta(
+          mode,
+          startX,
+          startY,
+          ev.clientX,
+          ev.clientY,
+        );
+        const maxW = Math.min(
+          MINI_PLAYER_W_MAX,
+          typeof window !== "undefined" ? window.innerWidth - 24 : MINI_PLAYER_W_MAX,
+        );
+        const nw = clampNumber(
+          Math.round(w0 + dw),
+          MINI_PLAYER_W_MIN,
+          maxW,
+        );
+        setMiniPlayerWidthPx(nw);
+        setMiniPlayerInset((prev) => {
+          const c = clampMiniPlayerInsets(prev.right, prev.bottom, nw);
+          return { right: c.right, bottom: c.bottom };
+        });
+      };
+      const onUp = () => {
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch {
+          /* noop */
+        }
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onUp);
+      };
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("pointercancel", onUp);
+      e.preventDefault();
+    },
+    [miniPlayerWidthPx],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -489,6 +723,50 @@ export default function LearningPathLessonPage() {
     return null;
   }, []);
 
+  const enforceLessonVideoPlaybackRules = useCallback(() => {
+    const fence = lessonVideoMaxProgressRef.current;
+    const yt = ytPlayerRef.current;
+    if (yt?.getCurrentTime && yt?.seekTo) {
+      try {
+        const t = yt.getCurrentTime();
+        if (!Number.isFinite(t)) return;
+        if (t > fence + LESSON_VIDEO_MAX_PROGRESS_TOLERANCE_SEC) {
+          yt.seekTo(fence, true);
+        } else if (t >= fence - 0.05) {
+          lessonVideoMaxProgressRef.current = Math.max(fence, t);
+        }
+        if (
+          typeof yt.getPlaybackRate === "function" &&
+          typeof yt.setPlaybackRate === "function"
+        ) {
+          const r = yt.getPlaybackRate();
+          if (Number.isFinite(r) && Math.abs(r - 1) > 0.02) {
+            yt.setPlaybackRate(1);
+          }
+        }
+      } catch {
+        /* noop */
+      }
+      return;
+    }
+    const html5 = videoRef.current;
+    if (!html5) return;
+    try {
+      const t = html5.currentTime;
+      if (!Number.isFinite(t)) return;
+      if (t > fence + LESSON_VIDEO_MAX_PROGRESS_TOLERANCE_SEC) {
+        html5.currentTime = fence;
+      } else if (t >= fence - 0.05) {
+        lessonVideoMaxProgressRef.current = Math.max(fence, t);
+      }
+      if (Math.abs(html5.playbackRate - 1) > 0.02) {
+        html5.playbackRate = 1;
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
   const getPlaybackPayload = useCallback(() => {
     const live = readLivePlayback();
     if (live != null) {
@@ -525,11 +803,29 @@ export default function LearningPathLessonPage() {
   }, [lesson, loading, error]);
 
   useEffect(() => {
+    if (!lesson || loading || error) return;
+    const key = String(lesson.id ?? lessonId ?? "");
+    const rs = lessonResumeSecondsFromPayload(lesson);
+    const resumeSec =
+      rs != null && Number.isFinite(rs) ? Math.max(0, rs) : 0;
+    if (lessonVideoFenceLessonKeyRef.current !== key) {
+      lessonVideoFenceLessonKeyRef.current = key;
+      lessonVideoMaxProgressRef.current = resumeSec;
+    } else {
+      lessonVideoMaxProgressRef.current = Math.max(
+        lessonVideoMaxProgressRef.current,
+        resumeSec,
+      );
+    }
+  }, [lesson, loading, error, lessonId]);
+
+  useEffect(() => {
     const youtubeId = videoEmbedInfo.youtubeId;
     if (!youtubeId || !lesson) return;
 
     let cancelled = false;
     let snapshotTickId = null;
+    let capEnforceTickId = null;
 
     const init = async () => {
       await loadYouTubeIframeAPI();
@@ -548,6 +844,7 @@ export default function LearningPathLessonPage() {
             modestbranding: 1,
             rel: 0,
             origin: window.location.origin,
+            disablekb: 1,
           },
           events: {
             onReady: (e) => {
@@ -566,14 +863,33 @@ export default function LearningPathLessonPage() {
                   /* noop */
                 }
               }
+              try {
+                const t0 =
+                  typeof p.getCurrentTime === "function"
+                    ? p.getCurrentTime()
+                    : 0;
+                if (Number.isFinite(t0)) {
+                  lessonVideoMaxProgressRef.current = Math.max(
+                    lessonVideoMaxProgressRef.current,
+                    t0,
+                  );
+                }
+              } catch {
+                /* noop */
+              }
               snapshotTickId = window.setInterval(() => {
                 if (cancelled) return;
                 const live = readLivePlayback();
                 if (live != null) playbackSnapshotRef.current = live;
               }, 1500);
+              capEnforceTickId = window.setInterval(() => {
+                if (cancelled) return;
+                enforceLessonVideoPlaybackRules();
+              }, 250);
             },
             onStateChange: (e) => {
               if (cancelled) return;
+              enforceLessonVideoPlaybackRules();
               const live = readLivePlayback();
               if (live != null) playbackSnapshotRef.current = live;
               if (e.data === YT_STATE_PLAYING && pathId && lid) {
@@ -600,6 +916,10 @@ export default function LearningPathLessonPage() {
         window.clearInterval(snapshotTickId);
         snapshotTickId = null;
       }
+      if (capEnforceTickId != null) {
+        window.clearInterval(capEnforceTickId);
+        capEnforceTickId = null;
+      }
       const live = readLivePlayback();
       if (live != null) playbackSnapshotRef.current = live;
       ytPlayerRef.current = null;
@@ -616,6 +936,7 @@ export default function LearningPathLessonPage() {
     lessonId,
     learningPathId,
     readLivePlayback,
+    enforceLessonVideoPlaybackRules,
   ]);
 
   getPlaybackPayloadRef.current = getPlaybackPayload;
@@ -862,56 +1183,222 @@ export default function LearningPathLessonPage() {
 
                   <div className="bg-black">
                     {lesson?.videoUrl ? (
-                      videoEmbedInfo.youtubeId ? (
-                        <div className="aspect-video w-full overflow-hidden">
+                      <div ref={videoDockRef} className="relative w-full">
+                        {showVideoMini ? (
                           <div
-                            ref={youtubeContainerRef}
-                            className="h-full w-full"
+                            className="aspect-video w-full shrink-0"
+                            aria-hidden
                           />
-                        </div>
-                      ) : (
-                        <video
-                          ref={videoRef}
-                          className="aspect-video w-full max-h-[70vh] bg-black object-contain"
-                          controls
-                          playsInline
-                          src={videoEmbedInfo.directUrl || lesson.videoUrl}
-                          onLoadedMetadata={(e) => {
-                            const hint = lessonResumeSecondsFromPayload(lesson);
-                            if (hint == null) return;
-                            const v = e.currentTarget;
-                            const t = clampResumeToDuration(hint, v.duration);
-                            if (
-                              t != null &&
-                              Number.isFinite(v.duration) &&
-                              v.duration > 0
-                            ) {
-                              try {
-                                v.currentTime = t;
-                              } catch {
-                                /* noop */
-                              }
-                            }
-                          }}
-                          onTimeUpdate={(e) => {
-                            const v = e.currentTarget;
-                            const live = computePlaybackProgress(
-                              v.currentTime ?? 0,
-                              v.duration,
-                            );
-                            playbackSnapshotRef.current = live;
-                          }}
-                          onPlaying={() =>
-                            markTodayPlayedLessonIfFirst(
-                              String(learningPathId),
-                              lessonId,
-                              lessonWasOpenedBeforePlaybackRef.current,
-                            )
+                        ) : null}
+                        <div
+                          className={
+                            showVideoMini
+                              ? "fixed z-[100] flex max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg bg-black shadow-2xl ring-1 ring-white/15"
+                              : "relative aspect-video w-full overflow-hidden"
+                          }
+                          style={
+                            showVideoMini
+                              ? {
+                                  width: miniPlayerWidthPx,
+                                  right: miniPlayerInset.right,
+                                  bottom: `calc(${miniPlayerInset.bottom}px + env(safe-area-inset-bottom, 0px))`,
+                                }
+                              : undefined
                           }
                         >
-                          Trình duyệt không hỗ trợ video.
-                        </video>
-                      )
+                          {showVideoMini ? (
+                            <div
+                              className="flex h-9 shrink-0 cursor-grab select-none items-center gap-0.5 border-b border-white/10 bg-slate-900/95 px-1 active:cursor-grabbing touch-none"
+                              onPointerDown={onMiniToolbarPointerDown}
+                            >
+                              <HolderOutlined className="ml-1 shrink-0 text-slate-400" />
+                              <span className="min-w-0 flex-1 truncate px-1 text-xs font-medium text-slate-200">
+                                Video bài học
+                              </span>
+                              <Tooltip title="Về vị trí gốc trong trang">
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  className="!text-slate-200"
+                                  icon={<FullscreenExitOutlined />}
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    restoreVideoInline();
+                                  }}
+                                />
+                              </Tooltip>
+                            </div>
+                          ) : null}
+                          <div
+                            className={
+                              showVideoMini
+                                ? "relative w-full shrink-0 overflow-visible"
+                                : "relative h-full w-full overflow-hidden"
+                            }
+                            style={
+                              showVideoMini
+                                ? { aspectRatio: "16/9" }
+                                : undefined
+                            }
+                          >
+                            {videoEmbedInfo.youtubeId ? (
+                              <div className="h-full w-full overflow-hidden">
+                                <div
+                                  ref={youtubeContainerRef}
+                                  className="h-full w-full"
+                                />
+                              </div>
+                            ) : (
+                              <video
+                                ref={videoRef}
+                                className={`h-full w-full bg-black object-contain ${
+                                  showVideoMini ? "" : "max-h-[70vh]"
+                                }`}
+                                controls
+                                playsInline
+                                src={
+                                  videoEmbedInfo.directUrl || lesson.videoUrl
+                                }
+                                onLoadedMetadata={(e) => {
+                                  const v = e.currentTarget;
+                                  const hint =
+                                    lessonResumeSecondsFromPayload(lesson);
+                                  if (hint != null) {
+                                    const t = clampResumeToDuration(
+                                      hint,
+                                      v.duration,
+                                    );
+                                    if (
+                                      t != null &&
+                                      Number.isFinite(v.duration) &&
+                                      v.duration > 0
+                                    ) {
+                                      try {
+                                        v.currentTime = t;
+                                      } catch {
+                                        /* noop */
+                                      }
+                                    }
+                                  }
+                                  const t0 = v.currentTime ?? 0;
+                                  if (Number.isFinite(t0)) {
+                                    lessonVideoMaxProgressRef.current =
+                                      Math.max(
+                                        lessonVideoMaxProgressRef.current,
+                                        t0,
+                                      );
+                                  }
+                                  try {
+                                    v.playbackRate = 1;
+                                  } catch {
+                                    /* noop */
+                                  }
+                                  enforceLessonVideoPlaybackRules();
+                                }}
+                                onSeeked={enforceLessonVideoPlaybackRules}
+                                onRateChange={(e) => {
+                                  const v = e.currentTarget;
+                                  try {
+                                    if (Math.abs(v.playbackRate - 1) > 0.02) {
+                                      v.playbackRate = 1;
+                                    }
+                                  } catch {
+                                    /* noop */
+                                  }
+                                  enforceLessonVideoPlaybackRules();
+                                }}
+                                onTimeUpdate={(e) => {
+                                  enforceLessonVideoPlaybackRules();
+                                  const v = e.currentTarget;
+                                  const live = computePlaybackProgress(
+                                    v.currentTime ?? 0,
+                                    v.duration,
+                                  );
+                                  playbackSnapshotRef.current = live;
+                                }}
+                                onPlaying={() =>
+                                  markTodayPlayedLessonIfFirst(
+                                    String(learningPathId),
+                                    lessonId,
+                                    lessonWasOpenedBeforePlaybackRef.current,
+                                  )
+                                }
+                              >
+                                Trình duyệt không hỗ trợ video.
+                              </video>
+                            )}
+                            {showVideoMini ? (
+                              <>
+                                <div
+                                  data-mini-resize="n"
+                                  className="absolute top-0 left-8 right-8 z-20 h-3 cursor-ns-resize touch-none hover:bg-white/10"
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo cạnh trên để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="s"
+                                  className="absolute bottom-0 left-8 right-8 z-20 h-3 cursor-ns-resize touch-none hover:bg-white/10"
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo cạnh dưới để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="e"
+                                  className="absolute right-0 top-8 bottom-8 z-20 w-3 cursor-ew-resize touch-none hover:bg-white/10"
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo cạnh phải để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="w"
+                                  className="absolute left-0 top-8 bottom-8 z-20 w-3 cursor-ew-resize touch-none hover:bg-white/10"
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo cạnh trái để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="nw"
+                                  className="absolute top-0 left-0 z-30 h-8 w-8 cursor-nwse-resize touch-none"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to bottom right, rgba(255,255,255,0.42), transparent 62%)",
+                                  }}
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo góc trên trái để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="ne"
+                                  className="absolute top-0 right-0 z-30 h-8 w-8 cursor-nesw-resize touch-none"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to bottom left, rgba(255,255,255,0.42), transparent 62%)",
+                                  }}
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo góc trên phải để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="sw"
+                                  className="absolute bottom-0 left-0 z-30 h-8 w-8 cursor-nesw-resize touch-none"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to top right, rgba(255,255,255,0.42), transparent 62%)",
+                                  }}
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo góc dưới trái để đổi kích thước"
+                                />
+                                <div
+                                  data-mini-resize="se"
+                                  className="absolute bottom-0 right-0 z-30 h-8 w-8 cursor-nwse-resize touch-none"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to top left, rgba(255,255,255,0.42), transparent 62%)",
+                                  }}
+                                  onPointerDown={onMiniVideoResizePointerDown}
+                                  aria-label="Kéo góc dưới phải để đổi kích thước"
+                                />
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <div className="px-6 py-10 text-center text-sm text-slate-200">
                         Chưa có video cho bài này.

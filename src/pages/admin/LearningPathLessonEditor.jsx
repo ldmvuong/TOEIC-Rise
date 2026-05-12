@@ -11,16 +11,40 @@ import {
   Tag,
   Typography,
   message,
+  Modal,
+  Empty,
+  Popconfirm,
 } from "antd";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import {
+  ClassicEditor,
+  Heading,
+  Essentials,
+  Paragraph,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Table,
+  TableToolbar,
+  BlockQuote,
+  Font,
+  Alignment,
+  Indent,
+  IndentBlock,
+  RemoveFormat,
+  Image,
+  ImageUpload,
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
 import StaffTagPaginatedSelect from "@/components/admin/lessons/StaffTagPaginatedSelect";
-import { createCloudinaryImageUploadAdapterPlugin } from "@/utils/ckeditorCloudinaryUploadAdapter";
 import {
   createLearningPathLesson,
   getAdminLearningPathDetail,
   updateAdminLesson,
+  uploadCloudinaryImage,
+  deleteCloudinaryImage,
 } from "@/api/api";
 
 const { Title, Text } = Typography;
@@ -45,6 +69,41 @@ function nextLessonOrderIndex(detail) {
   return lessons.length + 1;
 }
 
+class ImageUploadAdapter {
+  constructor(loader, onUploaded) {
+    this.loader = loader;
+    this.onUploaded = onUploaded;
+  }
+
+  upload() {
+    return this.loader.file.then((file) => {
+      const formData = new FormData();
+      // Backend expects Multipart @ModelAttribute BlogPostImageRequest.image
+      formData.append("image", file);
+      return uploadCloudinaryImage(formData).then((res) => {
+        const url = res?.data;
+        if (!url) {
+          throw new Error("Image upload succeeded but no URL returned");
+        }
+        this.onUploaded?.(url);
+        return { default: url };
+      });
+    });
+  }
+
+  abort() {
+    // Optional: axios request cancellation can be added later if needed.
+  }
+}
+
+function createImageUploadAdapterPlugin(onUploaded) {
+  return function ImageUploadAdapterPlugin(editor) {
+    const fileRepository = editor.plugins.get("FileRepository");
+    fileRepository.createUploadAdapter = (loader) =>
+      new ImageUploadAdapter(loader, onUploaded);
+  };
+}
+
 export default function AdminLearningPathLessonEditorPage() {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
@@ -58,6 +117,9 @@ export default function AdminLearningPathLessonEditorPage() {
   const [contentInitial, setContentInitial] = useState("");
   const contentRef = useRef("");
   const contentSyncTimerRef = useRef(null);
+  const [deletingImageUrl, setDeletingImageUrl] = useState(null);
+  const [manageImagesOpen, setManageImagesOpen] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
 
   const loadForEdit = useCallback(async () => {
     if (!learningPathId) return;
@@ -203,6 +265,152 @@ export default function AdminLearningPathLessonEditorPage() {
     }
   }, [form, isEdit, learningPathId, learningPathSlug, lessonId, navigate]);
 
+  const extractImageUrlsFromHtml = useCallback((html) => {
+    if (!html || typeof window === "undefined") return [];
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return [...doc.querySelectorAll("img")]
+        .map((img) => img.getAttribute("src"))
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const handleImageUploaded = useCallback((url) => {
+    if (!url) return;
+    setUploadedImageUrls((prev) =>
+      prev.includes(url) ? prev : [...prev, url],
+    );
+  }, []);
+
+  const handleDeleteUploadedImage = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    const usedUrls = extractImageUrlsFromHtml(contentInitial);
+    const isInUse = usedUrls.some(
+      (u) => normalizeImageUrl(u) === normalizeImageUrl(imageUrl),
+    );
+
+    if (isInUse) {
+      message.error(
+        "Cannot delete: this image is still used in CKEditor content.",
+      );
+      return;
+    }
+
+    try {
+      setDeletingImageUrl(imageUrl);
+      await deleteCloudinaryImage(imageUrl);
+      setUploadedImageUrls((prev) =>
+        prev.filter(
+          (u) => normalizeImageUrl(u) !== normalizeImageUrl(imageUrl),
+        ),
+      );
+      message.success("Image deleted");
+    } catch (e) {
+      message.error(
+        e?.response?.data?.message || e?.message || "Failed to delete image",
+      );
+    } finally {
+      setDeletingImageUrl(null);
+    }
+  };
+
+  const normalizeImageUrl = (url) => {
+    if (!url || typeof url !== "string") return "";
+    // Backend may return absolute URLs; editor usage check should ignore query params.
+    return url.split("#")[0].split("?")[0].trim();
+  };
+
+  const blogPostEditorConfiguration = useMemo(
+    () => ({
+      licenseKey: "GPL",
+      plugins: [
+        Essentials,
+        Heading,
+        Paragraph,
+        Bold,
+        Italic,
+        Underline,
+        List,
+        Table,
+        TableToolbar,
+        BlockQuote,
+        Image,
+        ImageUpload,
+        Font,
+        Alignment,
+        Indent,
+        IndentBlock,
+        RemoveFormat,
+      ],
+      heading: {
+        options: [
+          {
+            model: "paragraph",
+            title: "Paragraph",
+            class: "ck-heading_paragraph",
+          },
+          {
+            model: "heading1",
+            view: "h1",
+            title: "Heading 1",
+            class: "ck-heading_heading1",
+          },
+          {
+            model: "heading2",
+            view: "h2",
+            title: "Heading 2",
+            class: "ck-heading_heading2",
+          },
+          {
+            model: "heading3",
+            view: "h3",
+            title: "Heading 3",
+            class: "ck-heading_heading3",
+          },
+        ],
+      },
+      toolbar: [
+        "undo",
+        "redo",
+        "|",
+        "heading",
+        "|",
+        "bold",
+        "italic",
+        "underline",
+        "|",
+        "fontSize",
+        "fontFamily",
+        "fontColor",
+        "fontBackgroundColor",
+        "|",
+        "numberedList",
+        "bulletedList",
+        "|",
+        "imageUpload",
+        "insertTable",
+        "blockQuote",
+        "|",
+        "alignment",
+        "|",
+        "indent",
+        "outdent",
+        "|",
+        "removeFormat",
+      ],
+      table: {
+        contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
+      },
+      extraPlugins: [
+        createImageUploadAdapterPlugin(handleImageUploaded),
+      ],
+    }),
+    [handleImageUploaded],
+  );
+
   return (
     <div style={{ padding: 16 }}>
       <div className="mb-4">
@@ -219,6 +427,54 @@ export default function AdminLearningPathLessonEditorPage() {
           <Tag style={{ marginInlineEnd: 0 }}>{pathName}</Tag>
         </div>
       </div>
+      <Modal
+        open={manageImagesOpen}
+        onCancel={() => setManageImagesOpen(false)}
+        title="Manage uploaded images"
+        footer={null}
+        width={920}
+        destroyOnClose
+      >
+        {uploadedImageUrls.length === 0 ? (
+          <Empty description="No uploaded images in this editor session." />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {uploadedImageUrls.map((url) => (
+              <div
+                key={url}
+                className="border border-slate-200 rounded-xl overflow-hidden bg-white"
+              >
+                <div className="bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="w-full h-36 object-cover" />
+                </div>
+                <div className="p-3">
+                  <div className="text-xs text-slate-500 line-clamp-2">
+                    {url}
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Popconfirm
+                      title="Delete this image?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={() => handleDeleteUploadedImage(url)}
+                      disabled={deletingImageUrl === url}
+                    >
+                      <Button
+                        size="small"
+                        danger
+                        disabled={deletingImageUrl === url}
+                      >
+                        {deletingImageUrl === url ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Card variant="outlined" style={{ borderRadius: 12 }}>
         <Form form={form} layout="vertical" initialValues={{ isActive: true }}>
@@ -278,16 +534,22 @@ export default function AdminLearningPathLessonEditorPage() {
             </Form.Item>
           </div>
 
+          <div className="flex items-center justify-end mb-2">
+            <Button
+              size="small"
+              onClick={() => setManageImagesOpen(true)}
+              disabled={uploadedImageUrls.length === 0}
+            >
+              Manage images ({uploadedImageUrls.length})
+            </Button>
+          </div>
           <Form.Item label="Content">
             <div className="rounded-lg border border-gray-200">
               <CKEditor
                 key={`${learningPathId || "lp"}-${lessonId || "new"}-${isEdit ? "edit" : "create"}`}
                 editor={ClassicEditor}
                 data={contentInitial}
-                config={{
-                  licenseKey: "GPL",
-                  extraPlugins: [createCloudinaryImageUploadAdapterPlugin()],
-                }}
+                config={blogPostEditorConfiguration}
                 onReady={(editor) => {
                   // Keep a local ref so we can sync to antd Form without re-rendering editor on every keystroke.
                   contentRef.current = editor.getData() || "";

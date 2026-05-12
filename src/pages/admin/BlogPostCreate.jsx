@@ -1,7 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import {
+  ClassicEditor,
+  Heading,
+  Essentials,
+  Paragraph,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Link,
+  Table,
+  TableToolbar,
+  BlockQuote,
+  Font,
+  Alignment,
+  Indent,
+  IndentBlock,
+  RemoveFormat,
+  Image,
+  ImageUpload,
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import {
   Button,
   Card,
@@ -342,6 +363,26 @@ const BlogPostCreatePage = () => {
   const blogPostEditorConfiguration = useMemo(
     () => ({
       licenseKey: "GPL",
+      plugins: [
+        Essentials,
+        Heading,
+        Paragraph,
+        Bold,
+        Italic,
+        Underline,
+        List,
+        Link,
+        Table,
+        TableToolbar,
+        BlockQuote,
+        Image,
+        ImageUpload,
+        Font,
+        Alignment,
+        Indent,
+        IndentBlock,
+        RemoveFormat,
+      ],
       heading: {
         options: [
           {
@@ -377,6 +418,12 @@ const BlogPostCreatePage = () => {
         "|",
         "bold",
         "italic",
+        "underline",
+        "|",
+        "fontSize",
+        "fontFamily",
+        "fontColor",
+        "fontBackgroundColor",
         "|",
         "numberedList",
         "bulletedList",
@@ -385,6 +432,13 @@ const BlogPostCreatePage = () => {
         "imageUpload",
         "insertTable",
         "blockQuote",
+        "|",
+        "alignment",
+        "|",
+        "indent",
+        "outdent",
+        "|",
+        "removeFormat",
       ],
       // Classic build includes Table + merge; tableProperties plugins are not in this build.
       table: {
@@ -845,7 +899,7 @@ const BlogPostCreatePage = () => {
           </Button>,
         ]}
         width={720}
-        destroyOnHidden
+        destroyOnClose
       >
         <div className="min-h-[160px]">
           {generatingSummary && !generatedSummaryText ? (
@@ -862,7 +916,7 @@ const BlogPostCreatePage = () => {
         title="Manage uploaded images"
         footer={null}
         width={920}
-        destroyOnHidden
+        destroyOnClose
       >
         {uploadedImageUrls.length === 0 ? (
           <Empty description="No uploaded images in this editor session." />

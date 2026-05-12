@@ -1,7 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import {
+  ClassicEditor,
+  Heading,
+  Essentials,
+  Paragraph,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  Link,
+  Table,
+  TableToolbar,
+  BlockQuote,
+  Font,
+  Alignment,
+  Indent,
+  IndentBlock,
+  RemoveFormat,
+  Image,
+  ImageUpload,
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import {
   Button,
   Card,
@@ -349,6 +370,26 @@ const BlogPostUpdatePage = () => {
   const blogPostEditorConfiguration = useMemo(
     () => ({
       licenseKey: "GPL",
+      plugins: [
+        Essentials,
+        Heading,
+        Paragraph,
+        Bold,
+        Italic,
+        Underline,
+        List,
+        Link,
+        Table,
+        TableToolbar,
+        BlockQuote,
+        Image,
+        ImageUpload,
+        Font,
+        Alignment,
+        Indent,
+        IndentBlock,
+        RemoveFormat,
+      ],
       heading: {
         options: [
           {
@@ -384,6 +425,12 @@ const BlogPostUpdatePage = () => {
         "|",
         "bold",
         "italic",
+        "underline",
+        "|",
+        "fontSize",
+        "fontFamily",
+        "fontColor",
+        "fontBackgroundColor",
         "|",
         "numberedList",
         "bulletedList",
@@ -392,6 +439,13 @@ const BlogPostUpdatePage = () => {
         "imageUpload",
         "insertTable",
         "blockQuote",
+        "|",
+        "alignment",
+        "|",
+        "indent",
+        "outdent",
+        "|",
+        "removeFormat",
       ],
       table: {
         contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
@@ -795,7 +849,7 @@ const BlogPostUpdatePage = () => {
           </Button>,
         ]}
         width={720}
-        destroyOnHidden
+        destroyOnClose
       >
         <div className="min-h-[160px]">
           {generatingSummary && !generatedSummaryText ? (
@@ -813,7 +867,7 @@ const BlogPostUpdatePage = () => {
         title="Manage images"
         footer={null}
         width={920}
-        destroyOnHidden
+        destroyOnClose
       >
         {uploadedImageUrls.length === 0 ? (
           <Empty description="No images found in content." />
@@ -858,4 +912,3 @@ const BlogPostUpdatePage = () => {
 };
 
 export default BlogPostUpdatePage;
-
