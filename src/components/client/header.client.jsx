@@ -83,9 +83,9 @@ export default function Header({ currentPath }) {
             </div>
           </Link>
 
-          {/* Navigation — flex-wrap + no overflow-x để tránh thanh cuộn ngang khi đủ 7 mục */}
+          {/* Một hàng: flex-nowrap; tên user truncate để không đẩy menu xuống dòng */}
           <nav className="hidden min-w-0 flex-1 md:flex md:items-center md:justify-center">
-            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:gap-x-3 lg:gap-x-4 xl:gap-x-5">
+            <div className="flex min-w-0 flex-nowrap items-center justify-center gap-x-1 sm:gap-x-1.5 md:gap-x-2 lg:gap-x-2.5 xl:gap-x-3 2xl:gap-x-4">
               {nav.map((item) => {
                 const isTestHub =
                   item.href === "/online-tests" &&
@@ -119,11 +119,11 @@ export default function Header({ currentPath }) {
             </div>
           </nav>
 
-          {/* User / Auth */}
-          <div className="ml-auto flex shrink-0 items-center gap-4">
+          {/* User / Auth — min-w-0 + truncate tên để nav luôn đủ chỗ một hàng */}
+          <div className="ml-auto flex min-w-0 shrink items-center gap-2 sm:gap-4">
             <button
               onClick={() => window.dispatchEvent(new Event("open-tour"))}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
               title="Hướng dẫn"
             >
               <QuestionMarkCircleIcon className="h-6 w-6" />
@@ -133,9 +133,9 @@ export default function Header({ currentPath }) {
                 <button
                   id="user-menu-btn"
                   onClick={() => setIsUserOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50"
+                  className="flex min-w-0 max-w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50"
                 >
-                  <div className="h-8 w-8 overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-200">
                     {user.avatar ? (
                       <img
                         src={user.avatar}
@@ -148,7 +148,10 @@ export default function Header({ currentPath }) {
                       </div>
                     )}
                   </div>
-                  <span className="hidden text-sm font-medium text-gray-700 lg:inline">
+                  <span
+                    className="hidden min-w-0 max-w-[7rem] text-left text-sm font-medium text-gray-700 sm:max-w-[9rem] lg:inline xl:max-w-[11rem] 2xl:max-w-[14rem] truncate"
+                    title={user.fullName}
+                  >
                     {user.fullName}
                   </span>
                 </button>
