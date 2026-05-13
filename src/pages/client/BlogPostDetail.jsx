@@ -13,6 +13,7 @@ import {
   getPublicRelatedBlogPosts,
 } from "@/api/api";
 import { renderBlogHtml } from "@/utils/blogContent.jsx";
+import BlogPostCard from "@/components/card/blog-post.card.jsx";
 
 const { Title, Text } = Typography;
 

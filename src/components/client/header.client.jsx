@@ -83,41 +83,39 @@ export default function Header({ currentPath }) {
             </div>
           </Link>
 
-          {/* Navigation */}
-          <nav className="hidden min-w-0 flex-1 md:block">
-            <div className="overflow-x-auto">
-              <div className="flex w-max min-w-full items-center justify-center gap-1.5 lg:gap-2">
-                {nav.map((item) => {
-                  const isTestHub =
-                    item.href === "/online-tests" &&
-                    (activePath === "/online-tests" ||
-                      activePath.startsWith("/online-tests/") ||
-                      activePath === "/speaking-tests" ||
-                      activePath.startsWith("/speaking-tests/") ||
-                      activePath === "/writing-tests" ||
-                      activePath.startsWith("/writing-tests/"));
-                  const isActive =
-                    isTestHub ||
-                    (item.href === "/"
-                      ? activePath === "/"
-                      : activePath === item.href ||
-                        activePath.startsWith(`${item.href}/`));
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={[
-                        "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold transition",
-                        isActive
-                          ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
-                          : "text-gray-700 hover:bg-gray-50 hover:text-emerald-700",
-                      ].join(" ")}
-                    >
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
+          {/* Navigation — flex-wrap + no overflow-x để tránh thanh cuộn ngang khi đủ 7 mục */}
+          <nav className="hidden min-w-0 flex-1 md:flex md:items-center md:justify-center">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:gap-x-3 lg:gap-x-4 xl:gap-x-5">
+              {nav.map((item) => {
+                const isTestHub =
+                  item.href === "/online-tests" &&
+                  (activePath === "/online-tests" ||
+                    activePath.startsWith("/online-tests/") ||
+                    activePath === "/speaking-tests" ||
+                    activePath.startsWith("/speaking-tests/") ||
+                    activePath === "/writing-tests" ||
+                    activePath.startsWith("/writing-tests/"));
+                const isActive =
+                  isTestHub ||
+                  (item.href === "/"
+                    ? activePath === "/"
+                    : activePath === item.href ||
+                      activePath.startsWith(`${item.href}/`));
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={[
+                      "inline-flex h-8 items-center whitespace-nowrap px-0.5 text-sm font-medium transition-colors border-b-[3px]",
+                      isActive
+                        ? "border-indigo-600 text-indigo-600"
+                        : "border-transparent text-gray-700 hover:text-indigo-600",
+                    ].join(" ")}
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
             </div>
           </nav>
 
