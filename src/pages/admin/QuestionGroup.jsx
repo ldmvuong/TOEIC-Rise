@@ -1335,4 +1335,3 @@ const QuestionGroupPage = () => {
 };
 
 export default QuestionGroupPage;
-

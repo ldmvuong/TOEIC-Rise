@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import parse from "html-react-parser";
-import { Button, Card, Col, Image, Row, Space, Tag, Typography } from "antd";
+import {
+  Button,
+  Card,
+  Col,
+  Image,
+  Row,
+  Space,
+  Tag,
+  Typography,
+} from "antd";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -11,6 +19,7 @@ import {
 import dayjs from "dayjs";
 import { changeBlogPostStatus, getBlogPostDetailForStaff } from "@/api/api";
 import { message, Popconfirm } from "antd";
+import { renderBlogHtml } from "@/utils/blogContent.jsx";
 
 const { Title, Text } = Typography;
 
@@ -427,7 +436,7 @@ const BlogPostDetailPage = () => {
           <Col xs={24} lg={18}>
             <Card title="Content" className="shadow-sm">
               <div
-                className="blog-post-detail-content text-slate-800 leading-relaxed
+                className="blog-post-detail-content text-slate-800 leading-relaxed overflow-x-hidden
                   [&_table]:border-collapse [&_table]:border [&_table]:border-slate-200 [&_table]:my-4
                   [&_td]:border [&_td]:border-slate-200 [&_td]:p-2
                   [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50
@@ -438,7 +447,7 @@ const BlogPostDetailPage = () => {
                   [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
               >
                 {contentHtml ? (
-                  parse(contentHtml)
+                  renderBlogHtml(contentHtml)
                 ) : (
                   <Text type="secondary">No content</Text>
                 )}

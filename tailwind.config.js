@@ -5,7 +5,11 @@ content: [
 './src/**/*.{js,jsx}',
 ],
 theme: {
-extend: {},
+extend: {
+fontFamily: {
+sans: ["Inter", "system-ui", "Segoe UI", "Roboto", "sans-serif"],
+},
+},
 },
 plugins: [],
 }

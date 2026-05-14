@@ -450,7 +450,7 @@ const SpeakingQuestionGroupPage = () => {
                 confirmLoading={savingQuestion}
                 okText="Save"
                 cancelText="Cancel"
-                destroyOnClose
+                destroyOnHidden
                 width={640}
             >
                 {loadingQuestion ? (

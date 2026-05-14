@@ -1,11 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useEffect } from "react";
-import NotFound from '../src/components/shared/not.found.jsx'
+import NotFound from "../src/components/shared/not.found.jsx";
 import ClientLayout from "./layouts/ClientLayout.jsx";
-import HomePage from './pages/client/HomePage.jsx';
-import TestList from './pages/client/TestList.jsx';
+import HomePage from "./pages/client/HomePage.jsx";
+import TestList from "./pages/client/TestList.jsx";
 import TestDetail from "./pages/client/TestDetail.jsx";
-import ClientProfile from './pages/client/Profile.jsx';
+import ClientProfile from "./pages/client/Profile.jsx";
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import TestSetPage from "./pages/admin/TestSet.jsx";
@@ -19,9 +19,16 @@ import SpeakingTestPage from "./pages/admin/SpeakingTest.jsx";
 import WritingTestPage from "./pages/admin/WritingTest.jsx";
 import Profile from "./pages/admin/Profile.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
-import ProtectedRoute, { GuestOnlyRoute } from "./components/shared/protected-route/index.jsx";
+import ProtectedRoute, {
+  GuestOnlyRoute,
+} from "./components/shared/protected-route/index.jsx";
 import GoogleCallbackHandler from "./components/auth/GoogleCallbackHandler.jsx";
 import RefreshTokenHandler from "./components/shared/RefreshTokenHandler.jsx";
+import LessonsPage from "./pages/admin/Lessons.jsx";
+import AdminLearningPathsPage from "./pages/admin/LearningPaths.jsx";
+import AdminLearningPathDetailPage from "./pages/admin/LearningPathDetail.jsx";
+import AdminLearningPathLessonEditorPage from "./pages/admin/LearningPathLessonEditor.jsx";
+import AdminLearningPathLessonViewPage from "./pages/admin/LearningPathLessonView.jsx";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { fetchAccount } from "./redux/slices/accountSlide";
 import UserPage from "./pages/admin/User.jsx";
@@ -41,6 +48,9 @@ import BlogCategoriesPublicPage from "./pages/client/BlogCategories.jsx";
 import BlogPostsPublicPage from "./pages/client/BlogPosts.jsx";
 import BlogPostDetailPublicPage from "./pages/client/BlogPostDetail.jsx";
 import BlogSearchPage from "./pages/client/BlogSearch.jsx";
+import LearningPathsPage from "./pages/client/LearningPaths.jsx";
+import LearningPathDetailPage from "./pages/client/LearningPathDetail.jsx";
+import LearningPathLessonPage from "./pages/client/LearningPathLesson.jsx";
 import DoTest from "./pages/client/DoTest.jsx";
 import DoSpeakingTest from "./pages/client/DoSpeakingTest.jsx";
 import DoWritingTest from "./pages/client/DoWritingTest.jsx";
@@ -77,7 +87,6 @@ import DictationDetail from "./pages/admin/DictationDetail.jsx";
 import DictationLibrary from "./pages/client/Dictation.jsx";
 import DictationPractice from "./pages/client/DictationPractice.jsx";
 
-
 export default function App() {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector((state) => state.account.isLoading);
@@ -88,7 +97,7 @@ export default function App() {
 
   const router = createBrowserRouter([
     {
-      path: '/',
+      path: "/",
       element: (
         <>
           <ClientLayout />
@@ -119,16 +128,16 @@ export default function App() {
           element: <BlogPostDetailPublicPage />,
         },
         {
-          path: 'exam-structure',
-          element: <ExamStructure />
+          path: "exam-structure",
+          element: <ExamStructure />,
         },
         {
-          path: 'online-tests',
-          element: <TestList variant="readingListening" />
+          path: "online-tests",
+          element: <TestList variant="readingListening" />,
         },
         {
-          path: 'online-tests/:id/:slug?',
-          element: <TestDetail variant="readingListening" />
+          path: "online-tests/:id/:slug?",
+          element: <TestDetail variant="readingListening" />,
         },
         {
           path: "speaking-tests",
@@ -147,188 +156,212 @@ export default function App() {
           element: <TestDetail variant="writing" />,
         },
         {
-          path: 'do-test',
+          path: "do-test",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <DoTest />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'do-speaking-test',
+          path: "do-speaking-test",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <DoSpeakingTest />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'do-writing-test',
+          path: "do-writing-test",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <DoWritingTest />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'do-mini-test',
+          path: "do-mini-test",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <DoMiniTest />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'mini-test-result',
+          path: "mini-test-result",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <MiniTestResult />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'test-result/:userTestId',
+          path: "test-result/:userTestId",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <TestResult />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'test-result-detail/:userTestId',
+          path: "test-result-detail/:userTestId",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <TestResultDetail />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'redo-wrong/:userTestId',
+          path: "redo-wrong/:userTestId",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <RedoWrong />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'fix-wrong-one-by-one/:userTestId',
+          path: "fix-wrong-one-by-one/:userTestId",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FixWrongOneByOne />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'statistics',
+          path: "statistics",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <TestAnalytics />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'profile',
+          path: "profile",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER', 'ADMIN', "STAFF"]}>
+            <ProtectedRoute allowedRoles={["LEARNER", "ADMIN", "STAFF"]}>
               <ClientProfile />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards',
+          path: "flashcards",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardLibrary />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/create',
+          path: "flashcards/create",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardCreatePage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/due',
+          path: "learning-paths",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <LearningPathsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:learningPathSlug/lessons/:lessonSlug",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <LearningPathLessonPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:learningPathSlug",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
+              <LearningPathDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "flashcards/due",
+          element: (
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardDueChoosePage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/due/match',
+          path: "flashcards/due/match",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardMatchPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/due/quiz',
+          path: "flashcards/due/quiz",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardQuizPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/due/type',
+          path: "flashcards/due/type",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardTypePage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id/edit',
+          path: "flashcards/:id/edit",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardEditPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id/match',
+          path: "flashcards/:id/match",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardMatchPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id/quiz',
+          path: "flashcards/:id/quiz",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardQuizPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id/type',
+          path: "flashcards/:id/type",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardTypePage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id/sentence-practice',
+          path: "flashcards/:id/sentence-practice",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardSentencePracticePage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
-          path: 'flashcards/:id',
+          path: "flashcards/:id",
           element: (
-            <ProtectedRoute allowedRoles={['LEARNER']}>
+            <ProtectedRoute allowedRoles={["LEARNER"]}>
               <FlashcardViewPage />
             </ProtectedRoute>
-          )
+          ),
         },
         {
           path: "dictation",
@@ -379,282 +412,328 @@ export default function App() {
       path: "/admin/profile",
       element: (
         <>
-          <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <AdminLayout />
           </ProtectedRoute>
           <RefreshTokenHandler />
         </>
       ),
-      children: [
-        { index: true, element: <Profile /> }
-      ],
+      children: [{ index: true, element: <Profile /> }],
     },
     {
       path: "/admin",
       element: (
         <>
-          <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <AdminLayout />
           </ProtectedRoute>
           <RefreshTokenHandler />
         </>
       ),
       children: [
-        { 
-          index: true, 
+        {
+          path: "lessons",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-              <Dashboard />
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <LessonsPage />
             </ProtectedRoute>
-          ) 
+          ),
         },
         {
-          path: 'test-sets',
+          path: "learning-paths",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <AdminLearningPathsPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:id/lessons/new",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <AdminLearningPathLessonEditorPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:id/lessons/:lessonId/edit",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <AdminLearningPathLessonEditorPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:id/lessons/:lessonId",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <AdminLearningPathLessonViewPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "learning-paths/:slug",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <AdminLearningPathDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          index: true,
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "test-sets",
+          element: (
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <TestSetPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'speaking-test-sets',
+          path: "speaking-test-sets",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <SpeakingTestSetPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'writing-test-sets',
+          path: "writing-test-sets",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <WritingTestSetPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'speaking-tests',
+          path: "speaking-tests",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <SpeakingTestPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'speaking-tests/:id',
+          path: "speaking-tests/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <SpeakingTestDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'writing-tests',
+          path: "writing-tests",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <WritingTestPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'writing-tests/:id',
+          path: "writing-tests/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <WritingTestDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'tests',
+          path: "tests",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <TestPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'tests/:id',
+          path: "tests/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <TestDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'users',
+          path: "users",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <UserPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'reports',
+          path: "reports",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <ReportPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'reports/:id',
+          path: "reports/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <ReportDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'question-groups/:id',
+          path: "question-groups/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <QuestionGroupPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'speaking-question-groups/:id',
+          path: "speaking-question-groups/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <SpeakingQuestionGroupPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'writing-question-groups/:id',
+          path: "writing-question-groups/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <WritingQuestionGroupPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'analytics',
+          path: "analytics",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <AnalyticsPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'tags',
+          path: "tags",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <TagsPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'blog-categories',
+          path: "blog-categories",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <BlogCategoriesPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'blog-categories/:id/posts/new',
+          path: "blog-categories/:id/posts/new",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <BlogPostCreatePage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'blog-posts/:id',
+          path: "blog-posts/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <BlogPostDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'blog-posts/:id/edit',
+          path: "blog-posts/:id/edit",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <BlogPostUpdatePage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'blog-categories/:id',
+          path: "blog-categories/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <BlogCategoryDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/chatbot',
+          path: "system-prompts/chatbot",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsChatbot />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/q-and-a',
+          path: "system-prompts/q-and-a",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsQAndA />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/explanation',
+          path: "system-prompts/explanation",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsExplanation />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/sentence-assessment',
+          path: "system-prompts/sentence-assessment",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsSentenceAssessment />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/writing-assessment',
+          path: "system-prompts/writing-assessment",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsWritingAssessment />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/speaking-assessment',
+          path: "system-prompts/speaking-assessment",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsSpeakingAssessment />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/blog-summarization',
+          path: "system-prompts/blog-summarization",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptsBlogSummarization />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'system-prompts/:type/:id',
+          path: "system-prompts/:type/:id",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <SystemPromptDetailPage />
             </ProtectedRoute>
           ),
         },
         {
-          path: 'dictation',
+          path: "dictation",
           element: (
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
               <Dictation />
             </ProtectedRoute>
-          )
+          ),
         },
         {
           path: "dictation/:id",

@@ -912,4 +912,3 @@ const BlogPostUpdatePage = () => {
 };
 
 export default BlogPostUpdatePage;
-

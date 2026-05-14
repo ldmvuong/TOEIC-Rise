@@ -5,8 +5,11 @@ import {
     getUserTestStatisticsResult,
     getWritingTestStatisticsResult,
     getSpeakingTestStatisticsResult,
+    getLevelLearningPath,
+    createUserLearningPath,
+    getLearningPathDetail,
 } from '../../api/api';
-import { message } from 'antd';
+import { message, Modal, Button, Spin } from 'antd';
 import AnswerQuestion from '../client/modal/AnswerQuestion';
 import ChatQuestion from '../client/modal/ChatQuestion';
 import ReportQuestion from '../client/modal/ReportQuestion';
@@ -78,6 +81,84 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
     const [searchParams] = useSearchParams();
     const writingFromUrl = searchParams.get('writing') === '1';
     const speakingFromUrl = searchParams.get('speaking') === '1';
+
+    const [learningPathLoading, setLearningPathLoading] = useState(false);
+    const [showLevelModal, setShowLevelModal] = useState(false);
+    const [levelOptions, setLevelOptions] = useState([]);
+    const [recommendedLevel, setRecommendedLevel] = useState(null);
+
+    const handleLearningPathClick = async () => {
+        if (!data) return;
+        const slug = toSlug(data.testName || 'test');
+        try {
+            setLearningPathLoading(true);
+            let testType = "LISTENING_AND_READING";
+            if (data.isWritingSummary) {
+                if (speakingFromUrl || shouldPreferSpeakingStatisticsApi(data)) {
+                    testType = "SPEAKING";
+                } else {
+                    testType = "WRITING";
+                }
+            } else if (!fullTest) {
+                testType = "MINI_TEST";
+            }
+
+            const res = await getLevelLearningPath(slug, testType);
+            const result = res?.data ?? {};
+
+            if (result.currentLevel != null) {
+                try {
+                    await getLearningPathDetail(slug);
+                } catch (detailErr) {
+                    console.warn("Learning path detail prefetch:", detailErr);
+                }
+                navigate(`/learning-paths/${slug}`);
+                return;
+            }
+
+            setRecommendedLevel(result.chooseLevel ?? "BEGINNER");
+            const choose = result.chooseLevel;
+            let options = ["BEGINNER"];
+            if (choose === "INTERMEDIATE") {
+                options = ["BEGINNER", "INTERMEDIATE"];
+            } else if (choose === "ADVANCED") {
+                options = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+            }
+            setLevelOptions(options);
+            setShowLevelModal(true);
+        } catch (error) {
+            console.error('Error fetching level learning path:', error);
+            message.error(error?.message || 'Không thể tải thông tin lộ trình');
+        } finally {
+            setLearningPathLoading(false);
+        }
+    };
+
+    const handleSelectLevel = async (level) => {
+        const slug = toSlug(data?.testName || 'test');
+        try {
+            setLearningPathLoading(true);
+            await createUserLearningPath(slug, level);
+            try {
+                await getLearningPathDetail(slug);
+            } catch (detailErr) {
+                console.warn("Learning path detail after save:", detailErr);
+                message.warning(
+                    detailErr?.message ||
+                        "Đã lưu cấp độ; không tải được chi tiết ngay. Đang mở trang lộ trình…",
+                );
+            }
+            message.success('Tạo lộ trình thành công!');
+            setShowLevelModal(false);
+            navigate(`/learning-paths/${slug}`);
+        } catch (error) {
+            console.error('Error creating learning path:', error);
+            message.error(error?.message || 'Lỗi khi tạo lộ trình');
+            setShowLevelModal(true);
+        } finally {
+            setLearningPathLoading(false);
+        }
+    };
 
     // Fetch data from API
     useEffect(() => {
@@ -284,8 +365,6 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
         };
     }, [activePartTab, data]);
 
-    // Early returns AFTER all hooks
-    // Only show "no data" message after fetch is complete
     if (hasFetched && !data) {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -296,13 +375,24 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
         );
     }
     
-    // Don't render anything while fetching
     if (!hasFetched || !data) {
         return null;
     }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="relative bg-white rounded-xl border border-gray-200 p-6">
+            {learningPathLoading ? (
+                <div
+                    className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/85 px-4 py-8 backdrop-blur-[1px]"
+                    aria-busy="true"
+                    aria-live="polite"
+                >
+                    <Spin size="large" />
+                    <div className="text-center text-sm text-gray-600">
+                        Đang xử lý lộ trình…
+                    </div>
+                </div>
+            ) : null}
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -317,6 +407,13 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                             Xem đáp án
                         </button>
                     )}
+                    <button 
+                        onClick={handleLearningPathClick}
+                        disabled={learningPathLoading}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-indigo-400 flex items-center justify-center min-w-[160px]"
+                    >
+                        {learningPathLoading ? "Đang xử lý…" : "Lộ trình học tập"}
+                    </button>
                     <button 
                         onClick={() => {
                             if (data.isWritingSummary && data.testId != null) {
@@ -564,6 +661,70 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 }}
                 questionData={reportQuestionData}
             />
+
+            <Modal
+                title={
+                    <div>
+                        <div className="text-base font-semibold text-gray-900">
+                            Chọn cấp độ lộ trình
+                        </div>
+                        <div className="mt-0.5 text-xs font-normal text-gray-500">
+                            Select your learning level
+                        </div>
+                    </div>
+                }
+                open={showLevelModal}
+                onCancel={() => !learningPathLoading && setShowLevelModal(false)}
+                footer={null}
+                destroyOnClose
+                maskClosable={!learningPathLoading}
+            >
+                <p className="mb-1 mt-2 text-sm text-gray-600">
+                    Mức có nhãn{" "}
+                    <span className="font-medium text-amber-700">Recommended for you</span>{" "}
+                    (⭐) là gợi ý phù hợp với kết quả làm bài của bạn.
+                </p>
+                <div className="flex flex-col gap-3 mt-4">
+                    {levelOptions.map(level => {
+                        const isRecommended = level === recommendedLevel;
+                        let bgColor = "bg-slate-50 hover:bg-slate-100 border-slate-200";
+                        let textColor = "text-slate-700";
+                        
+                        if (level === "BEGINNER") {
+                            bgColor = "bg-green-50 hover:bg-green-100 border-green-200";
+                            textColor = "text-green-700";
+                        } else if (level === "INTERMEDIATE") {
+                            bgColor = "bg-orange-50 hover:bg-orange-100 border-orange-200";
+                            textColor = "text-orange-700";
+                        } else if (level === "ADVANCED") {
+                            bgColor = "bg-purple-50 hover:bg-purple-100 border-purple-200";
+                            textColor = "text-purple-700";
+                        }
+
+                        return (
+                            <Button 
+                                key={level} 
+                                onClick={() => handleSelectLevel(level)}
+                                disabled={learningPathLoading}
+                                size="large"
+                                className={`w-full text-left flex justify-between items-center h-auto py-3 border ${bgColor}`}
+                            >
+                                <span className={`font-medium ${textColor}`}>
+                                    {level === "BEGINNER" ? "Người mới bắt đầu (Beginner)" :
+                                     level === "INTERMEDIATE" ? "Trung cấp (Intermediate)" : "Nâng cao (Advanced)"}
+                                </span>
+                                {isRecommended ? (
+                                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200/80">
+                                        <span aria-hidden>⭐</span>
+                                        Recommended for you
+                                    </span>
+                                ) : null}
+                            </Button>
+                        );
+                    })}
+                </div>
+            </Modal>
+
         </div>
     );
 };
