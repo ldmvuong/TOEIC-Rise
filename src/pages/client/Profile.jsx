@@ -67,11 +67,11 @@ const Profile = () => {
     }, []);
 
     const getGenderDisplay = (gender) => {
-        if (!gender) return 'Chưa cập nhật';
+        if (!gender) return 'Not updated';
         const genderMap = {
-            'MALE': 'Nam',
-            'FEMALE': 'Nữ',
-            'OTHER': 'Khác'
+            'MALE': 'Male',
+            'FEMALE': 'Female',
+            'OTHER': 'Other'
         };
         return genderMap[gender] || gender;
     };
@@ -163,14 +163,14 @@ const Profile = () => {
         
         // Validate fullName
         if (!formData.fullName || !formData.fullName.trim()) {
-            errors.fullName = 'Họ và tên không được để trống';
+            errors.fullName = 'Full name cannot be empty';
         } else if (!isValidFullName(formData.fullName.trim())) {
-            errors.fullName = 'Họ và tên chỉ được chứa chữ cái và khoảng trắng';
+            errors.fullName = 'Full name can only contain letters and spaces';
         }
         
         // Validate gender
         if (!formData.gender) {
-            errors.gender = 'Vui lòng chọn giới tính';
+            errors.gender = 'Please select a gender';
         }
         
         // Validate avatar if file is selected
@@ -202,7 +202,7 @@ const Profile = () => {
 
             const response = await updateUserProfile(data);
             if (response && response.status === 200) {
-                message.success('Cập nhật thông tin thành công');
+                message.success('Profile updated successfully');
                 setIsEditing(false);
                 setFormErrors({}); // Clear errors
                 
@@ -222,7 +222,7 @@ const Profile = () => {
                 await dispatch(fetchAccount());
             }
         } catch (error) {
-            message.error(error?.message || 'Cập nhật thông tin thất bại');
+            message.error(error?.message || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
@@ -246,13 +246,13 @@ const Profile = () => {
     const validatePasswordForm = () => {
         const errors = {};
         
-        if (!passwordData.oldPassword) errors.oldPassword = 'Vui lòng nhập mật khẩu cũ';
-        if (!passwordData.newPassword) errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+        if (!passwordData.oldPassword) errors.oldPassword = 'Please enter your current password';
+        if (!passwordData.newPassword) errors.newPassword = 'Please enter your new password';
         else if (!isStrongPassword(passwordData.newPassword)) {
-            errors.newPassword = 'Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+            errors.newPassword = 'Password must be 8-20 characters and include lowercase, uppercase, number, special character (.@#$%^&+=), and no spaces';
         }
-        if (!passwordData.confirmPassword) errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
-        else if (passwordData.newPassword !== passwordData.confirmPassword) errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+        if (!passwordData.confirmPassword) errors.confirmPassword = 'Please confirm your password';
+        else if (passwordData.newPassword !== passwordData.confirmPassword) errors.confirmPassword = 'Confirmation password does not match';
         
         setPasswordErrors(errors);
         return Object.keys(errors).length === 0;
@@ -265,12 +265,12 @@ const Profile = () => {
         try {
             const response = await changeUserPassword(passwordData);
             if (response && response.status === 200) {
-                message.success('Đổi mật khẩu thành công');
+                message.success('Password changed successfully');
                 setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
                 setPasswordErrors({});
             }
         } catch (error) {
-            message.error(error?.message || 'Đổi mật khẩu thất bại');
+            message.error(error?.message || 'Failed to change password');
         } finally {
             setPasswordLoading(false);
         }
@@ -287,7 +287,7 @@ const Profile = () => {
     const hasPassword = hasPasswordInStore ?? profileData?.hasPassword ?? false;
 
     const tabs = [
-        { id: 'info', name: 'Thông tin cá nhân', icon: (
+        { id: 'info', name: 'Personal information', icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
@@ -296,7 +296,7 @@ const Profile = () => {
     if (hasPassword) {
         tabs.push({
             id: 'password',
-            name: 'Đổi mật khẩu',
+            name: 'Change password',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a6 6 0 00-12 0v4h12z" />
@@ -310,8 +310,8 @@ const Profile = () => {
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Tài khoản của tôi</h1>
-                    <p className="text-gray-600">Quản lý thông tin cá nhân và bảo mật tài khoản</p>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">My Account</h1>
+                    <p className="text-gray-600">Manage your personal information and account security</p>
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -388,7 +388,7 @@ const Profile = () => {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800">
-                                            {formData.fullName || profileData?.fullName || 'Người dùng'}
+                                            {formData.fullName || profileData?.fullName || 'User'}
                                         </h2>
                                         <p className="text-gray-600">{profileData?.email || ''}</p>
                                     </div>
@@ -409,7 +409,7 @@ const Profile = () => {
                                             {/* Full Name */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Họ và tên <span className="text-red-500">*</span>
+                                                    Full name <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -418,7 +418,7 @@ const Profile = () => {
                                                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
                                                         formErrors.fullName ? 'border-red-500' : 'border-gray-300'
                                                     }`}
-                                                    placeholder="Nhập họ và tên"
+                                                    placeholder="Enter your full name"
                                                 />
                                                 {formErrors.fullName && (
                                                     <p className="text-red-500 text-sm mt-1">{formErrors.fullName}</p>
@@ -428,7 +428,7 @@ const Profile = () => {
                                             {/* Gender */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Giới tính <span className="text-red-500">*</span>
+                                                    Gender <span className="text-red-500">*</span>
                                                 </label>
                                                 <select
                                                     value={formData.gender}
@@ -437,10 +437,10 @@ const Profile = () => {
                                                         formErrors.gender ? 'border-red-500' : 'border-gray-300'
                                                     }`}
                                                 >
-                                                    <option value="">Chọn giới tính</option>
-                                                    <option value="MALE">Nam</option>
-                                                    <option value="FEMALE">Nữ</option>
-                                                    <option value="OTHER">Khác</option>
+                                                    <option value="">Select gender</option>
+                                                    <option value="MALE">Male</option>
+                                                    <option value="FEMALE">Female</option>
+                                                    <option value="OTHER">Other</option>
                                                 </select>
                                                 {formErrors.gender && (
                                                     <p className="text-red-500 text-sm mt-1">{formErrors.gender}</p>
@@ -457,15 +457,15 @@ const Profile = () => {
                                                 {/* Full Name */}
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Họ và tên
+                                                        Full name
                                                     </label>
-                                                    <p className="px-4 py-3 bg-gray-50 rounded-lg text-gray-800">{profileData?.fullName || 'Chưa cập nhật'}</p>
+                                                    <p className="px-4 py-3 bg-gray-50 rounded-lg text-gray-800">{profileData?.fullName || 'Not updated'}</p>
                                                 </div>
 
                                                 {/* Gender */}
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Giới tính
+                                                        Gender
                                                     </label>
                                                     <p className="px-4 py-3 bg-gray-50 rounded-lg text-gray-800">{getGenderDisplay(profileData?.gender)}</p>
                                                 </div>
@@ -501,7 +501,7 @@ const Profile = () => {
                                                 disabled={loading}
                                                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
                                             >
-                                                Hủy
+                                                Cancel
                                             </button>
                                             <button
                                                 onClick={handleSave}
@@ -514,7 +514,7 @@ const Profile = () => {
                                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                     </svg>
                                                 )}
-                                                Lưu thay đổi
+                                                Save changes
                                             </button>
                                         </>
                                     ) : (
@@ -525,7 +525,7 @@ const Profile = () => {
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                             </svg>
-                                            Chỉnh sửa thông tin
+                                            Edit profile
                                         </button>
                                     )}
                                 </div>
@@ -540,7 +540,7 @@ const Profile = () => {
                                     {/* Old Password */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Mật khẩu hiện tại <span className="text-red-500">*</span>
+                                            Current password <span className="text-red-500">*</span>
                                         </label>
                                         <div className="relative">
                                             <input
@@ -548,7 +548,7 @@ const Profile = () => {
                                                 value={passwordData.oldPassword}
                                                 onChange={(e) => handlePasswordInputChange('oldPassword', e.target.value)}
                                                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                                placeholder="Nhập mật khẩu hiện tại"
+                                                placeholder="Enter your current password"
                                             />
                                             <button
                                                 type="button"
@@ -575,7 +575,7 @@ const Profile = () => {
                                     {/* New Password */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Mật khẩu mới <span className="text-red-500">*</span>
+                                            New password <span className="text-red-500">*</span>
                                         </label>
                                         <div className="relative">
                                             <input
@@ -583,7 +583,7 @@ const Profile = () => {
                                                 value={passwordData.newPassword}
                                                 onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
                                                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                                placeholder="Nhập mật khẩu mới"
+                                                placeholder="Enter your new password"
                                             />
                                             <button
                                                 type="button"
@@ -605,13 +605,13 @@ const Profile = () => {
                                         {passwordErrors.newPassword && (
                                             <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
                                         )}
-                                        <p className="text-gray-500 text-xs mt-2">Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=)</p>
+                                        <p className="text-gray-500 text-xs mt-2">Password must be 8-20 characters and include lowercase, uppercase, number, and special character (.@#$%^&+=)</p>
                                     </div>
 
                                     {/* Confirm Password */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Xác nhận mật khẩu mới <span className="text-red-500">*</span>
+                                            Confirm new password <span className="text-red-500">*</span>
                                         </label>
                                         <div className="relative">
                                             <input
@@ -619,7 +619,7 @@ const Profile = () => {
                                                 value={passwordData.confirmPassword}
                                                 onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
                                                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                                placeholder="Nhập lại mật khẩu mới"
+                                                placeholder="Confirm your new password"
                                             />
                                             <button
                                                 type="button"
@@ -657,7 +657,7 @@ const Profile = () => {
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
                                         )}
-                                        Đổi mật khẩu
+                                        Change password
                                     </button>
                                 </div>
                             </div>
