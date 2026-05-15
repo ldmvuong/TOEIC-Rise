@@ -39,21 +39,21 @@ const TestCard = ({ test, onClick, variant = "readingListening" }) => {
                     {/* Duration */}
                     <div className="flex items-center text-gray-600 text-sm">
                         <ClockCircleOutlined className="mr-2 text-blue-500" />
-                        <span>{durationMinutes} phút</span>
+                        <span>{durationMinutes} minutes</span>
                     </div>
 
                     {/* Learners Count */}
                     <div className="flex items-center text-gray-600 text-sm pt-2 border-t border-gray-100">
                         <UserOutlined className="mr-2 text-blue-500" />
                         <span className="font-semibold">
-                            {test?.numberOfLearnerTests || 0} lượt làm bài
+                            {test?.numberOfLearnerTests || 0} attempts
                         </span>
                     </div>
                 </div>
 
                 {/* Details Button */}
                 <button className="w-full py-2 px-4 border-2 border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-300 hover:shadow-md">
-                    Chi tiết
+                    Details
                 </button>
             </div>
         </div>
