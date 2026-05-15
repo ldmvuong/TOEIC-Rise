@@ -70,7 +70,7 @@ export default function DictationPractice() {
     } catch (e) {
       setData(null);
       message.error(
-        e?.response?.data?.message || e?.message || "Không thể tải bài chép chính tả",
+        e?.response?.data?.message || e?.message || "Unable to load dictation practice",
       );
     } finally {
       setLoading(false);
@@ -159,7 +159,7 @@ export default function DictationPractice() {
                     ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                     : "bg-amber-200/60 border-amber-300 text-amber-950 hover:bg-amber-200 hover:ring-2 hover:ring-amber-100"
                 }`}
-                title={isRevealed ? "Đã mở" : "Nhấn để mở"}
+                title={isRevealed ? "Revealed" : "Click to reveal"}
               >
                 {isRevealed ? tk.t : dots}
               </button>
@@ -246,10 +246,10 @@ export default function DictationPractice() {
 
   const handleBack = () => {
     Modal.confirm({
-      title: "Quay lại thư viện?",
-      content: "Bạn có thể mất tiến độ đang làm ở câu hiện tại.",
-      okText: "Quay lại",
-      cancelText: "Ở lại",
+      title: "Back to library?",
+      content: "You may lose your progress on the current question.",
+      okText: "Go back",
+      cancelText: "Stay",
       centered: true,
       onOk: () => navigate("/dictation"),
     });
@@ -428,7 +428,7 @@ export default function DictationPractice() {
       <Drawer
         open={navOpen}
         onClose={() => setNavOpen(false)}
-        title="Danh sách câu hỏi"
+        title="Question list"
         placement="right"
         width={360}
       >
@@ -436,15 +436,15 @@ export default function DictationPractice() {
           <div className="flex items-center gap-2 text-xs text-slate-700 flex-wrap">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-emerald-500 bg-emerald-500/10" />
-              {navStats.correct} Đúng
+              {navStats.correct} Correct
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-rose-500 bg-rose-500/10" />
-              {navStats.wrong} Sai
+              {navStats.wrong} Wrong
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-gray-300 bg-gray-100" />
-              {navStats.unanswered} Chưa làm
+              {navStats.unanswered} Unanswered
             </span>
           </div>
 
@@ -468,7 +468,7 @@ export default function DictationPractice() {
                   className={`h-9 rounded-lg border text-xs font-semibold ${tone} ${
                     isCurrent ? "ring-2 ring-indigo-200 border-indigo-400" : ""
                   }`}
-                  title={`Câu ${it.position}`}
+                  title={`Question ${it.position}`}
                 >
                   {it.position}
                 </button>
@@ -484,7 +484,7 @@ export default function DictationPractice() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="min-w-0">
                 <div className="text-slate-900 font-semibold text-sm sm:text-base truncate">
-                  {data?.testName ? `${data.testName} - Luyện tập` : "Chép chính tả - Luyện tập"}
+                  {data?.testName ? `${data.testName} - Practice` : "Dictation - Practice"}
                 </div>
                 <div className="text-slate-600 text-xs mt-0.5">
                   {data?.partName ? data.partName : partNo ? `Part ${partNo}` : ""}
@@ -503,7 +503,7 @@ export default function DictationPractice() {
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <IconPencil className={mode === "FILL" ? "text-slate-900" : "text-slate-500"} />
-                    Điền từ
+                    Fill words
                   </span>
                 </button>
                 <button
@@ -517,7 +517,7 @@ export default function DictationPractice() {
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <IconSparkles className={mode === "FLIP" ? "text-white" : "text-slate-500"} />
-                    Lật từ
+                    Flip words
                   </span>
                 </button>
                 {[0.3, 0.5, 0.7].map((r) => (
@@ -539,13 +539,13 @@ export default function DictationPractice() {
                   {scoreStats.correctQ}/{Math.max(scoreStats.totalQ, 1)}
                 </div>
                 <div className="px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-xs font-semibold text-slate-700">
-                  Câu {total ? currentIndex + 1 : 0}/{Math.max(total, 0)}
+                  Question {total ? currentIndex + 1 : 0}/{Math.max(total, 0)}
                 </div>
                 <button
                   type="button"
                   onClick={() => setNavOpen(true)}
                   className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs font-semibold shadow-sm inline-flex items-center gap-2"
-                  title="Mở danh sách câu hỏi"
+                  title="Open question list"
                 >
                   <svg
                     width="16"
@@ -572,7 +572,7 @@ export default function DictationPractice() {
                         : "text-slate-700 hover:bg-gray-50"
                     }`}
                   >
-                    Trước
+                    Previous
                   </button>
                   <button
                     type="button"
@@ -584,7 +584,7 @@ export default function DictationPractice() {
                         : "text-slate-700 hover:bg-gray-50"
                     }`}
                   >
-                    Sau
+                    Next
                   </button>
                 </div>
                 <button
@@ -592,7 +592,7 @@ export default function DictationPractice() {
                   onClick={handleBack}
                   className="px-3 py-1 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs font-semibold shadow-sm"
                 >
-                  Quay lại
+                  Back
                 </button>
               </div>
             </div>
@@ -605,7 +605,7 @@ export default function DictationPractice() {
           </div>
         ) : !groups.length ? (
           <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-            <Empty description="Không có nội dung chép chính tả cho part này" />
+            <Empty description="No dictation content is available for this part" />
           </div>
         ) : (
           <div className="flex-1 min-h-0" ref={rootRef}>
@@ -688,15 +688,15 @@ export default function DictationPractice() {
                         <div className="mb-4">
                           <DictationAudioPlayer ref={audioCtlRef} src={currentGroup.audioUrl} />
                           <div className="mt-1 text-[11px] text-slate-500">
-                            <span className="font-semibold text-slate-600 mr-2">Phím tắt</span>
+                            <span className="font-semibold text-slate-600 mr-2">Shortcuts</span>
                             <span className="mr-2">
-                              <span className="font-semibold">Tab</span> gợi ý
+                              <span className="font-semibold">Tab</span> hint
                             </span>
                             <span className="mr-2">
-                              <span className="font-semibold">Ctrl</span> phát/dừng
+                              <span className="font-semibold">Ctrl</span> play/pause
                             </span>
                             <span>
-                              <span className="font-semibold">Shift</span> tua lại 3s
+                              <span className="font-semibold">Shift</span> rewind 3s
                             </span>
                           </div>
                         </div>
@@ -718,7 +718,7 @@ export default function DictationPractice() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="text-sm font-bold text-indigo-700">
-                                {mode === "FILL" ? "Nghe & Điền từ:" : "Nghe & Lật từ:"}
+                                {mode === "FILL" ? "Listen & Fill words:" : "Listen & Flip words:"}
                               </div>
                             </div>
 
@@ -736,7 +736,7 @@ export default function DictationPractice() {
                                     : "bg-indigo-100 text-indigo-400 border-indigo-100 cursor-not-allowed opacity-60"
                                 }`}
                               >
-                                Gợi ý{" "}
+                                Hint{" "}
                                 <span className="ml-1 px-2 py-0.5 rounded-lg bg-indigo-200/60">
                                   Tab
                                 </span>
@@ -754,7 +754,7 @@ export default function DictationPractice() {
                                     : "bg-amber-50 text-amber-300 border-amber-100 cursor-not-allowed opacity-60"
                                 }`}
                               >
-                                Mở tất cả
+                                Reveal all
                               </button>
                             </div>
                           </div>
@@ -770,7 +770,7 @@ export default function DictationPractice() {
                               </div>
                             ) : (
                               <div className="text-slate-600">
-                                Không có passage để chép.
+                                No passage is available for dictation.
                               </div>
                             )}
                           </div>
@@ -787,7 +787,7 @@ export default function DictationPractice() {
                               {renderClozeLine(currentGroupId, dictationText, `${currentGroupId}-dictation`)}
                             </div>
                           ) : (
-                            <div className="text-slate-600">Không có transcript/passage để chép.</div>
+                            <div className="text-slate-600">No transcript or passage is available for dictation.</div>
                           )}
                         </div>
                       )}
@@ -809,7 +809,7 @@ export default function DictationPractice() {
                               Transcript
                             </div>
                             <div className="text-xs font-semibold text-slate-600">
-                              {showTranscriptByGroupId[currentGroupId] ? "Ẩn" : "Hiện"}
+                              {showTranscriptByGroupId[currentGroupId] ? "Hide" : "Show"}
                             </div>
                           </button>
                           {showTranscriptByGroupId[currentGroupId] ? (
@@ -854,7 +854,7 @@ export default function DictationPractice() {
                               className={`rounded-2xl border p-4 ${pickTone}`}
                             >
                               <div className="text-sm font-semibold text-slate-900">
-                                {q?.position ? `Câu ${q.position}` : `Câu ${qi + 1}`}
+                                {q?.position ? `Question ${q.position}` : `Question ${qi + 1}`}
                               </div>
                               <div className="text-sm text-slate-700 mt-2">
                                 {q?.content || "—"}
@@ -907,7 +907,7 @@ export default function DictationPractice() {
 
                               {isLocked && correctLetter ? (
                                 <div className="mt-3 text-xs text-slate-600">
-                                  Đáp án đúng:{" "}
+                                  Correct answer:{" "}
                                   <span className="font-semibold text-slate-900">
                                     {correctLetter}
                                   </span>
@@ -926,7 +926,7 @@ export default function DictationPractice() {
                                     }
                                     className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-slate-700 hover:border-gray-300"
                                   >
-                                    {isExplainOpen ? "Ẩn giải thích" : "Xem giải thích"}
+                                    {isExplainOpen ? "Hide explanation" : "View explanation"}
                                   </button>
                                   {isExplainOpen ? (
                                     <div className="mt-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap leading-5">
@@ -949,7 +949,7 @@ export default function DictationPractice() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-bold text-indigo-700">
-                              {mode === "FILL" ? "Nghe & Điền từ:" : "Nghe & Lật từ:"}
+                              {mode === "FILL" ? "Listen & Fill words:" : "Listen & Flip words:"}
                             </div>
                           </div>
 
@@ -967,7 +967,7 @@ export default function DictationPractice() {
                                   : "bg-indigo-100 text-indigo-400 border-indigo-100 cursor-not-allowed opacity-60"
                               }`}
                             >
-                              Gợi ý <span className="ml-1 px-2 py-0.5 rounded-lg bg-indigo-200/60">Tab</span>
+                              Hint <span className="ml-1 px-2 py-0.5 rounded-lg bg-indigo-200/60">Tab</span>
                             </button>
                             <button
                               type="button"
@@ -982,7 +982,7 @@ export default function DictationPractice() {
                                   : "bg-amber-50 text-amber-300 border-amber-100 cursor-not-allowed opacity-60"
                               }`}
                             >
-                              Mở tất cả
+                              Reveal all
                             </button>
                           </div>
                         </div>
@@ -1008,7 +1008,7 @@ export default function DictationPractice() {
                         {/* Options list inside ONE panel */}
                         <div className="mt-3 space-y-2">
                           {!options.length ? (
-                            <div className="text-slate-600">Part này không có đáp án lựa chọn.</div>
+                            <div className="text-slate-600">This part does not have answer choices.</div>
                           ) : (
                             options.map((opt, oi) => {
                               const letter = optionLetter(oi);
@@ -1052,7 +1052,7 @@ export default function DictationPractice() {
                                       className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold border ${badgeTone} ${
                                         locked ? "cursor-not-allowed" : "hover:border-gray-300"
                                       }`}
-                                      aria-label={`Chọn đáp án ${letter}`}
+                                      aria-label={`Select answer ${letter}`}
                                     >
                                       {letter}
                                     </button>
@@ -1080,7 +1080,7 @@ export default function DictationPractice() {
                       currentGroup.questions[0]?.explanation ? (
                         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
                           <div className="text-sm font-semibold text-slate-900 mb-2">
-                            Giải thích đáp án
+                            Answer explanation
                           </div>
                           <div className="text-sm text-slate-700 whitespace-pre-wrap leading-6">
                             {currentGroup.questions[0].explanation}
