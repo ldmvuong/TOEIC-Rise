@@ -36,7 +36,7 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
       
       // Kiểm tra status code 200
       if (response && response.status === 200) {
-        message.success('Xác thực email thành công! Đang chuyển về trang đăng nhập...');
+        message.success('Email verified successfully! Redirecting to the login page...');
         // Chuyển về login sau 2 giây
         setTimeout(() => {
           onVerifySuccess();
@@ -46,8 +46,8 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
       
       // Hiển thị lỗi bằng notification
       notification.error({
-        message: "Xác thực OTP thất bại",
-        description: error && typeof error === 'string' ? error : 'OTP không hợp lệ',
+        message: "OTP verification failed",
+        description: error && typeof error === 'string' ? error : 'Invalid OTP',
         duration: 5
       });
     } finally {
@@ -65,15 +65,15 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
       
       // Kiểm tra status code 200
       if (response && response.status === 200) {
-        message.success('Đã gửi lại mã OTP thành công!');
+        message.success('OTP code resent successfully!');
         setTimeLeft(5 * 60); // Reset countdown
       }
     } catch (error) {
       
       // Hiển thị lỗi bằng notification
       notification.error({
-        message: "Gửi lại OTP thất bại",
-        description: error && typeof error === 'string' ? error : 'Có lỗi xảy ra, vui lòng thử lại',
+        message: "Failed to resend OTP",
+        description: error && typeof error === 'string' ? error : 'Something went wrong, please try again',
         duration: 5
       });
     } finally {
@@ -91,11 +91,11 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
             <svg className="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-green-800 font-medium">Mã xác nhận đã được gửi</span>
+            <span className="text-green-800 font-medium">Verification code sent</span>
           </div>
           <p className="text-green-700 text-sm">
-            Mã xác nhận email đã được gửi vào email <strong>{email}</strong>. 
-            Vui lòng nhập OTP để hoàn tất đăng ký tài khoản.
+            The email verification code has been sent to <strong>{email}</strong>. 
+            Please enter the OTP to complete account registration.
           </p>
         </div>
       </div>
@@ -103,7 +103,7 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
       {/* Nhập OTP */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-          Nhập mã xác nhận (6 chữ số)
+          Enter verification code (6 digits)
         </label>
         <OTPInput 
           onComplete={handleOTPComplete} 
@@ -115,11 +115,11 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
       <div className="text-center">
         {timeLeft > 0 ? (
           <p className="text-gray-600 text-sm">
-            Mã OTP còn hiệu lực trong: <span className="font-semibold text-blue-600">{formatTime(timeLeft)}</span>
+            OTP code is valid for: <span className="font-semibold text-blue-600">{formatTime(timeLeft)}</span>
           </p>
         ) : (
           <p className="text-red-600 text-sm font-medium">
-            Mã OTP đã hết hạn
+            OTP code has expired
           </p>
         )}
       </div>
@@ -136,7 +136,7 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
               : 'text-blue-600 hover:text-blue-700 hover:underline'
           }`}
         >
-          {isResending ? 'Đang gửi lại...' : 'Gửi lại mã OTP'}
+          {isResending ? 'Resending...' : 'Resend OTP code'}
         </button>
       </div>
 
@@ -145,7 +145,7 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-gray-700">Đang xác thực...</span>
+            <span className="text-gray-700">Verifying...</span>
           </div>
         </div>
       )}
@@ -157,7 +157,7 @@ const OTPVerificationTab = ({ email, onVerifySuccess, onBackToRegister }) => {
           onClick={onBackToRegister}
           className="text-sm text-gray-600 hover:text-gray-800 hover:underline transition-colors"
         >
-          ← Quay lại đăng ký
+          ← Back to register
         </button>
       </div>
     </div>

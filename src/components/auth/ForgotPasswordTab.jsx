@@ -48,23 +48,23 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
     
     if (step === 1) {
       if (!formData.email) {
-        newErrors.email = 'Email là bắt buộc';
+        newErrors.email = 'Email is required';
       } else if (!isValidEmail(formData.email)) {
-        newErrors.email = 'Email không hợp lệ';
+        newErrors.email = 'Invalid email address';
       }
     } else if (step === 2) {
       // nothing to validate here, OTP handled by OTPInput component
     } else {
       if (!formData.newPassword) {
-        newErrors.newPassword = 'Mật khẩu mới là bắt buộc';
+        newErrors.newPassword = 'New password is required';
       } else if (!isStrongPassword(formData.newPassword)) {
-        newErrors.newPassword = 'Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+        newErrors.newPassword = 'Password must be 8-20 characters and include lowercase, uppercase, number, special character (.@#$%^&+=), and no spaces';
       }
       
       if (!formData.confirmNewPassword) {
-        newErrors.confirmNewPassword = 'Xác nhận mật khẩu mới là bắt buộc';
+        newErrors.confirmNewPassword = 'Please confirm your new password';
       } else if (formData.newPassword !== formData.confirmNewPassword) {
-        newErrors.confirmNewPassword = 'Mật khẩu không khớp';
+        newErrors.confirmNewPassword = 'Passwords do not match';
       }
     }
     
@@ -82,8 +82,8 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
       if (onRequestOtp) onRequestOtp(formData.email);
     } catch (err) {
       notification.error({
-        message: 'Yêu cầu đổi mật khẩu thất bại',
-        description: err?.message || 'Vui lòng thử lại.',
+        message: 'Password reset request failed',
+        description: err?.message || 'Please try again.',
         placement: 'topRight',
         duration: 5,
       });
@@ -94,18 +94,18 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
     try {
       const res = await verifyOtpApi({ email: formData.email, otp });
       const token = res?.data; // BE returns token string
-      if (!token) throw new Error('Không nhận được token xác thực');
+      if (!token) throw new Error('Verification token was not received');
       setOtpToken(token);
       notification.success({
-        message: 'Xác thực OTP thành công',
+        message: 'OTP verified successfully',
         placement: 'topRight',
         duration: 3,
       });
       setStep(3);
     } catch (err) {
       notification.error({
-        message: 'Xác thực OTP thất bại',
-        description: err?.message || 'Vui lòng thử lại.',
+        message: 'OTP verification failed',
+        description: err?.message || 'Please try again.',
         placement: 'topRight',
         duration: 5,
       });
@@ -117,7 +117,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
     try {
       await forgotPasswordApi({ email: formData.email });
       notification.success({
-        message: 'Đã gửi lại OTP',
+        message: 'OTP has been resent',
         placement: 'topRight',
         duration: 3,
       });
@@ -125,8 +125,8 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
       if (onRequestOtp) onRequestOtp(formData.email);
     } catch (err) {
       notification.error({
-        message: 'Gửi lại OTP thất bại',
-        description: err?.message || 'Vui lòng thử lại.',
+        message: 'Failed to resend OTP',
+        description: err?.message || 'Please try again.',
         placement: 'topRight',
         duration: 3,
       });
@@ -145,7 +145,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
     if (!validateForm()) return;
     try {
       await resetPasswordApi({ password: formData.newPassword, confirmPassword: formData.confirmNewPassword }, otpToken);
-      message.success('Đổi mật khẩu thành công! Đang chuyển về trang đăng nhập...');
+      message.success('Password changed successfully! Redirecting to the login page...');
       // Clear sensitive state
       setOtpToken('');
       setFormData({ email: '', newPassword: '', confirmNewPassword: '' });
@@ -156,8 +156,8 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
       }, 1500);
     } catch (err) {
       notification.error({
-        message: 'Đổi mật khẩu thất bại',
-        description: err?.message || 'Vui lòng thử lại.',
+        message: 'Password change failed',
+        description: err?.message || 'Please try again.',
         placement: 'topRight',
         duration: 5,
       });
@@ -179,7 +179,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
               value={formData.email}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="Nhập email của bạn"
+              placeholder="Enter your email"
             />
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
           </div>
@@ -188,27 +188,27 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
             type="submit"
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
-            Gửi OTP
+            Send OTP
           </button>
         </>
       ) : step === 2 ? (
         <>
           <div className="text-center mb-6">
             <p className="text-sm text-gray-600">
-              OTP đã gửi tới <strong>{formData.email}</strong>
+              OTP has been sent to <strong>{formData.email}</strong>
             </p>
             <button
               type="button"
               onClick={handleBackToEmail}
               className="text-xs text-blue-600 hover:text-blue-700 mt-1"
             >
-              Thay đổi email
+              Change email
             </button>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Nhập mã OTP (6 số)
+              Enter OTP code (6 digits)
             </label>
             <OTPInput onComplete={handleVerifyOtp} />
             <div className="text-center mt-3">
@@ -222,7 +222,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
                     : 'text-blue-600 hover:text-blue-700'
                 }`}
               >
-                {resendCountdown > 0 ? `Gửi lại OTP (${resendCountdown}s)` : 'Gửi lại OTP'}
+                {resendCountdown > 0 ? `Resend OTP (${resendCountdown}s)` : 'Resend OTP'}
               </button>
             </div>
           </div>
@@ -231,7 +231,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
         <>
           <div>
             <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
-              Mật khẩu mới
+              New password
             </label>
             <div className="relative">
               <input
@@ -241,13 +241,13 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
                 value={formData.newPassword}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Nhập mật khẩu mới"
+                placeholder="Enter your new password"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                aria-label={showNewPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                aria-label={showNewPassword ? 'Hide password' : 'Show password'}
               >
                 {showNewPassword ? <AiOutlineEyeInvisible className="w-5 h-5" /> : <AiOutlineEye className="w-5 h-5" />}
               </button>
@@ -257,7 +257,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
 
           <div>
             <label htmlFor="confirm-new-password" className="block text-sm font-medium text-gray-700 mb-2">
-              Nhập lại mật khẩu mới
+              Confirm new password
             </label>
             <div className="relative">
               <input
@@ -267,13 +267,13 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
                 value={formData.confirmNewPassword}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder="Confirm your new password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                aria-label={showConfirmNewPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmNewPassword ? <AiOutlineEyeInvisible className="w-5 h-5" /> : <AiOutlineEye className="w-5 h-5" />}
               </button>
@@ -284,7 +284,7 @@ const ForgotPasswordTab = ({ onRequestOtp, onVerifyOtp, onSwitchToLogin }) => {
             type="submit"
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
-            Đổi mật khẩu
+            Change password
           </button>
         </>
       )}
