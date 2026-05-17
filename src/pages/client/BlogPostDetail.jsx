@@ -83,7 +83,7 @@ const BlogPostDetailPublicPage = () => {
 
   const load = useCallback(async () => {
     if (!slug) {
-      setError("Slug bài viết không hợp lệ");
+      setError("Invalid post slug");
       setLoading(false);
       return;
     }
@@ -94,7 +94,7 @@ const BlogPostDetailPublicPage = () => {
       setPost(res?.data ?? null);
     } catch (e) {
       setPost(null);
-      setError(e?.message || "Không thể tải bài viết");
+      setError(e?.message || "Unable to load post");
     } finally {
       setLoading(false);
     }
@@ -148,10 +148,10 @@ const BlogPostDetailPublicPage = () => {
     return (
       <div className="max-w-4xl mx-auto p-4">
         <Card className="rounded-2xl border-slate-200 shadow-sm">
-          <Text type="danger">{error || "Không tìm thấy bài viết"}</Text>
+          <Text type="danger">{error || "Post not found"}</Text>
           <div className="mt-4">
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-              Quay lại
+              Back
             </Button>
           </div>
         </Card>
@@ -169,12 +169,12 @@ const BlogPostDetailPublicPage = () => {
               onClick={() => navigate(-1)}
               className="rounded-xl"
             >
-              Quay lại
+              Back
             </Button>
             {post.categorySlug ? (
               <Link to={`/blog/categories/${post.categorySlug}`}>
                 <Tag color="blue" className="cursor-pointer m-0">
-                  Danh mục: {post.categoryName || post.categorySlug}
+                  Category: {post.categoryName || post.categorySlug}
                 </Tag>
               </Link>
             ) : null}
@@ -214,7 +214,7 @@ const BlogPostDetailPublicPage = () => {
               {post.views != null ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-2.5 py-1">
                   <EyeOutlined />
-                  {Number(post.views).toLocaleString()} lượt xem
+                  {Number(post.views).toLocaleString()} views
                 </span>
               ) : null}
               {post.categoryName ? (
@@ -223,7 +223,7 @@ const BlogPostDetailPublicPage = () => {
             </div>
 
             <Title level={2} style={{ marginBottom: 8 }}>
-              {post.title || "Chưa có tiêu đề"}
+              {post.title || "Untitled"}
             </Title>
             {post.summary ? (
               <Text type="secondary" className="text-base block">
@@ -239,11 +239,11 @@ const BlogPostDetailPublicPage = () => {
               className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
               title={
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-800">Nội dung</span>
+                  <span className="font-semibold text-slate-800">Content</span>
                   <span className="text-xs text-slate-500">
                     {tocItems.length > 0
-                      ? `${tocItems.length} mục`
-                      : "Chế độ đọc"}
+                      ? `${tocItems.length} sections`
+                      : "Reading mode"}
                   </span>
                 </div>
               }
@@ -275,7 +275,7 @@ const BlogPostDetailPublicPage = () => {
             {tocItems.length > 0 ? (
               <Card
                 className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
-                title="Mục lục"
+                title="Table of contents"
                 styles={{
                   header: {
                     background:
@@ -339,7 +339,7 @@ const BlogPostDetailPublicPage = () => {
               </Card>
             ) : (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
-                <Text type="secondary">Không tìm thấy mục lục.</Text>
+                <Text type="secondary">No table of contents found.</Text>
               </Card>
             )}
           </div>
@@ -350,10 +350,10 @@ const BlogPostDetailPublicPage = () => {
           title={
             <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3">
               <div className="text-slate-900 font-semibold">
-                Bài viết liên quan
+                Related Posts
               </div>
               <div className="text-xs text-slate-500 mt-0.5">
-                Gợi ý nội dung tương tự để bạn đọc tiếp
+                Similar content suggestions for your next read
               </div>
             </div>
           }
@@ -371,7 +371,7 @@ const BlogPostDetailPublicPage = () => {
               <Spin />
             </div>
           ) : relatedPosts.length === 0 ? (
-            <Empty description="Không có bài viết liên quan" />
+            <Empty description="No related posts" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {relatedPosts.map((rp) => (

@@ -112,10 +112,10 @@ const BlogCategoriesPage = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <Title level={2} style={{ marginBottom: 6 }}>
-                Danh mục bài viết
+                Blog Categories
               </Title>
               <Text type="secondary" className="text-base">
-                Khám phá các chủ đề TOEIC, mẹo học và tài liệu hữu ích.
+                Explore TOEIC topics, study tips, and useful resources.
               </Text>
             </div>
 
@@ -131,7 +131,7 @@ const BlogCategoriesPage = () => {
                     navigate(`/blog/search?keyword=${encodeURIComponent(keyword)}`);
                   }}
                   prefix={<SearchOutlined className="text-slate-400" />}
-                  placeholder="Tìm bài viết theo từ khóa"
+                  placeholder="Search posts by keyword"
                   size="large"
                   className="rounded-xl"
                 />
@@ -145,7 +145,7 @@ const BlogCategoriesPage = () => {
                   }}
                   disabled={!q.trim()}
                 >
-                  Tìm
+                  Search
                 </Button>
               </Space.Compact>
             </div>
@@ -162,7 +162,7 @@ const BlogCategoriesPage = () => {
           </Card>
         ) : categories.length === 0 ? (
           <Card className="rounded-2xl border-slate-200 shadow-sm">
-            <Empty description="Không tìm thấy danh mục nào" />
+            <Empty description="No categories found" />
           </Card>
         ) : (
           <Swiper
@@ -192,10 +192,10 @@ const BlogCategoriesPage = () => {
                       <div className="min-w-0">
                         <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-600 border border-indigo-100">
                           <BookOutlined />
-                          Danh mục
+                          Category
                         </div>
                         <div className="text-[15px] font-semibold text-slate-900 line-clamp-2">
-                          {c?.name || "Chưa có tên"}
+                          {c?.name || "Untitled"}
                         </div>
                       </div>
                     </div>
@@ -209,12 +209,12 @@ const BlogCategoriesPage = () => {
         <div className="mt-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <Title level={3} style={{ margin: 0 }}>
-              Bài viết mới nhất
+              Latest Posts
             </Title>
             <span className="text-xs text-slate-500">
               {newestMeta.total > 0
-                ? `${newestMeta.total} bài viết`
-                : "Nội dung mới"}
+                ? `${newestMeta.total} posts`
+                : "New content"}
             </span>
           </div>
 
@@ -224,7 +224,7 @@ const BlogCategoriesPage = () => {
             </div>
           ) : newestPosts.length === 0 ? (
             <Card className="rounded-2xl border-slate-200 shadow-sm">
-              <Empty description="Chưa có bài viết mới" />
+              <Empty description="No new posts yet" />
             </Card>
           ) : (
             <>
@@ -267,4 +267,3 @@ const BlogCategoriesPage = () => {
 };
 
 export default BlogCategoriesPage;
-
