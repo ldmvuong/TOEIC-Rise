@@ -92,10 +92,10 @@ const CommentItem = ({
     const handleDelete = () => {
         setDropdownOpen(false);
         Modal.confirm({
-            title: 'Xóa bình luận',
-            content: 'Bạn có chắc muốn xóa bình luận này?',
-            okText: 'Xóa',
-            cancelText: 'Hủy',
+            title: 'Delete comment',
+            content: 'Are you sure you want to delete this comment?',
+            okText: 'Delete',
+            cancelText: 'Cancel',
             okButtonProps: { danger: true },
             onOk: async () => {
                 setDeleting(true);
@@ -109,8 +109,8 @@ const CommentItem = ({
     };
 
     const dropdownItems = [
-        { key: 'edit', label: 'Chỉnh sửa', onClick: () => { setIsEditing(true); setEditContent(comment.content); } },
-        { key: 'delete', label: 'Xóa', danger: true, onClick: handleDelete },
+        { key: 'edit', label: 'Edit', onClick: () => { setIsEditing(true); setEditContent(comment.content); } },
+        { key: 'delete', label: 'Delete', danger: true, onClick: handleDelete },
     ];
 
     const trimmedEditContent = editContent.trim();
@@ -137,7 +137,7 @@ const CommentItem = ({
                         <span className="font-medium text-gray-900">{comment.userFullName}</span>
                         <span className="text-gray-500 text-sm ml-2">
                             {comment.createdAt ? formatDateFull(comment.createdAt) : ''}
-                            {edited && <span className="ml-1">(đã chỉnh sửa)</span>}
+                            {edited && <span className="ml-1">(edited)</span>}
                         </span>
                         {hasTaggedQuestion && (
                             <div className="mt-1">
@@ -146,7 +146,7 @@ const CommentItem = ({
                                     onClick={() => onViewQuestion && onViewQuestion(comment)}
                                     className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100"
                                 >
-                                    {`Câu ${taggedQuestionPosition}`}
+                                    {`Question ${taggedQuestionPosition}`}
                                 </button>
                             </div>
                         )}
@@ -173,18 +173,18 @@ const CommentItem = ({
                     <div className="mt-2">
                         <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <span className="text-sm font-medium text-gray-700">
-                                Gắn với câu hỏi (tuỳ chọn)
+                                Attach to question (optional)
                             </span>
                             <Select
                                 allowClear
                                 showSearch
-                                placeholder="Không gắn câu hỏi"
+                                placeholder="No question attached"
                                 className="w-full md:w-72"
                                 value={editQuestionId}
                                 onChange={(value) => setEditQuestionId(value ?? null)}
                                 options={questions.map((q) => ({
                                     value: q.id,
-                                    label: `Câu ${q.position}`,
+                                    label: `Question ${q.position}`,
                                 }))}
                                 optionFilterProp="label"
                                 loading={questionLoading}
@@ -206,13 +206,13 @@ const CommentItem = ({
                                 disabled={isSaveDisabled}
                                 className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
-                                Lưu
+                                Save
                             </button>
                             <button
                                 onClick={() => { setIsEditing(false); setEditContent(comment.content); }}
                                 className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                             >
-                                Hủy
+                                Cancel
                             </button>
                         </div>
                     </div>
@@ -232,7 +232,7 @@ const CommentItem = ({
                                     onClick={() => setIsExpanded((v) => !v)}
                                     className="mt-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
                                 >
-                                    {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                    {isExpanded ? 'Collapse' : 'See more'}
                                 </button>
                             )}
                         </div>
@@ -245,7 +245,7 @@ const CommentItem = ({
                         onClick={() => setShowReplyInput(!showReplyInput)}
                         className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        {showReplyInput ? 'Hủy' : 'Trả lời'}
+                        {showReplyInput ? 'Cancel' : 'Reply'}
                     </button>
                 )}
 
@@ -256,7 +256,7 @@ const CommentItem = ({
                                 value={replyContent}
                                 onChange={(e) => setReplyContent(e.target.value)}
                                 maxLength={MAX_COMMENT_LENGTH}
-                                placeholder="Viết trả lời..."
+                                placeholder="Write a reply..."
                                 rows={2}
                                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
@@ -265,7 +265,7 @@ const CommentItem = ({
                                 disabled={!replyContent.trim() || submittingReply}
                                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 self-end"
                             >
-                                {submittingReply ? 'Đang gửi...' : 'Gửi'}
+                                {submittingReply ? 'Sending...' : 'Send'}
                             </button>
                         </div>
                         <CharCount value={replyContent} max={MAX_COMMENT_LENGTH} />
@@ -297,7 +297,7 @@ const CommentItem = ({
                                 disabled={loadingMoreReplies}
                                 className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
                             >
-                                {loadingMoreReplies ? 'Đang tải...' : `Xem thêm trả lời`}
+                                {loadingMoreReplies ? 'Loading...' : `View more replies`}
                             </button>
                         )}
                     </div>
@@ -330,7 +330,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             if (found) questionId = found.id;
         }
         if (!questionId) {
-            message.error('Không tìm thấy thông tin câu hỏi.');
+            message.error('Question information not found.');
             return;
         }
         setPreviewQuestionId(questionId);
@@ -345,7 +345,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             const list = Array.isArray(data) ? data : [];
             setQuestions(list);
         } catch (err) {
-            message.error(err?.message || 'Không thể tải danh sách câu hỏi');
+            message.error(err?.message || 'Unable to load question list');
         } finally {
             setQuestionLoading(false);
         }
@@ -367,7 +367,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             }
             setMeta(m);
         } catch (err) {
-            message.error(err?.message || 'Không thể tải bình luận');
+            message.error(err?.message || 'Unable to load comments');
         } finally {
             setter(false);
         }
@@ -404,7 +404,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             }
             requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scrollY)));
         } catch (err) {
-            message.error(err?.message || 'Không thể đăng bình luận');
+            message.error(err?.message || 'Unable to post comment');
         } finally {
             setSubmitting(false);
         }
@@ -457,7 +457,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                 })
             );
         } catch (err) {
-            message.error(err?.message || 'Không thể cập nhật');
+            message.error(err?.message || 'Unable to update');
             throw err;
         }
     };
@@ -478,7 +478,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                 return filtered;
             });
         } catch (err) {
-            message.error(err?.message || 'Không thể xóa');
+            message.error(err?.message || 'Unable to delete');
         }
     };
 
@@ -493,7 +493,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
             }
             requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scrollY)));
         } catch (err) {
-            message.error(err?.message || 'Không thể gửi trả lời');
+            message.error(err?.message || 'Unable to send reply');
         }
     };
 
@@ -522,7 +522,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                 })
             );
         } catch (err) {
-            message.error(err?.message || 'Không thể tải thêm trả lời');
+            message.error(err?.message || 'Unable to load more replies');
         } finally {
             setLoadingMoreReplies((prev) => ({ ...prev, [commentId]: false }));
         }
@@ -531,31 +531,31 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
     if (!isAuthenticated) {
         return (
             <div className="mt-6 bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Bình luận</h2>
-                <p className="text-gray-500">Đăng nhập để xem và tham gia bình luận.</p>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Comments</h2>
+                <p className="text-gray-500">Log in to view and join the discussion.</p>
             </div>
         );
     }
 
     return (
         <div className="mt-6 bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Bình luận</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Comments</h2>
 
             <div className="mb-4">
                 <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <span className="text-sm font-medium text-gray-700">
-                        Gắn với câu hỏi (tuỳ chọn)
+                        Attach to question (optional)
                     </span>
                     <Select
                         allowClear
                         showSearch
-                        placeholder="Không gắn câu hỏi"
+                        placeholder="No question attached"
                         className="w-full md:w-72"
                         value={selectedQuestionId}
                         onChange={(value) => setSelectedQuestionId(value ?? null)}
                         options={questions.map((q) => ({
                             value: q.id,
-                            label: `Câu ${q.position}`,
+                            label: `Question ${q.position}`,
                         }))}
                         optionFilterProp="label"
                         loading={questionLoading}
@@ -566,7 +566,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                     value={newCommentContent}
                     onChange={(e) => setNewCommentContent(e.target.value)}
                     maxLength={MAX_COMMENT_LENGTH}
-                    placeholder="Viết bình luận..."
+                    placeholder="Write a comment..."
                     rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -576,14 +576,14 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                     disabled={!newCommentContent.trim() || submitting}
                     className="mt-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                    {submitting ? 'Đang đăng...' : 'Đăng bình luận'}
+                    {submitting ? 'Posting...' : 'Post comment'}
                 </button>
             </div>
 
             {loading ? (
-                <div className="py-8 text-center text-gray-500">Đang tải bình luận...</div>
+                <div className="py-8 text-center text-gray-500">Loading comments...</div>
             ) : comments.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">Chưa có bình luận. Hãy là người đầu tiên!</div>
+                <div className="py-8 text-center text-gray-500">No comments yet. Be the first!</div>
             ) : (
                 <div className="space-y-4">
                     {comments.map((c) => (
@@ -609,7 +609,7 @@ const TestCommentSection = ({ testId, isAuthenticated }) => {
                                 disabled={loadingMore}
                                 className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium border border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50"
                             >
-                                {loadingMore ? 'Đang tải...' : 'Xem thêm bình luận'}
+                                {loadingMore ? 'Loading...' : 'View more comments'}
                             </button>
                         </div>
                     )}

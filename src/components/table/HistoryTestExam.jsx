@@ -25,7 +25,7 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
                 setHistoryData(response.data || []);
             } catch (error) {
                 console.error('Error fetching test history:', error);
-                message.error('Không thể tải lịch sử làm bài');
+                message.error('Unable to load test history');
             } finally {
                 setLoading(false);
             }
@@ -61,7 +61,7 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
         // If parts is null, it's Full test mode - show totalScore
         if (item.parts === null) {
             const totalScore = item.totalScore !== null && item.totalScore !== undefined ? item.totalScore : 0;
-            return `${result} (Điểm: ${totalScore})`;
+            return `${result} (Score: ${totalScore})`;
         }
         // Practice mode - don't show totalScore
         return result;
@@ -70,8 +70,8 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
     if (loading) {
         return (
             <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Kết quả làm bài của bạn</h2>
-                <div className="text-center py-8 text-gray-500">Đang tải...</div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Test Results</h2>
+                <div className="text-center py-8 text-gray-500">Loading...</div>
             </div>
         );
     }
@@ -79,10 +79,10 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
     if (historyData.length === 0) {
         return (
             <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Kết quả làm bài của bạn</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Test Results</h2>
                 <div className="text-center py-8 text-gray-500">
-                    <p className="text-base">Bạn chưa làm đề này.</p>
-                    <p className="text-sm mt-2">Hãy bắt đầu làm bài để xem kết quả tại đây.</p>
+                    <p className="text-base">You have not taken this test yet.</p>
+                    <p className="text-sm mt-2">Start the test to see your results here.</p>
                 </div>
             </div>
         );
@@ -90,22 +90,22 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Kết quả làm bài của bạn</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Test Results</h2>
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
                 <div className="relative overflow-y-auto" style={{ maxHeight: '320px' }}>
                     <table className="w-full text-sm text-left text-gray-700">
                         <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>
-                                <th className="px-4 py-3 border-b border-gray-200">Ngày làm</th>
-                                <th className="px-4 py-3 border-b border-gray-200">Kết quả</th>
-                                <th className="px-4 py-3 border-b border-gray-200">Thời gian làm bài</th>
+                                <th className="px-4 py-3 border-b border-gray-200">Date</th>
+                                <th className="px-4 py-3 border-b border-gray-200">Result</th>
+                                <th className="px-4 py-3 border-b border-gray-200">Time spent</th>
                                 <th className="px-4 py-3 border-b border-gray-200"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {historyData.map((item) => {
                                 const isFullTest = item.parts === null;
-                                const mode = isFullTest ? 'Full test' : 'Luyện tập';
+                                const mode = isFullTest ? 'Full test' : 'Practice';
                                 // Support both createAt and createdAt field names
                                 const dateField = item.createAt || item.createdAt;
                                 
@@ -154,12 +154,12 @@ const HistoryTestExam = ({ testId, isAuthenticated, variant }) => {
                                                             ),
                                                         );
                                                     } else {
-                                                        message.error('Không tìm thấy ID bài thi');
+                                                        message.error('Test attempt ID not found');
                                                     }
                                                 }}
                                                 className="text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
                                             >
-                                                Xem chi tiết
+                                                View details
                                             </button>
                                         </td>
                                     </tr>
