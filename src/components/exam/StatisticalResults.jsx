@@ -128,7 +128,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
             setShowLevelModal(true);
         } catch (error) {
             console.error('Error fetching level learning path:', error);
-            message.error(error?.message || 'Không thể tải thông tin lộ trình');
+            message.error(error?.message || 'Unable to load learning path information');
         } finally {
             setLearningPathLoading(false);
         }
@@ -145,15 +145,15 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 console.warn("Learning path detail after save:", detailErr);
                 message.warning(
                     detailErr?.message ||
-                        "Đã lưu cấp độ; không tải được chi tiết ngay. Đang mở trang lộ trình…",
+                        "Level saved, but details could not be loaded right away. Opening the learning path page...",
                 );
             }
-            message.success('Tạo lộ trình thành công!');
+            message.success('Learning path created successfully!');
             setShowLevelModal(false);
             navigate(`/learning-paths/${slug}`);
         } catch (error) {
             console.error('Error creating learning path:', error);
-            message.error(error?.message || 'Lỗi khi tạo lộ trình');
+            message.error(error?.message || 'Error creating learning path');
             setShowLevelModal(true);
         } finally {
             setLearningPathLoading(false);
@@ -216,7 +216,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     }
                 }
                 console.error('Error fetching statistics:', error);
-                message.error('Không thể tải thống kê kết quả');
+                message.error('Unable to load result statistics');
             } finally {
                 setHasFetched(true);
             }
@@ -369,7 +369,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
-                    Không có dữ liệu thống kê
+                    No statistics data available
                 </div>
             </div>
         );
@@ -389,14 +389,14 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 >
                     <Spin size="large" />
                     <div className="text-center text-sm text-gray-600">
-                        Đang xử lý lộ trình…
+                        Processing learning path...
                     </div>
                 </div>
             ) : null}
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                    Kết quả thi: {data.testName || 'Test'}
+                    Test result: {data.testName || 'Test'}
                 </h1>
                 <div className="flex gap-3">
                     {onViewAnswers && (
@@ -404,7 +404,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                             onClick={onViewAnswers}
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
                         >
-                            Xem đáp án
+                            View answers
                         </button>
                     )}
                     <button 
@@ -412,7 +412,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                         disabled={learningPathLoading}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-indigo-400 flex items-center justify-center min-w-[160px]"
                     >
-                        {learningPathLoading ? "Đang xử lý…" : "Lộ trình học tập"}
+                        {learningPathLoading ? "Processing..." : "Learning path"}
                     </button>
                     <button 
                         onClick={() => {
@@ -434,7 +434,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                         }}
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
                     >
-                        Quay về trang đề thi
+                        Back to test page
                     </button>
                 </div>
             </div>
@@ -442,7 +442,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
             {/* Summary Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Kết quả làm bài</div>
+                    <div className="text-sm text-gray-600 mb-1">Test result</div>
                     <div className="text-2xl font-bold text-gray-900">
                         {data.correctAnswers}/{data.totalQuestions}
                     </div>
@@ -450,15 +450,15 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <div className="text-sm text-gray-600 mb-1">
                         {data.isWritingSummary
-                            ? 'Tỷ lệ hoàn thành'
-                            : 'Độ chính xác'}
+                            ? 'Completion rate'
+                            : 'Accuracy'}
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                         {data.correctPercent?.toFixed(1) || '0.0'}%
                     </div>
                 </div>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">Thời gian hoàn thành</div>
+                    <div className="text-sm text-gray-600 mb-1">Completion time</div>
                     <div className="text-2xl font-bold text-gray-900">
                         {formatTime(data.timeSpent)}
                     </div>
@@ -470,8 +470,8 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
                     <CheckCircleOutlined className="text-3xl text-green-600" />
                     <div>
-                        <div className="text-sm text-gray-600">Trả lời đúng</div>
-                        <div className="text-xl font-bold text-gray-900">{data.correctAnswers || 0} câu hỏi</div>
+                        <div className="text-sm text-gray-600">Correct answers</div>
+                        <div className="text-xl font-bold text-gray-900">{data.correctAnswers || 0} questions</div>
                     </div>
                 </div>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -479,17 +479,17 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     <div>
                         <div className="text-sm text-gray-600">
                             {data.isWritingSummary
-                                ? 'Chưa trả lời'
-                                : 'Trả lời sai'}
+                                ? 'Unanswered'
+                                : 'Wrong answers'}
                         </div>
-                        <div className="text-xl font-bold text-gray-900">{incorrectAnswers} câu hỏi</div>
+                        <div className="text-xl font-bold text-gray-900">{incorrectAnswers} questions</div>
                     </div>
                 </div>
                 {fullTest && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
                         <FlagOutlined className="text-3xl text-blue-600" />
                         <div>
-                            <div className="text-sm text-gray-600">Điểm</div>
+                            <div className="text-sm text-gray-600">Score</div>
                             <div className="text-xl font-bold text-gray-900">{data.score || 0}</div>
                         </div>
                     </div>
@@ -505,7 +505,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                             {data.listeningScore || 0}/495
                         </div>
                         <div className="text-sm text-gray-600">
-                            Trả lời đúng: {data.listeningCorrectAnswers || 0}/100
+                            Correct answers: {data.listeningCorrectAnswers || 0}/100
                         </div>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -514,7 +514,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                             {data.readingScore || 0}/495
                         </div>
                         <div className="text-sm text-gray-600">
-                            Trả lời đúng: {data.readingCorrectAnswers || 0}/100
+                            Correct answers: {data.readingCorrectAnswers || 0}/100
                         </div>
                     </div>
                 </div>
@@ -523,7 +523,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
             {/* Phân tích chi tiết (không áp dụng cho tóm tắt Writing từ API riêng) */}
             {parts.length > 0 && !data.isWritingSummary && (
                 <div className="border-t border-gray-200 pt-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Phân tích chi tiết</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Detailed Analysis</h2>
                     
                     {/* Tabs */}
                     <div className="flex flex-wrap gap-2 mb-4 border-b border-gray-200">
@@ -545,18 +545,18 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                     {/* Table */}
                     {!currentPartDetails || !currentPartDetails.categories || currentPartDetails.categories.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
-                            {activePartTab ? `Không có dữ liệu cho ${activePartTab}` : 'Chọn một part để xem chi tiết'}
+                            {activePartTab ? `No data for ${activePartTab}` : 'Select a part to view details'}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm border border-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left border border-gray-200">Phân loại câu hỏi</th>
-                                        <th className="px-4 py-3 text-center border border-gray-200">Số câu đúng</th>
-                                        <th className="px-4 py-3 text-center border border-gray-200">Số câu sai</th>
-                                        <th className="px-4 py-3 text-center border border-gray-200">Độ chính xác</th>
-                                        <th className="px-4 py-3 text-left border border-gray-200">Danh sách câu hỏi</th>
+                                        <th className="px-4 py-3 text-left border border-gray-200">Question category</th>
+                                        <th className="px-4 py-3 text-center border border-gray-200">Correct answers</th>
+                                        <th className="px-4 py-3 text-center border border-gray-200">Wrong answers</th>
+                                        <th className="px-4 py-3 text-center border border-gray-200">Accuracy</th>
+                                        <th className="px-4 py-3 text-left border border-gray-200">Question list</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -588,7 +588,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                                                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${bgColor} ${
                                                                         q.userAnswerId ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-default'
                                                                     }`}
-                                                                    title={q.userAnswerId ? 'Xem chi tiết' : ''}
+                                                                    title={q.userAnswerId ? 'View details' : ''}
                                                                 >
                                                                     {q.position}
                                                                 </button>
@@ -666,7 +666,7 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 title={
                     <div>
                         <div className="text-base font-semibold text-gray-900">
-                            Chọn cấp độ lộ trình
+                            Choose learning path level
                         </div>
                         <div className="mt-0.5 text-xs font-normal text-gray-500">
                             Select your learning level
@@ -680,9 +680,9 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                 maskClosable={!learningPathLoading}
             >
                 <p className="mb-1 mt-2 text-sm text-gray-600">
-                    Mức có nhãn{" "}
+                    The level labeled{" "}
                     <span className="font-medium text-amber-700">Recommended for you</span>{" "}
-                    (⭐) là gợi ý phù hợp với kết quả làm bài của bạn.
+                    is the suggestion that best fits your test result.
                 </p>
                 <div className="flex flex-col gap-3 mt-4">
                     {levelOptions.map(level => {
@@ -710,8 +710,8 @@ const StatisticalResults = ({ userTestId, testId, onViewAnswers }) => {
                                 className={`w-full text-left flex justify-between items-center h-auto py-3 border ${bgColor}`}
                             >
                                 <span className={`font-medium ${textColor}`}>
-                                    {level === "BEGINNER" ? "Người mới bắt đầu (Beginner)" :
-                                     level === "INTERMEDIATE" ? "Trung cấp (Intermediate)" : "Nâng cao (Advanced)"}
+                                    {level === "BEGINNER" ? "Beginner" :
+                                     level === "INTERMEDIATE" ? "Intermediate" : "Advanced"}
                                 </span>
                                 {isRecommended ? (
                                     <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200/80">

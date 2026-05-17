@@ -23,16 +23,16 @@ const EQuestionReportReason = {
 };
 
 /**
- * Mapping reasons to Vietnamese labels
+ * Mapping reasons to labels
  */
 const REASON_LABELS = {
-    [EQuestionReportReason.WRONG_ANSWER]: 'Đáp án sai',
-    [EQuestionReportReason.TYPO]: 'Lỗi chính tả',
-    [EQuestionReportReason.WRONG_EXPLANATION]: 'Giải thích sai',
-    [EQuestionReportReason.INCORRECT_CONTENT]: 'Nội dung không chính xác',
-    [EQuestionReportReason.MISSING_MEDIA]: 'Thiếu file đính kèm (audio/image)',
-    [EQuestionReportReason.OFFENSIVE_CONTENT]: 'Nội dung phản cảm',
-    [EQuestionReportReason.OTHER]: 'Lý do khác'
+    [EQuestionReportReason.WRONG_ANSWER]: 'Wrong answer',
+    [EQuestionReportReason.TYPO]: 'Typo',
+    [EQuestionReportReason.WRONG_EXPLANATION]: 'Wrong explanation',
+    [EQuestionReportReason.INCORRECT_CONTENT]: 'Incorrect content',
+    [EQuestionReportReason.MISSING_MEDIA]: 'Missing media file (audio/image)',
+    [EQuestionReportReason.OFFENSIVE_CONTENT]: 'Offensive content',
+    [EQuestionReportReason.OTHER]: 'Other reason'
 };
 
 /**
@@ -69,7 +69,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
     const handleSubmit = async () => {
         // Validation
         if (selectedReasons.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một lý do báo cáo');
+            message.warning('Please select at least one report reason');
             return;
         }
 
@@ -79,7 +79,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
         
         if (!questionId) {
             console.error('Question data:', questionData);
-            message.error('Không tìm thấy ID câu hỏi để báo cáo. Vui lòng thử lại sau.');
+            message.error('Question ID not found for reporting. Please try again later.');
             return;
         }
         
@@ -105,7 +105,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
             
             console.log('Report response:', response);
             
-            message.success('Báo cáo đã được gửi thành công. Cảm ơn bạn đã đóng góp!');
+            message.success('Report submitted successfully. Thank you for your contribution!');
             
             // Reset form and close modal
             setSelectedReasons([]);
@@ -113,7 +113,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
             onClose();
         } catch (error) {
             console.error('Error reporting question:', error);
-            const errorMessage = error?.message || error?.response?.data?.message || 'Không thể gửi báo cáo. Vui lòng thử lại sau.';
+            const errorMessage = error?.message || error?.response?.data?.message || 'Unable to submit report. Please try again later.';
             message.error(errorMessage);
         } finally {
             setSubmitting(false);
@@ -165,7 +165,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                         {/* Header */}
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                Câu hỏi #{position || ''}
+                                Question #{position || ''}
                             </h2>
                             
                             {/* Tags */}
@@ -210,7 +210,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                     className="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
                                 >
                                     <span className="text-sm font-medium text-gray-700">
-                                        {showTranscript ? 'Ẩn Transcript' : 'Hiện Transcript'}
+                                        {showTranscript ? 'Hide Transcript' : 'Show Transcript'}
                                     </span>
                                     <svg
                                         className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`}
@@ -304,7 +304,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                             {correctOption && (!userAnswer || userAnswer !== correctOption) && (
                                 <div className="mt-4 ml-11">
                                     <p className="text-sm font-semibold text-green-600">
-                                        Đáp án đúng: {correctOption}
+                                        Correct answer: {correctOption}
                                     </p>
                                 </div>
                             )}
@@ -318,7 +318,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                     className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                                 >
                                     <span className="text-sm font-medium text-gray-700">
-                                        Giải thích chi tiết đáp án
+                                        Detailed answer explanation
                                     </span>
                                     <svg
                                         className={`w-5 h-5 text-gray-500 transition-transform ${showExplanation ? 'rotate-180' : ''}`}
@@ -352,8 +352,8 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Báo cáo câu hỏi</h3>
-                                <p className="text-xs text-gray-600">Vui lòng chọn lý do và mô tả vấn đề</p>
+                                <h3 className="text-lg font-semibold text-gray-900">Report question</h3>
+                                <p className="text-xs text-gray-600">Please select a reason and describe the issue</p>
                             </div>
                         </div>
                     </div>
@@ -364,7 +364,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                             {/* Report Reasons */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                    Lý do báo cáo <span className="text-red-500">*</span>
+                                    Report reason <span className="text-red-500">*</span>
                                 </label>
                                 <div className="space-y-2">
                                     {Object.entries(EQuestionReportReason).map(([key, value]) => {
@@ -409,7 +409,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Vui lòng chọn ít nhất một lý do
+                                        Please select at least one reason
                                     </p>
                                 )}
                             </div>
@@ -417,19 +417,19 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                             {/* Description */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Mô tả chi tiết <span className="text-gray-400">(Tùy chọn)</span>
+                                    Detailed description <span className="text-gray-400">(Optional)</span>
                                 </label>
                                 <TextArea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Vui lòng mô tả chi tiết vấn đề bạn gặp phải (nếu có)..."
+                                    placeholder="Please describe the issue you encountered in detail (if any)..."
                                     rows={6}
                                     maxLength={1000}
                                     showCount
                                     className="resize-none"
                                 />
                                 <p className="text-xs text-gray-500 mt-2">
-                                    Mô tả chi tiết sẽ giúp chúng tôi xử lý báo cáo nhanh chóng và chính xác hơn.
+                                    A detailed description helps us process your report faster and more accurately.
                                 </p>
                             </div>
                         </div>
@@ -443,7 +443,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                 disabled={submitting}
                                 className="px-6"
                             >
-                                Hủy
+                                Cancel
                             </Button>
                             <Button
                                 type="primary"
@@ -453,7 +453,7 @@ const ReportQuestion = ({ open, onClose, questionData }) => {
                                 disabled={selectedReasons.length === 0 || submitting}
                                 className="px-6"
                             >
-                                Gửi báo cáo
+                                Submit report
                             </Button>
                         </div>
                     </div>
