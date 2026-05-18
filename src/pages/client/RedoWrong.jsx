@@ -19,7 +19,7 @@ const RedoWrong = () => {
 
   useEffect(() => {
     if (!redoResult) {
-      message.error('Không có dữ liệu làm lại câu sai.');
+      message.error('No redo-wrong data available.');
       navigate('/online-tests');
     }
   }, [redoResult, navigate]);
@@ -34,7 +34,7 @@ const RedoWrong = () => {
   if (!testData?.partResponses || testData.partResponses.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Không có dữ liệu bài làm lại</div>
+        <div className="text-gray-500">No redo test data available</div>
       </div>
     );
   }
@@ -57,8 +57,8 @@ const RedoWrong = () => {
     if (positions.length === 0) return '';
     const minPos = Math.min(...positions);
     const maxPos = Math.max(...positions);
-    if (minPos === maxPos) return `Câu ${minPos}`;
-    return `Câu ${minPos}-${maxPos}`;
+    if (minPos === maxPos) return `Question ${minPos}`;
+    return `Questions ${minPos}-${maxPos}`;
   };
 
   const renderOptions = (question) => {
@@ -142,7 +142,7 @@ const RedoWrong = () => {
                     <div className="mb-4 mt-4 pt-4 border-t border-gray-200">
                       <details className="cursor-pointer">
                         <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                          Hiện Transcript
+                          Show Transcript
                         </summary>
                         <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="text-gray-800 text-sm leading-relaxed">
@@ -181,7 +181,7 @@ const RedoWrong = () => {
                     {showCorrectLine && (
                       <div className="mt-3 ml-11">
                         <p className="text-sm font-semibold text-green-600">
-                          Đáp án đúng: {question.correctOption}
+                          Correct answer: {question.correctOption}
                         </p>
                       </div>
                     )}
@@ -189,7 +189,7 @@ const RedoWrong = () => {
                       <div className="mt-4 ml-11">
                         <details className="cursor-pointer">
                           <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                            Giải thích chi tiết đáp án
+                            Detailed answer explanation
                           </summary>
                           <div className="mt-2">
                             <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
@@ -262,7 +262,7 @@ const RedoWrong = () => {
                     {showCorrectLine && (
                       <div className="mt-3 ml-11">
                         <p className="text-sm font-semibold text-green-600">
-                          Đáp án đúng: {question.correctOption}
+                          Correct answer: {question.correctOption}
                         </p>
                       </div>
                     )}
@@ -270,7 +270,7 @@ const RedoWrong = () => {
                       <div className="mt-4 ml-11">
                         <details className="cursor-pointer">
                           <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                            Giải thích chi tiết đáp án
+                            Detailed answer explanation
                           </summary>
                           <div className="mt-2">
                             <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
@@ -289,7 +289,7 @@ const RedoWrong = () => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <details className="cursor-pointer">
                   <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                    Hiện Transcript
+                    Show Transcript
                   </summary>
                   <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="text-gray-800 text-sm leading-relaxed">
@@ -311,14 +311,14 @@ const RedoWrong = () => {
         <div className="max-w-full mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Kết quả làm lại câu sai: {testData.testName || ''}
+              Redo Wrong Result: {testData.testName || ''}
             </h1>
           </div>
           <button
             onClick={() => navigate(`/test-result/${userTestId}`, { replace: true })}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
           >
-            Quay lại
+            Back
           </button>
         </div>
       </div>
@@ -328,18 +328,18 @@ const RedoWrong = () => {
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="text-sm text-gray-600">Tổng số câu</div>
+                <div className="text-sm text-gray-600">Total questions</div>
                 <div className="mt-2 text-2xl font-bold text-blue-700">{totalQuestions}</div>
               </div>
               <div className="p-4 rounded-lg bg-green-50 border border-green-200">
-                <div className="text-sm text-gray-600">Số câu đúng</div>
+                <div className="text-sm text-gray-600">Correct answers</div>
                 <div className="mt-2 text-2xl font-bold text-green-700">
                   {correctAnswers} ({totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0}
                   %)
                 </div>
               </div>
               <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                <div className="text-sm text-gray-600">Thời gian làm lại</div>
+                <div className="text-sm text-gray-600">Redo time</div>
                 <div className="mt-2 text-2xl font-bold text-orange-700">
                   {formatTime(timeSpent || 0)}
                 </div>
@@ -373,7 +373,7 @@ const RedoWrong = () => {
 
         <div className="bg-white border-l border-gray-200 overflow-y-auto" style={{ width: '15%' }}>
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Question list</h3>
             {testData.partResponses.map((part, partIdx) => (
               <div key={part.id} className="mb-6">
                 <h4 className="text-xs font-semibold text-gray-700 mb-2 uppercase">
@@ -408,7 +408,7 @@ const RedoWrong = () => {
                               ? 'bg-red-500 text-white hover:bg-red-600'
                               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                           }`}
-                          title={`Câu ${question.position}`}
+                          title={`Question ${question.position}`}
                         >
                           {question.position}
                         </button>
