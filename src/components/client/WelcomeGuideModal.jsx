@@ -7,32 +7,32 @@ const STORAGE_KEY_PREFIX = "toeicrise_tour_v2_";
 const tourConfig = {
   "/": [
     {
-      title: "Chào mừng bạn đến với TOEIC RISE 🚀",
+      title: "Welcome to TOEIC RISE 🚀",
       description:
-        "Nền tảng luyện thi TOEIC toàn diện giúp bạn tối ưu thời gian học và dễ dàng đạt mục tiêu điểm số. Hãy bấm 'Next' để dạo quanh và làm quen với các tính năng hữu ích nhất nhé!",
+        "A comprehensive TOEIC practice platform that helps you optimize your study time and reach your target score more easily. Click 'Next' to take a quick tour and get familiar with the most useful features!",
       target: null,
     },
     {
-      title: "Thanh Điều Hướng Chính",
+      title: "Main Navigation",
       description:
-        "Thanh công cụ này giúp bạn truy cập nhanh mọi chức năng. Bạn có thể chuyển đổi giữa việc học theo Lộ trình (Learning Paths), luyện Đề thi (Online Tests), học Từ vựng (Flashcards), hay theo dõi Thống kê (Statistics) học tập của mình.",
+        "This toolbar gives you quick access to every feature. You can switch between Learning Paths, Online Tests, Flashcards, and your learning Statistics.",
       target: () =>
         document.querySelector("header nav") ||
         document.querySelector("header") ||
         document.querySelector("nav"),
     },
     {
-      title: "Tra Cứu Nhanh & Lối Tắt",
+      title: "Quick Search & Shortcuts",
       description:
-        "Ở một số trang, bạn có thể tìm thấy thanh tìm kiếm để tra cứu nhanh đề thi, bài viết hoặc từ vựng. Mọi thứ được thiết kế để bạn tiết kiệm thời gian nhất có thể.",
+        "On some pages, you can use the search bar to quickly find tests, articles, or vocabulary. Everything is designed to save you as much time as possible.",
       target: () =>
         document.querySelector(".ant-input-search") ||
         document.querySelector(".search-bar"),
     },
     {
-      title: "Quản Lý Tài Khoản & Tiến Độ",
+      title: "Account & Progress Management",
       description:
-        "Khu vực này chứa hồ sơ cá nhân và các tuỳ chọn tài khoản. Bấm vào đây để xem trang cá nhân, chỉnh sửa thông tin, theo dõi tổng quan tiến độ hoặc đăng xuất. Luôn đăng nhập để không bị mất dữ liệu học tập nhé!",
+        "This area contains your profile and account options. Click here to view your profile, edit your information, track your overall progress, or sign out. Stay signed in so your learning data is not lost!",
       target: () =>
         document.querySelector(".ant-dropdown-trigger img") ||
         document.querySelector("#user-menu-btn") ||
@@ -42,24 +42,24 @@ const tourConfig = {
   ],
   "/online-tests": [
     {
-      title: "Thi Thử TOEIC Online 📝",
+      title: "Online TOEIC Practice Tests 📝",
       description:
-        "Chào mừng đến với thư viện đề thi! Tại đây cung cấp hàng trăm bộ đề sát với định dạng TOEIC thực tế (ETS, Hacker, v.v.). Đây là nơi lý tưởng để bạn đánh giá trình độ và làm quen với áp lực phòng thi.",
+        "Welcome to the test library! Here you can find hundreds of tests that closely follow the real TOEIC format (ETS, Hacker, and more). It is an ideal place to evaluate your level and get used to exam pressure.",
       target: null,
     },
     {
-      title: "Tìm Kiếm & Bộ Lọc Đề Thi",
+      title: "Search & Test Filters",
       description:
-        "Đừng bối rối trước số lượng lớn đề thi! Hãy sử dụng thanh tìm kiếm hoặc các bộ lọc theo loại đề, năm xuất bản để tìm chính xác bộ đề bạn cần. Nhấn vào một đề bài bạn quan tâm để xem chi tiết.",
+        "Do not feel overwhelmed by the number of tests. Use the search bar or filters by test type and publication year to find exactly what you need. Click a test you are interested in to view its details.",
       target: () =>
         document.querySelector(".ant-input-search") ||
         document.querySelector(".ant-select") ||
         document.querySelector(".test-filters"),
     },
     {
-      title: "Bắt Đầu Làm Bài",
+      title: "Start Practicing",
       description:
-        "Khi đã sẵn sàng, hãy bấm nút 'Chi tiết' hoặc 'Làm bài' trên một thẻ đề. Giao diện làm bài sẽ cung cấp đồng hồ đếm ngược và phiếu trả lời (Answer Sheet) giống như thi thật. Lời khuyên: Hãy sắp xếp thời gian làm trọn vẹn 1 đề mỗi tuần!",
+        "When you are ready, click 'Details' or 'Start Test' on a test card. The test interface provides a countdown timer and an Answer Sheet just like a real exam. Tip: Try to complete one full test every week!",
       target: () =>
         document.querySelector(".ant-card") ||
         document.querySelector(".test-card") ||
@@ -68,15 +68,15 @@ const tourConfig = {
   ],
   "/learning-paths": [
     {
-      title: "Lộ Trình Học Tập Cá Nhân Hóa 🛤️",
+      title: "Personalized Learning Paths 🛤️",
       description:
-        "Bạn chưa biết bắt đầu học từ đâu? Tính năng Lộ trình học (Learning Paths) chính là giải pháp. Các bài học ở đây được sắp xếp bài bản từ cơ bản đến nâng cao, đi kèm từ vựng, ngữ pháp và kỹ năng làm bài.",
+        "Not sure where to start? Learning Paths are here to help. Lessons are organized from basic to advanced levels, with vocabulary, grammar, and test-taking skills included.",
       target: null,
     },
     {
-      title: "Khám Phá Các Lộ Trình",
+      title: "Explore Learning Paths",
       description:
-        "Các lộ trình được chia theo mục tiêu điểm số (ví dụ: TOEIC 500+, 700+). Chọn một lộ trình phù hợp với trình độ hiện tại, bấm 'Tham gia' hoặc 'Xem chi tiết' để bắt đầu. Hãy hoàn thành từng bài học để mở khóa bài tiếp theo!",
+        "Paths are grouped by score goals, such as TOEIC 500+ or 700+. Choose a path that matches your current level, then click 'Join' or 'View Details' to begin. Complete each lesson to unlock the next one!",
       target: () =>
         document.querySelector(".ant-card") ||
         document.querySelector(".path-item") ||
@@ -85,15 +85,15 @@ const tourConfig = {
   ],
   "/flashcards": [
     {
-      title: "Thư Viện Từ Vựng Flashcard 🗂️",
+      title: "Flashcard Vocabulary Library 🗂️",
       description:
-        "Học từ vựng không còn nhàm chán với Flashcard! Hệ thống áp dụng phương pháp Lặp Lại Ngắt Quãng (Spaced Repetition) - tự động nhắc bạn ôn lại từ vựng đúng thời điểm chuẩn bị quên, giúp nhớ lâu hơn.",
+        "Vocabulary practice is more engaging with Flashcards. The system uses Spaced Repetition to remind you to review words at the right time, helping you remember them longer.",
       target: null,
     },
     {
-      title: "Chế Độ Luyện Tập Đa Dạng",
+      title: "Multiple Practice Modes",
       description:
-        "Với mỗi bộ Flashcard, bạn có thể Lật thẻ, làm bài Trắc nghiệm (Quiz), hoặc chơi Ghép thẻ (Match). Chọn bộ từ bạn muốn ôn, bấm 'Luyện tập' và khám phá các chế độ. Mẹo nhỏ: Ôn 15 phút mỗi ngày hiệu quả hơn học dồn một lần!",
+        "For each Flashcard set, you can flip cards, take a Quiz, or play Match. Choose the set you want to review, click 'Practice', and explore the modes. Small tip: Reviewing for 15 minutes every day works better than cramming.",
       target: () =>
         document.querySelector(".ant-card") ||
         document.querySelector(".flashcard-item") ||
@@ -102,31 +102,31 @@ const tourConfig = {
   ],
   "/statistics": [
     {
-      title: "Phân Tích & Thống Kê 📊",
+      title: "Analytics & Statistics 📊",
       description:
-        "Bảng điều khiển cá nhân cung cấp bức tranh toàn cảnh về nỗ lực của bạn. Hệ thống sẽ phân tích điểm số các bài thi, số câu đúng/sai ở từng kỹ năng (Listening/Reading) giúp bạn nhận ra điểm mạnh và phần cần cải thiện.",
+        "Your personal dashboard gives you a complete view of your effort. The system analyzes test scores and correct or incorrect answers by skill (Listening/Reading), helping you identify strengths and areas to improve.",
       target: null,
     },
   ],
   "/exam-structure": [
     {
-      title: "Nắm Vững Cấu Trúc Đề Thi 🔍",
+      title: "Master the Test Structure 🔍",
       description:
-        "Biết người biết ta, trăm trận trăm thắng! Mục này giải phẫu chi tiết 7 phần (Parts) của một bài thi TOEIC tiêu chuẩn. Hãy đọc kỹ các mẹo làm bài và nhận diện các dạng câu hỏi thường gặp để tránh sập bẫy nhé.",
+        "This section breaks down the 7 parts of a standard TOEIC test in detail. Read the tips carefully and learn to recognize common question types so you can avoid common traps.",
       target: null,
     },
   ],
   "/dictation": [
     {
-      title: "Luyện Nghe Chép Chính Tả 🎧",
+      title: "Dictation Practice 🎧",
       description:
-        "Dictation là 'vũ khí bí mật' giúp bạn tăng vọt điểm Listening. Bằng cách nghe và gõ lại chính xác từng từ, bạn sẽ quen với cách phát âm, nối âm và ngữ điệu của người bản xứ.",
+        "Dictation is a powerful way to improve your Listening score. By listening and typing each word accurately, you become more familiar with native pronunciation, linking sounds, and intonation.",
       target: null,
     },
     {
-      title: "Thao Tác Thực Hành",
+      title: "Practice Controls",
       description:
-        "Hãy sử dụng các nút Play/Pause để nghe đoạn băng. Nhập đoạn văn bản bạn nghe được vào ô trống. Nếu khó quá, bạn có thể chỉnh tốc độ chậm lại. Bấm 'Kiểm tra' để xem đáp án đúng sai và học từ mới ngay lập tức.",
+        "Use the Play/Pause buttons to listen to the audio. Type what you hear into the input area. If it is too difficult, you can slow down the playback speed. Click 'Check' to review correct and incorrect answers and learn new words right away.",
       target: () =>
         document.querySelector(".ant-input") ||
         document.querySelector(".audio-controls") ||
@@ -135,101 +135,101 @@ const tourConfig = {
   ],
   "/profile": [
     {
-      title: "Hồ Sơ Của Bạn 👤",
+      title: "Your Profile 👤",
       description:
-        "Trang cá nhân cho phép bạn cập nhật ảnh đại diện, thay đổi mật khẩu và quản lý thông tin tài khoản. Đừng quên kiểm tra lịch sử hoạt động để thấy bản thân đã nỗ lực như thế nào nhé!",
+        "Your profile page lets you update your avatar, change your password, and manage account information. Do not forget to check your activity history to see how much progress you have made!",
       target: null,
     },
   ],
   "/blog": [
     {
-      title: "Góc Chia Sẻ & Tài Liệu 📰",
+      title: "Sharing Corner & Resources 📰",
       description:
-        "Chào mừng bạn đến với Blog! Đây là nơi tổng hợp các bài viết chia sẻ kinh nghiệm học tập, chiến thuật làm bài và tài liệu TOEIC hữu ích giúp bạn ôn thi hiệu quả hơn.",
+        "Welcome to the Blog! This is where you can find study experiences, test-taking strategies, and useful TOEIC resources to help you prepare more effectively.",
       target: null,
     },
     {
-      title: "Lọc Theo Danh Mục 📑",
+      title: "Filter by Category 📑",
       description:
-        "Sử dụng danh sách danh mục để dễ dàng tìm kiếm các bài viết theo chủ đề bạn quan tâm (ví dụ: Ngữ pháp, Từ vựng, Mẹo thi TOEIC). Nhấn vào một danh mục để xem tất cả bài viết liên quan.",
+        "Use the category list to easily find articles by topics you care about, such as Grammar, Vocabulary, or TOEIC Tips. Click a category to view all related posts.",
       target: () =>
         document.querySelector(".lg\\:col-span-4 .ant-card") ||
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Duyệt danh mục"),
+          c.textContent.includes("Browse categories"),
         ),
     },
     {
-      title: "Tìm Kiếm Bài Viết 🔍",
+      title: "Search Articles 🔍",
       description:
-        "Bạn đang tìm một chủ đề cụ thể? Nhập từ khóa vào thanh tìm kiếm này để hệ thống lọc ra các bài viết phù hợp nhất một cách nhanh chóng.",
+        "Looking for a specific topic? Enter a keyword in this search bar so the system can quickly filter the most relevant articles.",
       target: () =>
-        document.querySelector("input[placeholder*='Tìm bài viết']") ||
+        document.querySelector("input[placeholder*='Search articles']") ||
         document.querySelector(".ant-input-wrapper") ||
         document.querySelector(".lg\\:w-\\[420px\\]"),
     },
     {
-      title: "Mục Lục Tương Tác 📖",
+      title: "Interactive Table of Contents 📖",
       description:
-        "Khi xem chi tiết một bài viết dài, hãy sử dụng 'Mục lục' bên cạnh (nếu có) để nhảy vọt đến phần nội dung bạn quan tâm mà không cần cuộn trang mỏi tay.",
+        "When reading a long article, use the Table of Contents on the side, if available, to jump directly to the section you care about without endless scrolling.",
       target: () =>
         document.querySelector("nav[aria-label='Table of contents']") ||
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Mục lục"),
+          c.textContent.includes("Table of contents"),
         ),
     },
     {
-      title: "Bài Viết Liên Quan 🔗",
+      title: "Related Articles 🔗",
       description:
-        "Sau khi đọc xong, đừng vội rời đi! Bạn có thể tham khảo thêm các 'Bài viết liên quan' ở cuối bài để mở rộng kiến thức và khám phá những nội dung hấp dẫn khác.",
+        "After reading, you can explore more Related Articles at the end of the post to expand your knowledge and discover other helpful content.",
       target: () =>
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Bài viết liên quan"),
+          c.textContent.includes("Related Articles"),
         ),
     },
   ],
   "/blogs": [
     {
-      title: "Góc Chia Sẻ & Tài Liệu 📰",
+      title: "Sharing Corner & Resources 📰",
       description:
-        "Chào mừng bạn đến với Blog! Đây là nơi tổng hợp các bài viết chia sẻ kinh nghiệm học tập, chiến thuật làm bài và tài liệu TOEIC hữu ích giúp bạn ôn thi hiệu quả hơn.",
+        "Welcome to the Blog! This is where you can find study experiences, test-taking strategies, and useful TOEIC resources to help you prepare more effectively.",
       target: null,
     },
     {
-      title: "Lọc Theo Danh Mục 📑",
+      title: "Filter by Category 📑",
       description:
-        "Sử dụng danh sách danh mục để dễ dàng tìm kiếm các bài viết theo chủ đề bạn quan tâm (ví dụ: Ngữ pháp, Từ vựng, Mẹo thi TOEIC). Nhấn vào một danh mục để xem tất cả bài viết liên quan.",
+        "Use the category list to easily find articles by topics you care about, such as Grammar, Vocabulary, or TOEIC Tips. Click a category to view all related posts.",
       target: () =>
         document.querySelector(".lg\\:col-span-4 .ant-card") ||
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Duyệt danh mục"),
+          c.textContent.includes("Browse categories"),
         ),
     },
     {
-      title: "Tìm Kiếm Bài Viết 🔍",
+      title: "Search Articles 🔍",
       description:
-        "Bạn đang tìm một chủ đề cụ thể? Nhập từ khóa vào thanh tìm kiếm này để hệ thống lọc ra các bài viết phù hợp nhất một cách nhanh chóng.",
+        "Looking for a specific topic? Enter a keyword in this search bar so the system can quickly filter the most relevant articles.",
       target: () =>
-        document.querySelector("input[placeholder*='Tìm bài viết']") ||
+        document.querySelector("input[placeholder*='Search articles']") ||
         document.querySelector(".ant-input-wrapper") ||
         document.querySelector(".lg\\:w-\\[420px\\]"),
     },
     {
-      title: "Mục Lục Tương Tác 📖",
+      title: "Interactive Table of Contents 📖",
       description:
-        "Khi xem chi tiết một bài viết dài, hãy sử dụng 'Mục lục' bên cạnh (nếu có) để nhảy vọt đến phần nội dung bạn quan tâm mà không cần cuộn trang mỏi tay.",
+        "When reading a long article, use the Table of Contents on the side, if available, to jump directly to the section you care about without endless scrolling.",
       target: () =>
         document.querySelector("nav[aria-label='Table of contents']") ||
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Mục lục"),
+          c.textContent.includes("Table of contents"),
         ),
     },
     {
-      title: "Bài Viết Liên Quan 🔗",
+      title: "Related Articles 🔗",
       description:
-        "Sau khi đọc xong, đừng vội rời đi! Bạn có thể tham khảo thêm các 'Bài viết liên quan' ở cuối bài để mở rộng kiến thức và khám phá những nội dung hấp dẫn khác.",
+        "After reading, you can explore more Related Articles at the end of the post to expand your knowledge and discover other helpful content.",
       target: () =>
         Array.from(document.querySelectorAll(".ant-card")).find((c) =>
-          c.textContent.includes("Bài viết liên quan"),
+          c.textContent.includes("Related Articles"),
         ),
     },
   ],
