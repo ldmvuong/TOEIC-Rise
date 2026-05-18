@@ -61,7 +61,7 @@ const NavigationGrid = ({
   return (
     <div className="space-y-4">
       <div className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3">
-        <strong>Chú ý:</strong> bạn có thể click vào số thứ tự câu hỏi trong bài để đánh dấu review
+        <strong>Note:</strong> you can click a question number in the test to mark it for review
       </div>
       
       {questionNumbers.map((partData, partIdx) => {

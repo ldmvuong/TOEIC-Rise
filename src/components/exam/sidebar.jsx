@@ -40,7 +40,7 @@ const Sidebar = ({
           onClick={onSubmit}
           className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors border border-blue-700"
         >
-          NỘP BÀI
+          SUBMIT
         </button>
 
         {/* Navigation Grid - luôn hiển thị */}
