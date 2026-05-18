@@ -599,7 +599,7 @@ export default function LearningPathLessonPage() {
           const msg =
             e?.response?.data?.message ||
             e?.message ||
-            "Không tải được bài học";
+            "Unable to load lesson";
           setError(msg);
           message.error(msg);
           setLesson(null);
@@ -615,7 +615,7 @@ export default function LearningPathLessonPage() {
     };
   }, [lessonId, learningPathId, navigate]);
 
-  const title = lesson?.title || "Bài học";
+  const title = lesson?.title || "Lesson";
   const isInactive = lesson?.isActive === false;
   const lessonProgressPct = useMemo(() => {
     const n = Number(lesson?.progressPercentage);
@@ -994,13 +994,13 @@ export default function LearningPathLessonPage() {
         lastWatchedTimeMs,
         notice: notice.trim() ? notice.trim() : "",
       });
-      message.success("Đã lưu tiến độ bài học");
+      message.success("Lesson progress saved");
       navigate(`/learning-paths/${learningPathId}`);
     } catch (e) {
       message.error(
         e?.response?.data?.message ||
           e?.message ||
-          "Không thể cập nhật tiến độ",
+          "Unable to update progress",
       );
     } finally {
       setCompleteSubmitting(false);
@@ -1042,7 +1042,7 @@ export default function LearningPathLessonPage() {
       const res = await getMiniTestPracticeBySlug(practiceSlug);
       const testData = res?.data ?? null;
       if (!testData) {
-        message.error("Không tải được dữ liệu luyện tập");
+        message.error("Unable to load practice data");
         return;
       }
       navigate("/do-mini-test", {
@@ -1057,7 +1057,7 @@ export default function LearningPathLessonPage() {
       });
     } catch (e) {
       message.error(
-        e?.response?.data?.message || e?.message || "Không tải được luyện tập",
+        e?.response?.data?.message || e?.message || "Unable to load practice",
       );
     } finally {
       setPracticeLoading(false);
@@ -1073,7 +1073,7 @@ export default function LearningPathLessonPage() {
               to={`/learning-paths/${learningPathId}`}
               className="text-sm font-semibold text-emerald-700 hover:underline"
             >
-              ← Lộ trình
+              ← Learning Path
             </Link>
 
             {lesson?.topic ? (
@@ -1081,7 +1081,7 @@ export default function LearningPathLessonPage() {
                 style={{ marginInlineEnd: 0 }}
                 className="!m-0 !rounded-full !border-emerald-200 !bg-emerald-50 !px-3 !py-1 !text-xs !font-semibold !text-emerald-800"
               >
-                Chủ đề: {lesson.topic}
+                Topic: {lesson.topic}
               </Tag>
             ) : null}
             {lesson?.level ? (
@@ -1089,7 +1089,7 @@ export default function LearningPathLessonPage() {
                 style={{ marginInlineEnd: 0 }}
                 className="!m-0 !rounded-full !border-slate-200 !bg-slate-50 !px-3 !py-1 !text-xs !font-semibold !text-slate-700"
               >
-                Trình độ: {String(lesson.level)}
+                Level: {String(lesson.level)}
               </Tag>
             ) : null}
           </div>
@@ -1097,7 +1097,7 @@ export default function LearningPathLessonPage() {
           <div className="flex items-center gap-3">
             {stepInfo ? (
               <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
-                Bước {stepInfo.index}/{stepInfo.total}
+                Step {stepInfo.index}/{stepInfo.total}
               </div>
             ) : null}
           </div>
@@ -1109,7 +1109,7 @@ export default function LearningPathLessonPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Tiến trình bài học
+                  Lesson progress
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <span className="text-sm font-semibold text-slate-900">
@@ -1117,7 +1117,7 @@ export default function LearningPathLessonPage() {
                   </span>
                   {lesson?.isCompleted ? (
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                      Đã hoàn thành
+                      Completed
                     </span>
                   ) : null}
                 </div>
@@ -1136,7 +1136,7 @@ export default function LearningPathLessonPage() {
 
         {loading ? (
           <div className="mt-12 flex justify-center py-16">
-            <Spin size="large" tip="Đang tải bài học…" spinning>
+            <Spin size="large" tip="Loading lesson..." spinning>
               <div className="min-h-[120px] min-w-[240px]" />
             </Spin>
           </div>
@@ -1151,7 +1151,7 @@ export default function LearningPathLessonPage() {
             </Title>
             {isInactive ? (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-                Bài học hiện không khả dụng.
+                This lesson is currently unavailable.
               </div>
             ) : null}
 
@@ -1167,14 +1167,14 @@ export default function LearningPathLessonPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                          Video bài giảng
+                          Lesson video
                         </div>
                         {resumeSecondsHint != null ? (
                           <Text
                             type="secondary"
                             className="!mb-0 block text-xs"
                           >
-                            Phát tiếp từ vị trí đã lưu lần trước.
+                            Resume from the previously saved position.
                           </Text>
                         ) : null}
                       </div>
@@ -1213,9 +1213,9 @@ export default function LearningPathLessonPage() {
                             >
                               <HolderOutlined className="ml-1 shrink-0 text-slate-400" />
                               <span className="min-w-0 flex-1 truncate px-1 text-xs font-medium text-slate-200">
-                                Video bài học
+                                Lesson video
                               </span>
-                              <Tooltip title="Về vị trí gốc trong trang">
+                              <Tooltip title="Return to the original position on the page">
                                 <Button
                                   type="text"
                                   size="small"
@@ -1325,7 +1325,7 @@ export default function LearningPathLessonPage() {
                                   )
                                 }
                               >
-                                Trình duyệt không hỗ trợ video.
+                                Your browser does not support video.
                               </video>
                             )}
                             {showVideoMini ? (
@@ -1334,25 +1334,25 @@ export default function LearningPathLessonPage() {
                                   data-mini-resize="n"
                                   className="absolute top-0 left-8 right-8 z-20 h-3 cursor-ns-resize touch-none hover:bg-white/10"
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo cạnh trên để đổi kích thước"
+                                  aria-label="Drag the top edge to resize"
                                 />
                                 <div
                                   data-mini-resize="s"
                                   className="absolute bottom-0 left-8 right-8 z-20 h-3 cursor-ns-resize touch-none hover:bg-white/10"
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo cạnh dưới để đổi kích thước"
+                                  aria-label="Drag the bottom edge to resize"
                                 />
                                 <div
                                   data-mini-resize="e"
                                   className="absolute right-0 top-8 bottom-8 z-20 w-3 cursor-ew-resize touch-none hover:bg-white/10"
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo cạnh phải để đổi kích thước"
+                                  aria-label="Drag the right edge to resize"
                                 />
                                 <div
                                   data-mini-resize="w"
                                   className="absolute left-0 top-8 bottom-8 z-20 w-3 cursor-ew-resize touch-none hover:bg-white/10"
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo cạnh trái để đổi kích thước"
+                                  aria-label="Drag the left edge to resize"
                                 />
                                 <div
                                   data-mini-resize="nw"
@@ -1362,7 +1362,7 @@ export default function LearningPathLessonPage() {
                                       "linear-gradient(to bottom right, rgba(255,255,255,0.42), transparent 62%)",
                                   }}
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo góc trên trái để đổi kích thước"
+                                  aria-label="Drag the top-left corner to resize"
                                 />
                                 <div
                                   data-mini-resize="ne"
@@ -1372,7 +1372,7 @@ export default function LearningPathLessonPage() {
                                       "linear-gradient(to bottom left, rgba(255,255,255,0.42), transparent 62%)",
                                   }}
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo góc trên phải để đổi kích thước"
+                                  aria-label="Drag the top-right corner to resize"
                                 />
                                 <div
                                   data-mini-resize="sw"
@@ -1382,7 +1382,7 @@ export default function LearningPathLessonPage() {
                                       "linear-gradient(to top right, rgba(255,255,255,0.42), transparent 62%)",
                                   }}
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo góc dưới trái để đổi kích thước"
+                                  aria-label="Drag the bottom-left corner to resize"
                                 />
                                 <div
                                   data-mini-resize="se"
@@ -1392,7 +1392,7 @@ export default function LearningPathLessonPage() {
                                       "linear-gradient(to top left, rgba(255,255,255,0.42), transparent 62%)",
                                   }}
                                   onPointerDown={onMiniVideoResizePointerDown}
-                                  aria-label="Kéo góc dưới phải để đổi kích thước"
+                                  aria-label="Drag the bottom-right corner to resize"
                                 />
                               </>
                             ) : null}
@@ -1401,7 +1401,7 @@ export default function LearningPathLessonPage() {
                       </div>
                     ) : (
                       <div className="px-6 py-10 text-center text-sm text-slate-200">
-                        Chưa có video cho bài này.
+                        No video is available for this lesson.
                       </div>
                     )}
                   </div>
@@ -1420,7 +1420,7 @@ export default function LearningPathLessonPage() {
                       </div>
                     </Card>
                   ) : (
-                    <Text type="secondary">Chưa có nội dung.</Text>
+                    <Text type="secondary">No content available.</Text>
                   )}
                 </div>
               </div>
@@ -1435,10 +1435,10 @@ export default function LearningPathLessonPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                         <BookOutlined className="text-emerald-700" />
-                        Từ vựng / Ghi chú
+                        Vocabulary / Notes
                       </div>
                       <div className="text-xs font-semibold text-slate-400">
-                        {vocabItems.length ? `${vocabItems.length} mục` : "—"}
+                        {vocabItems.length ? `${vocabItems.length} items` : "—"}
                       </div>
                     </div>
 
@@ -1461,7 +1461,7 @@ export default function LearningPathLessonPage() {
                                     </div>
                                   ) : null}
                                 </div>
-                                <Tooltip title="Phát âm (EN)">
+                                <Tooltip title="Pronunciation (EN)">
                                   <button
                                     type="button"
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
@@ -1469,7 +1469,7 @@ export default function LearningPathLessonPage() {
                                       const ok = speakWord(v.word);
                                       if (!ok)
                                         message.info(
-                                          "Thiết bị không hỗ trợ phát âm.",
+                                          "This device does not support pronunciation.",
                                         );
                                     }}
                                   >
@@ -1488,9 +1488,9 @@ export default function LearningPathLessonPage() {
                       </div>
                     ) : (
                       <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                        Chưa phát hiện danh sách từ vựng trong nội dung. Nếu bạn
-                        dùng bảng hoặc gạch đầu dòng dạng “word - meaning”, hệ
-                        thống sẽ tự hiển thị ở đây.
+                        No vocabulary list was detected in the content. If you
+                        use a table or bullet list in the "word - meaning"
+                        format, it will appear here automatically.
                       </div>
                     )}
                   </Card>
@@ -1501,11 +1501,11 @@ export default function LearningPathLessonPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-slate-900">
-                        Ghi chú của bạn
+                        Your notes
                       </div>
                       <div className="text-xs font-semibold text-slate-400">
                         {notice.trim().length
-                          ? `${notice.trim().length} ký tự`
+                          ? `${notice.trim().length} characters`
                           : "—"}
                       </div>
                     </div>
@@ -1514,7 +1514,7 @@ export default function LearningPathLessonPage() {
                       <Input.TextArea
                         value={notice}
                         onChange={(e) => setNotice(e.target.value)}
-                        placeholder="Ghi lại ý chính, từ mới, điểm cần nhớ… Ghi chú sẽ được lưu cùng tiến độ bài học."
+                        placeholder="Write down key ideas, new words, and points to remember... Notes will be saved with your lesson progress."
                         autoSize={{ minRows: 4, maxRows: 10 }}
                         maxLength={2000}
                         disabled={
@@ -1522,7 +1522,7 @@ export default function LearningPathLessonPage() {
                         }
                       />
                       <div className="mt-2 text-xs text-slate-400">
-                        Ghi chú sẽ được lưu cùng tiến độ bài học.
+                        Notes will be saved with your lesson progress.
                       </div>
                     </div>
                   </Card>
@@ -1605,15 +1605,15 @@ export default function LearningPathLessonPage() {
                       </nav>
                     ) : (
                       <Text type="secondary" className="mt-2 block text-sm">
-                        Nội dung chưa có heading (H1–H3) để tạo mục lục.
+                        This content has no headings (H1-H3) to build a table of contents.
                       </Text>
                     )}
                   </Card>
 
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <Text type="secondary" className="!mb-0 block text-sm">
-                      Khi thoát ra hệ thống sẽ ghi lại thời điểm đang xem trên
-                      video để bạn học tiếp lần sau.
+                      When you leave, the system will save your current video
+                      position so you can continue next time.
                     </Text>
 
                     {showPracticeButton ? (
@@ -1625,7 +1625,7 @@ export default function LearningPathLessonPage() {
                         onClick={handleOpenPractice}
                         className="mt-3 w-full !border-sky-200 !bg-sky-50 !text-sky-800 hover:!border-sky-300 hover:!bg-sky-100"
                       >
-                        Luyện tập
+                        Practice
                       </Button>
                     ) : null}
                   </div>
@@ -1635,7 +1635,7 @@ export default function LearningPathLessonPage() {
 
             {lesson?.updatedAt ? (
               <div className="mt-6 text-xs text-slate-400">
-                Cập nhật: {lesson.updatedAt}
+                Updated: {lesson.updatedAt}
               </div>
             ) : null}
           </>
