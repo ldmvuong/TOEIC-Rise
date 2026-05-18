@@ -100,7 +100,7 @@ const BlogPostsPage = () => {
         pageSize: data.meta?.pageSize ?? m.pageSize,
       }));
     } catch (e) {
-      setError(e?.message || "Không thể tải danh sách bài viết");
+      setError(e?.message || "Unable to load the article list");
       setPosts([]);
       setMeta((m) => ({ ...m, total: 0, pages: 0 }));
     } finally {
@@ -121,7 +121,7 @@ const BlogPostsPage = () => {
               icon={<ArrowLeftOutlined />}
               onClick={() => navigate("/blog")}
             >
-              Danh mục
+              Categories
             </Button>
           </div>
         </div>
@@ -135,10 +135,10 @@ const BlogPostsPage = () => {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="min-w-0">
                   <Title level={3} style={{ margin: 0 }}>
-                    {activeCategory?.name || "Bài viết theo danh mục"}
+                    {activeCategory?.name || "Articles by category"}
                   </Title>
                   <Text type="secondary" className="text-sm">
-                    Chọn bài viết để xem nội dung chi tiết.
+                    Select an article to view the full content.
                   </Text>
                 </div>
 
@@ -161,7 +161,7 @@ const BlogPostsPage = () => {
                       allowClear
                       size="large"
                       prefix={<SearchOutlined className="text-slate-400" />}
-                      placeholder="Tìm bài viết theo tiêu đề"
+                      placeholder="Search articles by title"
                       className="rounded-xl"
                     />
                     <Button
@@ -180,7 +180,7 @@ const BlogPostsPage = () => {
                       }}
                       disabled={!q.trim()}
                     >
-                      Tìm
+                      Search
                     </Button>
                   </Space.Compact>
                 </div>
@@ -197,7 +197,7 @@ const BlogPostsPage = () => {
               </Card>
             ) : posts.length === 0 ? (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
-                <Empty description="Không có bài viết nào" />
+                <Empty description="No articles found" />
               </Card>
             ) : (
               <div className="space-y-4">
@@ -238,13 +238,13 @@ const BlogPostsPage = () => {
                                 preview={false}
                               />
                               <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                                Nổi bật
+                                Featured
                               </div>
                             </div>
                           ) : (
                             <div className="h-[120px] w-full rounded-xl bg-gradient-to-br from-slate-100 via-white to-indigo-50 border border-slate-200 relative">
                               <div className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-indigo-600 border border-indigo-100">
-                                Nổi bật
+                                Featured
                               </div>
                             </div>
                           )}
@@ -260,7 +260,7 @@ const BlogPostsPage = () => {
                           </div>
 
                           <div className="text-lg font-semibold text-slate-900 line-clamp-2">
-                            {p.title || "Chưa có tiêu đề"}
+                            {p.title || "Untitled"}
                           </div>
                           {p.summary ? (
                             <div className="mt-1 text-sm text-slate-600 line-clamp-3">
@@ -282,7 +282,7 @@ const BlogPostsPage = () => {
                             {p.views != null ? (
                               <span className="inline-flex items-center gap-1">
                                 <EyeOutlined />
-                                {Number(p.views).toLocaleString()} lượt xem
+                                {Number(p.views).toLocaleString()} views
                               </span>
                             ) : null}
                           </div>
@@ -315,9 +315,9 @@ const BlogPostsPage = () => {
               className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
               title={
                 <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3 rounded-t-2xl">
-                  <div className="text-slate-900 font-semibold">Duyệt danh mục</div>
+                  <div className="text-slate-900 font-semibold">Browse categories</div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    Chọn một chủ đề để xem các bài viết liên quan
+                    Choose a topic to view related articles
                   </div>
                 </div>
               }
@@ -337,12 +337,12 @@ const BlogPostsPage = () => {
                   <Spin />
                 </div>
               ) : categories.length === 0 ? (
-                <Empty description="Không có danh mục" />
+                <Empty description="No categories found" />
               ) : (
                 <div className="flex flex-col gap-2">
                   <div className="mt-1 text-xs text-slate-500">
                     {categories.filter((c) => (c?.isActive ?? true) === true).length}{" "}
-                    danh mục
+                    categories
                   </div>
                   <div className="max-h-[55vh] overflow-y-auto pr-1 space-y-2">
                     {categories
