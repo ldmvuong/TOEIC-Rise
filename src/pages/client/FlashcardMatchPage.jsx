@@ -62,7 +62,7 @@ const FlashcardMatchPage = () => {
                     setMatchedPairIds(new Set());
                     setProgressMap({});
                 } catch (err) {
-                    message.error(err?.message || 'Không thể tải từ cần ôn');
+                    message.error(err?.message || 'Unable to load words due for review');
                 } finally {
                     setLoading(false);
                 }
@@ -83,7 +83,7 @@ const FlashcardMatchPage = () => {
                 setMatchedPairIds(new Set());
                 setProgressMap({});
             } catch (err) {
-                message.error(err?.message || 'Không thể tải dữ liệu luyện tập');
+                message.error(err?.message || 'Unable to load practice data');
             } finally {
                 setLoading(false);
             }
@@ -204,7 +204,7 @@ const FlashcardMatchPage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -218,10 +218,10 @@ const FlashcardMatchPage = () => {
             return;
         }
         Modal.confirm({
-            title: 'Thoát luyện tập?',
-            content: 'Tiến độ trả lời của bạn sẽ được gửi và không thể hoàn tác.',
-            okText: 'Gửi & thoát',
-            cancelText: 'Hủy',
+            title: 'Exit practice?',
+            content: 'Your answer progress will be submitted and cannot be undone.',
+            okText: 'Submit & exit',
+            cancelText: 'Cancel',
             onOk: async () => {
                 try {
                     setSubmittingExit(true);
@@ -230,7 +230,7 @@ const FlashcardMatchPage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -244,7 +244,7 @@ const FlashcardMatchPage = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Spin size="large" className="text-green-600" />
-                    <p className="text-gray-600">Đang tải dữ liệu...</p>
+                    <p className="text-gray-600">Loading data...</p>
                 </div>
             </div>
         );
@@ -254,13 +254,13 @@ const FlashcardMatchPage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center text-gray-600">
-                    <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
+                    <p className="mb-4">No vocabulary terms available for practice.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-xl hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
-                        Quay lại bộ thẻ
+                        Back to flashcard set
                     </button>
                 </div>
             </div>
@@ -279,24 +279,24 @@ const FlashcardMatchPage = () => {
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
-                    <span className="hidden sm:inline">Quay lại</span>
+                    <span className="hidden sm:inline">Back</span>
                 </button>
                 <span className="text-sm text-gray-600">
-                    Nối từ với nghĩa · Lượt {batchIndex + 1}/{totalBatches} · Đã nối {totalMatchedSoFar}/{items.length} cặp
+                    Match words with meanings · Round {batchIndex + 1}/{totalBatches} · Matched {totalMatchedSoFar}/{items.length} pairs
                 </span>
             </div>
 
             <div className="flex-1 p-4 overflow-auto flex flex-col min-h-0">
                 {allDone ? (
                     <div className="flex flex-col items-center justify-center py-16 flex-1">
-                        <p className="text-xl font-semibold text-green-700 mb-4">Hoàn thành!</p>
-                        <p className="text-gray-600 mb-6">Bạn đã nối đúng tất cả cặp từ.</p>
+                        <p className="text-xl font-semibold text-green-700 mb-4">Completed!</p>
+                        <p className="text-gray-600 mb-6">You matched all word pairs correctly.</p>
                         <button
                             onClick={handleExit}
                             disabled={submittingExit}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium"
                         >
-                            {isDueMode ? 'Quay lại chọn game' : 'Quay lại bộ thẻ'}
+                            {isDueMode ? 'Back to game selection' : 'Back to flashcard set'}
                         </button>
                     </div>
                 ) : (

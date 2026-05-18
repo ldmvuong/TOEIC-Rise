@@ -232,7 +232,7 @@ const FlashcardCreatePage = () => {
 
         // Validate tên
         if (!name.trim()) {
-            newErrors.name = 'Vui lòng nhập tên bộ thẻ!';
+            newErrors.name = 'Please enter a flashcard set name!';
             hasError = true;
         }
 
@@ -245,11 +245,11 @@ const FlashcardCreatePage = () => {
         // Validate từng item
         items.forEach((item, index) => {
             if (!item.vocabulary.trim()) {
-                newErrors.items[index].vocabulary = 'Vui lòng nhập từ vựng!';
+                newErrors.items[index].vocabulary = 'Please enter a vocabulary term!';
                 hasError = true;
             }
             if (!item.definition.trim()) {
-                newErrors.items[index].definition = 'Vui lòng nhập định nghĩa!';
+                newErrors.items[index].definition = 'Please enter a definition!';
                 hasError = true;
             }
         });
@@ -258,7 +258,7 @@ const FlashcardCreatePage = () => {
             setErrors(newErrors);
             // Scroll to first error
             if (!name.trim()) {
-                document.querySelector('input[placeholder*="Từ vựng chủ đề"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.querySelector('input[placeholder*="Topic vocabulary"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 const firstErrorIndex = items.findIndex((item, idx) => 
                     !item.vocabulary.trim() || !item.definition.trim()
@@ -289,12 +289,12 @@ const FlashcardCreatePage = () => {
         try {
             const res = await callCreateFlashcard(payload);
             if (res && (res.status >= 200 && res.status < 300)) {
-                message.success("Tạo bộ thẻ mới thành công!");
+                message.success("Flashcard set created successfully!");
                 navigate('/flashcards', { state: { activeTab: 'my' } });
             }
         } catch (error) {
             console.error(error);
-            const errorMsg = error?.message || error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.";
+            const errorMsg = error?.message || error?.response?.data?.message || "Something went wrong. Please try again.";
             message.error(errorMsg);
         } finally {
             setIsSubmitting(false);
@@ -312,7 +312,7 @@ const FlashcardCreatePage = () => {
                         className="border-none shadow-none hover:bg-gray-100"
                     />
                     <h1 className="text-xl font-bold text-gray-800 m-0">
-                        Tạo bộ thẻ mới
+                        Create new flashcard set
                     </h1>
                 </div>
                 <Button 
@@ -322,7 +322,7 @@ const FlashcardCreatePage = () => {
                     onClick={handleSubmit}
                     className="bg-blue-600 hover:bg-blue-700 h-10 px-6 rounded-lg font-semibold"
                 >
-                    Hoàn tất
+                    Finish
                 </Button>
             </div>
 
@@ -334,10 +334,10 @@ const FlashcardCreatePage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="md:col-span-2 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
                                 <Input 
                                     size="large" 
-                                    placeholder="VD: Từ vựng chủ đề Kinh tế..." 
+                                    placeholder="E.g. Business topic vocabulary..."
                                     value={name}
                                     onChange={(e) => handleNameChange(e.target.value)}
                                     className={`font-semibold ${errors.name ? 'border-red-500' : ''}`}
@@ -348,10 +348,10 @@ const FlashcardCreatePage = () => {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                 <TextArea 
                                     rows={3} 
-                                    placeholder="Mô tả giúp người học hiểu rõ hơn về bộ thẻ này..." 
+                                    placeholder="Add a description to help learners understand this set..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
@@ -359,7 +359,7 @@ const FlashcardCreatePage = () => {
                         </div>
 
                         <div className="md:col-span-1 bg-blue-50 p-4 rounded-lg flex flex-col justify-center items-center gap-3 border border-blue-100">
-                            <span className="font-medium text-gray-700">Chế độ hiển thị</span>
+                            <span className="font-medium text-gray-700">Visibility</span>
                             <Switch 
                                 checkedChildren={<GlobalOutlined />}
                                 unCheckedChildren={<LockOutlined />}
@@ -368,12 +368,12 @@ const FlashcardCreatePage = () => {
                                 className="scale-125"
                             />
                             <span className={`text-sm font-bold ${isPublic ? 'text-blue-600' : 'text-gray-500'}`}>
-                                {isPublic ? 'Công khai (Public)' : 'Riêng tư (Private)'}
+                                {isPublic ? 'Public' : 'Private'}
                             </span>
                             <p className="text-xs text-center text-gray-500 mt-2">
                                 {isPublic 
-                                    ? 'Mọi người có thể tìm thấy và học bộ thẻ này.' 
-                                    : 'Chỉ mình bạn mới có thể nhìn thấy bộ thẻ này.'}
+                                    ? 'Everyone can find and study this flashcard set.'
+                                    : 'Only you can see this flashcard set.'}
                             </p>
                         </div>
                     </div>
@@ -381,7 +381,7 @@ const FlashcardCreatePage = () => {
 
                 {/* 2. DANH SÁCH TỪ VỰNG */}
                 <div className="space-y-4">
-                    <h2 className="text-lg font-bold text-gray-800">Danh sách từ vựng ({items.length})</h2>
+                    <h2 className="text-lg font-bold text-gray-800">Vocabulary list ({items.length})</h2>
                     
                     {items.map((item, index) => (
                         <div key={index} className="flashcard-item bg-white rounded-xl shadow-sm border p-4 relative group hover:border-blue-300 transition-all" style={{
@@ -393,7 +393,7 @@ const FlashcardCreatePage = () => {
                             </div>
 
                             {/* Nút xóa */}
-                            <Tooltip title="Xóa thẻ này">
+                            <Tooltip title="Delete this card">
                                 <Button 
                                     type="text" 
                                     danger 
@@ -407,10 +407,10 @@ const FlashcardCreatePage = () => {
                                 {/* Cột Từ vựng */}
                                 <div className="space-y-3">
                                     <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.vocabulary ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
-                                        <label className="text-xs text-gray-400 uppercase font-semibold">Thuật ngữ (Term) <span className="text-red-500">*</span></label>
+                                        <label className="text-xs text-gray-400 uppercase font-semibold">Term <span className="text-red-500">*</span></label>
                                         <Input 
                                             variant="borderless" 
-                                            placeholder="Nhập từ vựng..." 
+                                            placeholder="Enter vocabulary..."
                                             className="text-lg font-bold text-blue-900 px-0 py-1"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
@@ -425,10 +425,10 @@ const FlashcardCreatePage = () => {
                                 {/* Cột Định nghĩa */}
                                 <div className="space-y-3">
                                     <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.definition ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
-                                        <label className="text-xs text-gray-400 uppercase font-semibold">Định nghĩa (Definition) <span className="text-red-500">*</span></label>
+                                        <label className="text-xs text-gray-400 uppercase font-semibold">Definition <span className="text-red-500">*</span></label>
                                         <Input 
                                             variant="borderless" 
-                                            placeholder="Nhập định nghĩa..." 
+                                            placeholder="Enter definition..."
                                             className="text-lg text-gray-800 px-0 py-1"
                                             value={item.definition}
                                             onChange={(e) => handleItemChange(index, 'definition', e.target.value)}
@@ -449,7 +449,7 @@ const FlashcardCreatePage = () => {
                                 {/* Pronunciation (display-only, only if exists) */}
                                 {item.pronunciation && (
                                     <div className="space-y-2">
-                                        <label className="text-xs text-gray-400 uppercase font-semibold">Phiên âm (Pronunciation)</label>
+                                        <label className="text-xs text-gray-400 uppercase font-semibold">Pronunciation</label>
                                         <div className="inline-flex items-center px-3 py-1 rounded-full text-sm text-gray-700 bg-gray-50 border border-gray-200 w-fit">
                                             /{item.pronunciation}/
                                         </div>
@@ -465,7 +465,7 @@ const FlashcardCreatePage = () => {
                         className="w-full py-6 bg-white border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all font-semibold group"
                     >
                         <PlusOutlined className="text-2xl mb-2 group-hover:scale-110 transition-transform" />
-                        <span>Thêm thẻ mới</span>
+                        <span>Add new card</span>
                     </button>
                 </div>
             </div>

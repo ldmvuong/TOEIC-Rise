@@ -59,7 +59,7 @@ const FlashcardViewPage = () => {
                 setIsNotFound(true);
             } else {
                 // Các lỗi khác vẫn hiển thị message và navigate
-                message.error(error?.message || "Không thể tải thông tin bộ thẻ!");
+                message.error(error?.message || "Unable to load flashcard set information!");
                 navigate('/flashcards');
             }
         } finally {
@@ -73,14 +73,14 @@ const FlashcardViewPage = () => {
             if (isFavourite) {
                 await callRemoveFromFavourite(id);
                 setIsFavourite(false);
-                message.success("Đã xóa khỏi yêu thích");
+                message.success("Removed from favorites");
             } else {
                 await callAddToFavourite(id);
                 setIsFavourite(true);
-                message.success("Đã thêm vào yêu thích");
+                message.success("Added to favorites");
             }
         } catch (error) {
-            message.error(error?.message || "Có lỗi xảy ra");
+            message.error(error?.message || "Something went wrong");
         }
     };
 
@@ -93,10 +93,10 @@ const FlashcardViewPage = () => {
     const handleDelete = async () => {
         try {
             await callDeleteFlashcard(id);
-            message.success("Đã xóa bộ thẻ thành công!");
+            message.success("Flashcard set deleted successfully!");
             navigate('/flashcards', { state: { activeTab: 'my' } });
         } catch (error) {
-            message.error(error?.message || "Không thể xóa bộ thẻ");
+            message.error(error?.message || "Unable to delete flashcard set");
         }
     };
 
@@ -120,17 +120,17 @@ const FlashcardViewPage = () => {
                             </div>
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                            Không tìm thấy
+                            Not found
                         </h2>
                         <p className="text-gray-600 mb-6">
-                            Bộ thẻ này không tồn tại hoặc bạn không có quyền truy cập.
+                            This flashcard set does not exist or you do not have permission to access it.
                         </p>
                         <Button
                             type="primary"
                             onClick={() => navigate('/flashcards')}
                             className="bg-blue-600 hover:bg-blue-700"
                         >
-                            Quay lại thư viện
+                            Back to library
                         </Button>
                     </div>
                 </Card>
@@ -172,7 +172,7 @@ const FlashcardViewPage = () => {
                                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
-                                    {isFavourite ? 'Đã lưu' : 'Lưu'}
+                                    {isFavourite ? 'Saved' : 'Save'}
                                 </Button>
 
                                 {/* Nút Chỉnh sửa và Xóa - chỉ hiện khi có quyền sở hữu */}
@@ -184,14 +184,14 @@ const FlashcardViewPage = () => {
                                             size="small"
                                             className="bg-gray-100 text-gray-700 hover:bg-gray-200"
                                         >
-                                            Chỉnh sửa
+                                            Edit
                                         </Button>
                                         <Popconfirm
-                                            title="Xóa bộ thẻ"
-                                            description="Bạn có chắc chắn muốn xóa bộ thẻ này?"
+                                            title="Delete flashcard set"
+                                            description="Are you sure you want to delete this flashcard set?"
                                             onConfirm={handleDelete}
-                                            okText="Xóa"
-                                            cancelText="Hủy"
+                                            okText="Delete"
+                                            cancelText="Cancel"
                                             okButtonProps={{ danger: true }}
                                         >
                                             <Button
@@ -200,7 +200,7 @@ const FlashcardViewPage = () => {
                                                 size="small"
                                                 className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
                                             >
-                                                Xóa
+                                                Delete
                                             </Button>
                                         </Popconfirm>
                                     </>
@@ -233,12 +233,12 @@ const FlashcardViewPage = () => {
                                 {isPublic ? (
                                     <>
                                         <GlobalOutlined className="w-4 h-4 text-green-600" />
-                                        <span className="text-green-700 font-medium">Công khai</span>
+                                        <span className="text-green-700 font-medium">Public</span>
                                     </>
                                 ) : (
                                     <>
                                         <LockOutlined className="w-4 h-4 text-gray-500" />
-                                        <span className="text-gray-700 font-medium">Riêng tư</span>
+                                        <span className="text-gray-700 font-medium">Private</span>
                                     </>
                                 )}
                             </div>
@@ -247,7 +247,7 @@ const FlashcardViewPage = () => {
                             <span className="text-gray-300">•</span>
                             
                             {/* Số lượng từ vựng */}
-                            <span className="text-sm text-gray-600">{items.length} từ vựng</span>
+                            <span className="text-sm text-gray-600">{items.length} vocabulary terms</span>
                         </div>
                     </div>
                 </Card>
@@ -256,7 +256,7 @@ const FlashcardViewPage = () => {
                 <Card className="shadow-sm rounded-xl border-gray-200">
                     <div className="flex items-center gap-2 mb-4">
                         <AcademicCapIcon className="w-6 h-6 text-gray-700" />
-                        <h3 className="text-lg font-bold text-gray-800">Chế độ luyện tập</h3>
+                        <h3 className="text-lg font-bold text-gray-800">Practice modes</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Card Thẻ ghi nhớ (Flashcard) */}
@@ -271,7 +271,7 @@ const FlashcardViewPage = () => {
                                 </div>
                                 <h4 className="font-bold text-white">Flashcard</h4>
                             </div>
-                            <p className="text-sm text-white/90">Luyện tập với thẻ ghi nhớ, lật thẻ để xem nghĩa và ví dụ</p>
+                            <p className="text-sm text-white/90">Practice with memory cards, flip cards to view meanings and examples</p>
                         </button>
 
                         {/* Nối từ với nghĩa */}
@@ -284,9 +284,9 @@ const FlashcardViewPage = () => {
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
                                     <ArrowsRightLeftIcon className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-bold text-white">Nối từ với nghĩa</h4>
+                                <h4 className="font-bold text-white">Match words with meanings</h4>
                             </div>
-                            <p className="text-sm text-white/90">Kéo thả hoặc chọn cặp từ vựng – nghĩa tương ứng</p>
+                            <p className="text-sm text-white/90">Drag and drop or select matching word-definition pairs</p>
                         </button>
 
                         {/* Trắc nghiệm lựa chọn */}
@@ -299,9 +299,9 @@ const FlashcardViewPage = () => {
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
                                     <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-bold text-white">Trắc nghiệm lựa chọn</h4>
+                                <h4 className="font-bold text-white">Multiple-choice quiz</h4>
                             </div>
-                            <p className="text-sm text-white/90">Trắc nghiệm 4 đáp án, chọn 1 đáp án đúng cho từ vựng</p>
+                            <p className="text-sm text-white/90">A 4-option quiz where you choose the correct answer for each word</p>
                         </button>
 
                         {/* Hiển thị tiếng Việt, nhập từ tiếng Anh */}
@@ -314,9 +314,9 @@ const FlashcardViewPage = () => {
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
                                     <LanguageIcon className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-bold text-white">Hiển thị tiếng Việt, nhập từ tiếng Anh</h4>
+                                <h4 className="font-bold text-white">See the meaning, type the English word</h4>
                             </div>
-                            <p className="text-sm text-white/90">Xem nghĩa tiếng Việt và gõ từ vựng tiếng Anh tương ứng</p>
+                            <p className="text-sm text-white/90">View the meaning and type the matching English vocabulary term</p>
                         </button>
 
                         {/* Luyện câu với AI */}
@@ -329,9 +329,9 @@ const FlashcardViewPage = () => {
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
                                     <PencilSquareIcon className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-bold text-white">Luyện câu với AI</h4>
+                                <h4 className="font-bold text-white">Sentence practice with AI</h4>
                             </div>
-                            <p className="text-sm text-white/90">Tạo câu với từ vựng và nhận phản hồi từ AI</p>
+                            <p className="text-sm text-white/90">Create sentences with vocabulary and receive AI feedback</p>
                         </button>
                     </div>
                 </Card>
@@ -339,7 +339,7 @@ const FlashcardViewPage = () => {
                 {/* 3. DANH SÁCH TỪ VỰNG (Chế độ xem) */}
                 <Card className="shadow-sm rounded-xl border-gray-200">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">
-                        Danh sách từ vựng ({items.length})
+                        Vocabulary list ({items.length})
                     </h3>
                     
                     <div className="space-y-4">
@@ -353,7 +353,7 @@ const FlashcardViewPage = () => {
                                         {/* Cột Từ vựng */}
                                         <div className="space-y-2">
                                             <div className="mb-2">
-                                                <span className="text-xs font-semibold text-gray-400 uppercase">Thuật ngữ</span>
+                                                <span className="text-xs font-semibold text-gray-400 uppercase">Term</span>
                                             </div>
                                             <h4 className="text-xl font-bold text-blue-900">
                                                 {item.vocabulary || item.word || 'N/A'}
@@ -370,7 +370,7 @@ const FlashcardViewPage = () => {
 
                                         {/* Cột Định nghĩa */}
                                         <div className="space-y-2">
-                                            <span className="text-xs font-semibold text-gray-400 uppercase">Định nghĩa</span>
+                                            <span className="text-xs font-semibold text-gray-400 uppercase">Definition</span>
                                             <p className="text-lg text-gray-800">
                                                 {item.definition || 'N/A'}
                                             </p>
@@ -380,7 +380,7 @@ const FlashcardViewPage = () => {
                             ))
                         ) : (
                             <div className="text-center py-8 text-gray-500">
-                                Chưa có từ vựng nào
+                                No vocabulary terms yet
                             </div>
                         )}
                     </div>
