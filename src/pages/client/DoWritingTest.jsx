@@ -128,7 +128,7 @@ const DoWritingTest = () => {
       try {
         localStorage.setItem(key, JSON.stringify(payload));
       } catch (e) {
-        console.error("Lưu tiến độ full test Writing thất bại:", e);
+        console.error("Failed to save Writing full test progress:", e);
       }
     }
     if (
@@ -247,7 +247,7 @@ const DoWritingTest = () => {
           localStorage.setItem(key, JSON.stringify(payload));
         } catch (err) {
           console.error(
-            "Lưu tiến độ full test Writing (beforeunload) thất bại:",
+            "Failed to save Writing full test progress before unload:",
             err,
           );
         }
@@ -264,7 +264,7 @@ const DoWritingTest = () => {
   useEffect(() => {
     const init = async () => {
       if (!testId) {
-        message.error("Thiếu thông tin đề Writing");
+        message.error("Missing Writing test information");
         navigate("/writing-tests");
         return;
       }
@@ -273,7 +273,7 @@ const DoWritingTest = () => {
         const res = await getWritingExam(testId, partIds);
         setTestData(res?.data || null);
       } catch (error) {
-        message.error(error?.message || "Không thể tải đề Writing");
+        message.error(error?.message || "Unable to load the Writing test");
       } finally {
         setLoading(false);
       }
@@ -420,7 +420,7 @@ const DoWritingTest = () => {
       }
     } catch (error) {
       message.error(
-        error?.response?.data?.message || error?.message || "Không thể nộp bài Writing",
+        error?.response?.data?.message || error?.message || "Unable to submit the Writing test",
       );
     } finally {
       setIsSubmitting(false);
@@ -482,7 +482,7 @@ const DoWritingTest = () => {
     (e) => {
       if (!isFullTest) return;
       e.preventDefault();
-      message.warning("Full test Writing không cho phép copy/paste.");
+      message.warning("Copy/paste is not allowed in the Writing full test.");
     },
     [isFullTest],
   );
@@ -499,13 +499,13 @@ const DoWritingTest = () => {
     .filter(Boolean).length;
 
   if (loading) {
-    return <Spin fullscreen tip="Đang tải đề Writing..." />;
+    return <Spin fullscreen tip="Loading Writing test..." />;
   }
 
   if (!testData || !currentPart || !currentGroup || !currentQuestion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-600">Không tìm thấy đề Writing</div>
+        <div className="text-center text-gray-600">Writing test not found</div>
       </div>
     );
   }
@@ -520,18 +520,18 @@ const DoWritingTest = () => {
                 {testData.testName}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                {currentPart.partName} · Câu {currentQuestion.position}
+                {currentPart.partName} · Question {currentQuestion.position}
               </p>
             </div>
             <div className="text-right space-y-1">
               {isFullTest ? (
                 <>
-                  <div className="text-xs text-gray-500">Thời gian full test</div>
+                  <div className="text-xs text-gray-500">Full test time</div>
                   <div className="text-lg font-semibold text-red-600">
                     {formatTime(fullRemaining)}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Thời gian phần hiện tại
+                    Current part time
                   </div>
                   <div className="text-lg font-semibold text-blue-700">
                     {formatTime(partRemaining)}
@@ -539,7 +539,7 @@ const DoWritingTest = () => {
                 </>
               ) : (
                 <div className="text-sm text-gray-600">
-                  Luyện tập: không áp dụng timer Writing
+                  Practice: Writing timer does not apply
                 </div>
               )}
             </div>
@@ -547,7 +547,7 @@ const DoWritingTest = () => {
           {canSwapWithinPart ? (
             <div className="mt-4 border-t border-gray-200 pt-4">
               <div className="text-sm text-gray-600 mb-2">
-                Chọn nhanh câu hỏi trong {currentPart.partName}
+                Quick select questions in {currentPart.partName}
               </div>
               <div className="flex flex-wrap gap-2">
                 {currentPartQuestionMap.map((item) => {
@@ -568,7 +568,7 @@ const DoWritingTest = () => {
                           : "bg-white border-gray-300 text-gray-700 hover:border-blue-300 hover:text-blue-700"
                       }`}
                     >
-                      Câu {item.position}
+                      Question {item.position}
                     </button>
                   );
                 })}
@@ -589,7 +589,7 @@ const DoWritingTest = () => {
                 />
               ) : (
                 <div className="text-gray-500 text-sm italic">
-                  Câu này không có passage.
+                  This question does not have a passage.
                 </div>
               )}
               {currentGroup.imageUrl ? (
@@ -613,7 +613,7 @@ const DoWritingTest = () => {
               >
                 {String(currentQuestion.content ?? "").trim()
                   ? currentQuestion.content
-                  : "Hãy viết câu trả lời cho câu hỏi này."}
+                  : "Please write an answer for this question."}
               </DictionaryText>
 
               <div className="mb-3">
@@ -622,13 +622,13 @@ const DoWritingTest = () => {
                   onClick={() => setShowNoteEditor((prev) => !prev)}
                   className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
                 >
-                  Viết ghi chú / dàn ý
+                  Write notes / outline
                 </button>
               </div>
               {showNoteEditor ? (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ghi chú cho câu {currentQuestion.position}
+                    Notes for question {currentQuestion.position}
                   </label>
                   <textarea
                     value={currentQuestionNote}
@@ -638,17 +638,17 @@ const DoWritingTest = () => {
                         [currentQuestion.id]: e.target.value,
                       }))
                     }
-                    placeholder="Viết dàn ý, từ vựng, cấu trúc bài viết..."
+                    placeholder="Write your outline, vocabulary, and essay structure..."
                     className="w-full min-h-[120px] rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   />
                 </div>
               ) : null}
 
               <div className="text-sm font-medium text-gray-700 mb-2">
-                Bài viết của bạn
+                Your writing
               </div>
               <div className="text-xs text-gray-500 mb-2">
-                Số từ: {currentAnswerWordCount}
+                Word count: {currentAnswerWordCount}
               </div>
               <textarea
                 value={currentQuestionAnswer}
@@ -662,7 +662,7 @@ const DoWritingTest = () => {
                 onCut={handleRestrictedClipboardAction}
                 onPaste={handleRestrictedClipboardAction}
                 onDrop={handleRestrictedClipboardAction}
-                placeholder="Nhập câu trả lời cho câu hỏi này..."
+                placeholder="Enter your answer for this question..."
                 className="w-full min-h-[220px] rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
@@ -676,7 +676,7 @@ const DoWritingTest = () => {
             disabled={!canGoPrevious || isFullTest}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50"
           >
-            Câu trước
+            Previous question
           </button>
           <button
             type="button"
@@ -684,7 +684,7 @@ const DoWritingTest = () => {
             disabled={isFullTest || !hasNextQuestion}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
           >
-            Câu tiếp
+            Next question
           </button>
         </div>
         <div className="mt-4 flex justify-end">
@@ -692,25 +692,25 @@ const DoWritingTest = () => {
             type="button"
             onClick={() =>
               Modal.confirm({
-                title: "Xác nhận nộp bài",
+                title: "Confirm Submission",
                 content:
-                  "Bạn có chắc chắn muốn nộp bài Writing? Sau khi nộp bạn không thể chỉnh sửa.",
-                okText: "Nộp bài",
-                cancelText: "Tiếp tục làm",
+                  "Are you sure you want to submit the Writing test? After submitting, you cannot edit your answers.",
+                okText: "Submit",
+                cancelText: "Continue",
                 onOk: () => submitWriting(),
               })
             }
             disabled={isSubmitting || isSubmitted}
             className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
           >
-            {isSubmitting ? "Đang nộp..." : isSubmitted ? "Đã nộp" : "Nộp bài"}
+            {isSubmitting ? "Submitting..." : isSubmitted ? "Submitted" : "Submit"}
           </button>
         </div>
       </div>
 
       {testResult ? (
         <Modal
-          title="Kết quả bài Writing"
+          title="Writing Test Result"
           open={!!testResult}
           onOk={() =>
             navigate(
@@ -726,15 +726,15 @@ const DoWritingTest = () => {
               }),
             )
           }
-          okText="Xem chi tiết"
-          cancelText="Đóng"
+          okText="View Details"
+          cancelText="Close"
           width={600}
           centered
         >
           <div className="py-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <span className="text-gray-700 font-medium">Tổng số câu hỏi:</span>
+                <span className="text-gray-700 font-medium">Total questions:</span>
                 <span className="text-lg font-semibold text-blue-600">
                   {testResult.totalQuestions}
                 </span>
@@ -742,7 +742,7 @@ const DoWritingTest = () => {
 
               <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                 <span className="text-gray-700 font-medium">
-                  Số câu đã trả lời:
+                  Answered questions:
                 </span>
                 <span className="text-lg font-semibold text-green-600">
                   {testResult.totalAnswers}
@@ -751,7 +751,7 @@ const DoWritingTest = () => {
 
               <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
                 <span className="text-gray-700 font-medium">
-                  Thời gian làm bài:
+                  Time spent:
                 </span>
                 <span className="text-lg font-semibold text-orange-600">
                   {formatTime(testResult.timeSpent)}
@@ -766,7 +766,7 @@ const DoWritingTest = () => {
                       : "0%"}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Tỷ lệ câu đã hoàn thành
+                    Completion rate
                   </div>
                 </div>
               </div>
@@ -776,23 +776,23 @@ const DoWritingTest = () => {
       ) : null}
 
       <Modal
-        title="Xác nhận rời khỏi trang"
+        title="Confirm Leaving Page"
         open={showLeaveConfirm}
         onOk={handleConfirmLeave}
         onCancel={handleCancelLeave}
-        okText="Thoát"
-        cancelText="Tiếp tục làm bài"
+        okText="Exit"
+        cancelText="Continue Test"
         okType="danger"
       >
-        <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
+        <p>Are you sure you want to leave the test page?</p>
         {isFullTest ? (
           <p className="text-blue-600 font-medium mt-2">
-            Tiến độ sẽ được lưu. Bạn có thể tiếp tục làm bài khi quay lại (chọn
-            lại làm full test cùng đề).
+            Your progress will be saved. You can continue the test when you return by choosing
+            the same full test again.
           </p>
         ) : (
           <p className="text-red-600 font-medium mt-2">
-            Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.
+            Note: Your test progress will not be saved if you leave this page.
           </p>
         )}
       </Modal>
