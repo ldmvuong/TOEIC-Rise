@@ -62,7 +62,7 @@ const DictionaryText = ({ children, className = '', style = {}, disableDictionar
             <button
               onClick={handleDictionaryIconClick}
               className="w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110"
-              title="Tra cứu từ điển"
+              title="Look up in dictionary"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
@@ -72,7 +72,7 @@ const DictionaryText = ({ children, className = '', style = {}, disableDictionar
             <button
               onClick={handleAddToFlashcardClick}
               className="w-6 h-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110"
-              title="Thêm vào flashcard"
+              title="Add to flashcard"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M4 3a2 2 0 00-2 2v10.5A1.5 1.5 0 003.5 17h9.879a2 2 0 001.414-.586l2.121-2.121A2 2 0 0018.5 12.88V5a2 2 0 00-2-2H4z" />
