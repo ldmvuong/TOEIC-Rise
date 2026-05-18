@@ -19,12 +19,12 @@ const MiniTestResult = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="bg-white rounded-lg shadow px-6 py-4 text-center">
-                    <p className="text-gray-700 mb-3">Không tìm thấy dữ liệu kết quả mini test.</p>
+                    <p className="text-gray-700 mb-3">Mini test result data not found.</p>
                     <button
                         onClick={() => navigate('/statistics')}
                         className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
                     >
-                        Quay lại thống kê
+                        Back to statistics
                     </button>
                 </div>
             </div>
@@ -105,7 +105,7 @@ const MiniTestResult = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Kết quả Mini Test</h1>
+                                <h1 className="text-2xl font-bold text-gray-900">Mini Test Result</h1>
                                 {selectedTags.length > 0 && (
                                     <div className="mt-2 flex flex-wrap gap-1.5">
                                         {selectedTags.map((tag, idx) => (
@@ -123,22 +123,22 @@ const MiniTestResult = () => {
                                 onClick={() => navigate('/statistics')}
                                 className="px-4 py-2 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
                             >
-                                Quay lại thống kê
+                                Back to statistics
                             </button>
                     </div>
 
                     {/* Summary */}
                     <div className="grid gap-4 sm:grid-cols-3">
                             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div className="text-xs text-gray-500 mb-1">Tổng số câu</div>
+                                <div className="text-xs text-gray-500 mb-1">Total questions</div>
                                 <div className="text-2xl font-semibold text-gray-900">{totalQuestions}</div>
                             </div>
                             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div className="text-xs text-gray-500 mb-1">Số câu đúng</div>
+                                <div className="text-xs text-gray-500 mb-1">Correct answers</div>
                                 <div className="text-2xl font-semibold text-emerald-600">{correctAnswers}</div>
                             </div>
                             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div className="text-xs text-gray-500 mb-1">Độ chính xác</div>
+                                <div className="text-xs text-gray-500 mb-1">Accuracy</div>
                                 <div className="text-2xl font-semibold text-blue-600">{accuracy}%</div>
                             </div>
                     </div>
@@ -181,7 +181,7 @@ const MiniTestResult = () => {
                                                     onClick={() => toggleTranscript(group.id)}
                                                     className="px-2 py-0.5 rounded-full text-xs font-medium border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100"
                                                 >
-                                                    {expandedTranscripts[group.id] ? 'Ẩn transcript' : 'Xem transcript'}
+                                                    {expandedTranscripts[group.id] ? 'Hide transcript' : 'View transcript'}
                                                 </button>
                                             </div>
                                             {expandedTranscripts[group.id] && (
@@ -273,7 +273,7 @@ const MiniTestResult = () => {
                                                         <div className="flex flex-wrap gap-3 text-gray-700 items-center justify-between">
                                                             {!userAnswer && (
                                                                 <div className="text-gray-600 italic">
-                                                                    Chưa trả lời
+                                                                    Unanswered
                                                                 </div>
                                                             )}
                                                             {q.explanation && (
@@ -283,14 +283,14 @@ const MiniTestResult = () => {
                                                                     className="px-3 py-1 rounded-full text-xs font-medium border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100"
                                                                 >
                                                                     {expandedQuestions[q.id]
-                                                                        ? 'Ẩn giải thích'
-                                                                        : 'Xem giải thích'}
+                                                                        ? 'Hide explanation'
+                                                                        : 'View explanation'}
                                                                 </button>
                                                             )}
                                                         </div>
                                                         {q.explanation && expandedQuestions[q.id] && (
                                                             <div className="mt-2 rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-sky-900 whitespace-pre-line text-xs sm:text-sm max-h-48 overflow-y-auto pr-1">
-                                                                <div className="font-semibold mb-1">Giải thích</div>
+                                                                <div className="font-semibold mb-1">Explanation</div>
                                                                 {q.explanation}
                                                             </div>
                                                         )}

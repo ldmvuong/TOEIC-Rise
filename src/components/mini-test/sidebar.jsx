@@ -88,25 +88,25 @@ const MiniTestSidebar = ({
                 <div className="mt-3 pt-3 border-t border-gray-200">
                     <div className="text-sm text-gray-600 space-y-1.5">
                         <div className="flex justify-between items-center gap-2">
-                            <span className="whitespace-nowrap">Tổng số câu:</span>
+                            <span className="whitespace-nowrap">Total questions:</span>
                             <span className="font-semibold flex-shrink-0">{questions.length}</span>
                         </div>
                         {isResultMode ? (
                             <>
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="whitespace-nowrap">Số câu đúng:</span>
+                                    <span className="whitespace-nowrap">Correct answers:</span>
                                     <span className="font-semibold text-green-600 flex-shrink-0">
                                         {Object.values(questionResults).filter(r => r === 'correct').length}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="whitespace-nowrap">Số câu sai:</span>
+                                    <span className="whitespace-nowrap">Wrong answers:</span>
                                     <span className="font-semibold text-red-600 flex-shrink-0">
                                         {Object.values(questionResults).filter(r => r === 'wrong').length}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="whitespace-nowrap">Chưa làm:</span>
+                                    <span className="whitespace-nowrap">Unanswered:</span>
                                     <span className="font-semibold text-gray-400 flex-shrink-0">
                                         {questions.length - Object.keys(questionResults).length}
                                     </span>
@@ -115,13 +115,13 @@ const MiniTestSidebar = ({
                         ) : (
                             <>
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="whitespace-nowrap">Đã làm:</span>
+                                    <span className="whitespace-nowrap">Answered:</span>
                                     <span className="font-semibold text-green-600 flex-shrink-0">
                                         {Object.keys(answers).length}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center gap-2">
-                                    <span className="whitespace-nowrap">Chưa làm:</span>
+                                    <span className="whitespace-nowrap">Unanswered:</span>
                                     <span className="font-semibold text-gray-400 flex-shrink-0">
                                         {questions.length - Object.keys(answers).length}
                                     </span>
@@ -137,7 +137,7 @@ const MiniTestSidebar = ({
                                 onClick={onSubmitTest}
                                 className="w-full py-2 px-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                             >
-                                Nộp bài
+                                Submit
                             </button>
                         </div>
                     )}
