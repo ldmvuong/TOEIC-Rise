@@ -82,7 +82,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
             questionData?.id;
 
         if (!resolvedUserAnswerId) {
-            antdMessage.warning('Không tìm thấy userAnswerId để chat với AI.');
+            antdMessage.warning('userAnswerId not found for chatting with AI.');
             return;
         }
 
@@ -136,7 +136,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
             });
 
             if (!response.ok || !response.body) {
-                throw new Error('Không nhận được phản hồi từ AI.');
+                throw new Error('No response received from AI.');
             }
 
             const reader = response.body.getReader();
@@ -188,7 +188,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                             );
                         }
                     } catch (err) {
-                        console.error('Không parse được dữ liệu AI:', err);
+                        console.error('Unable to parse AI data:', err);
                     }
                 }
             };
@@ -212,7 +212,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
         } catch (error) {
             console.error(error);
             if (!aggregatedContent) {
-                antdMessage.error(error.message || 'Không thể gửi tin nhắn tới AI.');
+                antdMessage.error(error.message || 'Unable to send message to AI.');
                 setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
             } else {
                 console.warn('AI stream ended with warning after delivering content.');
@@ -275,7 +275,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                         {/* Header */}
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                Câu hỏi #{position || ''}
+                                Question #{position || ''}
                             </h2>
                             
                             {/* Tags */}
@@ -320,7 +320,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                     className="w-full flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
                                 >
                                     <span className="text-sm font-medium text-gray-700">
-                                        {showTranscript ? 'Ẩn Transcript' : 'Hiện Transcript'}
+                                        {showTranscript ? 'Hide Transcript' : 'Show Transcript'}
                                     </span>
                                     <svg
                                         className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`}
@@ -407,7 +407,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                             {correctOption && (
                                 <div className="mt-4 ml-0 lg:ml-11">
                                     <p className="text-sm font-semibold text-green-600">
-                                        Đáp án đúng: {correctOption}
+                                        Correct answer: {correctOption}
                                     </p>
                                 </div>
                             )}
@@ -421,7 +421,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                     className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                                 >
                                     <span className="text-sm font-medium text-gray-700">
-                                        Giải thích chi tiết đáp án
+                                        Detailed answer explanation
                                     </span>
                                     <svg
                                         className={`w-5 h-5 text-gray-500 transition-transform ${showExplanation ? 'rotate-180' : ''}`}
@@ -457,15 +457,15 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Chat với AI</h3>
-                                    <p className="text-xs text-gray-600">Hỏi về câu hỏi này</p>
+                                    <h3 className="text-lg font-semibold text-gray-900">Chat with AI</h3>
+                                    <p className="text-xs text-gray-600">Ask about this question</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setIsQuestionPanelVisible(prev => !prev)}
                                 className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-blue-200 text-blue-600 bg-white hover:bg-blue-50 transition-colors"
                             >
-                                {isQuestionPanelVisible ? 'Ẩn câu hỏi' : 'Hiện câu hỏi'}
+                                {isQuestionPanelVisible ? 'Hide question' : 'Show question'}
                                 <svg
                                     className={`w-4 h-4 transition-transform ${isQuestionPanelVisible ? '' : 'rotate-180'}`}
                                     fill="none"
@@ -489,8 +489,8 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                 <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                 </svg>
-                                <p className="text-sm">Bắt đầu cuộc trò chuyện với AI</p>
-                                <p className="text-xs mt-1">Hỏi về câu hỏi, đáp án, hoặc giải thích</p>
+                                <p className="text-sm">Start a conversation with AI</p>
+                                <p className="text-xs mt-1">Ask about the question, answer, or explanation</p>
                             </div>
                         ) : (
                             messages.map((msg) => (
@@ -525,7 +525,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                                 msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                                             }`}
                                         >
-                                            {msg.timestamp.toLocaleTimeString('vi-VN', {
+                                            {msg.timestamp.toLocaleTimeString('en-US', {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
                                             })}
@@ -544,7 +544,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Nhập câu hỏi của bạn..."
+                                placeholder="Enter your question..."
                                 autoSize={{ minRows: 1, maxRows: 4 }}
                                 disabled={sending}
                                 className="flex-1"
@@ -561,7 +561,7 @@ const ChatQuestion = ({ open, onClose, questionData }) => {
                                     </svg>
                                 }
                             >
-                                Gửi
+                                Send
                             </Button>
                         </div>
                     </div>
