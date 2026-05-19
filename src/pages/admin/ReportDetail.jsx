@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/redux/hooks";
-import { getReportById, updateQuestionReport, updateQuestionGroup, getQuestionGroup, generateExplanationStream } from "@/api/api";
+import {
+    getReportById,
+    updateQuestionReport,
+    updateQuestionGroup,
+    getQuestionGroup,
+    updateSpeakingQuestionGroup,
+    getSpeakingQuestionGroup,
+    updateWritingQuestionGroup,
+    getWritingQuestionGroup,
+    generateExplanationStream,
+} from "@/api/api";
 import api from "@/api/axios-customize";
 import { Spin, Tag, Button, Descriptions, Alert, Input, Radio, Upload, Modal, message } from "antd";
 import { ArrowLeftOutlined, EditOutlined, SaveOutlined, CloseOutlined, DeleteOutlined, InboxOutlined } from "@ant-design/icons";
@@ -35,6 +45,14 @@ const statusColor = {
     REVIEWING: "blue",
     RESOLVED: "green",
     REJECTED: "red",
+};
+
+/** @returns {"listeningReading" | "speaking" | "writing"} */
+const getReportTestType = (partName) => {
+    const name = String(partName || "").trim();
+    if (/^speaking\s+part/i.test(name)) return "speaking";
+    if (/^writing\s+part/i.test(name)) return "writing";
+    return "listeningReading";
 };
 
 const ReportDetailPage = () => {
@@ -140,17 +158,42 @@ const ReportDetailPage = () => {
         fetchDetail();
     }, [id, isAdmin]);
 
+    const reportTestType = useMemo(
+        () => getReportTestType(report?.partName),
+        [report?.partName],
+    );
+
     const partNumber = useMemo(() => {
         if (!report?.partName) return null;
         const num = parseInt((report.partName.match(/\d+/) || [])[0], 10);
         return Number.isNaN(num) ? null : num;
     }, [report?.partName]);
 
-    const shouldShowAudio = partNumber ? [1, 2, 3, 4].includes(partNumber) : true;
-    const shouldShowImage = partNumber ? [1, 4, 7].includes(partNumber) : true;
-    const shouldShowPassage = partNumber ? [6, 7].includes(partNumber) : false;
-    const shouldShowTranscript = partNumber === 5 ? false : true;
-    
+    const isListeningReading = reportTestType === "listeningReading";
+    const isSpeakingTest = reportTestType === "speaking";
+    const isWritingTest = reportTestType === "writing";
+
+    const shouldShowAudio = isListeningReading
+        ? partNumber
+            ? [1, 2, 3, 4].includes(partNumber)
+            : true
+        : false;
+    const shouldShowImage = isListeningReading
+        ? partNumber
+            ? [1, 4, 7].includes(partNumber)
+            : true
+        : isSpeakingTest || isWritingTest;
+    const shouldShowPassage = isListeningReading
+        ? partNumber
+            ? [6, 7].includes(partNumber)
+            : false
+        : isSpeakingTest ||isWritingTest;
+    const shouldShowTranscript =
+        isListeningReading && (partNumber === 5 ? false : true);
+
+    const canEditQuestionGroup = isListeningReading ? partNumber !== 5 : true;
+    const canEditQuestion = !isWritingTest;
+
     // Keep old names for backward compatibility
     const partShowsAudio = shouldShowAudio;
     const partShowsImage = shouldShowImage;
@@ -206,11 +249,28 @@ const ReportDetailPage = () => {
     const handleSaveQuestion = () => {
         if (!id || !report) return;
 
+        setQuestionValidationError("");
+
+        if (isSpeakingTest) {
+            const trimmedContent = (qContent || "").trim();
+            if (!trimmedContent) {
+                setQuestionValidationError("Please enter question content");
+                return;
+            }
+            setPreparedQuestionUpdate({
+                id: report.questionId,
+                questionGroupId: report.questionGroupId,
+                content: trimmedContent,
+            });
+            setQuestionValidationError("");
+            setIsEditingQuestion(false);
+            setQuestionSaved(true);
+            return;
+        }
+
         const partHasContent = partNumber && [3, 4, 5, 7].includes(partNumber);
         const isPart12 = partNumber === 1 || partNumber === 2;
 
-        // Basic required validations
-        setQuestionValidationError("");
         if (partHasContent) {
             const trimmedContent = (qContent || "").trim();
             if (!trimmedContent) {
@@ -230,10 +290,8 @@ const ReportDetailPage = () => {
             return;
         }
 
-        // Prepare question options based on part
         let opts;
         if (isPart12) {
-            // Part 1, 2: backend luôn nhận 4 giá trị null cho options
             opts = [null, null, null, null];
         } else {
             opts = [...qOptions];
@@ -241,9 +299,8 @@ const ReportDetailPage = () => {
             opts = opts.map((o) => (o && o.trim() !== "" ? o : null));
         }
 
-        // Prepare question update data (save to state, not send API yet)
-        const tagsString = questionTagsState.map(tag => tag.name).join("; ");
-        
+        const tagsString = questionTagsState.map((tag) => tag.name).join("; ");
+
         const questionUpdate = {
             id: report.questionId,
             questionGroupId: report.questionGroupId,
@@ -257,7 +314,7 @@ const ReportDetailPage = () => {
         setPreparedQuestionUpdate(questionUpdate);
         setQuestionValidationError("");
         setIsEditingQuestion(false);
-        setQuestionSaved(true); // Mark as saved
+        setQuestionSaved(true);
     };
 
     const beforeUploadAudio = (file) => {
@@ -291,7 +348,7 @@ const ReportDetailPage = () => {
     };
 
     const handleEditGroup = () => {
-        if (!partNumber) {
+        if (isListeningReading && !partNumber) {
             setGroupValidationError("Unable to determine part. Please go back to Test Detail page and try again.");
             return;
         }
@@ -347,14 +404,14 @@ const ReportDetailPage = () => {
 
         setGroupValidationError("");
 
-        // Validate transcript (required)
-        const transcriptText = groupTranscript?.replace(/<[^>]*>/g, "").trim();
-        if (!groupTranscript || !transcriptText || transcriptText === "") {
-            setGroupValidationError("Please enter transcript");
-            return;
+        if (shouldShowTranscript) {
+            const transcriptText = groupTranscript?.replace(/<[^>]*>/g, "").trim();
+            if (!groupTranscript || !transcriptText || transcriptText === "") {
+                setGroupValidationError("Please enter transcript");
+                return;
+            }
         }
 
-        // Validate audio if required
         if (shouldShowAudio) {
             if (audioMode === "upload" && !audioFile) {
                 setGroupValidationError("Please upload audio file or enter audio URL");
@@ -372,10 +429,8 @@ const ReportDetailPage = () => {
             }
         }
 
-        // Validate image
-        // Part 1: required, Part 4 and 7: optional
         if (shouldShowImage) {
-            const isImageRequired = partNumber === 1;
+            const isImageRequired = isListeningReading && partNumber === 1;
             
             if (isImageRequired) {
                 // Part 1: image is required
@@ -398,12 +453,13 @@ const ReportDetailPage = () => {
             }
         }
 
-        // Prepare questionGroupUpdate object (save to state, not send API yet)
-        // Note: Do not include 'id' field as backend QuestionGroupUpdateRequest doesn't have it
-        const questionGroupUpdate = {
-            transcript: groupTranscript,
-            passage: shouldShowPassage ? groupPassage : null,
-        };
+        const questionGroupUpdate = {};
+        if (shouldShowTranscript) {
+            questionGroupUpdate.transcript = groupTranscript;
+        }
+        if (shouldShowPassage) {
+            questionGroupUpdate.passage = groupPassage || null;
+        }
 
         // Add audio/image URLs if using URL mode or keep mode
         if (shouldShowAudio) {
@@ -489,22 +545,22 @@ const ReportDetailPage = () => {
             let uploadedImageUrl = null;
 
             if (groupSaved && preparedGroupUpdate) {
-                // Update question group first (for file upload or transcript/passage changes)
                 const formData = new FormData();
-                
-                // Add transcript and passage
-                formData.append("transcript", preparedGroupUpdate.transcript);
-                if (preparedGroupUpdate.passage) {
-                    formData.append("passage", preparedGroupUpdate.passage);
-                }
 
-                // Add files if uploading
-                if (preparedAudioFile && preparedAudioMode === "upload") {
-                    formData.append("audio", preparedAudioFile);
-                } else if (preparedAudioMode === "url" && preparedAudioUrl) {
-                    formData.append("audioUrl", preparedAudioUrl);
-                } else if (preparedAudioMode === "keep" && report.questionGroupAudioUrl) {
-                    formData.append("audioUrl", report.questionGroupAudioUrl);
+                if (isListeningReading) {
+                    formData.append("transcript", preparedGroupUpdate.transcript ?? "");
+                    if (preparedGroupUpdate.passage) {
+                        formData.append("passage", preparedGroupUpdate.passage);
+                    }
+                    if (preparedAudioFile && preparedAudioMode === "upload") {
+                        formData.append("audio", preparedAudioFile);
+                    } else if (preparedAudioMode === "url" && preparedAudioUrl) {
+                        formData.append("audioUrl", preparedAudioUrl);
+                    } else if (preparedAudioMode === "keep" && report.questionGroupAudioUrl) {
+                        formData.append("audioUrl", report.questionGroupAudioUrl);
+                    }
+                } else if (isWritingTest && preparedGroupUpdate.passage) {
+                    formData.append("passage", preparedGroupUpdate.passage);
                 }
 
                 if (preparedImageFile && preparedImageMode === "upload") {
@@ -515,11 +571,20 @@ const ReportDetailPage = () => {
                     formData.append("imageUrl", report.questionGroupImageUrl);
                 }
 
-                // Update question group via updateQuestionGroup
-                await updateQuestionGroup(report.questionGroupId, formData);
-                
-                // Reload question group to get updated URLs (especially if files were uploaded)
-                const groupRes = await getQuestionGroup(report.questionGroupId);
+                const updateGroupFn = isSpeakingTest
+                    ? updateSpeakingQuestionGroup
+                    : isWritingTest
+                      ? updateWritingQuestionGroup
+                      : updateQuestionGroup;
+                const getGroupFn = isSpeakingTest
+                    ? getSpeakingQuestionGroup
+                    : isWritingTest
+                      ? getWritingQuestionGroup
+                      : getQuestionGroup;
+
+                await updateGroupFn(report.questionGroupId, formData);
+
+                const groupRes = await getGroupFn(report.questionGroupId);
                 const updatedGroup = groupRes?.data;
                 if (updatedGroup) {
                     uploadedAudioUrl = updatedGroup.audioUrl;
@@ -561,7 +626,7 @@ const ReportDetailPage = () => {
                 status,
                 resolvedNote: resolvedNote.trim(),
                 questionGroupUpdate: finalGroupUpdate,
-                questionUpdate: questionSaved ? preparedQuestionUpdate : null,
+                questionUpdate: questionSaved && canEditQuestion ? preparedQuestionUpdate : null,
             };
 
             await updateQuestionReport(id, payload);
@@ -889,8 +954,7 @@ const ReportDetailPage = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-gray-900">Question Group Information</h2>
-                    {/* Part 5: No edit button (no transcript, audio, image, passage to edit) */}
-                    {partNumber !== 5 && (
+                    {canEditQuestionGroup && (
                         <>
                             {!isEditingGroup ? (
                                 <Button
@@ -1013,9 +1077,13 @@ const ReportDetailPage = () => {
                                 </div>
                             )}
 
-                            {!getDisplayAudioUrl() && !getDisplayImageUrl() && !getDisplayPassage() && !getDisplayTranscript() && (
+                            {!getDisplayAudioUrl() &&
+                                !getDisplayImageUrl() &&
+                                !getDisplayPassage() &&
+                                !getDisplayTranscript() &&
+                                (shouldShowAudio || shouldShowImage || shouldShowPassage || shouldShowTranscript) && (
                                 <div className="text-center text-gray-400 py-8">
-                                    No media or transcript information
+                                    No question group content
                                 </div>
                             )}
                         </>
@@ -1543,7 +1611,7 @@ const ReportDetailPage = () => {
                     {questionValidationError && (
                         <Alert type="error" message={questionValidationError} closable onClose={() => setQuestionValidationError("")} className="mb-4" />
                     )}
-                    {!isEditingQuestion ? (
+                    {!isEditingQuestion || !canEditQuestion ? (
                         <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                             {/* Question Header */}
                             <div className="flex items-center gap-3 mb-4">
@@ -1554,13 +1622,15 @@ const ReportDetailPage = () => {
                                     <div className="text-sm font-medium text-gray-700">
                                         Question {questionPosition || questionId || 1}
                                     </div>
-                                    {getDisplayQuestionCorrectOption() && (
+                                    {isListeningReading && getDisplayQuestionCorrectOption() && (
                                         <div className="text-xs text-green-600 font-medium mt-1">
                                             Correct answer: {getDisplayQuestionCorrectOption()}
                                         </div>
                                     )}
                                 </div>
-                                {Array.isArray(getDisplayQuestionTags()) && getDisplayQuestionTags().length > 0 && (
+                                {isListeningReading &&
+                                    Array.isArray(getDisplayQuestionTags()) &&
+                                    getDisplayQuestionTags().length > 0 && (
                                     <div className="flex flex-wrap gap-1">
                                         {getDisplayQuestionTags().map((tag, tagIdx) => (
                                             <Tag key={tagIdx} color="blue" className="text-xs">
@@ -1569,14 +1639,16 @@ const ReportDetailPage = () => {
                                         ))}
                                     </div>
                                 )}
-                                <div className="ml-auto">
-                                    <Button
-                                        size="small"
-                                        onClick={openQuestionEdit}
-                                    >
-                                        Edit
-                                    </Button>
-                                </div>
+                                {canEditQuestion && (
+                                    <div className="ml-auto">
+                                        <Button
+                                            size="small"
+                                            onClick={openQuestionEdit}
+                                        >
+                                            Edit
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Question Content */}
@@ -1586,7 +1658,8 @@ const ReportDetailPage = () => {
                                 </div>
                             )}
 
-                            {/* Options */}
+                            {/* Options — Listening & Reading only */}
+                            {isListeningReading && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                 {(() => {
                                     const opts = Array.isArray(getDisplayQuestionOptions()) ? getDisplayQuestionOptions() : [];
@@ -1637,9 +1710,10 @@ const ReportDetailPage = () => {
                                     });
                                 })()}
                             </div>
+                            )}
 
-                            {/* Explanation */}
-                            {getDisplayQuestionExplanation() && (
+                            {/* Explanation — Listening & Reading only */}
+                            {isListeningReading && getDisplayQuestionExplanation() && (
                                 <details className="mt-4 cursor-pointer">
                                     <summary className="text-sm font-medium text-gray-700 hover:text-gray-900 select-none">
                                         Detailed explanation
@@ -1665,7 +1739,20 @@ const ReportDetailPage = () => {
                             
                             {/* Modal-like Body */}
                             <div className="p-6 space-y-4">
-                                {/* Tags - moved to top */}
+                                {isSpeakingTest ? (
+                                    <div>
+                                        <div className="mb-1 text-sm font-medium text-gray-700">
+                                            Question Content <span className="text-red-500">*</span>
+                                        </div>
+                                        <Input.TextArea
+                                            rows={8}
+                                            value={qContent}
+                                            onChange={(e) => setQContent(e.target.value)}
+                                            placeholder="Enter question content"
+                                        />
+                                    </div>
+                                ) : (
+                                <>
                                 <TagsSelector
                                     value={questionTagsState}
                                     onChange={setQuestionTagsState}
@@ -1753,6 +1840,8 @@ const ReportDetailPage = () => {
                                         placeholder="Enter explanation"
                                     />
                                 </div>
+                                </>
+                                )}
                             </div>
 
                             {/* Modal-like Footer */}
