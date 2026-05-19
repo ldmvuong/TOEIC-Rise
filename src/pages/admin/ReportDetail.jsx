@@ -55,6 +55,35 @@ const getReportTestType = (partName) => {
     return "listeningReading";
 };
 
+const formatApiErrorMessage = (err, fallback = "Unable to update report") => {
+    const data = err?.response?.data;
+    const message = data?.message ?? err?.message;
+
+    if (typeof message === "string" && message.trim()) {
+        return message;
+    }
+
+    if (message && typeof message === "object") {
+        return Object.entries(message)
+            .map(([key, value]) => {
+                const text = Array.isArray(value) ? value.join(", ") : String(value ?? "");
+                return `${key}: ${text}`;
+            })
+            .join("; ");
+    }
+
+    if (data?.errors && typeof data.errors === "object") {
+        return Object.entries(data.errors)
+            .map(([key, value]) => {
+                const text = Array.isArray(value) ? value.join(", ") : String(value ?? "");
+                return `${key}: ${text}`;
+            })
+            .join("; ");
+    }
+
+    return fallback;
+};
+
 const ReportDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -150,7 +179,7 @@ const ReportDetailPage = () => {
                     );
                 }
             } catch (err) {
-                setError(err?.response?.data?.message || err?.message || "Unable to load report");
+                setError(formatApiErrorMessage(err, "Unable to load report"));
             } finally {
                 setLoading(false);
             }
@@ -429,6 +458,16 @@ const ReportDetailPage = () => {
             }
         }
 
+        if (shouldShowPassage && (isSpeakingTest || isWritingTest)) {
+            const passageText = (groupPassage || report?.questionGroupPassage || "")
+                ?.replace(/<[^>]*>/g, "")
+                .trim();
+            if (!passageText) {
+                setGroupValidationError("Please enter passage");
+                return;
+            }
+        }
+
         if (shouldShowImage) {
             const isImageRequired = isListeningReading && partNumber === 1;
             
@@ -458,7 +497,8 @@ const ReportDetailPage = () => {
             questionGroupUpdate.transcript = groupTranscript;
         }
         if (shouldShowPassage) {
-            questionGroupUpdate.passage = groupPassage || null;
+            questionGroupUpdate.passage =
+                groupPassage || report?.questionGroupPassage || "";
         }
 
         // Add audio/image URLs if using URL mode or keep mode
@@ -559,8 +599,13 @@ const ReportDetailPage = () => {
                     } else if (preparedAudioMode === "keep" && report.questionGroupAudioUrl) {
                         formData.append("audioUrl", report.questionGroupAudioUrl);
                     }
-                } else if (isWritingTest && preparedGroupUpdate.passage) {
-                    formData.append("passage", preparedGroupUpdate.passage);
+                } else if (isSpeakingTest || isWritingTest) {
+                    const passage =
+                        preparedGroupUpdate.passage ??
+                        report?.questionGroupPassage ??
+                        groupPassage ??
+                        "";
+                    formData.append("passage", passage);
                 }
 
                 if (preparedImageFile && preparedImageMode === "upload") {
@@ -621,11 +666,17 @@ const ReportDetailPage = () => {
                 }
             }
 
-            // Use JSON payload (endpoint only supports JSON, not multipart/form-data)
+            // Report JSON endpoint uses L&R question group shape (transcript required).
+            // Speaking/Writing groups are already updated via their dedicated APIs above.
+            const reportQuestionGroupUpdate =
+                groupSaved && preparedGroupUpdate && isListeningReading
+                    ? finalGroupUpdate
+                    : null;
+
             const payload = {
                 status,
                 resolvedNote: resolvedNote.trim(),
-                questionGroupUpdate: finalGroupUpdate,
+                questionGroupUpdate: reportQuestionGroupUpdate,
                 questionUpdate: questionSaved && canEditQuestion ? preparedQuestionUpdate : null,
             };
 
@@ -674,7 +725,7 @@ const ReportDetailPage = () => {
             setStatus(null); // Reset to null (must be selected)
             setResolvedNote(""); // Keep empty (not from DB)
         } catch (err) {
-            setValidationError(err?.response?.data?.message || err?.message || "Unable to update report");
+            setValidationError(formatApiErrorMessage(err));
         }
     };
 
