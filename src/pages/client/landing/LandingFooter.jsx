@@ -19,8 +19,8 @@ const LandingFooter = () => {
               </span>
             </h3>
             <p>
-              Empowering learners worldwide with AI-driven TOEIC preparation. Master English proficiency with
-              personalized learning experiences.
+              TOEIC preparation for Listening, Reading, Speaking, and Writing with AI answer explanations,
+              study modes, flashcards, learning paths, and result statistics.
             </p>
             <div className="mt-6 space-y-3">
               <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ const LandingFooter = () => {
         >
           <div className="flex flex-col items-center justify-between gap-6 text-sm md:flex-row">
             <p className="text-center md:text-left">
-              © {new Date().getFullYear()} Toeic Rise. All rights reserved. Made with ❤️ for English learners worldwide.
+              © {new Date().getFullYear()} Toeic Rise. All rights reserved. Built for TOEIC learners worldwide.
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
@@ -81,7 +81,7 @@ const LandingFooter = () => {
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm text-slate-600 shadow">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            Free forever — No credit card required
+            Four-skill TOEIC practice with AI-supported review
           </div>
         </div>
       </div>

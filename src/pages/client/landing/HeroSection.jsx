@@ -32,8 +32,7 @@ const HeroSection = () => {
               isVisible ? "translate-x-0 opacity-100" : "-translate-x-10 opacity-0"
             }`}
           >
-            Boost your English proficiency with AI-powered practice, personalized learning paths, and comprehensive
-            TOEIC preparation — completely free.
+            Everything you need for TOEIC success — Full Tests, Practice Mode, Dictation, Flashcards, AI explanations, and detailed learning analytics.
           </p>
           <div
             className={`flex flex-col gap-4 transition-all duration-1000 delay-600 sm:flex-row ${
@@ -44,7 +43,7 @@ const HeroSection = () => {
               onClick={() => navigate('/online-tests')}
               className="transform rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-indigo-700"
             >
-              Take Practice Test
+              Start Practice
             </button>
             <button
               onClick={() => navigate('/exam-structure')}
@@ -70,8 +69,8 @@ const HeroSection = () => {
                   <SiGooglegemini className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">AI-Powered Learning</h3>
-                  <p className="text-slate-500">Personalized study plans</p>
+                  <h3 className="text-xl font-semibold text-slate-900">AI Answer Support</h3>
+                  <p className="text-slate-500">Clear explanations after practice</p>
                 </div>
               </div>
               <div className="space-y-4">

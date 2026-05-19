@@ -14,7 +14,7 @@ const FeatureSection = () => {
         >
           <h2 className="mb-6 text-4xl font-bold text-gray-900 lg:text-5xl">Everything You Need to Succeed</h2>
           <p className="mx-auto max-w-3xl text-xl text-gray-600">
-            Comprehensive TOEIC preparation tools designed to help you achieve your target score.
+            Complete TOEIC practice modes for LR and SW, supported by AI explanations and progress tracking.
           </p>
         </div>
 
