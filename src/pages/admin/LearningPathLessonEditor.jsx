@@ -226,6 +226,10 @@ export default function AdminLearningPathLessonEditorPage() {
       const values = form.getFieldsValue();
       const videoUrl = (values.videoUrl || "").trim();
 
+      const detailRes = await getAdminLearningPathDetail(learningPathId);
+      const detail = detailRes?.data ?? {};
+      const finalSlug = detail?.slug || learningPathId;
+
       if (isEdit) {
         await updateAdminLesson(lessonId, {
           title: values.title,
@@ -239,31 +243,29 @@ export default function AdminLearningPathLessonEditorPage() {
           orderIndex: Number(values.orderIndex),
         });
         message.success("Updated lesson");
+        navigate(`/admin/lessons/${lessonId}`);
       } else {
-        const detailRes = await getAdminLearningPathDetail(learningPathId);
-        const detail = detailRes?.data ?? {};
-        const orderIndex = nextLessonOrderIndex(detail);
-        await createLearningPathLesson(Number(learningPathId), {
-          title: values.title,
-          slug: (values.slug || "").trim(),
-          practice: values.practice ?? "",
-          ...(videoUrl ? { videoUrl } : {}),
-          topic: values.topic,
-          level: values.level,
-          content: values.content ?? "",
-          isActive: values.isActive,
-          orderIndex,
-        });
+        const formData = new FormData();
+        formData.append("title", values.title);
+        formData.append("slug", (values.slug || "").trim());
+        formData.append("practice", values.practice ?? "");
+        formData.append("content", values.content ?? "");
+        if (videoUrl) {
+          formData.append("videoUrl", videoUrl);
+        }
+        formData.append("topic", values.topic);
+        formData.append("level", values.level);
+        formData.append("isActive", values.isActive);
+        await createLearningPathLesson(finalSlug, formData);
         message.success("Created lesson");
+        navigate(`/admin/learning-paths/${finalSlug}`);
       }
-
-      navigate(`/admin/learning-paths/${learningPathSlug || learningPathId}`);
     } catch (e) {
       message.error(e?.response?.data?.message || e?.message || "Save failed");
     } finally {
       setLoading(false);
     }
-  }, [form, isEdit, learningPathId, learningPathSlug, lessonId, navigate]);
+  }, [form, isEdit, learningPathId, lessonId, navigate]);
 
   const extractImageUrlsFromHtml = useCallback((html) => {
     if (!html || typeof window === "undefined") return [];
@@ -404,9 +406,7 @@ export default function AdminLearningPathLessonEditorPage() {
       table: {
         contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
       },
-      extraPlugins: [
-        createImageUploadAdapterPlugin(handleImageUploaded),
-      ],
+      extraPlugins: [createImageUploadAdapterPlugin(handleImageUploaded)],
     }),
     [handleImageUploaded],
   );

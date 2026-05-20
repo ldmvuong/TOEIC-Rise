@@ -1028,8 +1028,8 @@ export const createAdminLearningPath = (payload) =>
 export const updateAdminLearningPath = (id, payload) =>
   api.put(`/admin/learning-paths/${id}`, payload);
 
-export const createLearningPathLesson = (learningPathId, payload) =>
-  api.post(`/admin/learning-paths/${learningPathId}/lessons`, payload);
+export const createLearningPathLesson = (learningPathSlug, payload) =>
+  api.post(`/admin/lessons/${learningPathSlug}`, payload);
 
 export const reorderAdminLessons = (payload) =>
   api.post("/admin/lessons/reorder", payload);
