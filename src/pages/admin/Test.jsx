@@ -177,7 +177,7 @@ const TestPage = () => {
     }
 
     if (!sortBy) {
-      sortBy = "numberOfLearnerTests";
+      sortBy = "updatedAt";
       direction = "DESC";
     }
 
@@ -187,8 +187,11 @@ const TestPage = () => {
   };
 
   const reloadTable = () => {
+    if (formRef.current) {
+      formRef.current.resetFields();
+    }
     if (tableRef.current) {
-      tableRef.current.reload();
+      tableRef.current.reset();
     }
   };
 
