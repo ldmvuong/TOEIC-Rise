@@ -207,24 +207,24 @@ export function coerceLessonProgressList(apiLessons) {
 
 export function describeDailyLessonBlock(check) {
   if (check.ok) return "";
-  const limitHint = `Trong một ngày bạn chỉ có thể học tối đa ${MAX_NEW_LESSONS_PER_DAY} bài mới trong lộ trình. Hôm nay bạn đã đạt giới hạn này — vui lòng quay lại vào ngày mai hoặc ôn lại các bài đã mở.`;
+  const limitHint = `You can study up to ${MAX_NEW_LESSONS_PER_DAY} new lessons in a learning path each day. You have reached today's limit. Please return tomorrow or review lessons you have already opened.`;
   if (check.reason === "session_video") {
     return limitHint;
   }
   if (check.reason === "server_lesson_opened_today") {
     return limitHint;
   }
-  return "Không thể mở bài học này hôm nay.";
+  return "Unable to open this lesson today.";
 }
 
 export function describeSequentialLessonBlock(check) {
   if (check.ok) return "";
   if (check.reason === "need_prev_progress") {
-    return `Đạt ít nhất ${MIN_PROGRESS_TO_UNLOCK_NEXT}% tiến độ (hoặc hoàn thành) bài trước trong lộ trình để mở bài này.`;
+    return `Reach at least ${MIN_PROGRESS_TO_UNLOCK_NEXT}% progress in the previous lesson, or complete it, to unlock this lesson.`;
   }
   if (check.reason === "not_in_path")
-    return "Bài học không thuộc lộ trình này.";
-  return "Không thể mở bài học này.";
+    return "This lesson does not belong to this learning path.";
+  return "Unable to open this lesson.";
 }
 
 function countDistinctLessonsOpenedNewToday(

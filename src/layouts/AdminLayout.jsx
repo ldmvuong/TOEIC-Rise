@@ -252,9 +252,9 @@ export default function AdminLayout() {
         setIsLoggingOut(true);
         try {
             await logoutApi();
-            message.success('Đăng xuất thành công!');
+            message.success('Logged out successfully!');
         } catch (error) {
-            message.warning('Có lỗi khi đăng xuất, nhưng đã đăng xuất local');
+            message.warning('Logout failed on the server, but you have been logged out locally');
         } finally {
             dispatch(setLogoutAction());
             navigate('/');

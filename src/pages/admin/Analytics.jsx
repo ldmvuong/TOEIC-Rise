@@ -175,7 +175,7 @@ const AnalyticsPage = () => {
       setData(response?.data || null);
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
-      message.error("Không thể tải dữ liệu phân tích. Vui lòng thử lại.");
+      message.error("Unable to load analytics data. Please try again.");
     } finally {
       setLoading(false);
     }

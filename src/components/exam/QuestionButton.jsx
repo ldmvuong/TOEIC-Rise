@@ -22,7 +22,7 @@ const QuestionButton = ({
           ${isFlagged && !isAnswered ? 'border-orange-400 bg-orange-50' : ''}
           ${!canNavigate ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
-        title={`Câu ${question.number}${isAnswered ? ' (Đã làm)' : ''}${isFlagged ? ' (Đã đánh dấu)' : ''}`}
+        title={`Question ${question.number}${isAnswered ? ' (Answered)' : ''}${isFlagged ? ' (Flagged)' : ''}`}
       >
         {question.number}
         {/* Icon flag nhỏ ở góc trên bên phải */}

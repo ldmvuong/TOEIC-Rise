@@ -143,7 +143,7 @@ export default function AdminLearningPathsPage() {
                     });
                   }}
                 >
-                  {isExpanded ? "Thu gọn" : "Xem thêm"}
+                  {isExpanded ? "Collapse" : "View more"}
                 </button>
               ) : null}
             </div>

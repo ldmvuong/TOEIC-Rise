@@ -43,7 +43,7 @@ function metaPages(body) {
 export default function StaffTagPaginatedSelect({
   value,
   onChange,
-  placeholder = "Chọn tag bài tập",
+  placeholder = "Select a practice tag",
   disabled = false,
   allowClear = true,
   pageSize = PAGE_SIZE,
@@ -225,7 +225,7 @@ export default function StaffTagPaginatedSelect({
         <div className="staff-tag-dropdown overflow-hidden rounded-lg border border-slate-100 bg-white shadow-lg">
           {loadingInitial && tags.length === 0 ? (
             <div className="flex justify-center py-10">
-              <Spin tip="Đang tải…" />
+              <Spin tip="Loading..." />
             </div>
           ) : (
             <>
@@ -244,17 +244,17 @@ export default function StaffTagPaginatedSelect({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => loadMore()}
                   >
-                    Xem thêm
+                    View more
                   </Button>
                 ) : tags.length > 0 ? (
                   <div className="py-2 text-center text-xs text-slate-400">
-                    Đã hết danh sách
+                    End of list
                   </div>
                 ) : (
                   <div className="py-6 px-4 text-center text-xs text-slate-500">
                     {searchApplied
-                      ? "Không tìm thấy tag phù hợp."
-                      : "Chưa có tag."}
+                      ? "No matching tags found."
+                      : "No tags yet."}
                   </div>
                 )}
               </div>

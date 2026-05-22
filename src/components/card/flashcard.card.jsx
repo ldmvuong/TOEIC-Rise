@@ -24,10 +24,10 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
         try {
             if (currentFavouriteStatus) {
                 await callRemoveFromFavourite(flashcardId);
-                message.success("Đã xóa khỏi yêu thích");
+                message.success("Removed from favorites");
             } else {
                 await callAddToFavourite(flashcardId);
-                message.success("Đã thêm vào yêu thích");
+                message.success("Added to favorites");
             }
             
             // Gọi callback để refresh data nếu có
@@ -35,7 +35,7 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
                 onFavouriteChange();
             }
         } catch (error) {
-            message.error(error?.message || "Có lỗi xảy ra");
+            message.error(error?.message || "An error occurred");
         }
     };
 
@@ -60,7 +60,7 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
                     data-id={item.id}
                     data-favourite={isFavourite}
                     className="absolute top-2 right-2 p-1.5 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-all z-10"
-                    title={isFavourite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                    title={isFavourite ? "Remove from favorites" : "Add to favorites"}
                 >
                     {isFavourite ? (
                         <HeartSolid className="w-5 h-5 text-red-500" />
@@ -90,7 +90,7 @@ const FlashcardCard = ({ item, activeTab, onFavouriteChange }) => {
 
                 {/* Item Count */}
                 <div className="text-sm text-gray-500 mb-3">
-                    <span>{item.itemCount || 0} từ vựng</span>
+                    <span>{item.itemCount || 0} vocabulary items</span>
                 </div>
 
                 {/* Author và Favourite Count - layout 2 cột */}

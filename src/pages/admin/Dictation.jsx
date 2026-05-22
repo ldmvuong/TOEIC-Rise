@@ -51,7 +51,7 @@ export default function Dictation() {
       const data = Array.isArray(res?.data) ? res.data : [];
       setTestSets(data);
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "Không thể tải danh sách test set.");
+      setError(e?.response?.data?.message || e?.message || "Unable to load the test set list.");
       setTestSets([]);
     } finally {
       setLoading(false);

@@ -22,20 +22,20 @@ const RefreshTokenHandler = () => {
 
   return (
     <Modal
-      title="Phiên đăng nhập hết hạn"
+      title="Session expired"
       open={isRefreshToken}
       onOk={handleOk}
       onCancel={handleCancel}
       footer={[
         <Button key="ok" type="primary" onClick={handleOk}>
-          Đăng nhập lại
+          Log in again
         </Button>
       ]}
       closable={false}
       maskClosable={false}
     >
       <p>{errorRefreshToken}</p>
-      <p>Vui lòng đăng nhập lại để tiếp tục sử dụng.</p>
+      <p>Please log in again to continue.</p>
     </Modal>
   );
 };

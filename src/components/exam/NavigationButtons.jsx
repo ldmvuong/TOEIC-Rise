@@ -14,14 +14,14 @@ const NavigationButtons = ({
         disabled={!canGoPrevious}
         className="px-4 py-2 bg-white border border-gray-300 rounded-full min-w-[110px] text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        ← Trước
+        ← Previous
       </button>
       <button
         onClick={onNext}
         disabled={!canGoNext}
         className="px-4 py-2 bg-white border border-gray-300 rounded-full min-w-[110px] text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Sau →
+        Next →
       </button>
     </div>
   );

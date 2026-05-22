@@ -153,7 +153,7 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
               seekToRatio(rect.width ? x / rect.width : 0);
             }}
             className="w-full h-10 rounded-xl bg-gray-50 border border-gray-200 relative overflow-hidden text-left"
-            title="Click để tua"
+            title="Click to seek"
           >
             <div className="absolute left-0 top-0 bottom-0 bg-emerald-500/20" style={{ width: `${Math.round(progress * 100)}%` }} />
             <div className="absolute inset-0 flex items-center px-3">
@@ -183,7 +183,7 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
               type="button"
               onClick={() => setShowVolume((v) => !v)}
               className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-gray-50 leading-none"
-              title="Âm lượng"
+              title="Volume"
             >
               <IconVolume className={`shrink-0 ${volume > 0 ? "text-slate-700" : "text-slate-400"}`} />
               {Math.round(volume * 100)}%
@@ -196,7 +196,7 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
                     type="button"
                     onClick={toggleMute}
                     className="px-2 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-slate-700 hover:border-gray-300"
-                    title={volume > 0 ? "Tắt tiếng" : "Bật tiếng"}
+                    title={volume > 0 ? "Mute" : "Unmute"}
                   >
                     {volume > 0 ? "Mute" : "Unmute"}
                   </button>
@@ -222,7 +222,7 @@ const DictationAudioPlayer = React.forwardRef(function DictationAudioPlayer({ sr
               setPlaybackRate(next);
             }}
             className="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-gray-50 leading-none"
-            title="Tốc độ phát"
+            title="Playback speed"
           >
             <IconClock className="shrink-0 text-slate-700" />
             {formatRate(rate)}x

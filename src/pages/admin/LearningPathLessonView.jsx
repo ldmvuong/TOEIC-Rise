@@ -426,12 +426,12 @@ export default function AdminLearningPathLessonViewPage() {
         },
         thumbnailFile ? { thumbnail: thumbnailFile } : undefined,
       );
-      message.success("Đã lưu bài học");
+      message.success("Lesson saved");
       cancelEdit();
       await load();
     } catch (e) {
       message.error(
-        e?.response?.data?.message || e?.message || "Không lưu được",
+        e?.response?.data?.message || e?.message || "Unable to save",
       );
     } finally {
       setSaving(false);
@@ -631,12 +631,12 @@ export default function AdminLearningPathLessonViewPage() {
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-24 shadow-sm">
             <Spin size="large" />
             <Text type="secondary" className="mt-4">
-              Đang tải chi tiết bài học…
+              Loading lesson details...
             </Text>
           </div>
         ) : !lesson ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-            <Text type="secondary">Không tải được bài học này.</Text>
+            <Text type="secondary">Unable to load this lesson.</Text>
           </div>
         ) : (
           <Form form={form} layout="vertical" className="space-y-6">
@@ -648,7 +648,7 @@ export default function AdminLearningPathLessonViewPage() {
                     {isEditing ? (
                       <>
                         <Text className="text-sm text-slate-600">
-                          Hiển thị:
+                          Visibility:
                         </Text>
                         <Form.Item
                           name="isActive"
@@ -656,8 +656,8 @@ export default function AdminLearningPathLessonViewPage() {
                           className="!mb-0"
                         >
                           <Switch
-                            checkedChildren="Đang hoạt động"
-                            unCheckedChildren="Ngưng"
+                            checkedChildren="Active"
+                            unCheckedChildren="Inactive"
                           />
                         </Form.Item>
                       </>
@@ -677,8 +677,8 @@ export default function AdminLearningPathLessonViewPage() {
                       >
                         {lesson.isActive !== undefined
                           ? lesson.isActive
-                            ? "Đang hoạt động"
-                            : "Ngưng hoạt động"
+                            ? "Active"
+                            : "Inactive"
                           : "—"}
                       </span>
                     )}
@@ -688,18 +688,18 @@ export default function AdminLearningPathLessonViewPage() {
                       name="title"
                       label={
                         <span className="font-semibold text-slate-800">
-                          Tiêu đề
+                          Title
                         </span>
                       }
                       rules={[
                         {
                           required: true,
-                          message: "Vui lòng nhập tiêu đề",
+                          message: "Please enter a title",
                         },
                       ]}
                       className="!mb-0"
                     >
-                      <Input placeholder="Tiêu đề bài học" size="large" />
+                      <Input placeholder="Lesson title" size="large" />
                     </Form.Item>
                   ) : (
                     <Title
@@ -707,11 +707,11 @@ export default function AdminLearningPathLessonViewPage() {
                       className="!mb-0 !mt-1 !font-semibold !leading-tight !text-slate-900"
                       style={{ margin: 0 }}
                     >
-                      {lesson.title || "Chi tiết bài học"}
+                      {lesson.title || "Lesson details"}
                     </Title>
                   )}
                   <Text type="secondary" className="text-sm">
-                    Lộ trình #{String(lesson.learningPathId ?? "—")} · Bài học
+                    Learning path #{String(lesson.learningPathId ?? "—")} · Lesson
                   </Text>
                 </div>
                 <Space wrap className="shrink-0">
@@ -721,7 +721,7 @@ export default function AdminLearningPathLessonViewPage() {
                     onClick={() => navigate(backHref)}
                     disabled={saving}
                   >
-                    Quay lại
+                    Back
                   </Button>
                   {lessonId ? (
                     !isEditing ? (
@@ -732,7 +732,7 @@ export default function AdminLearningPathLessonViewPage() {
                         className="!border-indigo-600 !bg-indigo-600 hover:!border-indigo-500 hover:!bg-indigo-500"
                         onClick={beginEdit}
                       >
-                        Chỉnh sửa
+                        Edit
                       </Button>
                     ) : (
                       <>
@@ -743,7 +743,7 @@ export default function AdminLearningPathLessonViewPage() {
                           loading={saving}
                           onClick={submitEdit}
                         >
-                          Lưu
+                          Save
                         </Button>
                       </>
                     )
@@ -756,8 +756,8 @@ export default function AdminLearningPathLessonViewPage() {
               {/* Basic metadata */}
               <div className="xl:col-span-5">
                 <SectionShell
-                  eyebrow="Tổng quan"
-                  title="Thông tin cơ bản"
+                  eyebrow="Overview"
+                  title="Basic information"
                   icon={<IdcardOutlined />}
                 >
                   {!isEditing ? (
@@ -780,20 +780,20 @@ export default function AdminLearningPathLessonViewPage() {
                           "—"
                         )}
                       </MetaTile>
-                      <MetaTile label="Thứ tự" icon={<OrderedListOutlined />}>
+                      <MetaTile label="Order" icon={<OrderedListOutlined />}>
                         {lesson.orderIndex == null
                           ? "—"
                           : String(lesson.orderIndex)}
                       </MetaTile>
-                      <MetaTile label="Chủ đề" icon={<BookOutlined />}>
+                      <MetaTile label="Topic" icon={<BookOutlined />}>
                         {lesson.topic || "—"}
                       </MetaTile>
-                      <MetaTile label="Cấp độ" icon={<LineChartOutlined />}>
+                      <MetaTile label="Level" icon={<LineChartOutlined />}>
                         {lesson.level || "—"}
                       </MetaTile>
                       <div className="sm:col-span-2">
                         <MetaTile
-                          label="Bài tập (Practice)"
+                          label="Practice"
                           icon={<FileTextOutlined />}
                         >
                           <span className="whitespace-pre-wrap font-normal">
@@ -803,7 +803,7 @@ export default function AdminLearningPathLessonViewPage() {
                       </div>
                       <div className="sm:col-span-2">
                         <MetaTile
-                          label="Cập nhật lần cuối"
+                          label="Last updated"
                           icon={<CalendarOutlined />}
                         >
                           {lesson.updatedAt || "—"}
@@ -827,7 +827,7 @@ export default function AdminLearningPathLessonViewPage() {
                         rules={[
                           {
                             pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
-                            message: "Slug chỉ gồm chữ, số và dấu gạch (-)",
+                            message: "Slug only allows letters, numbers, and hyphens (-)",
                           },
                         ]}
                       >
@@ -835,11 +835,11 @@ export default function AdminLearningPathLessonViewPage() {
                       </Form.Item>
                       <Form.Item
                         name="orderIndex"
-                        label="Thứ tự"
+                        label="Order"
                         rules={[
                           {
                             required: true,
-                            message: "Thứ tự là bắt buộc",
+                            message: "Order is required",
                           },
                         ]}
                       >
@@ -847,34 +847,34 @@ export default function AdminLearningPathLessonViewPage() {
                       </Form.Item>
                       <Form.Item
                         name="topic"
-                        label="Chủ đề"
-                        rules={[{ required: true, message: "Chọn chủ đề" }]}
+                        label="Topic"
+                        rules={[{ required: true, message: "Select a topic" }]}
                       >
                         <Select
                           options={TOPIC_OPTIONS}
                           showSearch
                           optionFilterProp="label"
-                          placeholder="Chọn chủ đề"
+                          placeholder="Select a topic"
                         />
                       </Form.Item>
                       <Form.Item
                         name="level"
-                        label="Cấp độ"
-                        rules={[{ required: true, message: "Chọn cấp độ" }]}
+                        label="Level"
+                        rules={[{ required: true, message: "Select a level" }]}
                       >
                         <Select
                           options={LEVEL_OPTIONS}
-                          placeholder="Chọn cấp độ"
+                          placeholder="Select a level"
                         />
                       </Form.Item>
                       <div className="sm:col-span-2">
-                        <Form.Item name="practice" label="Bài tập (Practice)">
-                          <StaffTagPaginatedSelect placeholder="Chọn tag cho bài tập" />
+                        <Form.Item name="practice" label="Practice">
+                          <StaffTagPaginatedSelect placeholder="Select a practice tag" />
                         </Form.Item>
                       </div>
                       <div className="sm:col-span-2">
                         <Text type="secondary" className="text-sm">
-                          Cập nhật lần cuối (chỉ đọc): {lesson.updatedAt || "—"}
+                          Last updated (read only): {lesson.updatedAt || "—"}
                         </Text>
                       </div>
                     </div>
@@ -885,8 +885,8 @@ export default function AdminLearningPathLessonViewPage() {
               {/* Video */}
               <div className="xl:col-span-7">
                 <SectionShell
-                  eyebrow="Đa phương tiện"
-                  title="Video bài học"
+                  eyebrow="Media"
+                  title="Lesson video"
                   icon={<VideoCameraOutlined />}
                 >
                   {isEditing ? (
@@ -901,7 +901,7 @@ export default function AdminLearningPathLessonViewPage() {
                   ) : !videoUrlDisplay ? (
                     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-12 text-center">
                       <VideoCameraOutlined className="mx-auto mb-2 text-2xl text-slate-300" />
-                      <Text type="secondary">Chưa có liên kết video.</Text>
+                      <Text type="secondary">No video link available.</Text>
                     </div>
                   ) : ytEmbed ? (
                     <div className="w-full space-y-4">
@@ -911,7 +911,7 @@ export default function AdminLearningPathLessonViewPage() {
                           style={{ minHeight: 200 }}
                         >
                           <iframe
-                            title="Video bài học"
+                            title="Lesson video"
                             src={ytEmbed}
                             className="absolute inset-0 h-full w-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -935,7 +935,7 @@ export default function AdminLearningPathLessonViewPage() {
                           rel="noopener noreferrer"
                           className="shrink-0 text-sm font-medium text-slate-600 underline-offset-4 hover:text-indigo-600 hover:underline"
                         >
-                          Mở trên YouTube →
+                          Open on YouTube →
                         </a>
                       </div>
                     </div>
@@ -963,8 +963,8 @@ export default function AdminLearningPathLessonViewPage() {
                   ) : (
                     <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4">
                       <Text type="secondary">
-                        URL không phải YouTube hoặc file video trực tiếp — mở
-                        liên kết để xem.
+                        This URL is not a YouTube link or a direct video file.
+                        Open the link to view it.
                       </Text>
                       <a
                         href={videoUrlDisplay}
@@ -983,8 +983,8 @@ export default function AdminLearningPathLessonViewPage() {
 
             {/* Main content */}
             <SectionShell
-              eyebrow="Nội dung chính"
-              title="Nội dung bài học"
+              eyebrow="Main content"
+              title="Lesson content"
               icon={<FileTextOutlined />}
               className="shadow-md"
             >
@@ -993,8 +993,9 @@ export default function AdminLearningPathLessonViewPage() {
                   <div className="lg:col-span-9">
                     <div className="mb-2">
                       <Text type="secondary" className="text-sm">
-                        Dùng <strong>Heading 1–3</strong> để chia mục (outline ở
-                        bên phải). Có thể upload ảnh trong toolbar.
+                        Use <strong>Heading 1-3</strong> to create sections
+                        for the outline on the right. You can upload images
+                        from the toolbar.
                       </Text>
                     </div>
                     <div className="flex items-center justify-end mb-2">
@@ -1183,9 +1184,9 @@ export default function AdminLearningPathLessonViewPage() {
                     >
                       {outline.length === 0 ? (
                         <Text type="secondary" className="block text-sm">
-                          Thêm <strong>Heading 1</strong>,{" "}
-                          <strong>Heading 2</strong> hoặc{" "}
-                          <strong>Heading 3</strong> để thấy mục lục.
+                          Add <strong>Heading 1</strong>,{" "}
+                          <strong>Heading 2</strong>, or{" "}
+                          <strong>Heading 3</strong> to show the outline.
                         </Text>
                       ) : (
                         <nav aria-label="Table of contents">
@@ -1254,7 +1255,7 @@ export default function AdminLearningPathLessonViewPage() {
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <FileTextOutlined className="mb-2 text-3xl text-slate-300" />
                       <Text type="secondary">
-                        Chưa có nội dung cho bài học này.
+                        This lesson has no content yet.
                       </Text>
                     </div>
                   )}

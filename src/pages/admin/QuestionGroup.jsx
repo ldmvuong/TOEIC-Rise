@@ -72,8 +72,8 @@ const QuestionGroupPage = () => {
                 setTranscript(res?.data?.transcript || "");
                 setPassage(res?.data?.passage || "");
             } catch (e) {
-                setError(e?.response?.data?.message || e?.message || "Không thể tải dữ liệu");
-                message.error("Không thể tải chi tiết nhóm câu hỏi");
+                setError(e?.response?.data?.message || e?.message || "Unable to load data");
+                message.error("Unable to load question group details");
             } finally {
                 setLoading(false);
             }
@@ -85,7 +85,7 @@ const QuestionGroupPage = () => {
         return (
             <div className="p-4 flex flex-col items-center justify-center min-h-[60vh]">
                 <Spin size="large" />
-                <div className="mt-4 text-gray-600">Đang tải chi tiết nhóm câu hỏi...</div>
+                <div className="mt-4 text-gray-600">Loading question group details...</div>
             </div>
         );
     }
@@ -93,12 +93,12 @@ const QuestionGroupPage = () => {
     if (error || !questionGroup) {
         return (
             <div className="p-4">
-                <div className="text-red-600 mb-3">{error || "Không tìm thấy nhóm câu hỏi"}</div>
+                <div className="text-red-600 mb-3">{error || "Question group not found"}</div>
                 <button
                     className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
                     onClick={() => navigate(-1)}
                 >
-                    Quay lại
+                    Back
                 </button>
             </div>
         );
@@ -116,7 +116,7 @@ const QuestionGroupPage = () => {
 
     const handleEdit = () => {
         if (!partNumber) {
-            message.warning("Không xác định được part. Vui lòng quay lại trang Test Detail và thử lại.");
+            message.warning("Unable to determine the part. Please return to Test Detail and try again.");
             return;
         }
         setIsEditing(true);
@@ -160,7 +160,7 @@ const QuestionGroupPage = () => {
         // CKEditor returns HTML, check if it's empty
         const transcriptText = transcript?.replace(/<[^>]*>/g, "").trim();
         if (!transcript || !transcriptText || transcriptText === "") {
-            message.error("Vui lòng nhập transcript");
+            message.error("Please enter a transcript");
             return;
         }
 
@@ -184,7 +184,7 @@ const QuestionGroupPage = () => {
                     formData.append("audio", audioFile);
                 } else if (audioMode === "url" && audioUrl) {
                     if (!isValidQuestionGroupAudioUrl(audioUrl)) {
-                        message.error("URL audio không hợp lệ. URL phải bắt đầu bằng http:// hoặc https:// và có đuôi .mp3, .wav, .ogg, .m4a, hoặc .aac");
+                        message.error("Invalid audio URL. The URL must start with http:// or https:// and end with .mp3, .wav, .ogg, .m4a, or .aac.");
                         setSubmitting(false);
                         return;
                     }
@@ -201,7 +201,7 @@ const QuestionGroupPage = () => {
                     formData.append("image", imageFile);
                 } else if (imageMode === "url" && imageUrl) {
                     if (!isValidQuestionGroupImageUrl(imageUrl)) {
-                        message.error("URL hình ảnh không hợp lệ. URL phải bắt đầu bằng http:// hoặc https:// và có đuôi .jpg, .jpeg, .png, .gif, hoặc .bmp");
+                        message.error("Invalid image URL. The URL must start with http:// or https:// and end with .jpg, .jpeg, .png, .gif, or .bmp.");
                         setSubmitting(false);
                         return;
                     }
@@ -213,7 +213,7 @@ const QuestionGroupPage = () => {
             }
 
             await updateQuestionGroup(questionGroup.id, formData);
-            message.success("Cập nhật nhóm câu hỏi thành công");
+            message.success("Question group updated successfully");
             
             // Reload data
             const res = await getQuestionGroup(id);
@@ -228,7 +228,7 @@ const QuestionGroupPage = () => {
             setImageMode("keep");
             setIsEditing(false);
         } catch (error) {
-            message.error(error?.response?.data?.message || error?.message || "Không thể cập nhật nhóm câu hỏi");
+            message.error(error?.response?.data?.message || error?.message || "Unable to update question group");
         } finally {
             setSubmitting(false);
         }
@@ -324,19 +324,19 @@ const QuestionGroupPage = () => {
         if (partHasContent) {
             const trimmedContent = (questionContent || "").trim();
             if (!trimmedContent) {
-                message.error("Vui lòng nhập nội dung câu hỏi");
+                message.error("Please enter question content");
                 return;
             }
         }
 
         const trimmedExplanation = (questionExplanation || "").trim();
         if (!trimmedExplanation) {
-            message.error("Vui lòng nhập giải thích đáp án");
+            message.error("Please enter an answer explanation");
             return;
         }
 
         if (!questionTags || questionTags.length === 0) {
-            message.error("Vui lòng chọn ít nhất một tag");
+            message.error("Please select at least one tag");
             return;
         }
 
@@ -364,7 +364,7 @@ const QuestionGroupPage = () => {
                 explanation: trimmedExplanation,
                 tags: tagsString,
             });
-            message.success("Cập nhật câu hỏi thành công");
+            message.success("Question updated successfully");
 
             // reload question group
             const res = await getQuestionGroup(id);
@@ -372,7 +372,7 @@ const QuestionGroupPage = () => {
             closeQuestionModal();
         } catch (error) {
             message.error(
-                error?.response?.data?.message || error?.message || "Không thể cập nhật câu hỏi"
+                error?.response?.data?.message || error?.message || "Unable to update question"
             );
             setSavingQuestion(false);
         }
@@ -395,7 +395,7 @@ const QuestionGroupPage = () => {
             onDone: () => setGeneratingExplanation(false),
             onError: (err) => {
                 setGeneratingExplanation(false);
-                message.error(err?.message || "Không thể tạo giải thích");
+                message.error(err?.message || "Unable to generate explanation");
             },
         });
     };
@@ -404,7 +404,7 @@ const QuestionGroupPage = () => {
         setQuestionExplanation(generatedExplanationText);
         setGenerateExplanationModalOpen(false);
         setGeneratedExplanationText("");
-        message.success("Đã áp dụng giải thích. Nhấn Lưu để cập nhật câu hỏi.");
+        message.success("Explanation applied. Click Save to update the question.");
     };
 
     const editorConfiguration = {
@@ -446,16 +446,16 @@ const QuestionGroupPage = () => {
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition"
-                    title="Quay lại"
+                    title="Back"
                 >
                     <ArrowLeftOutlined className="text-lg" />
                 </button>
                 <div className="flex-1">
                     <h1 className="text-2xl font-semibold text-gray-900">
-                        Chi tiết nhóm câu hỏi
+                        Question group details
                     </h1>
                     <div className="mt-1 text-sm text-gray-500">
-                        ID: {questionGroup.id} • Vị trí: {questionGroup.position}
+                        ID: {questionGroup.id} • Position: {questionGroup.position}
                     </div>
                 </div>
             </div>
@@ -464,7 +464,7 @@ const QuestionGroupPage = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {/* Header with Edit Button */}
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900">Thông tin nhóm câu hỏi</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">Question group information</h2>
                     {/* Part 5: No edit button (no transcript, audio, image, passage to edit) */}
                     {partNumber !== 5 && (
                         <>
@@ -474,7 +474,7 @@ const QuestionGroupPage = () => {
                             icon={<EditOutlined />}
                             onClick={handleEdit}
                         >
-                            Chỉnh sửa
+                            Edit
                         </Button>
                     ) : (
                         <div className="flex gap-2">
@@ -483,7 +483,7 @@ const QuestionGroupPage = () => {
                                 onClick={handleCancel}
                                 disabled={submitting}
                             >
-                                Hủy
+                                Cancel
                             </Button>
                             <Button
                                 type="primary"
@@ -491,7 +491,7 @@ const QuestionGroupPage = () => {
                                 onClick={handleSave}
                                 loading={submitting}
                             >
-                                Lưu
+                                Save
                             </Button>
                         </div>
                             )}
@@ -523,14 +523,14 @@ const QuestionGroupPage = () => {
                                         }}
                                         className="w-full"
                                     >
-                                        <Radio value="keep">Giữ nguyên</Radio>
+                                        <Radio value="keep">Keep current</Radio>
                                         <Radio value="upload">Upload file</Radio>
-                                        <Radio value="url">Nhập URL</Radio>
+                                        <Radio value="url">Enter URL</Radio>
                                     </Radio.Group>
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="text-sm text-gray-600 mb-2">
-                                                Chưa có audio. Bạn muốn thêm audio?
+                                                No audio yet. Do you want to add audio?
                                             </div>
                                             <Radio.Group
                                                 value={audioMode}
@@ -540,7 +540,7 @@ const QuestionGroupPage = () => {
                                                 className="w-full"
                                             >
                                                 <Radio value="upload">Upload file</Radio>
-                                                <Radio value="url">Nhập URL</Radio>
+                                                <Radio value="url">Enter URL</Radio>
                                             </Radio.Group>
                                         </div>
                                     )}
@@ -572,7 +572,7 @@ const QuestionGroupPage = () => {
                                                     <div className="mt-2">
                                                         <audio controls className="w-full">
                                                             <source src={URL.createObjectURL(audioFile)} />
-                                                            Trình duyệt của bạn không hỗ trợ phát audio.
+                                                            Your browser does not support audio playback.
                                                         </audio>
                                                     </div>
                                                 </div>
@@ -585,8 +585,8 @@ const QuestionGroupPage = () => {
                                                 <p className="ant-upload-drag-icon">
                                                     <InboxOutlined />
                                                 </p>
-                                                <p className="ant-upload-text">Click hoặc kéo thả file audio vào đây</p>
-                                                <p className="ant-upload-hint">Chỉ chấp nhận file audio, tối đa 10MB</p>
+                                                <p className="ant-upload-text">Click or drag an audio file here</p>
+                                                <p className="ant-upload-hint">Audio files only, up to 10MB</p>
                                             </Dragger>
                                         </div>
                                     )}
@@ -595,7 +595,7 @@ const QuestionGroupPage = () => {
                                     {audioMode === "url" && (
                                         <div className="space-y-2">
                                             <Input
-                                                placeholder="Nhập URL audio"
+                                                placeholder="Enter audio URL"
                                                 value={audioUrl}
                                                 onChange={(e) => setAudioUrl(e.target.value)}
                                             />
@@ -613,7 +613,7 @@ const QuestionGroupPage = () => {
                                 questionGroup.audioUrl && (
                                     <audio controls className="w-full">
                                         <source src={questionGroup.audioUrl} type="audio/mpeg" />
-                                        Trình duyệt của bạn không hỗ trợ phát audio.
+                                        Your browser does not support audio playback.
                                     </audio>
                                 )
                             )}
@@ -625,7 +625,7 @@ const QuestionGroupPage = () => {
                         <div>
                             <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                Hình ảnh
+                                Image
                             </div>
                             {isEditing ? (
                                 <div className="space-y-3">
@@ -642,14 +642,14 @@ const QuestionGroupPage = () => {
                                         }}
                                         className="w-full"
                                     >
-                                        <Radio value="keep">Giữ nguyên</Radio>
+                                        <Radio value="keep">Keep current</Radio>
                                         <Radio value="upload">Upload file</Radio>
-                                        <Radio value="url">Nhập URL</Radio>
+                                        <Radio value="url">Enter URL</Radio>
                                     </Radio.Group>
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="text-sm text-gray-600 mb-2">
-                                                Chưa có hình ảnh. Bạn muốn thêm hình ảnh?
+                                                No image yet. Do you want to add an image?
                                             </div>
                                             <Radio.Group
                                                 value={imageMode}
@@ -659,7 +659,7 @@ const QuestionGroupPage = () => {
                                                 className="w-full"
                                             >
                                                 <Radio value="upload">Upload file</Radio>
-                                                <Radio value="url">Nhập URL</Radio>
+                                                <Radio value="url">Enter URL</Radio>
                                             </Radio.Group>
                                         </div>
                                     )}
@@ -703,8 +703,8 @@ const QuestionGroupPage = () => {
                                                 <p className="ant-upload-drag-icon">
                                                     <InboxOutlined />
                                                 </p>
-                                                <p className="ant-upload-text">Click hoặc kéo thả file hình ảnh vào đây</p>
-                                                <p className="ant-upload-hint">Chỉ chấp nhận file hình ảnh, tối đa 5MB</p>
+                                                <p className="ant-upload-text">Click or drag an image file here</p>
+                                                <p className="ant-upload-hint">Image files only, up to 5MB</p>
                                             </Dragger>
                                         </div>
                                     )}
@@ -713,7 +713,7 @@ const QuestionGroupPage = () => {
                                     {imageMode === "url" && (
                                         <div className="space-y-2">
                                             <Input
-                                                placeholder="Nhập URL hình ảnh"
+                                                placeholder="Enter image URL"
                                                 value={imageUrl}
                                                 onChange={(e) => setImageUrl(e.target.value)}
                                             />
@@ -751,7 +751,7 @@ const QuestionGroupPage = () => {
                         <div>
                             <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                Đoạn văn
+                                Passage
                             </div>
                             {isEditing ? (
                                 <div className="ckeditor-wrapper" style={{ minHeight: "500px" }}>
@@ -1044,7 +1044,7 @@ const QuestionGroupPage = () => {
 
                     {!isEditing && !questionGroup.audioUrl && !questionGroup.imageUrl && !questionGroup.passage && !questionGroup.transcript && (
                         <div className="text-center text-gray-400 py-8">
-                            Không có thông tin media hoặc transcript
+                            No media or transcript information
                         </div>
                     )}
                 </div>
@@ -1054,7 +1054,7 @@ const QuestionGroupPage = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h2 className="text-lg font-semibold text-gray-900">
-                        Câu hỏi ({questionGroup.questions?.length || 0})
+                        Questions ({questionGroup.questions?.length || 0})
                     </h2>
                 </div>
 
@@ -1073,11 +1073,11 @@ const QuestionGroupPage = () => {
                                     </span>
                                     <div className="flex-1">
                                         <div className="text-sm font-medium text-gray-700">
-                                            Câu hỏi {question.position || idx + 1}
+                                            Question {question.position || idx + 1}
                                         </div>
                                         {question.correctOption && (
                                             <div className="text-xs text-green-600 font-medium mt-1">
-                                                Đáp án đúng: {question.correctOption}
+                                                Correct answer: {question.correctOption}
                                             </div>
                                         )}
                                     </div>
@@ -1095,7 +1095,7 @@ const QuestionGroupPage = () => {
                                             size="small"
                                             onClick={() => openQuestionModal(question)}
                                         >
-                                            Chỉnh sửa
+                                            Edit
                                         </Button>
                                     </div>
                                 </div>
@@ -1153,7 +1153,7 @@ const QuestionGroupPage = () => {
                                 {question.explanation && (
                                     <details className="mt-4 cursor-pointer">
                                         <summary className="text-sm font-medium text-gray-700 hover:text-gray-900 select-none">
-                                            Giải thích chi tiết
+                                            Detailed explanation
                                         </summary>
                                         <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
                                             <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">
@@ -1168,7 +1168,7 @@ const QuestionGroupPage = () => {
 
                     {(!questionGroup.questions || questionGroup.questions.length === 0) && (
                         <div className="text-center text-gray-500 py-8">
-                            Không có câu hỏi nào trong nhóm này
+                            This group has no questions
                         </div>
                     )}
                 </div>
@@ -1179,15 +1179,15 @@ const QuestionGroupPage = () => {
             <Modal
                 title={
                     editingQuestion
-                        ? `Chỉnh sửa câu hỏi ${editingQuestion.position || ""}`
-                        : "Chỉnh sửa câu hỏi"
+                        ? `Edit question ${editingQuestion.position || ""}`
+                        : "Edit question"
                 }
                 open={questionModalOpen}
                 onCancel={closeQuestionModal}
                 onOk={handleSaveQuestion}
                 confirmLoading={savingQuestion}
-                okText="Lưu"
-                cancelText="Hủy"
+                okText="Save"
+                cancelText="Cancel"
                 destroyOnClose
                 width={700}
             >
@@ -1203,13 +1203,13 @@ const QuestionGroupPage = () => {
                         {[3, 4, 5, 7].includes(partNumber) && (
                             <div>
                                 <div className="mb-1 text-sm font-medium text-gray-700">
-                                    Nội dung câu hỏi
+                                    Question content
                                 </div>
                                 <Input.TextArea
                                     rows={3}
                                     value={questionContent}
                                     onChange={(e) => setQuestionContent(e.target.value)}
-                                    placeholder="Nhập nội dung câu hỏi"
+                                    placeholder="Enter question content"
                                 />
                             </div>
                         )}
@@ -1218,7 +1218,7 @@ const QuestionGroupPage = () => {
                         {(partNumber !== 1 && partNumber !== 2) && (
                             <div>
                                 <div className="mb-1 text-sm font-medium text-gray-700">
-                                    Đáp án (A, B, C, D)
+                                    Answers (A, B, C, D)
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {["A", "B", "C", "D"].map((label, idx) => (
@@ -1229,7 +1229,7 @@ const QuestionGroupPage = () => {
                                                 onChange={(e) =>
                                                     handleQuestionOptionChange(idx, e.target.value)
                                                 }
-                                                placeholder={`Đáp án ${label}`}
+                                                placeholder={`Answer ${label}`}
                                             />
                                         </div>
                                     ))}
@@ -1240,7 +1240,7 @@ const QuestionGroupPage = () => {
                         {/* Correct option */}
                         <div>
                             <div className="mb-1 text-sm font-medium text-gray-700">
-                                Đáp án đúng <span className="text-red-500">*</span>
+                                Correct answer <span className="text-red-500">*</span>
                             </div>
                             <Radio.Group
                                 value={questionCorrectOption}
@@ -1260,7 +1260,7 @@ const QuestionGroupPage = () => {
                         <div>
                             <div className="mb-1 flex items-center justify-between gap-2">
                                 <span className="text-sm font-medium text-gray-700">
-                                    Giải thích <span className="text-red-500">*</span>
+                                    Explanation <span className="text-red-500">*</span>
                                 </span>
                                 <Button
                                     size="small"
@@ -1276,7 +1276,7 @@ const QuestionGroupPage = () => {
                                 rows={6}
                                 value={questionExplanation}
                                 onChange={(e) => setQuestionExplanation(e.target.value)}
-                                placeholder="Nhập giải thích đáp án"
+                                placeholder="Enter answer explanation"
                             />
                         </div>
                     </div>

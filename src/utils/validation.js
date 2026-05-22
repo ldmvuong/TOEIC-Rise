@@ -61,11 +61,11 @@ export const validateAvatar = (file) => {
     const errors = [];
     
     if (!isValidImageExtension(file.name)) {
-        errors.push('File ảnh phải có định dạng: jpg, jpeg, png, gif, bmp, webp');
+        errors.push('Image files must use one of these formats: jpg, jpeg, png, gif, bmp, webp');
     }
     
     if (!isValidImageSize(file.size)) {
-        errors.push('File ảnh không được vượt quá 2MB');
+        errors.push('Image files must not exceed 2MB');
     }
     
     return {
@@ -99,11 +99,11 @@ export const validateQuestionGroupAudio = (file) => {
     const errors = [];
     
     if (!file.type.startsWith("audio/")) {
-        errors.push('Chỉ chấp nhận file audio');
+        errors.push('Only audio files are accepted');
     }
     
     if (!isValidQuestionGroupAudioSize(file.size)) {
-        errors.push('File audio không được vượt quá 10MB');
+        errors.push('Audio files must not exceed 10MB');
     }
     
     return {
@@ -118,11 +118,11 @@ export const validateQuestionGroupImage = (file) => {
     const errors = [];
     
     if (!file.type.startsWith("image/")) {
-        errors.push('Chỉ chấp nhận file hình ảnh');
+        errors.push('Only image files are accepted');
     }
     
     if (!isValidQuestionGroupImageSize(file.size)) {
-        errors.push('File hình ảnh không được vượt quá 5MB');
+        errors.push('Image files must not exceed 5MB');
     }
     
     return {

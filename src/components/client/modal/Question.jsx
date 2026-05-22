@@ -35,7 +35,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                 const data = res?.data ?? res;
                 setQuestion(data || null);
             } catch (err) {
-                message.error(err?.message || 'Không thể tải chi tiết câu hỏi');
+                message.error(err?.message || 'Unable to load question details');
                 setQuestion(null);
             } finally {
                 setLoading(false);
@@ -96,7 +96,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            Câu {position}{partName ? ` • ${partName}` : ''}
+                            Question {position}{partName ? ` • ${partName}` : ''}
                         </h2>
                     </div>
 
@@ -142,7 +142,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                             className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                         >
                             <span className="text-sm font-medium text-gray-700">
-                                {showTranscript ? 'Ẩn Transcript' : 'Hiện Transcript'}
+                                {showTranscript ? 'Hide Transcript' : 'Show Transcript'}
                             </span>
                             <svg
                                 className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`}
@@ -222,7 +222,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                     {correctOption && (
                         <div className="mt-4 ml-11">
                             <p className="text-sm font-semibold text-green-600">
-                                Đáp án đúng: {correctOption}
+                                Correct answer: {correctOption}
                             </p>
                         </div>
                     )}
@@ -236,7 +236,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                             className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                         >
                             <span className="text-sm font-medium text-gray-700">
-                                Giải thích chi tiết đáp án
+                                Detailed answer explanation
                             </span>
                             <svg
                                 className={`w-5 h-5 text-gray-500 transition-transform ${showExplanation ? 'rotate-180' : ''}`}
@@ -265,13 +265,13 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                 {/* Loading / Empty states */}
                 {loading && (
                     <div className="text-center py-12 text-gray-500">
-                        Đang tải...
+                        Loading...
                     </div>
                 )}
 
                 {!loading && !question && (
                     <div className="text-center py-12 text-gray-500">
-                        Không có dữ liệu câu hỏi
+                        No question data available
                     </div>
                 )}
             </div>
