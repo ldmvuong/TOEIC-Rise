@@ -30,8 +30,8 @@ const CONFIG = {
         fullTestMinutes: 120,
         totalQuestions: 200,
         headerNote:
-            "Chú ý: để được quy đổi sang scaled score (ví dụ trên thang điểm 990 cho TOEIC hoặc 9.0 cho IELTS), vui lòng chọn chế độ làm FULL TEST.",
-        sidebarTip: "📌 Mẹo: Hãy luyện tập từng phần trước khi làm Full Test để làm quen dạng câu hỏi.",
+            "Note: To convert your result to a scaled score (for example, TOEIC 990 or IELTS 9.0 scale), please choose FULL TEST mode.",
+        sidebarTip: "Tip: Practice each part before taking the Full Test to get familiar with the question types.",
     },
     speaking: {
         label: "Speaking",
@@ -40,8 +40,8 @@ const CONFIG = {
         defaultParts: [1, 2, 3, 4, 5],
         fullTestMinutes: 20,
         totalQuestions: 11,
-        headerNote: "Luyện tập theo phần hoặc làm bài Speaking đầy đủ để ghi nhận kết quả.",
-        sidebarTip: "📌 Mẹo: Nghe kỹ từng phần trước khi làm full test Speaking.",
+        headerNote: "Practice by part or take the full Speaking test to record your result.",
+        sidebarTip: "Tip: Listen carefully to each part before taking the full Speaking test.",
     },
     writing: {
         label: "Writing",
@@ -50,8 +50,8 @@ const CONFIG = {
         defaultParts: [1, 2, 3],
         fullTestMinutes: 60,
         totalQuestions: 8,
-        headerNote: "Luyện tập theo phần hoặc làm bài Writing đầy đủ để ghi nhận kết quả.",
-        sidebarTip: "📌 Mẹo: Đọc đề và phân bổ thời gian trước khi làm full test Writing.",
+        headerNote: "Practice by part or take the full Writing test to record your result.",
+        sidebarTip: "Tip: Read the prompt and plan your time before taking the full Writing test.",
     },
 };
 
@@ -75,7 +75,7 @@ const PartSection = ({ part, checked, onChange }) => {
                     {part.partName}
                 </h3>
                 {questionCount ? (
-                    <span className="text-xs text-gray-400">({questionCount} câu hỏi)</span>
+                    <span className="text-xs text-gray-400">({questionCount} questions)</span>
                 ) : null}
             </div>
             {tags.length > 0 ? (
@@ -127,7 +127,7 @@ const TestDetail = ({ variant = "readingListening" }) => {
     // Bắt đầu luyện tập
     const handleStartPractice = () => {
         if (selectedParts.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một phần để luyện tập!');
+            message.warning('Please select at least one part to practice!');
             return;
         }
 
@@ -172,7 +172,7 @@ const TestDetail = ({ variant = "readingListening" }) => {
                 const res = await cfg.fetchDetail(parsedId);
                 setData(res.data);
             } catch (e) {
-                message.error('Không thể tải chi tiết đề thi');
+                message.error('Unable to load test details');
             } finally {
                 setLoading(false);
             }
@@ -215,10 +215,10 @@ const TestDetail = ({ variant = "readingListening" }) => {
         const parts = allPartIdsFromData.length > 0 ? allPartIdsFromData : cfg.defaultParts;
 
         Modal.confirm({
-            title: 'Tiếp tục làm bài',
-            content: 'Bạn đang làm dở bài test này. Có muốn tiếp tục làm không?',
-            okText: 'Có',
-            cancelText: 'Không',
+            title: 'Continue test',
+            content: 'You have unfinished progress for this test. Do you want to continue?',
+            okText: 'Yes',
+            cancelText: 'No',
             okType: 'primary',
             onOk: () => {
                 // Đánh dấu để DoTest không hiển thị lại modal "tiếp tục"
@@ -259,13 +259,13 @@ const TestDetail = ({ variant = "readingListening" }) => {
     }, [parsedId, isAuthenticated, isLearner, data, navigate, variant, cfg, allPartIdsFromData]);
 
     if (loading) {
-        return <Spin size="large" fullscreen tip="Đang tải chi tiết đề thi..." />;
+        return <Spin size="large" fullscreen tip="Loading test details..." />;
     }
 
     if (!data) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
-                <div className="text-center text-gray-600">Không tìm thấy đề thi</div>
+                <div className="text-center text-gray-600">Test not found</div>
             </div>
         );
     }
@@ -341,7 +341,7 @@ const TestDetail = ({ variant = "readingListening" }) => {
                                             }}
                                             className={`py-3 text-sm font-medium ${activeTab === key ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
                                         >
-                                            {key === 'practice' ? 'Luyện tập' : 'Làm full test'}
+                                            {key === 'practice' ? 'Practice' : 'Full test'}
                                         </button>
                                     ))}
                                 </div>
@@ -349,7 +349,7 @@ const TestDetail = ({ variant = "readingListening" }) => {
                             <div className="p-5 md:p-6">
                                 {activeTab === 'practice' && (
                                     <>
-                                        <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50 text-blue-800 p-3 text-sm">💡 Pro tips: Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi.</div>
+                                        <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50 text-blue-800 p-3 text-sm">Pro tip: Practicing by part and choosing a suitable time limit will help you focus on answering questions correctly.</div>
                                         <div className="space-y-2">
                                             {(data.learnerPartResponses || []).map((part) => (
                                                 <PartSection 
@@ -367,18 +367,18 @@ const TestDetail = ({ variant = "readingListening" }) => {
                                                 <div className="mt-4 grid grid-cols-1 gap-3 md:mt-0 md:grid-cols-[1fr_auto] md:items-end md:gap-4">
                                                     <div className="min-w-0">
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Giới hạn thời gian (tùy chọn)
+                                                            Time limit (optional)
                                                         </label>
                                                         <Select
-                                                            placeholder="-- Không giới hạn --"
+                                                            placeholder="-- No limit --"
                                                             className="w-full"
                                                             value={timeLimit}
                                                             onChange={setTimeLimit}
                                                             options={[
-                                                                { value: -1, label: "-- Không giới hạn --" },
+                                                                { value: -1, label: "-- No limit --" },
                                                                 ...Array.from({ length: 36 }, (_, i) => {
                                                                     const minutes = (i + 1) * 5;
-                                                                    return { value: minutes, label: `${minutes} phút` };
+                                                                    return { value: minutes, label: `${minutes} minutes` };
                                                                 }),
                                                             ]}
                                                         />
@@ -388,14 +388,14 @@ const TestDetail = ({ variant = "readingListening" }) => {
                                                         onClick={handleStartPractice}
                                                         className="h-[40px] w-full md:w-auto whitespace-nowrap rounded-lg bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700"
                                                     >
-                                                        BẮT ĐẦU LUYỆN TẬP
+                                                        START PRACTICE
                                                     </button>
                                                 </div>
                                                 ) : null
                                             ) : (
                                                 <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3">
-                                                    <div className="text-gray-700">Đăng nhập để đặt thời gian và lưu tiến độ luyện tập.</div>
-                                                    <button onClick={goLogin} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Đăng nhập ngay</button>
+                                                    <div className="text-gray-700">Log in to set a time limit and save your practice progress.</div>
+                                                    <button onClick={goLogin} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Log in now</button>
                                                 </div>
                                             )}
                                         </div>
@@ -404,8 +404,8 @@ const TestDetail = ({ variant = "readingListening" }) => {
                                 {activeTab === 'full' && (
                                     <>
                                         <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-900 p-4 text-sm">
-                                            ⚠️ Sẵn sàng để bắt đầu làm full test? Để đạt được kết quả tốt nhất,
-                                            bạn cần dành ra {cfg.fullTestMinutes} phút cho bài test này.
+                                            Ready to start the full test? For the best result,
+                                            you should set aside {cfg.fullTestMinutes} minutes for this test.
                                         </div>
                                         <div className="mt-4 flex justify-end">
                                             {isAuthenticated ? (
@@ -414,13 +414,13 @@ const TestDetail = ({ variant = "readingListening" }) => {
                                                     onClick={handleStartFullTest}
                                                     className="h-[40px] w-full md:w-auto whitespace-nowrap rounded-lg bg-blue-600 px-6 font-semibold text-white hover:bg-blue-700"
                                                 >
-                                                    BẮT ĐẦU THI
+                                                    START TEST
                                                 </button>
                                                 ) : null
                                             ) : (
                                                 <div className="w-full md:w-auto bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3">
-                                                    <div className="text-gray-700">Bạn cần đăng nhập để làm full test.</div>
-                                                    <button onClick={goLogin} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Đăng nhập ngay</button>
+                                                    <div className="text-gray-700">You need to log in to take the full test.</div>
+                                                    <button onClick={goLogin} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Log in now</button>
                                                 </div>
                                             )}
                                         </div>
@@ -440,22 +440,22 @@ const TestDetail = ({ variant = "readingListening" }) => {
                             <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6">
                                 <div className="grid grid-cols-2 gap-4 text-center">
                                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                                        <div className="text-xs text-gray-500">Số lượt thi</div>
+                                        <div className="text-xs text-gray-500">Attempts</div>
                                         <div className="text-lg font-semibold text-gray-900">{learnersCount}</div>
                                     </div>
                                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                                        <div className="text-xs text-gray-500">Thời lượng</div>
+                                        <div className="text-xs text-gray-500">Duration</div>
                                         <div className="text-lg font-semibold text-gray-900">
-                                            {durationMinutes ? `${durationMinutes} phút` : "—"}
+                                            {durationMinutes ? `${durationMinutes} minutes` : "—"}
                                         </div>
                                     </div>
                                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                                        <div className="text-xs text-gray-500">Số phần</div>
+                                        <div className="text-xs text-gray-500">Parts</div>
                                         <div className="text-lg font-semibold text-gray-900">{partCount}</div>
                                     </div>
                                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                                         <div className="text-xs text-gray-500">
-                                            Câu hỏi
+                                            Questions
                                         </div>
                                         <div className="text-lg font-semibold text-gray-900">
                                             {totalQuestions ? totalQuestions : "—"}

@@ -6,20 +6,20 @@ import { callFetchFlashcardReview } from '../../api/api';
 
 const MODES = {
     match: {
-        title: 'Nối từ với nghĩa',
-        description: 'Kéo thả hoặc chọn cặp từ vựng – nghĩa tương ứng. Tính năng đang được phát triển.',
+        title: 'Match words with meanings',
+        description: 'Drag and drop or select matching word-definition pairs. This feature is under development.',
     },
     quiz: {
-        title: 'Trắc nghiệm lựa chọn',
-        description: 'Trắc nghiệm 4 đáp án, chọn 1 đáp án đúng. Tính năng đang được phát triển.',
+        title: 'Multiple-choice quiz',
+        description: 'A 4-option quiz where you choose the correct answer. This feature is under development.',
     },
     type: {
-        title: 'Hiển thị tiếng Việt, nhập từ tiếng Anh',
-        description: 'Xem nghĩa tiếng Việt và gõ từ vựng tiếng Anh tương ứng. Tính năng đang được phát triển.',
+        title: 'See the meaning, type the English word',
+        description: 'View the meaning and type the matching English vocabulary term. This feature is under development.',
     },
     'sentence-practice': {
-        title: 'Luyện câu với AI',
-        description: 'Tạo câu với từ vựng và nhận phản hồi từ AI. Tính năng đang được phát triển.',
+        title: 'Sentence practice with AI',
+        description: 'Create sentences with vocabulary and receive AI feedback. This feature is under development.',
     },
 };
 
@@ -42,8 +42,8 @@ const FlashcardPracticePlaceholder = () => {
                 const list = Array.isArray(data) ? data : (data?.result ?? []);
                 setReviewItems(list);
             } catch (err) {
-                setError(err?.message || 'Không thể tải dữ liệu luyện tập');
-                message.error(err?.message || 'Không thể tải dữ liệu luyện tập');
+                setError(err?.message || 'Unable to load practice data');
+                message.error(err?.message || 'Unable to load practice data');
             } finally {
                 setLoading(false);
             }
@@ -60,7 +60,7 @@ const FlashcardPracticePlaceholder = () => {
                 : pathname.includes('type')
                     ? 'type'
                     : null;
-    const mode = modeKey ? MODES[modeKey] : { title: 'Chế độ luyện tập', description: 'Tính năng đang được phát triển.' };
+    const mode = modeKey ? MODES[modeKey] : { title: 'Practice mode', description: 'This feature is under development.' };
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -69,14 +69,14 @@ const FlashcardPracticePlaceholder = () => {
                     {loading ? (
                         <div className="flex flex-col items-center gap-4 py-4">
                             <Spin size="large" />
-                            <p className="text-gray-600">Đang tải dữ liệu luyện tập...</p>
+                            <p className="text-gray-600">Loading practice data...</p>
                         </div>
                     ) : (
                         <>
                             <h1 className="text-xl font-bold text-gray-800 mb-2">{mode.title}</h1>
                             <p className="text-gray-600 mb-2">{mode.description}</p>
                             {!error && reviewItems.length > 0 && (
-                                <p className="text-sm text-gray-500 mb-4">Đã tải {reviewItems.length} từ vựng từ API review.</p>
+                                <p className="text-sm text-gray-500 mb-4">Loaded {reviewItems.length} vocabulary terms from the review API.</p>
                             )}
                             <Button
                                 type="primary"
@@ -84,7 +84,7 @@ const FlashcardPracticePlaceholder = () => {
                                 onClick={() => navigate(`/flashcards/${id}`)}
                                 className="bg-blue-600 hover:bg-blue-700"
                             >
-                                Quay lại bộ thẻ
+                                Back to flashcard set
                             </Button>
                         </>
                     )}

@@ -80,7 +80,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             }
         } catch (error) {
             console.error('Error fetching question details:', error);
-            message.error('Không thể tải chi tiết câu hỏi');
+            message.error('Unable to load question details');
             setQuestionData(null);
         } finally {
             setLoading(false);
@@ -91,7 +91,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
 
     const handleFetchWritingFeedback = async () => {
         if (!resolvedUserAnswerId) {
-            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            message.warning('Answer ID not found for getting feedback.');
             return;
         }
         setWritingFeedbackLoading(true);
@@ -109,7 +109,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             message.error(
                 error?.response?.data?.message ||
                     error?.message ||
-                    'Không thể lấy nhận xét Writing.',
+                    'Unable to get Writing feedback.',
             );
         } finally {
             setWritingFeedbackLoading(false);
@@ -118,7 +118,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
 
     const handleFetchSpeakingFeedback = async () => {
         if (!resolvedUserAnswerId) {
-            message.warning('Không tìm thấy mã câu trả lời để lấy nhận xét.');
+            message.warning('Answer ID not found for getting feedback.');
             return;
         }
         setSpeakingFeedbackLoading(true);
@@ -136,7 +136,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
             message.error(
                 error?.response?.data?.message ||
                     error?.message ||
-                    'Không thể lấy nhận xét Speaking.',
+                    'Unable to get Speaking feedback.',
             );
         } finally {
             setSpeakingFeedbackLoading(false);
@@ -212,7 +212,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            Đáp án chi tiết #{position || ''}
+                            Detailed answer #{position || ''}
                         </h2>
                         {/* Action Icons */}
                         <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                     }
                                 }}
                                 className="p-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-all group shadow-sm hover:shadow-md"
-                                title="Báo cáo câu hỏi"
+                                title="Report question"
                             >
                                 <svg
                                     className="w-5 h-5 text-red-600 group-hover:text-red-700 transition-colors"
@@ -248,7 +248,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                     }
                                 }}
                                 className="p-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all group shadow-sm hover:shadow-md"
-                                title="Chat với AI về câu hỏi này"
+                                title="Chat with AI about this question"
                             >
                                 <svg
                                     className="w-5 h-5 text-blue-600 group-hover:text-blue-700 transition-colors"
@@ -309,7 +309,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                             className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                         >
                             <span className="text-sm font-medium text-gray-700">
-                                {showTranscript ? 'Ẩn Transcript' : 'Hiện Transcript'}
+                                {showTranscript ? 'Hide Transcript' : 'Show Transcript'}
                             </span>
                             <svg
                                 className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`}
@@ -403,7 +403,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                     {correctOption && (!userAnswer || userAnswer !== correctOption) && (
                         <div className="mt-4 ml-11">
                             <p className="text-sm font-semibold text-green-600">
-                                Đáp án đúng: {correctOption}
+                                Correct answer: {correctOption}
                             </p>
                         </div>
                     )}
@@ -412,7 +412,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         <div className="mt-4 ml-11 space-y-3">
                             <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
                                 <p className="text-sm font-semibold text-blue-700 mb-1">
-                                    Câu trả lời của bạn:
+                                    Your answer:
                                 </p>
                                 <p className="text-sm text-gray-800 whitespace-pre-wrap">
                                     {userAnswerText}
@@ -426,8 +426,8 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                     className="px-4 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-sm font-medium hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {writingFeedbackLoading
-                                        ? 'Đang lấy nhận xét...'
-                                        : 'Lấy nhận xét Writing từ AI'}
+                                        ? 'Getting feedback...'
+                                        : 'Get Writing feedback from AI'}
                                 </button>
                             ) : null}
                         </div>
@@ -437,7 +437,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                         <div className="mt-4 ml-11 space-y-3">
                             <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
                                 <p className="text-sm font-semibold text-emerald-800 mb-2">
-                                    Bản ghi trả lời của bạn:
+                                    Your answer recording:
                                 </p>
                                 <audio
                                     controls
@@ -454,8 +454,8 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                                     className="px-4 py-2 rounded-lg border border-teal-300 bg-teal-50 text-teal-900 text-sm font-medium hover:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {speakingFeedbackLoading
-                                        ? 'Đang lấy nhận xét...'
-                                        : 'Lấy nhận xét Speaking từ AI'}
+                                        ? 'Getting feedback...'
+                                        : 'Get Speaking feedback from AI'}
                                 </button>
                             ) : null}
                         </div>
@@ -463,7 +463,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
 
                     {showFeedbackBlock && (
                         <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                            <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                            <p className="text-sm font-semibold text-emerald-700 mb-1">Feedback:</p>
                             <p className="text-sm text-gray-800 whitespace-pre-wrap">
                                 {effectiveFeedback}
                             </p>
@@ -479,7 +479,7 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                             className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                         >
                             <span className="text-sm font-medium text-gray-700">
-                                Giải thích chi tiết đáp án
+                                Detailed answer explanation
                             </span>
                             <svg
                                 className={`w-5 h-5 text-gray-500 transition-transform ${showExplanation ? 'rotate-180' : ''}`}
@@ -503,14 +503,14 @@ const AnswerQuestion = ({ open, onClose, userAnswerId, onReport, onChatAI }) => 
                 {/* Loading State */}
                 {loading && (
                     <div className="text-center py-12 text-gray-500">
-                        Đang tải...
+                        Loading...
                     </div>
                 )}
 
                 {/* No Data State */}
                 {!loading && !questionData && (
                     <div className="text-center py-12 text-gray-500">
-                        Không có dữ liệu câu hỏi
+                        No question data available
                     </div>
                 )}
             </div>

@@ -37,7 +37,7 @@ const FlashcardSentencePracticePage = () => {
         setCurrentIndex(0);
         setSentence("");
       } catch (err) {
-        message.error(err?.message || "Không thể tải dữ liệu luyện tập");
+        message.error(err?.message || "Unable to load practice data");
       } finally {
         setLoading(false);
       }
@@ -180,7 +180,7 @@ const FlashcardSentencePracticePage = () => {
   const handleEvaluate = () => {
     const trimmed = sentence.trim();
     if (!trimmed) {
-      message.warning("Vui lòng nhập câu của bạn.");
+      message.warning("Please enter your sentence.");
       return;
     }
     setEvaluating(true);
@@ -197,7 +197,7 @@ const FlashcardSentencePracticePage = () => {
         },
         onError: (err) => {
           setEvaluating(false);
-          message.error(err?.message || "Không thể đánh giá câu. Vui lòng thử lại.");
+          message.error(err?.message || "Unable to evaluate the sentence. Please try again.");
         },
       },
     );
@@ -215,12 +215,12 @@ const FlashcardSentencePracticePage = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="text-center text-gray-600">
-          <p className="mb-4">Chưa có từ vựng để luyện câu.</p>
+          <p className="mb-4">No vocabulary terms available for sentence practice.</p>
           <button
             onClick={() => navigate(`/flashcards/${id}`)}
             className="px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600"
           >
-            Quay lại bộ thẻ
+            Back to flashcard set
           </button>
         </div>
       </div>
@@ -239,7 +239,7 @@ const FlashcardSentencePracticePage = () => {
               className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
           >
             <ArrowLeftIcon className="w-6 h-6" />
-              <span className="hidden sm:inline">Quay lại</span>
+              <span className="hidden sm:inline">Back</span>
           </button>
           <span className="text-gray-600 font-medium">
             {currentIndex + 1} / {total}
@@ -251,7 +251,7 @@ const FlashcardSentencePracticePage = () => {
                 disabled={currentIndex <= 0}
                 className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
               >
-                <span className="hidden sm:inline">Trước</span>
+                <span className="hidden sm:inline">Previous</span>
                 <ArrowLeftIcon className="w-5 h-5" />
               </button>
               <button
@@ -260,7 +260,7 @@ const FlashcardSentencePracticePage = () => {
                 disabled={currentIndex >= total - 1}
                 className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
               >
-                <span className="hidden sm:inline">Sau</span>
+                <span className="hidden sm:inline">Next</span>
                 <ArrowRightIcon className="w-5 h-5" />
               </button>
             </div>
@@ -268,7 +268,7 @@ const FlashcardSentencePracticePage = () => {
 
         {/* Instruction */}
         <p className="text-gray-800 font-medium mb-4">
-          Tạo một câu hoàn chỉnh sử dụng từ vựng sau:
+          Create a complete sentence using the following vocabulary word:
         </p>
 
         {/* Vocabulary + pronunciation + meaning */}
@@ -299,7 +299,7 @@ const FlashcardSentencePracticePage = () => {
         <textarea
           value={sentence}
           onChange={(e) => setSentence(e.target.value)}
-          placeholder="Nhập câu của bạn tại đây..."
+          placeholder="Enter your sentence here..."
           rows={4}
           className="w-full px-4 py-3 rounded-xl border-2 border-orange-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition text-gray-900 placeholder-gray-400 resize-y mb-6"
         />
@@ -308,12 +308,12 @@ const FlashcardSentencePracticePage = () => {
           <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3 mb-3">
               <p className="text-sm font-semibold text-gray-800">
-                Kết quả đánh giá
+                Evaluation result
               </p>
               {evaluating && (
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <Spin size="small" />
-                  <span>Đang đánh giá...</span>
+                  <span>Evaluating...</span>
                 </div>
               )}
             </div>
@@ -322,7 +322,7 @@ const FlashcardSentencePracticePage = () => {
               <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-gray-600">
                 <div className="flex items-center gap-3">
                   <Spin />
-                  <span>Đang nhận kết quả từ hệ thống...</span>
+                  <span>Receiving results from the system...</span>
                 </div>
               </div>
             ) : (
@@ -352,7 +352,7 @@ const FlashcardSentencePracticePage = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <WrenchScrewdriverIcon className="w-5 h-5 text-gray-500" />
                       <p className="text-xs font-semibold tracking-wide text-gray-600">
-                        CẢI THIỆN:
+                        IMPROVEMENTS:
                       </p>
                     </div>
                     <ul className="list-disc pl-5 space-y-2 text-gray-800">
@@ -368,7 +368,7 @@ const FlashcardSentencePracticePage = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-500" />
                       <p className="text-xs font-semibold tracking-wide text-gray-600">
-                        NHẬN XÉT:
+                        COMMENTS:
                       </p>
                     </div>
                     <p className="whitespace-pre-wrap text-gray-800">
@@ -399,7 +399,7 @@ const FlashcardSentencePracticePage = () => {
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-70 transition"
             >
               <SparklesIcon className="w-5 h-5" />
-              {evaluating ? "Đang đánh giá..." : "Đánh giá"}
+              {evaluating ? "Evaluating..." : "Evaluate"}
             </button>
           )}
         </div>

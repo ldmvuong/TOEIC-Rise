@@ -34,22 +34,22 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Họ và tên là bắt buộc';
+      newErrors.fullName = 'Full name is required';
     }
     if (!formData.email) {
-      newErrors.email = 'Email là bắt buộc';
+      newErrors.email = 'Email is required';
     } else if (!isValidEmail(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
+      newErrors.email = 'Invalid email address';
     }
     if (!formData.password) {
-      newErrors.password = 'Mật khẩu là bắt buộc';
+      newErrors.password = 'Password is required';
     } else if (!isStrongPassword(formData.password)) {
-      newErrors.password = 'Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+      newErrors.password = 'Password must be 8-20 characters and include lowercase, uppercase, number, special character (.@#$%^&+=), and no spaces';
     }
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc';
+      newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Mật khẩu không khớp';
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -71,10 +71,10 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
         onRegisterSuccess(formData.email);
       }
     } catch (error) {
-      const backendMessage = error?.message || 'Đăng ký thất bại';
+      const backendMessage = error?.message || 'Registration failed';
       // Hiển thị thông báo lỗi tổng quát bằng notification
       notification.error({
-        message: 'Đăng ký thất bại',
+        message: 'Registration failed',
         description: backendMessage,
         placement: 'topRight',
         duration: 5,
@@ -103,7 +103,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div>
         <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-2">
-          Họ và tên
+          Full name
         </label>
         <input
           type="text"
@@ -112,7 +112,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
           value={formData.fullName}
           onChange={handleInputChange}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          placeholder="Nhập họ và tên"
+          placeholder="Enter your full name"
         />
         {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
       </div>
@@ -128,14 +128,14 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
           value={formData.email}
           onChange={handleInputChange}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          placeholder="Nhập email của bạn"
+          placeholder="Enter your email"
         />
         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
       </div>
 
       <div>
         <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
-          Mật khẩu
+          Password
         </label>
         <div className="relative">
           <input
@@ -145,13 +145,13 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
             value={formData.password}
             onChange={handleInputChange}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="Nhập mật khẩu"
+            placeholder="Enter your password"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? <AiOutlineEyeInvisible className="w-5 h-5" /> : <AiOutlineEye className="w-5 h-5" />}
           </button>
@@ -161,7 +161,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
 
       <div>
         <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
-          Nhập lại mật khẩu
+          Confirm password
         </label>
         <div className="relative">
           <input
@@ -171,13 +171,13 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
             value={formData.confirmPassword}
             onChange={handleInputChange}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="Nhập lại mật khẩu"
+            placeholder="Confirm your password"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
           >
             {showConfirmPassword ? <AiOutlineEyeInvisible className="w-5 h-5" /> : <AiOutlineEye className="w-5 h-5" />}
           </button>
@@ -194,7 +194,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
             : 'bg-green-600 text-white hover:bg-green-700'
         }`}
       >
-        {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+        {isLoading ? 'Registering...' : 'Register'}
       </button>
 
       <div className="relative">
@@ -202,7 +202,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Hoặc</span>
+          <span className="px-2 bg-white text-gray-500">Or</span>
         </div>
       </div>
 
@@ -212,7 +212,7 @@ const RegisterTab = ({ onRegisterSuccess, onSwitchToLogin, onGoogleLogin }) => {
         className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
       >
         <GoogleIcon />
-        <span className="ml-2">Đăng ký bằng Google</span>
+        <span className="ml-2">Register with Google</span>
       </button>
 
     </form>

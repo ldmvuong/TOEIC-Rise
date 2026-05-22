@@ -18,7 +18,7 @@ const LEVEL_ORDER = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 
 const LEVEL_SECTION_META = {
   BEGINNER: {
-    title: "Giai đoạn cơ bản",
+    title: "Beginner Stage",
     subtitle: "BEGINNER",
     badgeClass:
       "border-blue-200 bg-blue-50 text-blue-700 ring-blue-100/80",
@@ -26,7 +26,7 @@ const LEVEL_SECTION_META = {
     shellClass: "border-blue-200/60 bg-gradient-to-b from-blue-50/40 to-white",
   },
   INTERMEDIATE: {
-    title: "Giai đoạn trung cấp",
+    title: "Intermediate Stage",
     subtitle: "INTERMEDIATE",
     badgeClass:
       "border-orange-200 bg-orange-50 text-orange-800 ring-orange-100/80",
@@ -35,7 +35,7 @@ const LEVEL_SECTION_META = {
       "border-orange-200/60 bg-gradient-to-b from-orange-50/35 to-white",
   },
   ADVANCED: {
-    title: "Giai đoạn nâng cao",
+    title: "Advanced Stage",
     subtitle: "ADVANCED",
     badgeClass: "border-rose-200 bg-rose-50 text-rose-800 ring-rose-100/80",
     accentLine: "from-rose-400 via-rose-600 to-fuchsia-500/80",
@@ -202,7 +202,7 @@ function BranchCard({
             <div
               className={`flex items-center justify-between gap-2 text-xs ${bright ? "text-slate-600" : "text-slate-500"}`}
             >
-              <span className="font-medium tracking-wide">Tiến độ</span>
+              <span className="font-medium tracking-wide">Progress</span>
               <span
                 className={`font-semibold tabular-nums ${bright ? "text-slate-800" : "text-slate-600"}`}
               >
@@ -231,7 +231,7 @@ function BranchCard({
                 className={`mt-2 flex items-center gap-1 text-xs ${bright ? "text-slate-500" : "text-slate-400"}`}
               >
                 <ClockCircleOutlined />
-                <span>Xem gần nhất: {formatMs(lastWatchedTimeMs)}</span>
+                <span>Last watched: {formatMs(lastWatchedTimeMs)}</span>
               </div>
             ) : null}
           </div>
@@ -303,7 +303,7 @@ export default function LearningPathDetailPage() {
       setDetail(res?.data ?? null);
     } catch (e) {
       const msg =
-        e?.response?.data?.message || e?.message || "Không tải được lộ trình";
+        e?.response?.data?.message || e?.message || "Unable to load learning path";
       setError(msg);
       message.error(msg);
       setDetail(null);
@@ -398,7 +398,7 @@ export default function LearningPathDetailPage() {
 
         {loading ? (
           <div className="mt-10 flex justify-center py-16">
-            <Spin size="large" tip="Đang tải lộ trình…" />
+            <Spin size="large" tip="Loading learning path..." />
           </div>
         ) : error ? (
           <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
@@ -409,7 +409,7 @@ export default function LearningPathDetailPage() {
             <header className="mx-auto mt-8 max-w-3xl text-center">
               <div className="flex justify-center items-center gap-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Lộ trình học
+                  Learning path
                 </p>
                 {detail?.level && (
                   <span
@@ -438,7 +438,7 @@ export default function LearningPathDetailPage() {
             <div className="mx-auto mt-12 max-w-3xl pb-16">
               {lessonItems.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white/90 p-12 text-center text-slate-500 shadow-inner">
-                  Lộ trình này chưa có bài học.
+                  This learning path has no lessons yet.
                 </div>
               ) : (
                 <div className="flex flex-col gap-10 sm:gap-12">
@@ -460,7 +460,7 @@ export default function LearningPathDetailPage() {
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                                Mốc lộ trình
+                                Roadmap milestone
                               </div>
                               <Title
                                 level={4}
@@ -469,7 +469,7 @@ export default function LearningPathDetailPage() {
                                 {meta.title}
                               </Title>
                               <Text type="secondary" className="!mb-0 mt-0.5 block text-xs">
-                                Cấp độ:{" "}
+                                Level:{" "}
                                 <span className="font-semibold text-slate-700">
                                   {meta.subtitle}
                                 </span>
@@ -521,7 +521,7 @@ export default function LearningPathDetailPage() {
                                 globalIndex > 0 &&
                                 prev &&
                                 !previousLessonMeetsAdvanceGate(prev)
-                                  ? `Đạt ít nhất ${MIN_PROGRESS_TO_UNLOCK_NEXT}% tiến độ bài trước để mở bài này.`
+                                  ? `Reach at least ${MIN_PROGRESS_TO_UNLOCK_NEXT}% progress in the previous lesson to unlock this lesson.`
                                   : "";
                               const dailyCheck =
                                 lessonId != null
@@ -553,7 +553,7 @@ export default function LearningPathDetailPage() {
                                   </div>
                                   <div className="min-w-0 flex-1 pt-0.5">
                                     <span className="mb-2 inline-block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                      Bước {step} / {totalSteps}
+                                      Step {step} / {totalSteps}
                                     </span>
                                     <BranchCard
                                       item={item}

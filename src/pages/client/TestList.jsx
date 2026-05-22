@@ -21,33 +21,33 @@ import { toSlug } from "../../utils/slug";
 const CONFIG = {
     readingListening: {
         label: "Reading & Listening",
-        title: "Đề thi LR",
-        subtitle: "Chọn bộ đề thi TOEIC để bắt đầu làm bài",
+        title: "Listening & Reading Tests",
+        subtitle: "Choose a TOEIC test set to start practicing",
         fetchSets: getPublicTestSets,
         fetchTests: getPublicTest,
         basePath: "/online-tests",
-        loadSetsError: "Không thể tải danh sách bộ đề thi",
-        loadTestsError: "Không thể tải danh sách đề thi",
+        loadSetsError: "Unable to load test set list",
+        loadTestsError: "Unable to load test list",
     },
     speaking: {
         label: "Speaking",
-        title: "Đề thi Speaking",
-        subtitle: "Chọn bộ đề và đề thi Speaking để luyện tập",
+        title: "Speaking Tests",
+        subtitle: "Choose a Speaking test set and test to practice",
         fetchSets: getLearnerSpeakingTestSets,
         fetchTests: getLearnerSpeakingTests,
         basePath: "/speaking-tests",
-        loadSetsError: "Không thể tải danh sách bộ đề Speaking",
-        loadTestsError: "Không thể tải danh sách đề Speaking",
+        loadSetsError: "Unable to load Speaking test set list",
+        loadTestsError: "Unable to load Speaking test list",
     },
     writing: {
         label: "Writing",
-        title: "Đề thi Writing",
-        subtitle: "Chọn bộ đề và đề thi Writing để luyện tập",
+        title: "Writing Tests",
+        subtitle: "Choose a Writing test set and test to practice",
         fetchSets: getLearnerWritingTestSets,
         fetchTests: getLearnerWritingTests,
         basePath: "/writing-tests",
-        loadSetsError: "Không thể tải danh sách bộ đề Writing",
-        loadTestsError: "Không thể tải danh sách đề Writing",
+        loadSetsError: "Unable to load Writing test set list",
+        loadTestsError: "Unable to load Writing test list",
     },
 };
 
@@ -169,7 +169,7 @@ const TestList = ({ variant = "readingListening" }) => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8 flex items-center justify-center">
-                <Spin size="large" tip="Đang tải...">
+                <Spin size="large" tip="Loading...">
                     <div className="h-8 w-8" />
                 </Spin>
             </div>
@@ -236,7 +236,7 @@ const TestList = ({ variant = "readingListening" }) => {
                 ) : (
                     <div className="text-center py-16 bg-white rounded-lg">
                         <p className="text-gray-500 text-lg">
-                            Hiện chưa có bộ đề thi nào
+                            No test sets are available yet
                         </p>
                     </div>
                 )}
@@ -247,11 +247,11 @@ const TestList = ({ variant = "readingListening" }) => {
                         {/* Search Input */}
                         <div className="flex-1">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Tìm kiếm theo tên
+                                Search by name
                             </label>
                             <Input
                                 size="large"
-                                placeholder="Nhập tên đề thi..."
+                                placeholder="Enter test name..."
                                 value={searchName}
                                 onChange={(e) => setSearchName(e.target.value)}
                                 onPressEnter={handleSearch}
@@ -263,12 +263,12 @@ const TestList = ({ variant = "readingListening" }) => {
                         {/* Test Set Filter */}
                         <div className="flex-1">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Bộ đề thi
+                                Test set
                             </label>
                             <Select
                                 mode="multiple"
                                 size="large"
-                                placeholder="Chọn bộ đề thi..."
+                                placeholder="Select test sets..."
                                 value={selectedTestSetIds}
                                 onChange={(values) => {
                                     setSelectedTestSetIds(values);
@@ -292,7 +292,7 @@ const TestList = ({ variant = "readingListening" }) => {
                                 onClick={handleSearch}
                                 className="min-w-[120px]"
                             >
-                                Tìm kiếm
+                                Search
                             </Button>
                             <Button
                                 size="large"
@@ -300,7 +300,7 @@ const TestList = ({ variant = "readingListening" }) => {
                                 onClick={handleReset}
                                 className="min-w-[120px]"
                             >
-                                Làm mới
+                                Reset
                             </Button>
                         </div>
                     </div>
@@ -310,23 +310,23 @@ const TestList = ({ variant = "readingListening" }) => {
                 <div className="mt-6">
                     <div className="mb-4">
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            Danh sách đề thi
+                            Test list
                         </h2>
                         <p className="text-gray-600">
                             {(() => {
                                 if (activeSearchName) {
-                                    return `Kết quả tìm kiếm cho "${activeSearchName}"`;
+                                    return `Search results for "${activeSearchName}"`;
                                 } else if (selectedTestSetIds.length === 0) {
-                                    if (variant === "speaking") return "Tất cả đề Speaking";
-                                    if (variant === "writing") return "Tất cả đề Writing";
-                                    return "Tất cả đề thi LR";
+                                    if (variant === "speaking") return "All Speaking tests";
+                                    if (variant === "writing") return "All Writing tests";
+                                    return "All Listening & Reading tests";
                                 } else if (selectedTestSetIds.length === 1) {
                                     const testSet = testSets.find(
                                         (ts) => ts.id === selectedTestSetIds[0],
                                     );
-                                    return `Đề thi trong bộ "${testSet?.name || ''}"`;
+                                    return `Tests in "${testSet?.name || ''}"`;
                                 } else {
-                                    return `Đề thi từ ${selectedTestSetIds.length} bộ đề đã chọn`;
+                                    return `Tests from ${selectedTestSetIds.length} selected test sets`;
                                 }
                             })()}
                         </p>
@@ -334,7 +334,7 @@ const TestList = ({ variant = "readingListening" }) => {
 
                     {loadingTests ? (
                         <div className="py-12">
-                            <Spin spinning tip="Đang tải danh sách đề thi...">
+                            <Spin spinning tip="Loading test list...">
                                 <div className="h-8" />
                             </Spin>
                         </div>
@@ -361,7 +361,7 @@ const TestList = ({ variant = "readingListening" }) => {
                                         onChange={handlePageChange}
                                         showSizeChanger={false}
                                         showTotal={(total, range) => 
-                                            `${range[0]}-${range[1]} / ${total} đề thi`
+                                            `${range[0]}-${range[1]} / ${total} tests`
                                         }
                                     />
                                 </div>
@@ -372,15 +372,15 @@ const TestList = ({ variant = "readingListening" }) => {
                             <div className="text-6xl mb-4">🔍</div>
                             <p className="text-gray-600 text-lg font-semibold mb-2">
                                 {activeSearchName 
-                                    ? 'Không tìm thấy đề thi phù hợp'
+                                    ? 'No matching tests found'
                                     : selectedTestSetIds.length > 0
-                                        ? 'Các bộ đề đã chọn chưa có đề thi'
-                                        : 'Hiện chưa có đề thi nào'
+                                        ? 'The selected test sets do not have any tests yet'
+                                        : 'No tests are available yet'
                                 }
                             </p>
                             {activeSearchName && (
                                 <p className="text-gray-400 text-sm">
-                                    Vui lòng thử lại với từ khóa khác
+                                    Please try again with a different keyword
                                 </p>
                             )}
                         </div>

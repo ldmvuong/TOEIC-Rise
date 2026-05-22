@@ -42,7 +42,7 @@ const FlashcardTypePage = () => {
                     setFeedback(null);
                     setProgressMap({});
                 } catch (err) {
-                    message.error(err?.message || 'Không thể tải từ cần ôn');
+                    message.error(err?.message || 'Unable to load words due for review');
                 } finally {
                     setLoading(false);
                 }
@@ -63,7 +63,7 @@ const FlashcardTypePage = () => {
                 setFeedback(null);
                 setProgressMap({});
             } catch (err) {
-                message.error(err?.message || 'Không thể tải dữ liệu luyện tập');
+                message.error(err?.message || 'Unable to load practice data');
             } finally {
                 setLoading(false);
             }
@@ -106,7 +106,7 @@ const FlashcardTypePage = () => {
         const user = normalizeAnswer(inputValue);
         const correct = normalizeAnswer(correctWord);
         if (!user) {
-            message.info('Vui lòng nhập từ tiếng Anh');
+            message.info('Please enter the English word');
             return;
         }
         if (user === correct) {
@@ -203,7 +203,7 @@ const FlashcardTypePage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -217,10 +217,10 @@ const FlashcardTypePage = () => {
             return;
         }
         Modal.confirm({
-            title: 'Thoát luyện tập?',
-            content: 'Tiến độ trả lời của bạn sẽ được gửi và không thể hoàn tác.',
-            okText: 'Gửi & thoát',
-            cancelText: 'Hủy',
+            title: 'Exit practice?',
+            content: 'Your answer progress will be submitted and cannot be undone.',
+            okText: 'Submit & exit',
+            cancelText: 'Cancel',
             onOk: async () => {
                 try {
                     setSubmittingExit(true);
@@ -229,7 +229,7 @@ const FlashcardTypePage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -247,7 +247,7 @@ const FlashcardTypePage = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Spin size="large" className="text-teal-600" />
-                    <p className="text-gray-600">Đang tải dữ liệu...</p>
+                    <p className="text-gray-600">Loading data...</p>
                 </div>
             </div>
         );
@@ -257,13 +257,13 @@ const FlashcardTypePage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center text-gray-600">
-                    <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
+                    <p className="mb-4">No vocabulary terms available for practice.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-xl hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
-                        Quay lại bộ thẻ
+                        Back to flashcard set
                     </button>
                 </div>
             </div>
@@ -282,7 +282,7 @@ const FlashcardTypePage = () => {
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
-                    <span className="hidden sm:inline">Quay lại</span>
+                    <span className="hidden sm:inline">Back</span>
                 </button>
             </div>
 
@@ -290,13 +290,13 @@ const FlashcardTypePage = () => {
             <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full">
                 {currentIndex >= total ? (
                     <div className="text-center">
-                        <p className="text-xl font-semibold text-teal-700 mb-4">Hoàn thành!</p>
-                        <p className="text-gray-600 mb-6">Bạn đã ôn hết các từ trong lượt này.</p>
+                        <p className="text-xl font-semibold text-teal-700 mb-4">Completed!</p>
+                        <p className="text-gray-600 mb-6">You have reviewed all words in this round.</p>
                         <button
                             onClick={handleExit}
                             className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium"
                         >
-                            {isDueMode ? 'Quay lại chọn game' : 'Quay lại bộ thẻ'}
+                            {isDueMode ? 'Back to game selection' : 'Back to flashcard set'}
                         </button>
                     </div>
                 ) : (
@@ -311,7 +311,7 @@ const FlashcardTypePage = () => {
                             <div className="w-full rounded-xl border-2 border-green-200 bg-white p-6 mb-6">
                                 <div className="flex items-center justify-center gap-2 text-green-600 mb-3">
                                     <CheckCircleSolid className="w-8 h-8" />
-                                    <span className="text-xl font-semibold">Chính xác!</span>
+                                    <span className="text-xl font-semibold">Correct!</span>
                                 </div>
                                 <p className="text-2xl sm:text-3xl font-bold text-green-700 text-center">
                                     {correctWord}
@@ -324,13 +324,13 @@ const FlashcardTypePage = () => {
                             <div className="w-full rounded-xl border-2 border-red-200 bg-red-50 p-6 mb-6">
                                 <div className="flex items-center justify-center gap-2 text-red-600 mb-3">
                                     <XCircleIcon className="w-8 h-8" />
-                                    <span className="text-xl font-semibold">Chưa đúng</span>
+                                    <span className="text-xl font-semibold">Not quite</span>
                                 </div>
                                 <p className="text-2xl sm:text-3xl font-bold text-red-900 text-center mb-4">
                                     {feedback.correctWord}
                                 </p>
                                 <div className="flex items-center justify-center gap-2 text-gray-600 text-sm">
-                                    <span>Bạn gõ:</span>
+                                    <span>You typed:</span>
                                     <span className="text-red-600 line-through font-medium">
                                         {feedback.userAnswer || '—'}
                                     </span>
@@ -346,7 +346,7 @@ const FlashcardTypePage = () => {
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    placeholder="Gõ từ tiếng Anh..."
+                                    placeholder="Type the English word..."
                                     className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 text-lg mb-4"
                                 />
                                 {/* hint-wrong: chỉ dòng gạch đỏ */}
@@ -367,21 +367,21 @@ const FlashcardTypePage = () => {
                                 onClick={handleHint}
                                 disabled={feedback?.status === 'wrong'}
                                 className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                                title="Gợi ý thêm 1 ký tự"
+                                title="Reveal one more character"
                             >
                                 <LightBulbIcon className="w-5 h-5" />
                                 <span className="hidden sm:inline">
-                                    Gợi ý
+                                    Hint
                                 </span>
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSkip}
                                 className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition border border-gray-200"
-                                title="Bỏ qua từ này"
+                                title="Skip this word"
                             >
                                 <ArrowRightCircleIcon className="w-5 h-5" />
-                                <span className="hidden sm:inline">Bỏ qua</span>
+                                <span className="hidden sm:inline">Skip</span>
                             </button>
                             <button
                                 type="button"
@@ -390,7 +390,7 @@ const FlashcardTypePage = () => {
                                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white font-medium transition"
                             >
                                 <CheckCircleIcon className="w-5 h-5" />
-                                Kiểm tra
+                                Check
                             </button>
                         </div>
                     </>

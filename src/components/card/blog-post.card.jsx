@@ -13,20 +13,20 @@ function formatUpdatedAt(value) {
  * Reusable blog post card.
  * - Clickable when `onClick` provided (also keyboard accessible)
  * - Thumbnail: blurred cover background + contain foreground (avoids crop + avoids empty bars)
- * - Optional "Mới" badge at top-right
+ * - Optional "New" badge at top-right
  */
 export default function BlogPostCard({
   post,
   onClick,
   showNewBadge = false,
-  newBadgeText = "Mới",
+  newBadgeText = "New",
   showMeta = true,
   className = "",
   bodyPadding = 14,
   imageHeight = 150,
 }) {
   const clickable = typeof onClick === "function";
-  const title = post?.title || "Chưa có tiêu đề";
+  const title = post?.title || "Untitled";
   const summary = post?.summary;
   const thumbnailUrl = post?.thumbnailUrl;
 

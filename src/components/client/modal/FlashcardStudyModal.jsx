@@ -69,7 +69,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">{details?.name || 'Flashcard'}</h2>
                         <span className="text-sm text-gray-500">
-                            Thẻ {currentIndex + 1} / {totalItems}
+                            Card {currentIndex + 1} / {totalItems}
                         </span>
                     </div>
                     <button 
@@ -85,7 +85,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                     {loading ? (
                         <div className="flex flex-col items-center gap-4">
                             <ArrowPathIcon className="w-10 h-10 animate-spin text-blue-600" />
-                            <p className="text-gray-600">Đang tải...</p>
+                            <p className="text-gray-600">Loading...</p>
                         </div>
                     ) : currentItem ? (
                         // KHU VỰC THẺ FLIP
@@ -97,17 +97,17 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                                 
                                 {/* Mặt trước (Front) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center p-8 border-2 border-blue-100">
-                                    <span className="text-sm uppercase tracking-widest text-gray-400 font-semibold mb-4">Từ vựng</span>
+                                    <span className="text-sm uppercase tracking-widest text-gray-400 font-semibold mb-4">Vocabulary</span>
                                     <h3 className="text-4xl md:text-5xl font-bold text-gray-800 text-center mb-4">
                                         {currentItem?.vocabulary || currentItem?.word || "Word"}
                                     </h3>
                                     {/* Gợi ý click */}
-                                    <div className="absolute bottom-4 text-xs text-gray-400">Chạm để lật</div>
+                                    <div className="absolute bottom-4 text-xs text-gray-400">Tap to flip</div>
                                 </div>
 
                                 {/* Mặt sau (Back) */}
                                 <div className="absolute inset-0 backface-hidden rotate-y-180 bg-blue-50 rounded-2xl flex flex-col items-center justify-center p-8 border-2 border-blue-200 overflow-y-auto">
-                                    <span className="text-sm uppercase tracking-widest text-blue-400 font-semibold mb-2">Định nghĩa</span>
+                                    <span className="text-sm uppercase tracking-widest text-blue-400 font-semibold mb-2">Definition</span>
                                     <p className="text-xl md:text-2xl font-medium text-blue-900 text-center mb-4">
                                         {currentItem?.definition || "Definition"}
                                     </p>
@@ -126,7 +126,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
 
                                     {currentItem?.example && (
                                         <div className="mt-2 text-center px-4">
-                                            <p className="text-sm font-semibold text-gray-500 mb-2">Ví dụ:</p>
+                                            <p className="text-sm font-semibold text-gray-500 mb-2">Example:</p>
                                             <p className="text-gray-700 italic">"{currentItem?.example}"</p>
                                         </div>
                                     )}
@@ -135,7 +135,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                         </div>
                     ) : (
                         <div className="text-center text-gray-500">
-                            <p>Không có dữ liệu</p>
+                            <p>No data</p>
                         </div>
                     )}
                 </div>
@@ -156,7 +156,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                         disabled={!currentItem}
                         className="px-4 py-2 sm:px-8 sm:py-3 bg-blue-600 text-white rounded-full text-sm sm:text-base font-semibold shadow-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
-                        {isFlipped ? "Xem từ vựng" : "Xem nghĩa"}
+                        {isFlipped ? "View vocabulary" : "View meaning"}
                     </button>
 
                     <button 

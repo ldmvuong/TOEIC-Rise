@@ -21,12 +21,12 @@ export default function Header({ currentPath }) {
   const isLearner = user?.role === "LEARNER";
 
   const navItems = [
-    { name: "Trang chủ", href: "/" },
-    { name: "Đề thi online", href: "/online-tests" },
-    { name: "Nghe chép chính tả", href: "/dictation", roles: ["LEARNER"] },
+    { name: "Home", href: "/" },
+    { name: "Online Tests", href: "/online-tests" },
+    { name: "Dictation", href: "/dictation", roles: ["LEARNER"] },
     { name: "Flashcard", href: "/flashcards", roles: ["LEARNER"] },
-    { name: "Thống kê kết quả", href: "/statistics", roles: ["LEARNER"] },
-    { name: "Cấu trúc đề thi", href: "/exam-structure" },
+    { name: "Result Statistics", href: "/statistics", roles: ["LEARNER"] },
+    { name: "Exam Structure", href: "/exam-structure" },
     { name: "Blog", href: "/blog" },
   ];
 
@@ -124,7 +124,7 @@ export default function Header({ currentPath }) {
             <button
               onClick={() => window.dispatchEvent(new Event("open-tour"))}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
-              title="Hướng dẫn"
+              title="Guide"
             >
               <QuestionMarkCircleIcon className="h-6 w-6" />
             </button>
@@ -164,7 +164,7 @@ export default function Header({ currentPath }) {
                         className="block px-3 py-2 text-sm hover:bg-gray-50"
                         onClick={() => setIsUserOpen(false)}
                       >
-                        Trang quản trị
+                        Admin Dashboard
                       </Link>
                     )}
                     <Link
@@ -172,7 +172,7 @@ export default function Header({ currentPath }) {
                       className="block px-3 py-2 text-sm hover:bg-gray-50"
                       onClick={() => setIsUserOpen(false)}
                     >
-                      Trang cá nhân
+                      Profile
                     </Link>
                     <div className="my-1 h-px bg-gray-200" />
                     <button
@@ -184,7 +184,7 @@ export default function Header({ currentPath }) {
                           : "text-red-600 hover:bg-red-50"
                       }`}
                     >
-                      {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
+                      {isLoggingOut ? "Logging out..." : "Log out"}
                     </button>
                   </div>
                 )}
@@ -195,7 +195,7 @@ export default function Header({ currentPath }) {
                 onClick={() => navigate("/auth")}
                 className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Đăng nhập
+                Log in
               </button>
             )}
           </div>

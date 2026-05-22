@@ -155,13 +155,13 @@ api.interceptors.response.use(
       error.response.status === 401 &&
       originalRequest.url === "/auth/refresh-token"
     ) {
-      const message = error?.response?.data?.message ?? "Có lỗi xảy ra, vui lòng login lại.";
+      const message = error?.response?.data?.message ?? "An error occurred. Please log in again.";
       store.dispatch(setRefreshTokenAction({ status: true, message }));
     }
     
     // Handle 403 Forbidden
     if (error.response && error.response.status === 403) {
-      const message = error?.response?.data?.message ?? "Không có quyền truy cập";
+      const message = error?.response?.data?.message ?? "You do not have permission to access this resource";
       // Silent error handling
     }
     
@@ -172,7 +172,7 @@ api.interceptors.response.use(
       const normalized = {
         statusCode: payload.code || error.response.status,
         status: payload.status || error.code,
-        message: payload.message || 'Đã xảy ra lỗi, vui lòng thử lại',
+        message: payload.message || 'An error occurred. Please try again',
         path: payload.path,
       };
       return Promise.reject(normalized);
@@ -182,7 +182,7 @@ api.interceptors.response.use(
     return Promise.reject({
       statusCode: 0,
       status: 'NETWORK_ERROR',
-      message: 'Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.',
+      message: 'Unable to connect to the server. Please check your network.',
     });
   }
 );

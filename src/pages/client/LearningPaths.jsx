@@ -74,7 +74,7 @@ export default function LearningPathsPage() {
       }
     } catch (error) {
       console.error('Error checking level:', error);
-      message.error(error?.message || "Không thể kiểm tra trạng thái lộ trình");
+      message.error(error?.message || "Unable to check learning path status");
     } finally {
       setCheckingSlug(null);
     }
@@ -83,7 +83,7 @@ export default function LearningPathsPage() {
   const handleSelectLevel = async (level) => {
     const slug = selectedSlug;
     if (!slug) {
-      message.error("Không xác định được lộ trình. Vui lòng đóng và chọn lại.");
+      message.error("Unable to identify the learning path. Please close and select again.");
       return;
     }
     try {
@@ -95,15 +95,15 @@ export default function LearningPathsPage() {
         console.warn("Learning path detail after create:", detailErr);
         message.warning(
           detailErr?.message ||
-            "Level saved; could not load path details. Opening roadmap…",
+            "Level saved; could not load path details. Opening roadmap...",
         );
       }
-      message.success("Tạo lộ trình thành công!");
+      message.success("Learning path created successfully!");
       setShowLevelModal(false);
       navigate(`/learning-paths/${slug}`);
     } catch (error) {
       console.error("Error creating learning path:", error);
-      message.error(error?.message || "Lỗi khi tạo lộ trình");
+      message.error(error?.message || "Error creating learning path");
       setShowLevelModal(true);
     } finally {
       setCheckingSlug(null);
@@ -118,8 +118,7 @@ export default function LearningPathsPage() {
             Learning Paths
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Chọn một lộ trình để xem chi tiết và tiến độ học trên bản đồ lộ
-            trình.
+            Choose a path to view details and track your learning progress on the roadmap.
           </p>
         </div>
       </div>
@@ -128,7 +127,7 @@ export default function LearningPathsPage() {
         {loading ? (
           <div className="flex items-center gap-2 text-slate-600">
             <Spin size="small" />
-            <span>Đang tải learning paths…</span>
+            <span>Loading learning paths...</span>
           </div>
         ) : null}
 
@@ -168,7 +167,7 @@ export default function LearningPathsPage() {
 
         {!loading && (!paths || paths.length === 0) ? (
           <div className="mt-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-600">
-            Chưa có learning path nào.
+            No learning paths yet.
           </div>
         ) : null}
       </div>

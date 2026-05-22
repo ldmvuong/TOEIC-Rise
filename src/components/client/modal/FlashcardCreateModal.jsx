@@ -63,7 +63,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
     const handleLookupFromDictionary = async (index, vocabOverride) => {
         const vocab = (vocabOverride ?? items[index]?.vocabulary ?? '').trim();
         if (!vocab) {
-            message.warning('Vui lòng nhập từ vựng trước khi tra cứu.');
+            message.warning('Please enter a vocabulary term before lookup.');
             return;
         }
 
@@ -159,7 +159,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
     // 4. Xóa dòng
     const handleRemoveItem = (index) => {
         if (items.length === 1) {
-            message.warning("Cần ít nhất 1 từ vựng trong bộ thẻ!");
+            message.warning("At least 1 vocabulary term is required in the set!");
             return;
         }
         const existing = lookupTimeoutsRef.current[index];
@@ -175,14 +175,14 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
     const handleSubmit = async () => {
         // --- VALIDATION FE ---
         if (!name.trim()) {
-            message.error("Vui lòng nhập tên bộ thẻ!");
+            message.error("Please enter a flashcard set name!");
             return;
         }
 
         // Kiểm tra từng item
         const invalidItems = items.filter(item => !item.vocabulary.trim() || !item.definition.trim());
         if (invalidItems.length > 0) {
-            message.error("Vui lòng điền đầy đủ 'Từ vựng' và 'Định nghĩa' cho tất cả các dòng!");
+            message.error("Please fill in both 'Vocabulary' and 'Definition' for every row!");
             return;
         }
 
@@ -207,7 +207,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
             // Kiểm tra response dựa trên cấu hình axios của bạn
             // Response từ axios-customize có format: { status, data, headers }
             if (res && (res.status >= 200 && res.status < 300)) { 
-                message.success("Tạo Flashcard thành công!");
+                message.success("Flashcard created successfully!");
                 
                 // Reset form và đóng modal
                 setName('');
@@ -223,11 +223,11 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                     }, 100);
                 }
             } else {
-                message.error("Có lỗi xảy ra khi tạo flashcard!");
+                message.error("An error occurred while creating the flashcard!");
             }
         } catch (error) {
             console.error("Error creating flashcard:", error);
-            const errorMsg = error?.message || error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!";
+            const errorMsg = error?.message || error?.response?.data?.message || "Something went wrong. Please try again!";
             message.error(errorMsg);
         } finally {
             setIsLoading(false);
@@ -238,7 +238,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
         <Modal
             title={
                 <div className="flex items-center gap-2 text-blue-600 text-lg">
-                    <BookOutlined /> Tạo bộ Flashcard mới
+                    <BookOutlined /> Create new flashcard set
                 </div>
             }
             open={isOpen}
@@ -246,8 +246,8 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
             onOk={handleSubmit}
             confirmLoading={isLoading}
             width={900}
-            okText="Tạo bộ thẻ"
-            cancelText="Hủy"
+            okText="Create set"
+            cancelText="Cancel"
             maskClosable={false}
             centered
             className="top-5"
@@ -260,9 +260,9 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                         {/* Tên & Mô tả */}
                         <div className="flex-1 space-y-3">
                             <div>
-                                <label className="text-sm font-semibold text-gray-700">Tên bộ thẻ <span className="text-red-500">*</span></label>
+                                <label className="text-sm font-semibold text-gray-700">Set name <span className="text-red-500">*</span></label>
                                 <Input 
-                                    placeholder="VD: 600 từ vựng TOEIC..." 
+                                    placeholder="E.g. 600 TOEIC vocabulary words..."
                                     size="large"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -271,9 +271,9 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-semibold text-gray-700">Mô tả</label>
+                                <label className="text-sm font-semibold text-gray-700">Description</label>
                                 <TextArea 
-                                    placeholder="Mô tả nội dung bộ thẻ..." 
+                                    placeholder="Describe this flashcard set..."
                                     rows={2}
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -283,7 +283,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
 
                         {/* Quyền riêng tư */}
                         <div className="w-full md:w-48 bg-white p-4 rounded-lg border border-gray-200 flex flex-col items-center justify-center gap-2 shadow-sm">
-                            <span className="text-sm font-medium text-gray-600">Quyền truy cập</span>
+                            <span className="text-sm font-medium text-gray-600">Access</span>
                             <Switch 
                                 checked={isPublic}
                                 onChange={setIsPublic}
@@ -292,7 +292,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                 className="bg-gray-300"
                             />
                             <span className={`text-xs font-bold ${isPublic ? 'text-green-600' : 'text-gray-500'}`}>
-                                {isPublic ? 'Công khai (Public)' : 'Riêng tư (Private)'}
+                                {isPublic ? 'Public' : 'Private'}
                             </span>
                         </div>
                     </div>
@@ -301,8 +301,8 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                 {/* --- PHẦN 2: DANH SÁCH TỪ VỰNG (Items) --- */}
                 <div>
                     <div className="flex justify-between items-center mb-2 px-1">
-                        <h3 className="font-bold text-gray-800 text-base">Danh sách từ vựng ({items.length})</h3>
-                        <span className="text-xs text-gray-500 italic">* Từ vựng và Định nghĩa là bắt buộc</span>
+                        <h3 className="font-bold text-gray-800 text-base">Vocabulary list ({items.length})</h3>
+                        <span className="text-xs text-gray-500 italic">* Vocabulary and Definition are required</span>
                     </div>
 
                     {/* Container scroll */}
@@ -320,7 +320,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                     {/* Cột 1: Vocabulary (4 phần) */}
                                     <div className="md:col-span-4 flex flex-col gap-1">
                                         <Input 
-                                            placeholder="Từ vựng (English)" 
+                                            placeholder="Vocabulary (English)"
                                             className="font-semibold text-blue-900"
                                             value={item.vocabulary}
                                             onChange={(e) => handleItemChange(index, 'vocabulary', e.target.value)}
@@ -334,7 +334,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                             loading={isLookupLoading}
                                             className="px-0 text-xs"
                                         >
-                                            Gợi ý từ điển
+                                            Dictionary suggestion
                                         </Button>
                                     </div>
 
@@ -351,7 +351,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                     {/* Cột 3: Definition (5 phần) */}
                                     <div className="md:col-span-5">
                                         <Input 
-                                            placeholder="Định nghĩa (Tiếng Việt)" 
+                                            placeholder="Definition"
                                             value={item.definition}
                                             onChange={(e) => handleItemChange(index, 'definition', e.target.value)}
                                         />
@@ -371,7 +371,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                                 </div>
 
                                 {/* Nút Xóa */}
-                                <Tooltip title="Xóa dòng này">
+                                <Tooltip title="Delete this row">
                                     <Button 
                                         type="text" 
                                         danger 
@@ -392,7 +392,7 @@ const FlashcardCreateModal = ({ isOpen, setIsOpen, refreshList }) => {
                         onClick={handleAddItem}
                         className="mt-4 h-10 border-blue-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     >
-                        Thêm từ vựng mới
+                        Add new vocabulary
                     </Button>
                 </div>
             </div>

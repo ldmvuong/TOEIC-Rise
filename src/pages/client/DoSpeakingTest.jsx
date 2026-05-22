@@ -199,7 +199,7 @@ const DoSpeakingTest = () => {
       try {
         localStorage.setItem(key, JSON.stringify(payload));
       } catch (e) {
-        console.error("Lưu tiến độ full test Speaking thất bại:", e);
+        console.error("Failed to save Speaking full test progress:", e);
       }
     }
     if (
@@ -323,7 +323,7 @@ const DoSpeakingTest = () => {
           localStorage.setItem(key, JSON.stringify(payload));
         } catch (err) {
           console.error(
-            "Lưu tiến độ full test Speaking (beforeunload) thất bại:",
+            "Failed to save Speaking full test progress before unload:",
             err,
           );
         }
@@ -348,7 +348,7 @@ const DoSpeakingTest = () => {
   useEffect(() => {
     const init = async () => {
       if (!testId) {
-        message.error("Thiếu thông tin đề Speaking");
+        message.error("Missing Speaking test information");
         navigate("/speaking-tests");
         return;
       }
@@ -357,7 +357,7 @@ const DoSpeakingTest = () => {
         const res = await getSpeakingExam(testId, partIds);
         setTestData(res?.data || null);
       } catch (error) {
-        message.error(error?.message || "Không thể tải đề Speaking");
+        message.error(error?.message || "Unable to load the Speaking test");
       } finally {
         setLoading(false);
       }
@@ -499,7 +499,7 @@ const DoSpeakingTest = () => {
       }
     } catch (e) {
       console.error(e);
-      message.error(e?.message || "Không thể lưu bản ghi âm.");
+      message.error(e?.message || "Unable to save the recording.");
     } finally {
       answerRecorderRef.current = null;
       answerRecordingTargetIdRef.current = null;
@@ -563,7 +563,7 @@ const DoSpeakingTest = () => {
         }
       }
     } catch (err) {
-      message.error(err?.message || "Không thể nộp bài Speaking");
+      message.error(err?.message || "Unable to submit the Speaking test");
     } finally {
       setIsSubmitting(false);
     }
@@ -665,7 +665,7 @@ const DoSpeakingTest = () => {
   const handleAnswerRecordStart = async () => {
     if (!canRecordAnswer || answerRecording || answerEncoding) return;
     if (isFullTest && phaseType !== "answer") {
-      message.warning("Chỉ ghi âm trong thời gian trả lời.");
+      message.warning("You can only record during answer time.");
       return;
     }
     if (!currentQuestion?.id) return;
@@ -678,7 +678,7 @@ const DoSpeakingTest = () => {
     } catch (e) {
       answerRecorderRef.current = null;
       answerRecordingTargetIdRef.current = null;
-      message.error(e?.message || "Không thể bắt đầu ghi âm.");
+      message.error(e?.message || "Unable to start recording.");
     }
   };
 
@@ -709,8 +709,8 @@ const DoSpeakingTest = () => {
       micCheckRecorderRef.current = null;
       const denied = e?.name === "NotAllowedError";
       const msg = denied
-        ? "Trình duyệt đã chặn micro. Vui lòng cấp quyền và thử lại."
-        : e?.message || "Không thể bắt đầu ghi âm.";
+        ? "The browser blocked microphone access. Please grant permission and try again."
+        : e?.message || "Unable to start recording.";
       setMicCheckError(msg);
       message.error(msg);
     }
@@ -727,7 +727,7 @@ const DoSpeakingTest = () => {
         return URL.createObjectURL(blob);
       });
     } catch (e) {
-      const msg = e?.message || "Không thể tạo file MP3 từ bản ghi.";
+      const msg = e?.message || "Unable to create an MP3 file from the recording.";
       setMicCheckError(msg);
       message.error(msg);
     } finally {
@@ -747,13 +747,13 @@ const DoSpeakingTest = () => {
   };
 
   if (loading) {
-    return <Spin fullscreen tip="Đang tải đề Speaking..." />;
+    return <Spin fullscreen tip="Loading Speaking test..." />;
   }
 
   if (!testData || !currentPart || !currentGroup || !currentQuestion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-600">Không tìm thấy đề Speaking</div>
+        <div className="text-center text-gray-600">Speaking test not found</div>
       </div>
     );
   }
@@ -764,16 +764,15 @@ const DoSpeakingTest = () => {
         <div className="max-w-xl mx-auto px-4 py-10">
           <div className="bg-white border rounded-xl p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-2">
-              Bước 1 · Kiểm tra micro
+              Step 1 · Microphone check
             </p>
             <h1 className="text-xl font-semibold text-gray-900">
               {testData.testName}
             </h1>
             <p className="text-sm text-gray-600 mt-3 leading-relaxed">
-              Trước khi vào bài, hãy ghi một đoạn ngắn (vài giây). Hệ thống sẽ
-              xuất file MP3 để bạn nghe lại: nếu tiếng rõ và không bị méo, hãy
-              bấm tiếp tục. Nếu không, thu lại sau khi kiểm tra micro hoặc
-              kết nối tai nghe.
+              Before starting, record a short clip for a few seconds. The system will
+              create an MP3 file so you can listen back. If the sound is clear and not distorted,
+              continue. If not, record again after checking your microphone or headset connection.
             </p>
 
             {micCheckError ? (
@@ -792,7 +791,7 @@ const DoSpeakingTest = () => {
                 disabled={micCheckRecording || micCheckEncoding}
                 className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {micCheckRecording ? "Đang ghi…" : "Bắt đầu thử micro"}
+                {micCheckRecording ? "Recording..." : "Start microphone test"}
               </button>
               <button
                 type="button"
@@ -800,7 +799,7 @@ const DoSpeakingTest = () => {
                 disabled={!micCheckRecording || micCheckEncoding}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {micCheckEncoding ? "Đang tạo MP3…" : "Dừng"}
+                {micCheckEncoding ? "Creating MP3..." : "Stop"}
               </button>
               <button
                 type="button"
@@ -812,14 +811,14 @@ const DoSpeakingTest = () => {
                 }
                 className="px-4 py-2 rounded-lg border border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Thu lại
+                Record again
               </button>
             </div>
 
             {micCheckPreviewUrl ? (
               <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <div className="text-sm font-medium text-gray-800 mb-2">
-                  Nghe thử bản ghi (MP3)
+                  Listen to the recording (MP3)
                 </div>
                 <audio
                   key={micCheckPreviewUrl}
@@ -828,7 +827,7 @@ const DoSpeakingTest = () => {
                   className="w-full"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Nếu bạn nghe rõ giọng của mình, micro đã hoạt động ổn định.
+                  If you can hear your voice clearly, your microphone is working properly.
                 </p>
               </div>
             ) : null}
@@ -839,7 +838,7 @@ const DoSpeakingTest = () => {
                 onClick={() => navigate("/speaking-tests")}
                 className="text-sm text-gray-600 hover:text-gray-900 underline-offset-2 hover:underline"
               >
-                Quay lại danh sách đề
+                Back to test list
               </button>
               <button
                 type="button"
@@ -847,7 +846,7 @@ const DoSpeakingTest = () => {
                 disabled={!micCheckPreviewUrl || micCheckRecording || micCheckEncoding}
                 className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Âm thanh ổn — vào làm bài
+                Audio is clear - start test
               </button>
             </div>
           </div>
@@ -866,20 +865,20 @@ const DoSpeakingTest = () => {
                 {testData.testName}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                {currentPart.partName} · Câu {currentQuestion.position}
+                {currentPart.partName} · Question {currentQuestion.position}
               </p>
             </div>
             <div className="text-right">
               {isFullTest ? (
                 <>
-                  <div className="text-xs text-gray-500">Thời gian full test</div>
+                  <div className="text-xs text-gray-500">Full test time</div>
                   <div className="text-lg font-semibold text-red-600">
                     {formatTime(fullRemaining)}
                   </div>
                 </>
               ) : (
                 <div className="text-sm text-gray-600">
-                  Luyện tập: không áp dụng timer Speaking
+                  Practice: Speaking timer does not apply
                 </div>
               )}
             </div>
@@ -923,9 +922,9 @@ const DoSpeakingTest = () => {
           {isFullTest ? (
             <div className="mt-5 p-4 rounded-lg border border-blue-200 bg-blue-50">
               <div className="text-sm text-blue-800">
-                {phaseType === "read-passage" && "Đang đọc passage"}
-                {phaseType === "prepare" && "Thời gian chuẩn bị"}
-                {phaseType === "answer" && "Thời gian trả lời"}
+                {phaseType === "read-passage" && "Reading passage"}
+                {phaseType === "prepare" && "Preparation time"}
+                {phaseType === "answer" && "Answer time"}
               </div>
               <div className="text-2xl font-bold text-blue-700 mt-1">
                 {formatTime(phaseRemaining)}
@@ -940,14 +939,14 @@ const DoSpeakingTest = () => {
                 onClick={() => setShowNoteEditor((prev) => !prev)}
                 className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
               >
-                Viết ghi chú / dàn ý
+                Write notes / outline
               </button>
             </div>
 
             {showNoteEditor ? (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú cho câu {currentQuestion.position}
+                  Notes for question {currentQuestion.position}
                 </label>
                 <textarea
                   value={currentQuestionNote}
@@ -957,17 +956,17 @@ const DoSpeakingTest = () => {
                       [currentQuestion.id]: e.target.value,
                     }))
                   }
-                  placeholder="Viết ý chính, từ vựng, cấu trúc câu trả lời..."
+                  placeholder="Write key ideas, vocabulary, and answer structure..."
                   className="w-full min-h-[120px] rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
             ) : null}
 
-            <div className="text-sm font-medium text-gray-700 mb-2">Ghi âm trả lời</div>
+            <div className="text-sm font-medium text-gray-700 mb-2">Record your answer</div>
             <p className="text-xs text-gray-500 mb-3">
               {isFullTest
-                ? "Trong thời gian trả lời, hãy bấm Bắt đầu ghi âm rồi Dừng và lưu MP3 trước khi hết giờ."
-                : "Ghi âm từng câu nếu muốn; có thể bỏ qua câu. Nghe lại, xóa hoặc thu lại trước khi nộp bài."}
+                ? "During answer time, click Start Recording, then Stop and save the MP3 before time runs out."
+                : "Record each question if you want; you can skip questions. Listen back, delete, or record again before submitting."}
             </p>
             <div className="flex flex-wrap gap-2 mb-3">
               <button
@@ -982,7 +981,7 @@ const DoSpeakingTest = () => {
                 }
                 className="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {answerRecording ? "Đang ghi…" : "Bắt đầu ghi âm"}
+                {answerRecording ? "Recording..." : "Start recording"}
               </button>
               <button
                 type="button"
@@ -992,7 +991,7 @@ const DoSpeakingTest = () => {
                 }
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {answerEncoding ? "Đang tạo MP3…" : "Dừng và lưu MP3"}
+                {answerEncoding ? "Creating MP3..." : "Stop and save MP3"}
               </button>
               <button
                 type="button"
@@ -1006,13 +1005,13 @@ const DoSpeakingTest = () => {
                 }
                 className="px-4 py-2 rounded-lg border border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Xóa bản ghi câu này
+                Delete this recording
               </button>
             </div>
             {currentAnswerPreviewUrl ? (
               <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="text-xs font-medium text-gray-600 mb-1">
-                  Nghe thử câu {currentQuestion.position}
+                  Listen to question {currentQuestion.position}
                 </div>
                 <audio
                   key={currentAnswerPreviewUrl}
@@ -1032,7 +1031,7 @@ const DoSpeakingTest = () => {
             disabled={!canGoPrevious || isFullTest || isSubmitting}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50"
           >
-            Câu trước
+            Previous question
           </button>
           <button
             type="button"
@@ -1040,7 +1039,7 @@ const DoSpeakingTest = () => {
             disabled={isFullTest || isSubmitting}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
           >
-            Câu tiếp
+            Next question
           </button>
         </div>
 
@@ -1049,11 +1048,11 @@ const DoSpeakingTest = () => {
             type="button"
             onClick={() =>
               Modal.confirm({
-                title: "Xác nhận nộp bài",
+                title: "Confirm Submission",
                 content:
-                  "Bạn có chắc muốn nộp bài Speaking? Các câu chưa ghi âm sẽ được gửi không có file âm thanh.",
-                okText: "Nộp bài",
-                cancelText: "Tiếp tục làm",
+                  "Are you sure you want to submit the Speaking test? Questions without recordings will be submitted without audio files.",
+                okText: "Submit",
+                cancelText: "Continue",
                 onOk: async () => {
                   await flushAnswerRecording();
                   await submitSpeaking();
@@ -1063,14 +1062,14 @@ const DoSpeakingTest = () => {
             disabled={isSubmitting || isSubmitted}
             className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
           >
-            {isSubmitting ? "Đang nộp…" : isSubmitted ? "Đã nộp" : "Nộp bài"}
+            {isSubmitting ? "Submitting..." : isSubmitted ? "Submitted" : "Submit"}
           </button>
         </div>
       </div>
 
       {testResult ? (
         <Modal
-          title="Đã nộp bài Speaking"
+          title="Speaking Test Submitted"
           open={!!testResult}
           onOk={() =>
             navigate(
@@ -1086,22 +1085,22 @@ const DoSpeakingTest = () => {
               }),
             )
           }
-          okText="Xem kết quả"
-          cancelText="Đóng"
+          okText="View Result"
+          cancelText="Close"
           width={560}
           centered
         >
           <div className="py-3 space-y-3 text-sm text-gray-700">
             <div className="flex justify-between">
-              <span>Tổng số câu hỏi</span>
+              <span>Total questions</span>
               <span className="font-semibold">{testResult.totalQuestions}</span>
             </div>
             <div className="flex justify-between">
-              <span>Số câu đã nộp</span>
+              <span>Submitted answers</span>
               <span className="font-semibold">{testResult.totalAnswers}</span>
             </div>
             <div className="flex justify-between">
-              <span>Thời gian làm bài (giây)</span>
+              <span>Time spent (seconds)</span>
               <span className="font-semibold">{testResult.timeSpent}</span>
             </div>
           </div>
@@ -1109,23 +1108,23 @@ const DoSpeakingTest = () => {
       ) : null}
 
       <Modal
-        title="Xác nhận rời khỏi trang"
+        title="Confirm Leaving Page"
         open={showLeaveConfirm}
         onOk={handleConfirmLeave}
         onCancel={handleCancelLeave}
-        okText="Thoát"
-        cancelText="Tiếp tục làm bài"
+        okText="Exit"
+        cancelText="Continue Test"
         okType="danger"
       >
-        <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
+        <p>Are you sure you want to leave the test page?</p>
         {isFullTest ? (
           <p className="text-blue-600 font-medium mt-2">
-            Tiến độ sẽ được lưu. Bạn có thể tiếp tục làm bài khi quay lại (chọn
-            lại làm full test cùng đề).
+            Your progress will be saved. You can continue the test when you return by choosing
+            the same full test again.
           </p>
         ) : (
           <p className="text-red-600 font-medium mt-2">
-            Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.
+            Note: Your test progress will not be saved if you leave this page.
           </p>
         )}
       </Modal>

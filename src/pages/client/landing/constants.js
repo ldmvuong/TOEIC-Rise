@@ -1,97 +1,97 @@
 export const featureCards = [
   {
-    icon: "📚",
-    title: "Interactive Practice",
+    icon: "🎧",
+    title: "TOEIC LR Tests",
     description:
-      "Engage with thousands of TOEIC questions with instant feedback and detailed explanations.",
+      "Practice Listening and Reading with full tests, focused practice mode, and quick mini tests.",
     color: "from-sky-500 to-blue-600",
   },
   {
-    icon: "🎯",
-    title: "Mock Tests",
+    icon: "🎙️",
+    title: "Speaking & Writing",
     description:
-      "Experience real TOEIC conditions with timed tests and comprehensive score analysis.",
+      "Expand beyond LR with dedicated TOEIC Speaking and Writing test routes in the same platform.",
     color: "from-indigo-500 to-blue-600",
   },
   {
-    icon: "📖",
-    title: "Vocabulary Builder",
+    icon: "✨",
+    title: "AI Answer Explanations",
     description:
-      "Master essential TOEIC vocabulary with spaced repetition and contextual learning.",
+      "Understand correct answers, key clues, and common distractors after each practice session.",
     color: "from-cyan-500 to-sky-500",
   },
   {
-    icon: "🎧",
-    title: "Listening Training",
+    icon: "⌨️",
+    title: "Dictation Training",
     description:
-      "Improve your listening skills with varied accents and real-world scenarios.",
+      "Listen, type, compare, and repeat to improve detail recognition for TOEIC listening passages.",
     color: "from-emerald-500 to-teal-500",
   },
   {
-    icon: "📊",
-    title: "Progress Analytics",
+    icon: "🗂️",
+    title: "Flashcards",
     description:
-      "Track your improvement with detailed analytics and personalized insights.",
+      "Build TOEIC vocabulary decks and review them with flexible practice modes for better recall.",
     color: "from-blue-500 to-indigo-500",
   },
   {
-    icon: "🏆",
-    title: "Achievement System",
+    icon: "📊",
+    title: "Learning Paths & Stats",
     description:
-      "Stay motivated with badges, streaks, and milestone celebrations.",
+      "Follow structured study routes and track scores, accuracy, weak areas, and completed work.",
     color: "from-slate-600 to-slate-700",
   },
 ];
 
 export const aiFeatures = [
   {
-    title: "Personalized Study Plans",
+    title: "Answer Explanations",
     description:
-      "AI analyzes your performance and creates custom study schedules tailored to your learning pace and goals.",
-    icon: "🎯",
+      "AI explains why the correct option works and points to the clue in the passage or audio.",
+    icon: "✨",
     color: "from-sky-500 to-blue-600",
   },
   {
-    title: "Smart Question Selection",
+    title: "Distractor Review",
     description:
-      "Advanced algorithms identify your weak areas and serve targeted questions to maximize improvement.",
-    icon: "🧠",
+      "Review why tempting wrong choices fail so learners can avoid common TOEIC traps.",
+    icon: "🔍",
     color: "from-indigo-500 to-blue-600",
   },
   {
-    title: "Real-time Feedback",
+    title: "Practice Feedback",
     description:
-      "Get instant explanations and tips powered by AI to understand mistakes and learn effectively.",
-    icon: "⚡",
+      "Use explanations after full tests, practice sessions, mini tests, and review flows.",
+    icon: "💬",
     color: "from-teal-500 to-emerald-500",
   },
   {
-    title: "Adaptive Learning",
+    title: "Result Insights",
     description:
-      "The system adapts to your progress, adjusting difficulty and focus areas as you improve.",
-    icon: "🔄",
+      "Connect answer review with statistics to identify weak skills and plan the next session.",
+    icon: "📈",
     color: "from-cyan-500 to-sky-500",
   },
 ];
 
 export const footerLinks = {
   product: [
-    { name: "Practice Tests", href: "#" },
-    { name: "Mock Exams", href: "#" },
-    { name: "Vocabulary", href: "#" },
-    { name: "Progress Tracking", href: "#" },
+    { name: "TOEIC LR Tests", href: "/online-tests" },
+    { name: "Speaking Tests", href: "/speaking-tests" },
+    { name: "Writing Tests", href: "/writing-tests" },
+    { name: "Exam Structure", href: "/exam-structure" },
   ],
-  company: [
-    { name: "About Us", href: "#" },
-    { name: "Blog", href: "#" },
-    { name: "Careers", href: "#" },
-    { name: "Contact", href: "#" },
+  practice: [
+    { name: "Dictation", href: "/dictation" },
+    { name: "Flashcards", href: "/flashcards" },
+    { name: "Learning Paths", href: "/learning-paths" },
+    { name: "Result Statistics", href: "/statistics" },
   ],
   support: [
-    { name: "Help Center", href: "#" },
-    { name: "Community", href: "#" },
-    { name: "Study Tips", href: "#" },
-    { name: "FAQ", href: "#" },
+    { name: "Blog", href: "/blog" },
+    { name: "Study Guide", href: "/exam-structure" },
+    { name: "Profile", href: "/profile" },
+    { name: "Log in", href: "/auth" },
   ],
   legal: [
     { name: "Privacy Policy", href: "#" },
@@ -103,10 +103,10 @@ export const footerLinks = {
 
 export const socialLinks = [
   { name: "Facebook", icon: "📘", href: "#" },
-  { name: "Twitter", icon: "🐦", href: "#" },
+  { name: "X", icon: "𝕏", href: "#" },
   { name: "LinkedIn", icon: "💼", href: "#" },
   { name: "Instagram", icon: "📷", href: "#" },
-  { name: "YouTube", icon: "📺", href: "#" },
+  { name: "YouTube", icon: "▶️", href: "#" },
 ];
 
 export const targetScores = {
@@ -114,4 +114,3 @@ export const targetScores = {
   reading: 380,
   total: 800,
 };
-

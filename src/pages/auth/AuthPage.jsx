@@ -66,7 +66,7 @@ const AuthPage = () => {
 
       const payload = response?.data;
       if (!payload) {
-        throw new Error('Không nhận được dữ liệu phản hồi');
+        throw new Error('No response data received');
       }
 
       localStorage.setItem('access_token', payload.accessToken);
@@ -89,11 +89,11 @@ const AuthPage = () => {
       navigate(redirectPath, { replace: true });
     } catch (err) {
       const serverMessage = err?.response?.data?.message || err?.message;
-      const fallback = 'Đăng nhập thất bại';
+      const fallback = 'Login failed';
       const msg = serverMessage || fallback;
 
       notification.error({
-        message: 'Đăng nhập thất bại',
+        message: 'Login failed',
         description: msg,
         placement: 'topRight',
         duration: 5,
@@ -133,15 +133,15 @@ const AuthPage = () => {
   const getFormTitle = () => {
     switch (currentForm) {
       case 'login':
-        return 'Đăng nhập';
+        return 'Log in';
       case 'register':
-        return 'Tạo tài khoản';
+        return 'Create account';
       case 'otp-verification':
-        return 'Xác thực email';
+        return 'Verify email';
       case 'forgot':
-        return 'Quên mật khẩu';
+        return 'Forgot password';
       default:
-        return 'Đăng nhập';
+        return 'Log in';
     }
   };
 
@@ -156,7 +156,7 @@ const AuthPage = () => {
         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Quay lại trang chủ
+        Back to home
       </Link>
 
       {/* Left Column - Branding */}
@@ -179,22 +179,22 @@ const AuthPage = () => {
           <div className="space-y-4 mb-8">
             <div className="flex items-start">
               <div className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-              <p className="text-gray-700">Bộ đề ETS 2018–2024, giao diện sát thực tế</p>
+              <p className="text-gray-700">ETS 2018-2024 test sets with a realistic interface</p>
             </div>
             <div className="flex items-start">
               <div className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-              <p className="text-gray-700">Theo dõi tiến độ, phân tích điểm mạnh/yếu</p>
+              <p className="text-gray-700">Track progress and analyze strengths and weaknesses</p>
             </div>
             <div className="flex items-start">
               <div className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-              <p className="text-gray-700">ChatAI hỗ trợ giải thích câu khó</p>
+              <p className="text-gray-700">ChatAI helps explain challenging questions</p>
             </div>
           </div>
 
           {/* Tip Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <p className="text-blue-800 text-sm">
-              💡 <strong>Mẹo:</strong> Bạn có thể đăng nhập bằng Google để bắt đầu nhanh chóng!
+              <strong>Tip:</strong> You can log in with Google to get started quickly!
             </p>
           </div>
         </div>
@@ -262,34 +262,34 @@ const AuthPage = () => {
               <div className="text-center text-sm text-gray-600">
                 {currentForm === 'login' && (
                   <p>
-                    Chưa có tài khoản?{' '}
+                    Don't have an account?{' '}
                     <button
                       onClick={() => setCurrentForm('register')}
                       className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline"
                     >
-                      Tạo tài khoản ngay
+                      Create one now
                     </button>
                   </p>
                 )}
                 {currentForm === 'register' && (
                   <p>
-                    Đã có tài khoản?{' '}
+                    Already have an account?{' '}
                     <button
                       onClick={() => setCurrentForm('login')}
                       className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline"
                     >
-                      Đăng nhập ngay
+                      Log in now
                     </button>
                   </p>
                 )}
                 {currentForm === 'forgot' && (
                   <p>
-                    Nhớ mật khẩu?{' '}
+                    Remember your password?{' '}
                     <button
                       onClick={() => setCurrentForm('login')}
                       className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline"
                     >
-                      Đăng nhập ngay
+                      Log in now
                     </button>
                   </p>
                 )}

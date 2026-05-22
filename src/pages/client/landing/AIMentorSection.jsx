@@ -17,10 +17,9 @@ const AIMentorSection = () => {
             isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           }`}
         >
-          <h2 className="mb-6 text-4xl font-bold text-gray-900 lg:text-5xl">Meet Your AI Learning Companion</h2>
+          <h2 className="mb-6 text-4xl font-bold text-gray-900 lg:text-5xl">Understand Every Answer with AI</h2>
           <p className="mx-auto max-w-3xl text-xl text-gray-600 lg:mx-0">
-            Experience the future of language learning with our advanced AI mentor that adapts to your unique learning
-            style.
+            Review TOEIC questions with clear explanations for the correct answer, key clues, and common distractors.
           </p>
         </div>
 
@@ -72,7 +71,7 @@ const AIMentorSection = () => {
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-slate-900">TOEIC Mentor AI</h3>
-                <p className="text-slate-500">Your Personal Learning Assistant</p>
+                <p className="text-slate-500">Answer Explanation Assistant</p>
               </div>
             </div>
 
@@ -83,24 +82,24 @@ const AIMentorSection = () => {
                     <SiGooglegemini className="h-4 w-4 text-white" />
                   </div>
                   <p className="text-slate-600">
-                    Based on your recent performance, I recommend focusing on Part 3 listening exercises. You’ve improved
-                    15% this week! 🎉
+                    The correct answer is B because the speaker mentions the updated schedule will be sent by email.
+                    Option A is a distractor: the meeting is mentioned, but no agenda is promised.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  AI is analyzing your progress...
+                  AI is explaining the answer...
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl bg-slate-100 p-4 text-center">
                   <div className="text-2xl font-bold text-sky-500">94%</div>
-                  <p className="text-sm text-slate-500">Accuracy Rate</p>
+                  <p className="text-sm text-slate-500">Review Accuracy</p>
                 </div>
                 <div className="rounded-xl bg-slate-100 p-4 text-center">
                   <div className="text-2xl font-bold text-blue-500">12</div>
-                  <p className="text-sm text-slate-500">Day Streak</p>
+                  <p className="text-sm text-slate-500">Review Items</p>
                 </div>
               </div>
             </div>

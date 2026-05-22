@@ -43,7 +43,7 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       setPage(pageToLoad);
     } catch (error) {
       console.error('Error fetching flashcards for popup:', error);
-      message.error(error?.message || 'Không thể tải danh sách flashcard');
+      message.error(error?.message || 'Unable to load flashcard list');
     } finally {
       setLoading(false);
     }
@@ -82,9 +82,9 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       if (!response.ok) {
         // Nếu 404 hoặc lỗi khác: chỉ hiển thị message, KHÔNG gọi backend
         if (response.status === 404) {
-          message.error('Không tìm thấy nghĩa cho từ này.');
+          message.error('No meaning found for this word.');
         } else {
-          message.error('Không thể tra cứu từ điển để thêm từ vào flashcard.');
+          message.error('Unable to look up this word before adding it to a flashcard.');
         }
         return;
       }
@@ -92,7 +92,7 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       const dictData = await response.json();
 
       if (!dictData?.exists || !Array.isArray(dictData.results) || dictData.results.length === 0) {
-        message.error('Không tìm thấy nghĩa cho từ này.');
+        message.error('No meaning found for this word.');
         return;
       }
 
@@ -110,7 +110,7 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
         : [];
       const definition = allDefinitions.join('; ');
       if (!definition) {
-        message.error('Không tìm thấy định nghĩa hợp lệ cho từ này.');
+        message.error('No valid definition found for this word.');
         return;
       }
 
@@ -133,14 +133,14 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       // 2. Gửi request thêm item vào flashcard
       const res = await callAddFlashcardItemToPopup(payload);
       if (res && res.status >= 200 && res.status < 300) {
-        message.success(`Đã thêm "${word}" vào "${flashcard.name}".`);
+        message.success(`Added "${word}" to "${flashcard.name}".`);
         onClose?.();
       } else {
-        message.error('Không thể thêm từ vào flashcard.');
+        message.error('Unable to add this word to a flashcard.');
       }
     } catch (error) {
       console.error('Error adding word to flashcard:', error);
-      message.error(error?.message || 'Không thể thêm từ vào flashcard.');
+      message.error(error?.message || 'Unable to add this word to a flashcard.');
     } finally {
       setAddingId(null);
     }
@@ -155,9 +155,9 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
       centered
       title={
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-800">Thêm từ vào flashcard</span>
+          <span className="font-semibold text-gray-800">Add word to flashcard</span>
           {word && (
-            <Tooltip title="Từ đang được thêm vào flashcard">
+            <Tooltip title="Word being added to a flashcard">
               <Tag color="blue" className="text-xs">
                 {word}
               </Tag>
@@ -178,13 +178,13 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
             </div>
           ) : flashcards.length === 0 ? (
             <div className="py-6">
-              <Empty description="Bạn chưa có bộ flashcard nào" />
+              <Empty description="You do not have any flashcard sets yet" />
             </div>
           ) : (
             <List
               dataSource={flashcards}
               renderItem={(item) => (
-                <Tooltip title="Nhấn để thêm từ này vào bộ flashcard">
+                <Tooltip title="Click to add this word to the flashcard set">
                   <List.Item
                     key={item.id}
                     className="cursor-pointer hover:bg-blue-50 transition-colors rounded-md px-3"
@@ -195,13 +195,13 @@ const AddToFlashcardModal = ({ open, onClose, word }) => {
                         <div className="flex justify-between items-center">
                           <span className="font-semibold text-gray-800">{item.name}</span>
                           <span className="text-xs text-gray-500">
-                            {item.itemCount ?? 0} từ
+                            {item.itemCount ?? 0} words
                           </span>
                         </div>
                       }
                       description={
                         <span className="text-xs text-gray-500">
-                          {item.description || 'Không có mô tả'}
+                          {item.description || 'No description'}
                         </span>
                       }
                     />

@@ -66,7 +66,7 @@ const FlashcardQuizPage = () => {
                     setResults({});
                     setProgressMap({});
                 } catch (err) {
-                    message.error(err?.message || 'Không thể tải từ cần ôn');
+                    message.error(err?.message || 'Unable to load words due for review');
                 } finally {
                     setLoading(false);
                 }
@@ -88,7 +88,7 @@ const FlashcardQuizPage = () => {
                 setResults({});
                 setProgressMap({});
             } catch (err) {
-                message.error(err?.message || 'Không thể tải dữ liệu luyện tập');
+                message.error(err?.message || 'Unable to load practice data');
             } finally {
                 setLoading(false);
             }
@@ -179,7 +179,7 @@ const FlashcardQuizPage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -193,10 +193,10 @@ const FlashcardQuizPage = () => {
             return;
         }
         Modal.confirm({
-            title: 'Thoát luyện tập?',
-            content: 'Tiến độ trả lời của bạn sẽ được gửi và không thể hoàn tác.',
-            okText: 'Gửi & thoát',
-            cancelText: 'Hủy',
+            title: 'Exit practice?',
+            content: 'Your answer progress will be submitted and cannot be undone.',
+            okText: 'Submit & exit',
+            cancelText: 'Cancel',
             onOk: async () => {
                 try {
                     setSubmittingExit(true);
@@ -205,7 +205,7 @@ const FlashcardQuizPage = () => {
                         await callSubmitFlashcardProgress(payload);
                     }
                 } catch (err) {
-                    message.error(err?.message || 'Không thể gửi tiến độ, vui lòng thử lại.');
+                    message.error(err?.message || 'Unable to submit progress. Please try again.');
                 } finally {
                     setSubmittingExit(false);
                     navigate(target);
@@ -219,7 +219,7 @@ const FlashcardQuizPage = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Spin size="large" className="text-green-600" />
-                    <p className="text-gray-600">Đang tải dữ liệu...</p>
+                    <p className="text-gray-600">Loading data...</p>
                 </div>
             </div>
         );
@@ -229,13 +229,13 @@ const FlashcardQuizPage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center text-gray-600">
-                    <p className="mb-4">Chưa có từ vựng để luyện tập.</p>
+                    <p className="mb-4">No vocabulary terms available for practice.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
-                        Quay lại bộ thẻ
+                        Back to flashcard set
                     </button>
                 </div>
             </div>
@@ -246,13 +246,13 @@ const FlashcardQuizPage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center text-gray-600">
-                    <p className="mb-4">Cần ít nhất 4 từ vựng để chơi. Hiện có {items.length} từ.</p>
+                    <p className="mb-4">At least 4 vocabulary terms are required to play. There are currently {items.length} terms.</p>
                     <button
                         onClick={() => navigate(isDueMode ? '/flashcards/due' : `/flashcards/${id}`)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
-                        Quay lại bộ thẻ
+                        Back to flashcard set
                     </button>
                 </div>
             </div>
@@ -267,9 +267,9 @@ const FlashcardQuizPage = () => {
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
-                    <span className="hidden sm:inline">Quay lại</span>
+                    <span className="hidden sm:inline">Back</span>
                 </button>
-                <span className="text-sm text-gray-600">Trắc nghiệm lựa chọn</span>
+                <span className="text-sm text-gray-600">Multiple-choice quiz</span>
             </div>
 
             {/* Progress bar: đỏ khi chọn sai */}
@@ -299,14 +299,14 @@ const FlashcardQuizPage = () => {
 
             <div className="px-4 py-6 flex-1">
                 <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                    Định nghĩa
+                    Definition
                 </h2>
                 <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
                     {currentItem?.definition || '—'}
                 </p>
 
                 <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
-                    Chọn đáp án đúng
+                    Choose the correct answer
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {options.map((opt, idx) => {
@@ -350,7 +350,7 @@ const FlashcardQuizPage = () => {
                             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm transition"
                         >
                             <QuestionMarkCircleIcon className="w-5 h-5" />
-                            Bỏ qua
+                            Skip
                         </button>
                     ) : (
                         <button
@@ -365,7 +365,7 @@ const FlashcardQuizPage = () => {
                             disabled={submittingExit}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
                         >
-                            {currentIndex >= total - 1 ? 'Kết thúc' : 'Tiếp theo'}
+                            {currentIndex >= total - 1 ? 'Finish' : 'Next'}
                         </button>
                     )}
                 </div>

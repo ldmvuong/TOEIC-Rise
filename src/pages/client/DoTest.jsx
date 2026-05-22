@@ -125,7 +125,7 @@ const DoTest = () => {
   const moveToNextGroup = useCallback(() => {
     const result = moveToNextGroupHook();
     if (result === false) {
-      message.info("Bạn đã hoàn thành tất cả câu hỏi!");
+      message.info("You have completed all questions!");
     }
   }, [moveToNextGroupHook]);
 
@@ -197,13 +197,13 @@ const DoTest = () => {
       }
 
       if (!testId) {
-        message.error("Thiếu thông tin đề thi");
+        message.error("Missing test information");
         navigate("/online-tests");
         return;
       }
 
       if (!partIds || partIds.length === 0) {
-        message.error("Vui lòng chọn ít nhất một phần");
+        message.error("Please select at least one part");
         navigate(-1);
         return;
       }
@@ -220,7 +220,7 @@ const DoTest = () => {
             try {
               saved = JSON.parse(raw);
             } catch (parseError) {
-              console.error("Lỗi parse localStorage full test:", parseError);
+              console.error("Failed to parse full test localStorage:", parseError);
               // Dữ liệu localStorage bị lỗi -> xóa để tránh logic treo
               localStorage.removeItem(key);
             }
@@ -254,7 +254,7 @@ const DoTest = () => {
             }
           }
         } catch (e) {
-          console.error("Khôi phục tiến độ full test thất bại:", e);
+          console.error("Failed to restore full test progress:", e);
         }
       }
 
@@ -284,10 +284,10 @@ const DoTest = () => {
           setIsTestSubmitted(false);
           setTestResult(null);
         } else {
-          message.error("Dữ liệu đề thi không hợp lệ");
+          message.error("Invalid test data");
         }
       } catch (error) {
-        message.error(error?.message || "Không thể tải đề thi");
+        message.error(error?.message || "Unable to load the test");
       } finally {
         setLoading(false);
       }
@@ -321,9 +321,9 @@ const DoTest = () => {
   const submitTest = useCallback(async () => {
     if (!testData || !testId || isTestSubmitted) {
       if (isTestSubmitted) {
-        message.info("Bài thi đã được nộp rồi!");
+        message.info("This test has already been submitted!");
       } else {
-        message.error("Không có dữ liệu đề thi");
+        message.error("No test data available");
       }
       return;
     }
@@ -398,7 +398,7 @@ const DoTest = () => {
                 getFullTestStorageKey(testId, learnerTestType),
               );
             } catch (e) {
-              console.error("Xóa tiến độ full test thất bại:", e);
+              console.error("Failed to remove saved full test progress:", e);
             }
           }
 
@@ -411,7 +411,7 @@ const DoTest = () => {
       message.error(
         error?.response?.data?.message ||
           error?.message ||
-          "Không thể nộp bài. Vui lòng thử lại.",
+          "Unable to submit the test. Please try again.",
       );
     }
   }, [
@@ -436,11 +436,11 @@ const DoTest = () => {
   // Nộp bài với xác nhận
   const handleSubmit = () => {
     Modal.confirm({
-      title: "Xác nhận nộp bài",
+      title: "Confirm Submission",
       content:
-        "Bạn có chắc chắn muốn nộp bài? Sau khi nộp bài, bạn không thể chỉnh sửa câu trả lời.",
-      okText: "Nộp bài",
-      cancelText: "Tiếp tục làm bài",
+        "Are you sure you want to submit? After submitting, you cannot edit your answers.",
+      okText: "Submit",
+      cancelText: "Continue Test",
       okType: "primary",
       onOk: () => {
         submitTest();
@@ -476,7 +476,7 @@ const DoTest = () => {
       try {
         localStorage.setItem(key, JSON.stringify(payload));
       } catch (e) {
-        console.error("Lưu tiến độ full test thất bại:", e);
+        console.error("Failed to save full test progress:", e);
       }
     }
     // Nếu đang chặn điều hướng trong app (Link/navigate) → cho phép đi tới trang đích
@@ -621,7 +621,7 @@ const DoTest = () => {
           };
           localStorage.setItem(key, JSON.stringify(payload));
         } catch (err) {
-          console.error("Lưu tiến độ full test (beforeunload) thất bại:", err);
+          console.error("Failed to save full test progress before unload:", err);
         }
       }
       e.preventDefault();
@@ -666,7 +666,7 @@ const DoTest = () => {
           // Sử dụng ref để tránh dependency
           if (submitTestRef.current) {
             setTimeout(() => {
-              submitTestRef.current("Hết thời gian! Đã tự động nộp bài.");
+              submitTestRef.current("Time is up! Your test has been submitted automatically.");
             }, 100);
           }
           return 0;
@@ -836,7 +836,7 @@ const DoTest = () => {
     if (testResult && testResult.userTestId) {
       navigate(`/test-result/${testResult.userTestId}`);
     } else {
-      message.error("Không tìm thấy ID bài thi");
+      message.error("Test ID not found");
     }
   };
 
@@ -852,7 +852,7 @@ const DoTest = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải đề thi...</p>
+          <p className="text-gray-600">Loading test...</p>
         </div>
       </div>
     );
@@ -861,7 +861,7 @@ const DoTest = () => {
   if (!testData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-600">Không tìm thấy đề thi</div>
+        <div className="text-center text-gray-600">Test not found</div>
       </div>
     );
   }
@@ -1035,12 +1035,12 @@ const DoTest = () => {
       {/* Modal hiển thị kết quả bài làm */}
       {testResult && (
         <Modal
-          title="Kết quả bài làm"
+          title="Test Result"
           open={!!testResult}
           onOk={handleViewDetailedResult}
           onCancel={handleCloseResultModal}
-          okText="Xem chi tiết"
-          cancelText="Đóng"
+          okText="View Details"
+          cancelText="Close"
           width={600}
           centered
         >
@@ -1048,7 +1048,7 @@ const DoTest = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <span className="text-gray-700 font-medium">
-                  Tổng số câu hỏi:
+                  Total questions:
                 </span>
                 <span className="text-lg font-semibold text-blue-600">
                   {testResult.totalQuestions}
@@ -1056,7 +1056,7 @@ const DoTest = () => {
               </div>
 
               <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                <span className="text-gray-700 font-medium">Số câu đúng:</span>
+                <span className="text-gray-700 font-medium">Correct answers:</span>
                 <span className="text-lg font-semibold text-green-600">
                   {testResult.correctAnswers}
                 </span>
@@ -1064,7 +1064,7 @@ const DoTest = () => {
 
               {testResult.score ? (
                 <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
-                  <span className="text-gray-700 font-medium">Điểm số:</span>
+                  <span className="text-gray-700 font-medium">Score:</span>
                   <span className="text-2xl font-bold text-purple-600">
                     {testResult.score}
                   </span>
@@ -1073,7 +1073,7 @@ const DoTest = () => {
 
               <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
                 <span className="text-gray-700 font-medium">
-                  Thời gian làm bài:
+                  Time spent:
                 </span>
                 <span className="text-lg font-semibold text-orange-600">
                   {formatTime(testResult.timeSpent)}
@@ -1087,7 +1087,7 @@ const DoTest = () => {
                       ? `${Math.round((testResult.correctAnswers / testResult.totalQuestions) * 100)}%`
                       : "0%"}
                   </div>
-                  <div className="text-sm text-gray-600">Tỷ lệ đúng</div>
+                  <div className="text-sm text-gray-600">Accuracy rate</div>
                 </div>
               </div>
             </div>
@@ -1097,23 +1097,23 @@ const DoTest = () => {
 
       {/* Modal xác nhận rời khỏi trang */}
       <Modal
-        title="Xác nhận rời khỏi trang"
+        title="Confirm Leaving Page"
         open={showLeaveConfirm}
         onOk={handleConfirmLeave}
         onCancel={handleCancelLeave}
-        okText="Thoát"
-        cancelText="Tiếp tục làm bài"
+        okText="Exit"
+        cancelText="Continue Test"
         okType="danger"
       >
-        <p>Bạn có chắc chắn muốn rời khỏi trang làm bài?</p>
+        <p>Are you sure you want to leave the test page?</p>
         {isFullTest ? (
           <p className="text-blue-600 font-medium mt-2">
-            Tiến độ sẽ được lưu. Bạn có thể tiếp tục làm bài khi quay lại (chọn
-            lại làm full test cùng đề).
+            Your progress will be saved. You can continue the test when you return by choosing
+            the same full test again.
           </p>
         ) : (
           <p className="text-red-600 font-medium mt-2">
-            Lưu ý: Tiến độ làm bài sẽ không được lưu nếu bạn rời khỏi trang.
+            Note: Your test progress will not be saved if you leave this page.
           </p>
         )}
       </Modal>

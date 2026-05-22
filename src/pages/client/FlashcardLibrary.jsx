@@ -70,7 +70,7 @@ const FlashcardLibrary = () => {
             }
         } catch (error) {
             console.error(error);
-            message.error(error?.message || 'Không thể tải danh sách flashcard');
+            message.error(error?.message || 'Unable to load flashcard list');
         } finally {
             setIsLoading(false);
         }
@@ -100,7 +100,7 @@ const FlashcardLibrary = () => {
             setOverallData(data?.result ?? data ?? null);
         } catch (err) {
             console.error(err);
-            message.error(err?.message || 'Không tải được thống kê ôn tập');
+            message.error(err?.message || 'Unable to load review statistics');
         } finally {
             setOverallLoading(false);
         }
@@ -128,23 +128,23 @@ const FlashcardLibrary = () => {
         <div className="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
             {/* --- HEADER & TABS --- */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-blue-800 mb-4 md:mb-0">Thư viện Flashcard</h1>
+                <h1 className="text-3xl font-bold text-blue-800 mb-4 md:mb-0">Flashcard Library</h1>
                 {/* Nút tạo mới hiện ở tất cả các tab */}
                 <button 
                     onClick={() => navigate('/flashcards/create')}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
                 >
-                    <PlusIcon className="w-5 h-5" /> Tạo bộ thẻ mới
+                    <PlusIcon className="w-5 h-5" /> Create new set
                 </button>
             </div>
 
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200 mb-6">
                 {[
-                    { key: 'public', label: 'Cộng đồng' },
-                    { key: 'my', label: 'Của tôi' },
-                    { key: 'favourite', label: 'Đã lưu' },
-                    { key: 'review', label: 'Ôn tập' },
+                    { key: 'public', label: 'Community' },
+                    { key: 'my', label: 'Mine' },
+                    { key: 'favourite', label: 'Saved' },
+                    { key: 'review', label: 'Review' },
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -174,22 +174,22 @@ const FlashcardLibrary = () => {
                                 {/* Ôn tập - số từ đã ôn */}
                                 <div className="flex-1 bg-gradient-to-r from-pink-100 to-purple-100 border border-pink-200 rounded-2xl p-4 sm:p-6 flex items-center justify-between gap-4 shadow-sm">
                                     <div>
-                                        <p className="text-sm font-semibold text-pink-600 mb-1">Số từ đã ôn</p>
+                                        <p className="text-sm font-semibold text-pink-600 mb-1">Reviewed words</p>
                                         <p className="text-3xl font-semibold text-pink-700">
                                             {overallData?.totalLearnedWords ?? 0}{' '}
-                                            <span className="text-base font-normal text-gray-600">từ</span>
+                                            <span className="text-base font-normal text-gray-600">words</span>
                                         </p>
-                                        <p className="text-gray-500 text-sm mt-1">Không giới hạn</p>
+                                        <p className="text-gray-500 text-sm mt-1">No limit</p>
                                     </div>
                                 </div>
 
                                 {/* Từ mới */}
                                 <div className="flex-1 bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col justify-between">
                                     <div>
-                                        <p className="text-sm font-semibold text-blue-600 mb-1">Số từ mới</p>
+                                        <p className="text-sm font-semibold text-blue-600 mb-1">New words</p>
                                         <p className="text-2xl font-semibold text-blue-700 mb-2">
                                             {overallData?.totalNewWords ?? 0}
-                                            <span className="text-base font-normal text-gray-600"> từ</span>
+                                            <span className="text-base font-normal text-gray-600"> words</span>
                                         </p>
                                     </div>
                                 </div>
@@ -198,12 +198,12 @@ const FlashcardLibrary = () => {
                             {/* Từ cần ôn ngay */}
                             <div className="border border-purple-200 bg-purple-50 rounded-2xl px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-sm text-purple-600 mb-1">Từ cần ôn ngay</p>
+                                    <p className="text-sm text-purple-600 mb-1">Words due now</p>
                                     <p className="text-base sm:text-lg font-semibold text-purple-700">
                                         <span className="text-lg sm:text-xl font-bold">
                                             {overallData?.totalDueWords ?? 0}
                                         </span>{' '}
-                                        từ đến hạn
+                                        words due
                                     </p>
                                 </div>
                                 <button
@@ -211,7 +211,7 @@ const FlashcardLibrary = () => {
                                     className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
                                     onClick={() => navigate('/flashcards/due')}
                                 >
-                                    Ôn tập ngay
+                                    Review now
                                 </button>
                             </div>
                         </>
@@ -240,7 +240,7 @@ const FlashcardLibrary = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <Empty description="Chưa có bộ flashcard nào" />
+                                <Empty description="No flashcard sets yet" />
                             )}
 
                             {/* Pagination */}

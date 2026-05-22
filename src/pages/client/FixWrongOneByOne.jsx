@@ -193,7 +193,7 @@ const FixWrongOneByOne = () => {
   const navByPart = useMemo(() => {
     const map = new Map();
     for (const it of navItems) {
-      const key = it.partName || 'Khác';
+      const key = it.partName || 'Other';
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(it);
     }
@@ -282,10 +282,10 @@ const FixWrongOneByOne = () => {
 
   const handleSubmit = () => {
     Modal.confirm({
-      title: 'Xác nhận nộp bài',
-      content: 'Bạn có chắc muốn nộp bài và xem kết quả làm lại câu sai?',
-      okText: 'Nộp bài',
-      cancelText: 'Hủy',
+      title: 'Confirm Submission',
+      content: 'Are you sure you want to submit and view your redo-wrong result?',
+      okText: 'Submit',
+      cancelText: 'Cancel',
       okButtonProps: { className: 'bg-indigo-600 hover:bg-indigo-700' },
       onOk: () => {
         const redoResult = buildRedoResultFromFixing();
@@ -302,7 +302,7 @@ const FixWrongOneByOne = () => {
   };
 
   if (!fixOneByOneData) {
-    message.error('Không có dữ liệu. Vui lòng bắt đầu từ trang kết quả bài thi.');
+    message.error('No data available. Please start from the test result page.');
     navigate(`/test-result/${userTestId}`);
     return null;
   }
@@ -310,13 +310,13 @@ const FixWrongOneByOne = () => {
   if (fixSteps.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-        <p className="text-gray-600">Không có câu hỏi nào để sửa.</p>
+        <p className="text-gray-600">There are no questions to fix.</p>
         <button
           type="button"
           onClick={() => navigate(`/test-result/${userTestId}`)}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          Quay về kết quả
+          Back to result
         </button>
       </div>
     );
@@ -331,7 +331,7 @@ const FixWrongOneByOne = () => {
       <Drawer
         open={navOpen}
         onClose={() => setNavOpen(false)}
-        title="Danh sách câu hỏi"
+        title="Question list"
         placement="right"
         width={360}
       >
@@ -339,15 +339,15 @@ const FixWrongOneByOne = () => {
           <div className="flex items-center gap-2 text-xs text-slate-700 flex-wrap">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-emerald-500 bg-emerald-500/10" />
-              {navStats.correct} Đúng
+              {navStats.correct} Correct
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-rose-500 bg-rose-500/10" />
-              {navStats.wrong} Sai
+              {navStats.wrong} Wrong
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded border border-gray-300 bg-gray-100" />
-              {navStats.unanswered} Chưa làm
+              {navStats.unanswered} Unanswered
             </span>
           </div>
 
@@ -378,7 +378,7 @@ const FixWrongOneByOne = () => {
                         className={`h-9 rounded-lg border text-xs font-semibold ${tone} ${
                           isCurrent ? 'ring-2 ring-indigo-200 border-indigo-400' : ''
                         }`}
-                        title={`Câu ${it.position}`}
+                        title={`Question ${it.position}`}
                       >
                         {it.position}
                       </button>
@@ -399,8 +399,8 @@ const FixWrongOneByOne = () => {
               <div className="min-w-0">
                 <div className="text-slate-900 font-semibold text-sm sm:text-base truncate">
                   {fixOneByOneData?.testName
-                    ? `${fixOneByOneData.testName} - Làm lại câu sai`
-                    : 'Làm lại câu sai'}
+                    ? `${fixOneByOneData.testName} - Redo wrong answers`
+                    : 'Redo wrong answers'}
                 </div>
               </div>
 
@@ -410,7 +410,7 @@ const FixWrongOneByOne = () => {
                 </div>
 
                 <div className="px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
-                  Câu {fixSteps.length ? currentStepIndex + 1 : 0}/{Math.max(fixSteps.length, 0)}
+                  Question {fixSteps.length ? currentStepIndex + 1 : 0}/{Math.max(fixSteps.length, 0)}
                 </div>
 
                 <div className="px-3 py-1.5 rounded-xl bg-emerald-500 border border-emerald-600 text-xs sm:text-sm font-semibold text-white inline-flex items-center gap-1.5 whitespace-nowrap">
@@ -429,7 +429,7 @@ const FixWrongOneByOne = () => {
                         : 'text-slate-700 hover:bg-gray-50'
                     }`}
                   >
-                    Trước
+                    Previous
                   </button>
                   <button
                     type="button"
@@ -441,7 +441,7 @@ const FixWrongOneByOne = () => {
                         : 'text-slate-700 hover:bg-gray-50'
                     }`}
                   >
-                    Sau
+                    Next
                   </button>
                 </div>
 
@@ -449,7 +449,7 @@ const FixWrongOneByOne = () => {
                   type="button"
                   onClick={() => setNavOpen(true)}
                   className="px-3 py-1.5 rounded-xl bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm inline-flex items-center gap-2"
-                  title="Mở danh sách câu hỏi"
+                  title="Open question list"
                 >
                   <svg
                     width="16"
@@ -471,7 +471,7 @@ const FixWrongOneByOne = () => {
                   onClick={() => navigate(`/test-result/${userTestId}`, { replace: true })}
                   className="px-3.5 py-1.5 rounded-xl bg-white border border-gray-200 hover:border-gray-300 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm whitespace-nowrap"
                 >
-                  Quay lại
+                  Back
                 </button>
 
                 <button
@@ -479,7 +479,7 @@ const FixWrongOneByOne = () => {
                   onClick={handleSubmit}
                   className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm whitespace-nowrap"
                 >
-                  Nộp bài
+                  Submit
                 </button>
               </div>
             </div>
@@ -608,13 +608,13 @@ const FixWrongOneByOne = () => {
                   <div className="space-y-4">
                     {currentQuestion?.correctOption && (
                       <p className="text-sm font-semibold text-green-600">
-                        Đáp án đúng: {currentQuestion.correctOption}
+                        Correct answer: {currentQuestion.correctOption}
                       </p>
                     )}
                     {currentQuestion?.explanation && (
                       <details className="cursor-pointer">
                         <summary className="text-sm font-medium text-gray-800 mb-2">
-                          Giải thích chi tiết đáp án
+                          Detailed answer explanation
                         </summary>
                         <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line mt-2">
                           {currentQuestion.explanation}
@@ -734,13 +734,13 @@ const FixWrongOneByOne = () => {
                         <div className="space-y-4">
                           {question?.correctOption && (
                             <p className="text-sm font-semibold text-green-600">
-                              Đáp án đúng: {question.correctOption}
+                              Correct answer: {question.correctOption}
                             </p>
                           )}
                           {question?.explanation && (
                             <details className="cursor-pointer">
                               <summary className="text-sm font-medium text-gray-800 mb-2">
-                                Giải thích chi tiết đáp án
+                                Detailed answer explanation
                               </summary>
                               <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line mt-2">
                                 {question.explanation}
@@ -778,7 +778,7 @@ const FixWrongOneByOne = () => {
               onClick={handleNext}
               className="px-6 py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
-              {isLast ? 'Hoàn thành' : currentStep?.type === 'group' ? 'Group tiếp theo' : 'Câu tiếp theo'}
+              {isLast ? 'Finish' : currentStep?.type === 'group' ? 'Next group' : 'Next question'}
             </button>
           </div>
         )}

@@ -42,8 +42,8 @@ const GoogleCallbackHandler = () => {
         navigate(redirectPath, { replace: true });
       } catch (err) {
         notification.error({
-          message: 'Lỗi xử lý dữ liệu Google',
-          description: 'Vui lòng thử lại',
+          message: 'Failed to process Google data',
+          description: 'Please try again',
           placement: 'topRight',
           duration: 5,
         });
@@ -51,7 +51,7 @@ const GoogleCallbackHandler = () => {
       }
     } else if (error) {
       notification.error({
-        message: 'Đăng nhập Google thất bại',
+        message: 'Google login failed',
         description: error,
         placement: 'topRight',
         duration: 5,
@@ -84,8 +84,8 @@ const GoogleCallbackHandler = () => {
           navigate(redirectPath, { replace: true });
         } catch (err) {
           notification.error({
-            message: 'Lỗi xử lý dữ liệu Google',
-            description: 'Vui lòng thử lại',
+            message: 'Failed to process Google data',
+            description: 'Please try again',
             placement: 'topRight',
             duration: 5,
           });
@@ -102,7 +102,7 @@ const GoogleCallbackHandler = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Đang xử lý đăng nhập Google...</p>
+        <p className="text-gray-600">Processing Google login...</p>
       </div>
     </div>
   );

@@ -5,9 +5,9 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { callFetchFlashcardDueItems } from '../../api/api';
 
 const GAMES = [
-    { key: 'match', label: 'Nối từ với nghĩa', path: '/flashcards/due/match', color: '#3b82f6' },
-    { key: 'quiz', label: 'Trắc nghiệm lựa chọn', path: '/flashcards/due/quiz', color: '#8b5cf6' },
-    { key: 'type', label: 'Hiển thị tiếng Việt, nhập từ tiếng Anh', path: '/flashcards/due/type', color: '#f97316' },
+    { key: 'match', label: 'Match words with meanings', path: '/flashcards/due/match', color: '#3b82f6' },
+    { key: 'quiz', label: 'Multiple-choice quiz', path: '/flashcards/due/quiz', color: '#8b5cf6' },
+    { key: 'type', label: 'See the meaning, type the English word', path: '/flashcards/due/type', color: '#f97316' },
 ];
 
 const FlashcardDueChoosePage = () => {
@@ -25,7 +25,7 @@ const FlashcardDueChoosePage = () => {
                 setDueItems(list);
             } catch (err) {
                 console.error(err);
-                message.error(err?.message || 'Không tải được từ cần ôn');
+                message.error(err?.message || 'Unable to load words due for review');
             } finally {
                 setLoading(false);
             }
@@ -45,14 +45,14 @@ const FlashcardDueChoosePage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center max-w-md">
-                    <p className="text-gray-600 mb-6">Không có từ cần ôn ngay.</p>
+                    <p className="text-gray-600 mb-6">No words are due for review right now.</p>
                     <button
                         type="button"
                         onClick={() => navigate('/flashcards', { state: { activeTab: 'review' } })}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
                     >
                         <ArrowLeftIcon className="w-5 h-5" />
-                        Quay lại Ôn tập
+                        Back to Review
                     </button>
                 </div>
             </div>
@@ -68,11 +68,11 @@ const FlashcardDueChoosePage = () => {
                     className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
-                    Quay lại Ôn tập
+                    Back to Review
                 </button>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Chọn chế độ luyện tập</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Choose a practice mode</h1>
                 <p className="text-gray-500 mb-8">
-                    Bạn có <span className="font-semibold text-gray-700">{dueItems.length}</span> từ cần ôn. Chọn một game bên dưới để bắt đầu.
+                    You have <span className="font-semibold text-gray-700">{dueItems.length}</span> words due for review. Choose a game below to begin.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {GAMES.map((game) => (

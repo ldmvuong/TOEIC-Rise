@@ -34,7 +34,7 @@ const TestResultDetail = () => {
     useEffect(() => {
         const fetchTestData = async () => {
             if (!userTestId) {
-                message.error('Không tìm thấy ID bài thi');
+                message.error('Test attempt ID not found');
                 navigate('/online-tests');
                 return;
             }
@@ -47,7 +47,7 @@ const TestResultDetail = () => {
                 }
             } catch (error) {
                 console.error('Error fetching test data:', error);
-                message.error('Không thể tải dữ liệu bài thi');
+                message.error('Unable to load test data');
             } finally {
                 setLoading(false);
             }
@@ -180,8 +180,8 @@ const TestResultDetail = () => {
                             type="button"
                             onClick={() => handleOpenReportModal(preparedQuestion)}
                             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                            title="Báo cáo câu hỏi"
-                            aria-label="Báo cáo câu hỏi"
+                            title="Report question"
+                            aria-label="Report question"
                         >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path
@@ -190,19 +190,19 @@ const TestResultDetail = () => {
                                     clipRule="evenodd"
                                 />
                             </svg>
-                            <span className="sr-only">Báo cáo câu hỏi</span>
+                            <span className="sr-only">Report question</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => handleOpenChatModal(preparedQuestion)}
                             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                            title="Chat với AI"
-                            aria-label="Chat với AI"
+                            title="Chat with AI"
+                            aria-label="Chat with AI"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
-                            <span className="sr-only">Chat với AI</span>
+                            <span className="sr-only">Chat with AI</span>
                         </button>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ const TestResultDetail = () => {
                     (!question.userAnswer || question.userAnswer !== question.correctOption) && (
                         <div className="mt-4 ml-11">
                             <p className="text-sm font-semibold text-green-600">
-                                Đáp án đúng: {question.correctOption}
+                                Correct answer: {question.correctOption}
                             </p>
                         </div>
                     )}
@@ -266,7 +266,7 @@ const TestResultDetail = () => {
                 {/* Writing Answer Text */}
                 {hasWritingAnswer && (
                     <div className="mt-4 ml-11 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                        <p className="text-sm font-semibold text-blue-700 mb-1">Câu trả lời của bạn:</p>
+                        <p className="text-sm font-semibold text-blue-700 mb-1">Your answer:</p>
                         <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.userAnswerText}</p>
                     </div>
                 )}
@@ -274,7 +274,7 @@ const TestResultDetail = () => {
                 {/* Speaking — learner recording */}
                 {hasSpeakingAudio && (
                     <div className="mt-4 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                        <p className="text-sm font-semibold text-emerald-800 mb-2">Bản ghi trả lời của bạn:</p>
+                        <p className="text-sm font-semibold text-emerald-800 mb-2">Your answer recording:</p>
                         <audio
                             controls
                             src={String(question.userAnswerAudioUrl).trim()}
@@ -287,7 +287,7 @@ const TestResultDetail = () => {
                 {/* Writing Feedback */}
                 {question.feedback != null && String(question.feedback).trim() !== '' && (
                     <div className="mt-3 ml-11 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                        <p className="text-sm font-semibold text-emerald-700 mb-1">Nhận xét:</p>
+                        <p className="text-sm font-semibold text-emerald-700 mb-1">Feedback:</p>
                         <p className="text-sm text-gray-800 whitespace-pre-wrap">{question.feedback}</p>
                     </div>
                 )}
@@ -297,7 +297,7 @@ const TestResultDetail = () => {
                     <div className="mt-4 ml-11">
                         <details className="cursor-pointer">
                             <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                                Giải thích chi tiết đáp án
+                                Detailed answer explanation
                             </summary>
                             <div className="mt-2">
                                 <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">
@@ -322,9 +322,9 @@ const TestResultDetail = () => {
         const maxPos = Math.max(...positions);
         
         if (minPos === maxPos) {
-            return `Câu ${minPos}`;
+            return `Question ${minPos}`;
         } else {
-            return `Câu ${minPos}-${maxPos}`;
+            return `Question ${minPos}-${maxPos}`;
         }
     };
 
@@ -368,7 +368,7 @@ const TestResultDetail = () => {
                                         <div className="mb-4 mt-4 pt-4 border-t border-gray-200">
                                             <details className="cursor-pointer">
                                                 <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                                                    Hiện Transcript
+                                                    Show Transcript
                                                 </summary>
                                                 <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="text-gray-800 text-sm leading-relaxed">
@@ -433,7 +433,7 @@ const TestResultDetail = () => {
                                 <div className="mt-6 pt-6 border-t border-gray-200">
                                     <details className="cursor-pointer">
                                         <summary className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                                            Hiện Transcript
+                                            Show Transcript
                                         </summary>
                                         <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="text-gray-800 text-sm leading-relaxed">
@@ -453,7 +453,7 @@ const TestResultDetail = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-500">Đang tải...</div>
+                <div className="text-gray-500">Loading...</div>
             </div>
         );
     }
@@ -461,7 +461,7 @@ const TestResultDetail = () => {
     if (!testData || !sortedPartResponses.length) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-500">Không có dữ liệu bài thi</div>
+                <div className="text-gray-500">No test data available</div>
             </div>
         );
     }
@@ -477,13 +477,13 @@ const TestResultDetail = () => {
                 <div className="max-w-full mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-bold text-gray-900">
-                            Đáp án chi tiết: {testData.testName || ''}
+                            Detailed answers: {testData.testName || ''}
                         </h1>
                         <button
                             onClick={() => navigate(-1)}
                             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                         >
-                            Quay về trang kết quả
+                            Back to result page
                         </button>
                     </div>
                 </div>
@@ -528,7 +528,7 @@ const TestResultDetail = () => {
                 {/* Sidebar (15%) */}
                 <div className="bg-white border-l border-gray-200 overflow-y-auto" style={{ width: '15%' }}>
                     <div className="p-4">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-4">Danh sách câu hỏi</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-4">Question list</h3>
                         
                         {/* Group by Part */}
                         {sortedPartResponses.map((part) => (
@@ -571,12 +571,12 @@ const TestResultDetail = () => {
                                                             ? 'bg-red-500 text-white hover:bg-red-600'
                                                             : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                                     }`}
-                                                    title={`Câu ${question.position}: ${
+                                                    title={`Question ${question.position}: ${
                                                         status === 'correct'
-                                                            ? 'Đúng'
+                                                            ? 'Correct'
                                                             : status === 'incorrect'
-                                                            ? 'Sai'
-                                                            : 'Chưa trả lời'
+                                                            ? 'Wrong'
+                                                            : 'Unanswered'
                                                     }`}
                                                 >
                                                     {question.position}

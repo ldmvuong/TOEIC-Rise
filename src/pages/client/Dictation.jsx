@@ -40,7 +40,7 @@ export default function DictationLibrary() {
       message.error(
         e?.response?.data?.message ||
           e?.message ||
-          "Không thể tải thư viện chép chính tả",
+          "Unable to load dictation library",
       );
     } finally {
       setLoading(false);
@@ -63,10 +63,10 @@ export default function DictationLibrary() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8">
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-slate-900">Chép chính tả</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Dictation</h1>
             <p className="text-slate-600 mt-2">
-              Chọn <span className="font-semibold">bộ đề</span>, rồi chọn{" "}
-              <span className="font-semibold">Part</span> để bắt đầu.
+              Choose a <span className="font-semibold">test set</span>, then select a{" "}
+              <span className="font-semibold">Part</span> to begin.
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function DictationLibrary() {
           </div>
         ) : !items.length ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-            <Empty description="Chưa có bộ đề nào sẵn sàng cho chép chính tả" />
+            <Empty description="No test sets are ready for dictation yet" />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -129,7 +129,7 @@ export default function DictationLibrary() {
                   <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                     <div className="p-5 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
                       <div className="text-xs uppercase tracking-wide text-slate-500">
-                        Bộ đề
+                        Test set
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-3">
                         <div className="text-xl font-bold text-slate-900 truncate">
@@ -140,7 +140,7 @@ export default function DictationLibrary() {
 
                     <div className="p-5 sm:p-6">
                       {!tests.length ? (
-                        <Empty description="Bộ đề này chưa có nội dung" />
+                        <Empty description="This test set does not have any content yet" />
                       ) : (
                         <div className="space-y-3">
                           {tests.map((t) => {
@@ -170,7 +170,7 @@ export default function DictationLibrary() {
                                     ))}
                                     {!parts.length ? (
                                       <span className="text-sm text-slate-500">
-                                        Không có Part
+                                        No Part available
                                       </span>
                                     ) : null}
                                   </div>

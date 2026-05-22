@@ -56,7 +56,7 @@ const MiniTestQuestion = ({ question, onChange, isFlagged, onToggleFlag, partNum
                                     ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                             }`}
-                            title={isFlagged ? 'Bỏ đánh dấu' : 'Đánh dấu để xem lại'}
+                            title={isFlagged ? 'Remove mark' : 'Mark for review'}
                         >
                             {isFlagged ? (
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

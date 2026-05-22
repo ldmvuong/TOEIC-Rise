@@ -22,12 +22,12 @@ import {
 } from 'recharts';
 
 const DAY_OPTIONS = [
-    { label: '1 tháng gần nhất', value: 'ONE_MONTH' },
-    { label: '3 tháng gần nhất', value: 'THREE_MONTHS' },
-    { label: '6 tháng gần nhất', value: 'SIX_MONTHS' },
-    { label: '1 năm gần nhất', value: 'ONE_YEAR' },
-    { label: '2 năm gần nhất', value: 'TWO_YEARS' },
-    { label: '3 năm gần nhất', value: 'THREE_YEARS' },
+    { label: 'Last 1 month', value: 'ONE_MONTH' },
+    { label: 'Last 3 months', value: 'THREE_MONTHS' },
+    { label: 'Last 6 months', value: 'SIX_MONTHS' },
+    { label: 'Last 1 year', value: 'ONE_YEAR' },
+    { label: 'Last 2 years', value: 'TWO_YEARS' },
+    { label: 'Last 3 years', value: 'THREE_YEARS' },
 ];
 
 const DEFAULT_DAYS = DAY_OPTIONS[0].value;
@@ -60,7 +60,7 @@ const ScoreChart = ({ data, chartType }) => {
     if (!data || chartData.length === 0) {
         return (
             <div className="h-80 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400">
-                Chưa có dữ liệu biểu đồ
+                No chart data yet
             </div>
         );
     }
@@ -68,9 +68,9 @@ const ScoreChart = ({ data, chartType }) => {
     // Transform data for Recharts
     const transformedData = chartData.map(item => ({
         name: item.testName || item.name || item.test?.name || 'Test',
-        Nghe: item.listeningScore || item.listening || 0,
-        Đọc: item.readingScore || item.reading || 0,
-        Tổng: item.totalScore || item.total || 0,
+        Listening: item.listeningScore || item.listening || 0,
+        Reading: item.readingScore || item.reading || 0,
+        Total: item.totalScore || item.total || 0,
     }));
 
     // Custom tooltip với styling đẹp hơn
@@ -82,9 +82,9 @@ const ScoreChart = ({ data, chartType }) => {
                     <div className="space-y-2">
                         {payload.map((entry, index) => {
                             const colorMap = {
-                                'Nghe': '#60a5fa',
-                                'Đọc': '#fb923c',
-                                'Tổng': '#34d399'
+                                Listening: '#60a5fa',
+                                Reading: '#fb923c',
+                                Total: '#34d399'
                             };
                         return (
                                 <div key={index} className="flex items-center gap-3">
@@ -111,15 +111,15 @@ const ScoreChart = ({ data, chartType }) => {
             <div className="flex justify-center gap-8 mb-4 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full shadow-sm bg-blue-500" />
-                    <span className="text-sm font-medium text-gray-700">Nghe</span>
+                    <span className="text-sm font-medium text-gray-700">Listening</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full shadow-sm bg-orange-500" />
-                    <span className="text-sm font-medium text-gray-700">Đọc</span>
+                    <span className="text-sm font-medium text-gray-700">Reading</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full shadow-sm bg-green-500" />
-                    <span className="text-sm font-medium text-gray-700">Tổng</span>
+                    <span className="text-sm font-medium text-gray-700">Total</span>
                 </div>
             </div>
             
@@ -130,15 +130,15 @@ const ScoreChart = ({ data, chartType }) => {
                         margin={{ top: 10, right: 20, left: 10, bottom: 90 }}
                     >
                         <defs>
-                            <linearGradient id="colorNghe" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="colorListening" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
                                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
                             </linearGradient>
-                            <linearGradient id="colorĐọc" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="colorReading" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#f97316" stopOpacity={0.8}/>
                                 <stop offset="95%" stopColor="#f97316" stopOpacity={0.1}/>
                             </linearGradient>
-                            <linearGradient id="colorTổng" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
                             </linearGradient>
@@ -172,7 +172,7 @@ const ScoreChart = ({ data, chartType }) => {
                         />
                         <Line 
                             type="monotone" 
-                            dataKey="Nghe" 
+                            dataKey="Listening" 
                             stroke="#3b82f6" 
                             strokeWidth={3.5}
                             dot={{ fill: '#3b82f6', r: 6, strokeWidth: 3, stroke: '#fff', className: 'drop-shadow-sm' }}
@@ -189,7 +189,7 @@ const ScoreChart = ({ data, chartType }) => {
                         />
                         <Line 
                             type="monotone" 
-                            dataKey="Đọc" 
+                            dataKey="Reading" 
                             stroke="#f97316" 
                             strokeWidth={3.5}
                             dot={{ fill: '#f97316', r: 6, strokeWidth: 3, stroke: '#fff', className: 'drop-shadow-sm' }}
@@ -206,7 +206,7 @@ const ScoreChart = ({ data, chartType }) => {
                         />
                         <Line 
                             type="monotone" 
-                            dataKey="Tổng" 
+                            dataKey="Total" 
                             stroke="#10b981" 
                             strokeWidth={3.5}
                             dot={{ fill: '#10b981', r: 6, strokeWidth: 3, stroke: '#fff', className: 'drop-shadow-sm' }}
@@ -228,15 +228,15 @@ const ScoreChart = ({ data, chartType }) => {
                         margin={{ top: 10, right: 20, left: 10, bottom: 90 }}
                     >
                         <defs>
-                            <linearGradient id="barNghe" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="barListening" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
                                 <stop offset="100%" stopColor="#3b82f6" stopOpacity={1}/>
                             </linearGradient>
-                            <linearGradient id="barĐọc" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="barReading" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#fb923c" stopOpacity={1}/>
                                 <stop offset="100%" stopColor="#f97316" stopOpacity={1}/>
                             </linearGradient>
-                            <linearGradient id="barTổng" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="barTotal" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#34d399" stopOpacity={1}/>
                                 <stop offset="100%" stopColor="#10b981" stopOpacity={1}/>
                             </linearGradient>
@@ -269,8 +269,8 @@ const ScoreChart = ({ data, chartType }) => {
                             animationDuration={200}
                         />
                         <Bar 
-                            dataKey="Nghe" 
-                            fill="url(#barNghe)" 
+                            dataKey="Listening" 
+                            fill="url(#barListening)" 
                             radius={[6, 6, 0, 0]}
                             label={{ 
                                 position: 'top', 
@@ -283,8 +283,8 @@ const ScoreChart = ({ data, chartType }) => {
                             animationEasing="ease-out"
                         />
                         <Bar 
-                            dataKey="Đọc" 
-                            fill="url(#barĐọc)" 
+                            dataKey="Reading" 
+                            fill="url(#barReading)" 
                             radius={[6, 6, 0, 0]}
                             label={{ 
                                 position: 'top', 
@@ -297,8 +297,8 @@ const ScoreChart = ({ data, chartType }) => {
                             animationEasing="ease-out"
                         />
                         <Bar 
-                            dataKey="Tổng" 
-                            fill="url(#barTổng)" 
+                            dataKey="Total" 
+                            fill="url(#barTotal)" 
                             radius={[6, 6, 0, 0]}
                             label={{ 
                                 position: 'top', 
@@ -330,7 +330,7 @@ const PartRadarChart = ({ data, loading }) => {
     if (!data || !data.examList || data.examList.length === 0) {
         return (
             <div className="h-96 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400">
-                Chưa có dữ liệu để phân tích
+                No data available for analysis
             </div>
         );
     }
@@ -384,7 +384,7 @@ const PartRadarChart = ({ data, loading }) => {
     if (chartData.length === 0) {
         return (
             <div className="h-96 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400">
-                Chưa có dữ liệu để phân tích
+                No data available for analysis
             </div>
         );
     }
@@ -402,7 +402,7 @@ const PartRadarChart = ({ data, loading }) => {
                 <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
                     <p className="font-semibold text-gray-900 mb-1">{payload[0].payload.part}</p>
                     <p className="text-sm text-gray-600">
-                        Độ chính xác: <span className="font-semibold text-blue-600">{payload[0].value.toFixed(2)}%</span>
+                        Accuracy: <span className="font-semibold text-blue-600">{payload[0].value.toFixed(2)}%</span>
                     </p>
                 </div>
             );
@@ -412,7 +412,7 @@ const PartRadarChart = ({ data, loading }) => {
 
     return (
         <div className="w-full rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tổng quan theo Part</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Overview by Part</h3>
             <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={radarData}>
                     <PolarGrid stroke="#e5e7eb" />
@@ -426,7 +426,7 @@ const PartRadarChart = ({ data, loading }) => {
                         tick={{ fontSize: 11, fill: '#9ca3af' }}
                     />
                     <Radar
-                        name="Độ chính xác"
+                        name="Accuracy"
                         dataKey="value"
                         stroke="#3b82f6"
                         fill="#3b82f6"
@@ -515,7 +515,7 @@ const TestAnalytics = () => {
                 setAnalyticsData(data);
             } catch (error) {
                 console.error('Error fetching analytics:', error);
-                message.error('Không thể tải dữ liệu thống kê');
+                message.error('Unable to load analytics data');
                 setAnalyticsData(null);
             } finally {
                 setAnalyticsLoading(false);
@@ -569,7 +569,7 @@ const TestAnalytics = () => {
                 }
             } catch (error) {
                 console.error('Error fetching test history:', error);
-                message.error('Không thể tải danh sách đề thi đã làm');
+                message.error('Unable to load completed test list');
                 setHistoryData([]);
                 setHistoryMeta({
                     page: 0,
@@ -613,7 +613,7 @@ const TestAnalytics = () => {
                 setScoreStats(normalizedData);
             } catch (error) {
                 console.error('Error fetching score statistics:', error);
-                message.error('Không thể tải thống kê điểm TOEIC');
+                message.error('Unable to load TOEIC score statistics');
                 setScoreStats(null);
             } finally {
                 setScoreStatsLoading(false);
@@ -634,7 +634,7 @@ const TestAnalytics = () => {
                 setSelectedTags([]);
             } catch (error) {
                 console.error('Error fetching tags:', error);
-                message.error('Không thể tải danh sách tag');
+                message.error('Unable to load tag list');
                 setMiniTestTags([]);
             } finally {
                 setMiniTestTagsLoading(false);
@@ -657,7 +657,7 @@ const TestAnalytics = () => {
                 if (prev.length < 3) {
                     return [...prev, tagId];
                 } else {
-                    message.warning('Bạn chỉ có thể chọn tối đa 3 tag');
+                    message.warning('You can select up to 3 tags');
                     return prev;
                 }
             }
@@ -667,11 +667,11 @@ const TestAnalytics = () => {
     // Handler for creating mini test
     const handleCreateMiniTest = async () => {
         if (selectedTags.length === 0) {
-            message.error('Vui lòng chọn ít nhất 1 tag');
+            message.error('Please select at least 1 tag');
             return;
         }
         if (numberOfQuestions < 1 || numberOfQuestions > 50) {
-            message.error('Số câu hỏi phải từ 1 đến 50');
+            message.error('The number of questions must be from 1 to 50');
             return;
         }
 
@@ -694,7 +694,7 @@ const TestAnalytics = () => {
             }
         } catch (error) {
             console.error('Error creating mini test:', error);
-            message.error(error?.response?.data?.message || 'Không thể tạo mini test');
+            message.error(error?.response?.data?.message || 'Unable to create mini test');
         } finally {
             setMiniTestCreating(false);
         }
@@ -708,14 +708,14 @@ const TestAnalytics = () => {
                         <span className="text-3xl">📈</span>
                         <div>
                             <p className="text-sm tracking-wide uppercase font-semibold text-indigo-500">TOEIC</p>
-                            <h1 className="text-3xl font-bold text-gray-900">Thống kê kết quả luyện thi</h1>
+                            <h1 className="text-3xl font-bold text-gray-900">Practice Result Statistics</h1>
                         </div>
                     </div>
                     <button
                         onClick={() => navigate('/learning-paths')}
                         className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-sm transition-all flex items-center justify-center gap-2"
                     >
-                        <span>Xem lộ trình học của tôi</span>
+                        <span>View my learning path</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -726,7 +726,7 @@ const TestAnalytics = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
                         <div className="space-y-2 flex-1">
                             <label className="text-sm font-medium text-gray-700">
-                                Lọc kết quả theo ngày (tính từ bài thi cuối):
+                                Filter results by date (from the latest test):
                             </label>
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <select
@@ -747,7 +747,7 @@ const TestAnalytics = () => {
                                         }}
                                     className="flex-1 sm:flex-none px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                                 >
-                                    Tìm kiếm
+                                    Search
                                     </button>
                                 </div>
                             </div>
@@ -759,13 +759,13 @@ const TestAnalytics = () => {
                     </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Card title="Số lượt thi" value={analyticsData?.numberOfSubmissions || 0} subtitle="lượt" />
-                            <Card title="Số đề đã làm" value={analyticsData?.numberOfTests || 0} subtitle="đề thi" />
-                            <Card title="Thời gian luyện thi" value={secondsToMinutes(analyticsData?.totalTimes || 0)} subtitle="phút" />
+                            <Card title="Test attempts" value={analyticsData?.numberOfSubmissions || 0} subtitle="attempts" />
+                            <Card title="Completed tests" value={analyticsData?.numberOfTests || 0} subtitle="tests" />
+                            <Card title="Practice time" value={secondsToMinutes(analyticsData?.totalTimes || 0)} subtitle="minutes" />
                         <Card
-                            title="Điểm mục tiêu"
-                                value="Chưa thiết lập"
-                                subtitle="Tạo ngay"
+                            title="Target score"
+                                value="Not set"
+                                subtitle="Create now"
                                 highlight={true}
                         />
                     </div>
@@ -801,14 +801,14 @@ const TestAnalytics = () => {
 
                     <div className="grid gap-4 md:grid-cols-2 max-w-2xl mb-6">
                         <Card 
-                            title="Số câu hỏi đã luyện" 
+                            title="Practiced questions" 
                             value={currentStats.totalQuestions || 0} 
-                            subtitle="câu hỏi" 
+                            subtitle="questions" 
                         />
                         <Card 
-                            title="Độ chính xác" 
+                            title="Accuracy" 
                             value={`${currentStats.accuracy != null ? Number(currentStats.accuracy).toFixed(2) : '0.00'}%`}
-                            subtitle={currentStats.totalQuestions > 0 ? `${currentStats.correctAnswers || 0}/${currentStats.totalQuestions} câu đúng` : 'Chưa có dữ liệu'}
+                            subtitle={currentStats.totalQuestions > 0 ? `${currentStats.correctAnswers || 0}/${currentStats.totalQuestions} correct` : 'No data yet'}
                         />
                     </div>
 
@@ -836,10 +836,10 @@ const TestAnalytics = () => {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr className="text-sm text-gray-500">
-                                            <th className="px-4 py-3 text-left font-medium">Phân loại câu hỏi</th>
-                                            <th className="px-4 py-3 text-center font-medium">Số câu đúng</th>
-                                            <th className="px-4 py-3 text-center font-medium">Số câu sai</th>
-                                            <th className="px-4 py-3 text-center font-medium">Độ chính xác</th>
+                                            <th className="px-4 py-3 text-left font-medium">Question category</th>
+                                            <th className="px-4 py-3 text-center font-medium">Correct answers</th>
+                                            <th className="px-4 py-3 text-center font-medium">Wrong answers</th>
+                                            <th className="px-4 py-3 text-center font-medium">Accuracy</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 bg-white text-sm">
@@ -852,7 +852,7 @@ const TestAnalytics = () => {
                                         ) : currentPartData.length === 0 ? (
                                             <tr>
                                                 <td colSpan={4} className="py-10 text-center text-gray-500">
-                                                    Không có dữ liệu
+                                                    No data
                                                 </td>
                                             </tr>
                                         ) : (
@@ -906,10 +906,10 @@ const TestAnalytics = () => {
                                 <div className="text-2xl">💡</div>
                                 <div className="text-left">
                                     <h3 className="text-base font-semibold text-gray-900">
-                                        Gợi ý: Làm mini test
+                                        Suggestion: Take a mini test
                                     </h3>
                                     <p className="text-sm text-gray-600">
-                                        Tạo bài test nhỏ để luyện tập theo các chủ đề bạn muốn cải thiện
+                                        Create a small test to practice the topics you want to improve
                                     </p>
                                 </div>
                             </div>
@@ -933,7 +933,7 @@ const TestAnalytics = () => {
                                 {/* Part Selection */}
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Chọn Part
+                                        Select Part
                                     </label>
                                     <div className="flex gap-2 flex-wrap">
                                         {[1, 2, 3, 4, 5, 6, 7].map((partNum) => (
@@ -956,7 +956,7 @@ const TestAnalytics = () => {
                                 {/* Number of Questions */}
                                 <div className="lg:w-64">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Số câu hỏi (1-50)
+                                        Number of questions (1-50)
                                     </label>
                                     <input
                                         type="number"
@@ -980,7 +980,7 @@ const TestAnalytics = () => {
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <label className="block text-sm font-medium text-gray-700">
-                                        Chọn Tag (tối thiểu 1, tối đa 3)
+                                        Select tags (minimum 1, maximum 3)
                                     </label>
                                     {selectedTags.length > 0 && (
                                         <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
@@ -994,7 +994,7 @@ const TestAnalytics = () => {
                                     </div>
                                 ) : miniTestTags.length === 0 ? (
                                     <div className="text-sm text-gray-500 py-8 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                                        Không có tag nào cho part này
+                                        No tags are available for this part
                                     </div>
                                 ) : (
                                     <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
@@ -1040,10 +1040,10 @@ const TestAnalytics = () => {
                                     {miniTestCreating ? (
                                         <span className="flex items-center justify-center gap-2">
                                             <Spin size="small" />
-                                            Đang tạo mini test...
+                                            Creating mini test...
                                         </span>
                                     ) : (
-                                        'Tạo mini test'
+                                        'Create mini test'
                                     )}
                                 </button>
                             </div>
@@ -1056,8 +1056,8 @@ const TestAnalytics = () => {
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Tổng quan điểm số</h3>
-                            <p className="text-sm text-gray-500 mt-1">{testLimit} đề gần nhất</p>
+                            <h3 className="text-lg font-semibold text-gray-900">Score Overview</h3>
+                            <p className="text-sm text-gray-500 mt-1">Latest {testLimit} tests</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <select
@@ -1065,10 +1065,10 @@ const TestAnalytics = () => {
                                 onChange={(e) => setTestLimit(Number(e.target.value))}
                                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500"
                             >
-                                <option value={3}>3 đề</option>
-                                <option value={5}>5 đề</option>
-                                <option value={7}>7 đề</option>
-                                <option value={10}>10 đề</option>
+                                <option value={3}>3 tests</option>
+                                <option value={5}>5 tests</option>
+                                <option value={7}>7 tests</option>
+                                <option value={10}>10 tests</option>
                             </select>
                             <div className="flex gap-2">
                                 <button
@@ -1079,7 +1079,7 @@ const TestAnalytics = () => {
                                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                     }`}
                                 >
-                                    Đường
+                                    Line
                                 </button>
                                 <button
                                     onClick={() => setChartType('bar')}
@@ -1089,7 +1089,7 @@ const TestAnalytics = () => {
                                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                     }`}
                                 >
-                                    Cột
+                                    Bar
                                 </button>
                             </div>
                         </div>
@@ -1104,24 +1104,24 @@ const TestAnalytics = () => {
                             {/* Statistics Cards */}
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
                                 <Card 
-                                    title="Điểm trung bình" 
+                                    title="Average score" 
                                     value={scoreStats.averageScore ? Math.round(scoreStats.averageScore) : 0} 
                                     subtitle={`/990`} 
                                 />
                                 <Card 
-                                    title="Điểm cao nhất" 
+                                    title="Highest score" 
                                     value={scoreStats.highestScore || 0} 
                                     subtitle={`/990`} 
                                 />
                                 <Card 
-                                    title="Điểm Listening TB" 
+                                    title="Average Listening score" 
                                     value={scoreStats.averageListeningScore ? Math.round(scoreStats.averageListeningScore) : 0} 
-                                    subtitle={`Cao nhất: ${scoreStats.maxListeningScore || 0}`} 
+                                    subtitle={`Highest: ${scoreStats.maxListeningScore || 0}`} 
                                 />
                                 <Card 
-                                    title="Điểm Reading TB" 
+                                    title="Average Reading score" 
                                     value={scoreStats.averageReadingScore ? Math.round(scoreStats.averageReadingScore) : 0} 
-                                    subtitle={`Cao nhất: ${scoreStats.maxReadingScore || 0}`} 
+                                    subtitle={`Highest: ${scoreStats.maxReadingScore || 0}`} 
                                 />
                 </div>
 
@@ -1130,22 +1130,22 @@ const TestAnalytics = () => {
                         </>
                     ) : (
                         <div className="h-80 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-500 text-sm text-center px-6">
-                            Bạn cần hoàn thành bài Full Test để xem thống kê điểm số tại đây.
+                            You need to complete a Full Test to view score statistics here.
                         </div>
                     )}
                 </div>
 
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Danh sách đề thi đã làm</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Test List</h3>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr className="text-sm text-gray-500">
-                                    <th className="px-4 py-3 text-left font-medium">Ngày làm</th>
-                                    <th className="px-4 py-3 text-left font-medium">Đề thi</th>
-                                    <th className="px-4 py-3 text-center font-medium">Kết quả</th>
-                                    <th className="px-4 py-3 text-center font-medium">Thời gian làm bài</th>
-                                    <th className="px-4 py-3 text-center font-medium">Hành động</th>
+                                    <th className="px-4 py-3 text-left font-medium">Date</th>
+                                    <th className="px-4 py-3 text-left font-medium">Test</th>
+                                    <th className="px-4 py-3 text-center font-medium">Result</th>
+                                    <th className="px-4 py-3 text-center font-medium">Time spent</th>
+                                    <th className="px-4 py-3 text-center font-medium">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white text-sm">
@@ -1158,7 +1158,7 @@ const TestAnalytics = () => {
                                 ) : historyData.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="py-10 text-center text-gray-500">
-                                            Không có dữ liệu
+                                            No data
                                         </td>
                                     </tr>
                                 ) : (
@@ -1186,7 +1186,7 @@ const TestAnalytics = () => {
                                                 {item.correctAnswers}/{item.totalQuestions}
                                                 {typeof item.totalScore === 'number' && (
                                                     <span className="block text-xs font-normal text-gray-500 mt-1">
-                                                        (Điểm: {item.totalScore})
+                                                        (Score: {item.totalScore})
                                                     </span>
                                                 )}
                                             </td>
@@ -1207,7 +1207,7 @@ const TestAnalytics = () => {
                                                     }
                                                     className="text-blue-600 hover:text-blue-700 font-medium"
                                                 >
-                                                    Xem chi tiết
+                                                    View details
                                                 </button>
                                             </td>
                                         </tr>
@@ -1218,7 +1218,7 @@ const TestAnalytics = () => {
                     </div>
                     <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="text-sm text-gray-600">
-                            Hiển thị <span className="font-semibold text-gray-900">{startRow}</span> - <span className="font-semibold text-gray-900">{endRow}</span> trong tổng số <span className="font-semibold text-gray-900">{totalRows}</span> kết quả
+                            Showing <span className="font-semibold text-gray-900">{startRow}</span> - <span className="font-semibold text-gray-900">{endRow}</span> of <span className="font-semibold text-gray-900">{totalRows}</span> results
                         </div>
                         <div className="flex items-center gap-2">
                             <button
@@ -1229,7 +1229,7 @@ const TestAnalytics = () => {
                                         ? 'text-gray-300 bg-gray-50 border border-gray-200 cursor-not-allowed'
                                         : 'text-gray-700 bg-white border border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:shadow'
                                 }`}
-                                aria-label="Trang trước"
+                                aria-label="Previous page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1309,7 +1309,7 @@ const TestAnalytics = () => {
                                         ? 'text-gray-300 bg-gray-50 border border-gray-200 cursor-not-allowed'
                                         : 'text-gray-700 bg-white border border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:shadow'
                                 }`}
-                                aria-label="Trang sau"
+                                aria-label="Next page"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

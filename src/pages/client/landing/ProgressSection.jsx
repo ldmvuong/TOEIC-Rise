@@ -70,10 +70,9 @@ const ProgressSection = () => {
           }`}
         >
           <div>
-            <h2 className="mb-6 text-4xl font-bold lg:text-5xl">Track Your Journey to Success</h2>
+            <h2 className="mb-6 text-4xl font-bold lg:text-5xl">Track Your TOEIC Progress</h2>
             <p className="text-xl text-slate-600">
-              Monitor your progress with detailed analytics, identify strengths and weaknesses, and celebrate every
-              milestone on your path to TOEIC mastery.
+              Monitor scores, accuracy, completed tests, and weak areas across Listening, Reading, Speaking, and Writing.
             </p>
           </div>
           <div className="rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
@@ -82,10 +81,10 @@ const ProgressSection = () => {
                 ✓
               </div>
               <div>
-                <h4 className="mb-2 text-lg font-semibold text-slate-900">Sarah M.</h4>
+                <h4 className="mb-2 text-lg font-semibold text-slate-900">Complete study modes</h4>
                 <p className="text-slate-600 italic">
-                  “Toeic Rise helped me improve my score from 650 to 850 in just 3 months! The AI-powered
-                  recommendations were spot on.”
+                  "Switch between full tests, practice sessions, mini tests, dictation, flashcards, learning paths,
+                  and AI-supported answer review."
                 </p>
                 <div className="mt-3 flex items-center gap-1 text-amber-400">
                   {[...Array(5)].map((_, index) => (

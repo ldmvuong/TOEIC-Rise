@@ -124,7 +124,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     console.error('Error fetching writing test detail:', error);
                     message.error(
                         error?.message ||
-                            'Không thể tải chi tiết bài Writing (đáp án).',
+                            'Unable to load Writing test details (answers).',
                     );
                     setAnswersData(null);
                 } finally {
@@ -143,7 +143,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 );
             } catch (error) {
                 console.error('Error fetching answers:', error);
-                message.error('Không thể tải đáp án');
+                message.error('Unable to load answers');
             } finally {
                 setHasFetched(true);
             }
@@ -192,8 +192,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
             return (
                 <div className="flex flex-col gap-1.5 min-w-0">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500 font-medium">Bản ghi:</span>
-                        <span className="text-xs text-emerald-700 font-semibold">Đã nộp</span>
+                        <span className="text-xs text-gray-500 font-medium">Recording:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Submitted</span>
                     </div>
                     <audio
                         controls
@@ -209,8 +209,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
             return (
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500 font-medium">Câu trả lời:</span>
-                        <span className="text-xs text-emerald-700 font-semibold">Đã nhập</span>
+                        <span className="text-xs text-gray-500 font-medium">Answer:</span>
+                        <span className="text-xs text-emerald-700 font-semibold">Entered</span>
                     </div>
                     <p className="text-xs text-gray-700 line-clamp-2 whitespace-pre-wrap">
                         {userAnswerText}
@@ -224,7 +224,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 {!hideCorrectKey && (
                     <>
                         <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-gray-500 font-medium">Đáp án:</span>
+                            <span className="text-xs text-gray-500 font-medium">Answer:</span>
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-semibold text-xs min-w-[28px] text-center">
                                 {correctAnswer}
                             </span>
@@ -235,10 +235,10 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
                 {/* Câu trả lời của bạn */}
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-gray-500 font-medium">Của bạn:</span>
+                    <span className="text-xs text-gray-500 font-medium">Yours:</span>
                     {status === 'skipped' ? (
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-xs">
-                            Chưa trả lời
+                            Unanswered
                         </span>
                     ) : (
                         <span
@@ -276,7 +276,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
         return (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
-                    Đang tải đáp án Writing...
+                    Loading Writing answers...
                 </div>
             </div>
         );
@@ -288,8 +288,8 @@ const AnswerSheet = ({ userTestId, testId }) => {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="text-center py-12 text-gray-500">
                     {skipAnswersForWriting
-                        ? 'Không có dữ liệu chi tiết bài Writing. Bạn vẫn có thể xem thống kê phía trên hoặc mở trang chi tiết đáp án.'
-                        : 'Không có dữ liệu đáp án'}
+                        ? 'No detailed Writing test data is available. You can still view the statistics above or open the answer detail page.'
+                        : 'No answer data available'}
                 </div>
             </div>
         );
@@ -328,7 +328,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
         const id = resolveUserAnswerIdFromRow(question);
         if (id == null || id === '') {
             message.warning(
-                'Không tìm thấy mã câu trả lời để xem chi tiết.',
+                'Answer ID not found for viewing details.',
             );
             return;
         }
@@ -342,13 +342,13 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 `/test-result-detail/${userTestId}${location.search || ''}`,
             );
         } else {
-            message.error('Không tìm thấy ID bài thi');
+            message.error('Test attempt ID not found');
         }
     };
 
     const handleRedoWrongAnswers = async () => {
         if (!userTestId) {
-            message.error('Không tìm thấy ID bài thi');
+            message.error('Test attempt ID not found');
             return;
         }
 
@@ -358,7 +358,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
             const wrongExam = res?.data;
 
             if (!wrongExam?.partResponses?.length) {
-                message.info('Bạn không có câu sai để làm lại.');
+                message.info('You do not have any wrong answers to redo.');
                 return;
             }
 
@@ -373,7 +373,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
             });
         } catch (error) {
             console.error('Error fetching wrong answers exam:', error);
-            message.error(error?.response?.data?.message || 'Không thể tải danh sách câu sai');
+            message.error(error?.response?.data?.message || 'Unable to load wrong answer list');
         } finally {
             setIsRedoWrongLoading(false);
         }
@@ -381,7 +381,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
     const handleFixOneByOne = async () => {
         if (!userTestId) {
-            message.error('Không tìm thấy ID bài thi');
+            message.error('Test attempt ID not found');
             return;
         }
 
@@ -391,7 +391,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
             const data = res?.data;
 
             if (!data?.partResponses?.length) {
-                message.info('Bạn không có câu sai để sửa từng câu.');
+                message.info('You do not have any wrong answers to fix one by one.');
                 return;
             }
 
@@ -401,7 +401,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
             });
         } catch (error) {
             console.error('Error fetching do-wrong-answer:', error);
-            message.error(error?.response?.data?.message || 'Không thể tải danh sách câu sai');
+            message.error(error?.response?.data?.message || 'Unable to load wrong answer list');
         } finally {
             setIsRedoWrongLoading(false);
         }
@@ -409,7 +409,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
     const openRedoWrongModal = () => {
         if (!userTestId) {
-            message.error('Không tìm thấy ID bài thi');
+            message.error('Test attempt ID not found');
             return;
         }
         setShowRedoWrongChoiceModal(true);
@@ -429,7 +429,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              Đáp án
+              Answers
             </button>
             <button
               onClick={handleViewDetails}
@@ -439,7 +439,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              Xem chi tiết đáp án
+              View answer details
             </button>
             {!hideRedoWrong && (
               <button
@@ -451,7 +451,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {isRedoWrongLoading ? "Đang tải..." : "Làm lại câu sai"}
+                {isRedoWrongLoading ? "Loading..." : "Redo wrong answers"}
               </button>
             )}
           </div>
@@ -463,9 +463,9 @@ const AnswerSheet = ({ userTestId, testId }) => {
             <div className="flex items-start gap-3">
               <span className="text-2xl">💡</span>
               <div className="text-sm text-green-800">
-                <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo
-                và lưu highlight từ vựng, keywords và tạo note để học và tra cứu
-                khi có nhu cầu ôn lại đề thi này trong tương lai.
+                <strong>Tips:</strong> When viewing answer details, you can create
+                and save vocabulary highlights, keywords, and notes for review
+                when you revisit this test later.
               </div>
             </div>
           </div>
@@ -528,7 +528,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                                   }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
-                                  Chi tiết
+                                  Details
                                 </button>
                               </div>
                             </div>
@@ -574,7 +574,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                                   }
                                   className="flex-shrink-0 text-blue-600 text-xs font-medium hover:text-blue-800 hover:underline whitespace-nowrap"
                                 >
-                                  Chi tiết
+                                  Details
                                 </button>
                               </div>
                             </div>
@@ -592,7 +592,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
         {/* Detailed View Placeholder */}
         {activeView === "detailed" && (
           <div className="text-center py-12 text-gray-500">
-            Tính năng xem chi tiết đáp án đang được phát triển
+            The answer detail view is under development
           </div>
         )}
 
@@ -636,7 +636,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
 
         {!hideRedoWrong && (
           <Modal
-            title="Làm lại câu sai"
+            title="Redo wrong answers"
             open={showRedoWrongChoiceModal}
             onCancel={() => setShowRedoWrongChoiceModal(false)}
             footer={null}
@@ -645,7 +645,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
           >
             <div className="pt-1 pb-2">
               <p className="text-sm text-gray-600 mb-4">
-                Chọn cách hiển thị đáp án khi làm lại các câu sai.
+                Choose how answers are displayed when redoing wrong answers.
               </p>
 
               <div className="space-y-3">
@@ -655,7 +655,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 disabled={isRedoWrongLoading}
                 className="w-full py-3.5 px-4 rounded-xl font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                {isRedoWrongLoading ? 'Đang tải...' : 'Hiển thị đáp án ngay'}
+                {isRedoWrongLoading ? 'Loading...' : 'Show answers immediately'}
               </button>
               <button
                 type="button"
@@ -663,7 +663,7 @@ const AnswerSheet = ({ userTestId, testId }) => {
                 disabled={isRedoWrongLoading}
                 className="w-full py-3.5 px-4 rounded-xl font-semibold bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
               >
-                Hiển thị đáp án sau khi hoàn thành
+                Show answers after completion
               </button>
               </div>
             </div>

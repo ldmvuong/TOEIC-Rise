@@ -38,14 +38,14 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
   const validateForm = () => {
     const newErrors = {};
     if (!formData.email) {
-      newErrors.email = 'Email là bắt buộc';
+      newErrors.email = 'Email is required';
     } else if (!isValidEmail(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
+      newErrors.email = 'Invalid email address';
     }
     if (!formData.password) {
-      newErrors.password = 'Mật khẩu là bắt buộc';
+      newErrors.password = 'Password is required';
     } else if (!isStrongPassword(formData.password)) {
-      newErrors.password = 'Mật khẩu 8-20 ký tự, có chữ thường, chữ hoa, số, ký tự đặc biệt (.@#$%^&+=) và không có khoảng trắng';
+      newErrors.password = 'Password must be 8-20 characters and include lowercase, uppercase, number, special character (.@#$%^&+=), and no spaces';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,14 +75,14 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
           value={formData.email}
           onChange={handleInputChange}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          placeholder="Nhập email của bạn"
+          placeholder="Enter your email"
         />
         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
       </div>
 
       <div>
         <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-2">
-          Mật khẩu
+          Password
         </label>
         <div className="relative">
           <input
@@ -92,13 +92,13 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
             value={formData.password}
             onChange={handleInputChange}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="Nhập mật khẩu"
+            placeholder="Enter your password"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? <AiOutlineEyeInvisible className="w-5 h-5" /> : <AiOutlineEye className="w-5 h-5" />}
           </button>
@@ -110,7 +110,7 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
         type="submit"
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
       >
-        Đăng nhập
+        Log in
       </button>
 
       <div className="text-center text-sm">
@@ -119,7 +119,7 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
           onClick={onSwitchToForgot}
           className="text-blue-600 hover:text-blue-700 font-medium"
         >
-          Quên mật khẩu?
+          Forgot password?
         </button>
       </div>
 
@@ -128,7 +128,7 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Hoặc</span>
+          <span className="px-2 bg-white text-gray-500">Or</span>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ const LoginTab = ({ onLogin, onGoogleLogin, onSwitchToRegister, onSwitchToForgot
         className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
       >
         <GoogleIcon />
-        <span className="ml-2">Đăng nhập bằng Google</span>
+        <span className="ml-2">Log in with Google</span>
       </button>
     </form>
   );

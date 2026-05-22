@@ -77,7 +77,7 @@ const DoMiniTest = () => {
                 setCurrentQuestionId(allQuestions[0].id);
             }
         } else {
-            message.error('Không tìm thấy dữ liệu test');
+            message.error('Test data not found');
             navigate('/statistics');
         }
     }, [testData]);
@@ -113,10 +113,10 @@ const DoMiniTest = () => {
     const handleSubmitTest = async () => {
         // Confirm before submitting
         Modal.confirm({
-            title: 'Xác nhận nộp bài',
-            content: 'Bạn có chắc chắn muốn nộp bài? Sau khi nộp bài, bạn không thể thay đổi câu trả lời.',
-            okText: 'Nộp bài',
-            cancelText: 'Hủy',
+            title: 'Confirm Submission',
+            content: 'Are you sure you want to submit? After submitting, you cannot change your answers.',
+            okText: 'Submit',
+            cancelText: 'Cancel',
             onOk: async () => {
                 try {
                     // Build questionGroups payload theo đúng thứ tự questionGroups trong đề
@@ -163,7 +163,7 @@ const DoMiniTest = () => {
                     }
                 } catch (error) {
                     console.error('Error submitting mini test:', error);
-                    message.error(error?.response?.data?.message || 'Không thể nộp bài. Vui lòng thử lại.');
+                    message.error(error?.response?.data?.message || 'Unable to submit the test. Please try again.');
                 }
             }
         });
@@ -209,7 +209,7 @@ const DoMiniTest = () => {
     if (loading || !testData) {
         return (
             <div className="h-screen flex items-center justify-center">
-                <div className="text-gray-500">Đang tải...</div>
+                <div className="text-gray-500">Loading...</div>
             </div>
         );
     }
