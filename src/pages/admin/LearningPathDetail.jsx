@@ -427,7 +427,7 @@ export default function AdminLearningPathDetailPage() {
       const effectiveSortBy = query.sortBy ?? "orderIndex";
       if (query.name || query.level || effectiveSortBy !== "orderIndex") {
         message.info(
-          "Reorder chỉ khả dụng khi không filter và đang sort theo Index",
+          "Reordering is only available without filters while sorting by Index",
         );
         return;
       }

@@ -70,7 +70,7 @@ const SystemPromptExplanationTestModal = ({
       );
 
       if (!response.ok || !response.body) {
-        throw new Error("Không nhận được phản hồi từ AI.");
+        throw new Error("No response was received from AI.");
       }
 
       const reader = response.body.getReader();
@@ -106,7 +106,7 @@ const SystemPromptExplanationTestModal = ({
               setGeneratedText((prev) => prev + payload.content);
             }
           } catch (err) {
-            console.error("Không parse được dữ liệu AI:", err);
+            console.error("Unable to parse AI data:", err);
           }
         }
       };
@@ -131,7 +131,7 @@ const SystemPromptExplanationTestModal = ({
       console.error(error);
       antdMessage.error(
         error.message ||
-          "Không thể gọi AI để test explanation generation system prompt."
+          "Unable to call AI to test the explanation generation system prompt."
       );
     } finally {
       setGenerating(false);
@@ -174,7 +174,7 @@ const SystemPromptExplanationTestModal = ({
             <Select
               value={selectedPart}
               onChange={setSelectedPart}
-              placeholder="Chọn Part"
+              placeholder="Select Part"
               options={PART_OPTIONS}
               style={{ width: 140 }}
               size="small"
@@ -210,12 +210,12 @@ const SystemPromptExplanationTestModal = ({
                 />
               </svg>
               <p className="text-sm">
-                Chọn Part và nhấn &quot;Generate explanation&quot; để test
-                system prompt.
+                Select a Part and click &quot;Generate explanation&quot; to test
+                the system prompt.
               </p>
               <p className="text-xs mt-1">
-                Hệ thống sẽ tạo một lời giải thích mẫu dựa trên system prompt và
-                Part đã chọn.
+                The system will create a sample explanation based on the system
+                prompt and selected Part.
               </p>
             </div>
           )}

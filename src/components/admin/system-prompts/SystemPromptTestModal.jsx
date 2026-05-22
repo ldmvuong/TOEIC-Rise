@@ -109,7 +109,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
       );
 
       if (!response.ok || !response.body) {
-        throw new Error("Không nhận được phản hồi từ AI.");
+        throw new Error("No response was received from AI.");
       }
 
       const reader = response.body.getReader();
@@ -162,7 +162,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
               );
             }
           } catch (err) {
-            console.error("Không parse được dữ liệu AI:", err);
+            console.error("Unable to parse AI data:", err);
           }
         }
       };
@@ -187,7 +187,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
       console.error(error);
       if (!aggregatedContent) {
         antdMessage.error(
-          error.message || "Không thể gửi tin nhắn tới AI để test system prompt."
+          error.message || "Unable to send a message to AI to test the system prompt."
         );
         setMessages((prev) =>
           prev.filter((msg) => msg.id !== assistantMessageId)
@@ -259,11 +259,11 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
                 />
               </svg>
               <p className="text-sm">
-                Bắt đầu cuộc trò chuyện để test system prompt.
+                Start a conversation to test the system prompt.
               </p>
               <p className="text-xs mt-1">
-                Hỏi về vai trò, hành vi, hoặc nội dung mà system prompt định
-                nghĩa.
+                Ask about the role, behavior, or content defined by the system
+                prompt.
               </p>
             </div>
           ) : (
@@ -319,7 +319,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Nhập câu hỏi để test system prompt..."
+              placeholder="Enter a question to test the system prompt..."
               autoSize={{ minRows: 1, maxRows: 4 }}
               disabled={sending}
               className="flex-1"
@@ -350,7 +350,7 @@ const SystemPromptTestModal = ({ open, onClose, systemPromptContent }) => {
                 )
               }
             >
-              Gửi
+              Send
             </Button>
           </div>
         </div>

@@ -112,8 +112,8 @@ const ModalUserUpdate = (props) => {
         });
       } catch (e) {
         notification.error({
-          message: "Có lỗi xảy ra",
-          description: e?.response?.data?.message || e?.message || "Không rõ nguyên nhân!",
+          message: "An error occurred",
+          description: e?.response?.data?.message || e?.message || "Unknown error!",
         });
         throw e;
       }

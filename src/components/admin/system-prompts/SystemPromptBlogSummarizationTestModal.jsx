@@ -87,7 +87,7 @@ const SystemPromptBlogSummarizationTestModal = ({
       );
 
       if (!response.ok || !response.body) {
-        throw new Error("Không nhận được phản hồi từ AI.");
+        throw new Error("No response was received from AI.");
       }
 
       const reader = response.body.getReader();
@@ -122,7 +122,7 @@ const SystemPromptBlogSummarizationTestModal = ({
               setGeneratedText((prev) => prev + payload.content);
             }
           } catch (err) {
-            console.error("Không parse được dữ liệu AI:", err);
+            console.error("Unable to parse AI data:", err);
           }
         }
       };
@@ -146,7 +146,7 @@ const SystemPromptBlogSummarizationTestModal = ({
     } catch (error) {
       console.error(error);
       antdMessage.error(
-        error.message || "Không thể gọi AI để test blog summarization system prompt.",
+        error.message || "Unable to call AI to test the blog summarization system prompt.",
       );
     } finally {
       setGenerating(false);

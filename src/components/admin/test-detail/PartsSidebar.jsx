@@ -2,15 +2,15 @@ const PartsSidebar = ({ parts, selectedIndex, onSelect }) => {
     if (!parts || parts.length === 0) {
         return (
             <div className="md:col-span-1 bg-white shadow rounded p-3 h-max">
-                <div className="font-medium mb-2">Danh sách Part</div>
-                <div className="text-sm text-gray-500">Chưa có dữ liệu part.</div>
+                <div className="font-medium mb-2">Part List</div>
+                <div className="text-sm text-gray-500">No part data available.</div>
             </div>
         );
     }
 
     return (
         <div className="md:col-span-1 bg-white shadow rounded p-3 h-max">
-            <div className="font-medium mb-2">Danh sách Part</div>
+            <div className="font-medium mb-2">Part List</div>
             <div className="flex flex-col gap-2">
                 {parts.map((p, idx) => {
                     const isActive = idx === selectedIndex;
@@ -21,7 +21,7 @@ const PartsSidebar = ({ parts, selectedIndex, onSelect }) => {
                             onClick={() => onSelect(idx)}
                         >
                             <div className="text-sm font-medium">{p.name}</div>
-                            <div className="text-xs text-gray-500">{p.questionGroups?.length || 0} nhóm câu hỏi</div>
+                            <div className="text-xs text-gray-500">{p.questionGroups?.length || 0} question groups</div>
                         </button>
                     );
                 })}

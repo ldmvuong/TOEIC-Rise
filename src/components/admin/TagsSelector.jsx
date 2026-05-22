@@ -96,7 +96,7 @@ const TagsSelector = ({ value = [], onChange }) => {
             onChange?.(newValue);
         } else {
             // Tag already exists, show message
-            message.warning('Tag này đã được chọn');
+            message.warning('This tag has already been selected');
         }
         setSearchText('');
         setDropdownOpen(false);

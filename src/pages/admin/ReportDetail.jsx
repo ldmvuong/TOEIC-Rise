@@ -1872,7 +1872,7 @@ const ReportDetailPage = () => {
                                 <div>
                                     <div className="mb-1 flex items-center justify-between gap-2">
                                         <span className="text-sm font-medium text-gray-700">
-                                            Giải thích <span className="text-red-500">*</span>
+                                            Explanation <span className="text-red-500">*</span>
                                         </span>
                                         <Button
                                             size="small"
