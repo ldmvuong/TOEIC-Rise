@@ -239,8 +239,12 @@ class ImageUploadAdapter {
 
   upload() {
     return this.loader.file.then((file) => {
+      const MAX_SIZE = 2 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        message.error("Image size must be smaller than 2MB");
+        return Promise.reject();
+      }
       const formData = new FormData();
-      // Backend expects Multipart @ModelAttribute BlogPostImageRequest.image
       formData.append("image", file);
       return uploadCloudinaryImage(formData).then((res) => {
         const url = res?.data;
@@ -253,9 +257,7 @@ class ImageUploadAdapter {
     });
   }
 
-  abort() {
-    // Optional: axios request cancellation can be added later if needed.
-  }
+  abort() {}
 }
 
 function createImageUploadAdapterPlugin(onUploaded) {
@@ -662,7 +664,23 @@ export default function AdminLearningPathLessonViewPage() {
       table: {
         contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
       },
-      extraPlugins: [createImageUploadAdapterPlugin(handleImageUploaded)],
+      extraPlugins: [
+        function CustomUploadAndErrorHandlingPlugin(editor) {
+          const fileRepository = editor.plugins.get("FileRepository");
+          fileRepository.on(
+            "error",
+            (evt) => {
+              evt.stop();
+            },
+            { priority: "highest" },
+          );
+
+          fileRepository.createUploadAdapter = (loader) => {
+            const adapter = new ImageUploadAdapter(loader, handleImageUploaded);
+            return adapter;
+          };
+        },
+      ],
     }),
     [handleImageUploaded],
   );
@@ -1299,18 +1317,7 @@ export default function AdminLearningPathLessonViewPage() {
                                 !isUploadedThisSession ||
                                 deletingImageUrl === url
                               }
-                            >
-                              <Button
-                                size="small"
-                                danger
-                                disabled={
-                                  isUsedInContent || !isUploadedThisSession
-                                }
-                                loading={deletingImageUrl === url}
-                              >
-                                Delete
-                              </Button>
-                            </Popconfirm>
+                            ></Popconfirm>
                           </div>
                         </div>
                       </div>
