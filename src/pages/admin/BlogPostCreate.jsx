@@ -899,7 +899,7 @@ const BlogPostCreatePage = () => {
           </Button>,
         ]}
         width={720}
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="min-h-[160px]">
           {generatingSummary && !generatedSummaryText ? (
@@ -916,7 +916,7 @@ const BlogPostCreatePage = () => {
         title="Manage uploaded images"
         footer={null}
         width={920}
-        destroyOnClose
+        destroyOnHidden
       >
         {uploadedImageUrls.length === 0 ? (
           <Empty description="No uploaded images in this editor session." />
