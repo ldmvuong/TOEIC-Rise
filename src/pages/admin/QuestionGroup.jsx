@@ -1188,7 +1188,7 @@ const QuestionGroupPage = () => {
                 confirmLoading={savingQuestion}
                 okText="Save"
                 cancelText="Cancel"
-                destroyOnClose
+                destroyOnHidden
                 width={700}
             >
                 {editingQuestion && (
@@ -1314,7 +1314,7 @@ const QuestionGroupPage = () => {
                     </Button>,
                 ]}
                 width={640}
-                destroyOnClose
+                destroyOnHidden
             >
                 <div className="min-h-[200px]">
                     {generatingExplanation && !generatedExplanationText ? (

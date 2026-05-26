@@ -57,15 +57,7 @@ import "ckeditor5/ckeditor5.css";
 import LessonVideoUrlField from "@/components/admin/lessons/LessonVideoUrlField";
 import StaffTagPaginatedSelect from "@/components/admin/lessons/StaffTagPaginatedSelect";
 import { getAdminLessonDetail, updateAdminLesson } from "@/api/api";
-import {
-  uploadCloudinaryImage,
-  deleteCloudinaryImage,
-} from "@/api/api";
-import {
-  BLOG_POST_THUMBNAIL_MAX_SIZE,
-  isValidBlogPostThumbnailSize,
-  isValidImageExtension,
-} from "@/utils/validation";
+import { uploadCloudinaryImage, deleteCloudinaryImage } from "@/api/api";
 
 const { Title, Text } = Typography;
 
@@ -116,17 +108,17 @@ function extractHeadingOutline(html) {
   }
 }
 
-function scrollToHeadingInCkEditor(editorWrapperEl, domIndex) {
-  if (!editorWrapperEl) return false;
+function scrollToHeadingInCkEditor(domIndex, isEditing) {
   const idx = Number(domIndex);
   if (!Number.isFinite(idx) || idx < 0) return false;
 
-  const editable =
-    editorWrapperEl.querySelector(".ck-editor__editable") ||
-    editorWrapperEl.querySelector(".ck-content");
-  if (!editable) return false;
+  const selector = isEditing
+    ? ".ckeditor-wrapper .ck-content"
+    : ".lesson-view-content";
+  const container = document.querySelector(selector);
+  if (!container) return false;
 
-  const headings = editable.querySelectorAll("h1, h2, h3");
+  const headings = container.querySelectorAll("h1, h2, h3");
   const el = headings?.[idx];
   if (!el) return false;
   try {
@@ -247,8 +239,12 @@ class ImageUploadAdapter {
 
   upload() {
     return this.loader.file.then((file) => {
+      const MAX_SIZE = 2 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        message.error("Image size must be smaller than 2MB");
+        return Promise.reject();
+      }
       const formData = new FormData();
-      // Backend expects Multipart @ModelAttribute BlogPostImageRequest.image
       formData.append("image", file);
       return uploadCloudinaryImage(formData).then((res) => {
         const url = res?.data;
@@ -261,9 +257,7 @@ class ImageUploadAdapter {
     });
   }
 
-  abort() {
-    // Optional: axios request cancellation can be added later if needed.
-  }
+  abort() {}
 }
 
 function createImageUploadAdapterPlugin(onUploaded) {
@@ -272,6 +266,66 @@ function createImageUploadAdapterPlugin(onUploaded) {
     fileRepository.createUploadAdapter = (loader) =>
       new ImageUploadAdapter(loader, onUploaded);
   };
+}
+
+function TableOfContents({ outline, isEditing }) {
+  if (outline.length === 0) {
+    return (
+      <Text type="secondary" className="block text-sm">
+        Add <strong>Heading 1</strong>, <strong>Heading 2</strong>, or{" "}
+        <strong>Heading 3</strong> to show the outline.
+      </Text>
+    );
+  }
+
+  return (
+    <nav aria-label="Table of contents">
+      <ul className="list-none m-0 p-0 space-y-1.5">
+        {outline.map((item) => (
+          <li
+            key={item.key}
+            style={{ marginLeft: (item.level - 1) * 10 }}
+            className="text-sm"
+          >
+            <button
+              type="button"
+              className={`group flex w-full items-start gap-2 rounded-lg px-2.5 py-2 border transition-all text-left hover:shadow-sm ${
+                item.level === 1
+                  ? "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70"
+                  : item.level === 2
+                    ? "border-slate-200 bg-white hover:bg-slate-50"
+                    : "border-transparent bg-transparent hover:bg-slate-50"
+              }`}
+              onClick={() =>
+                scrollToHeadingInCkEditor(item.domIndex, isEditing)
+              } // Gọi hàm scroll dùng chung
+            >
+              <span
+                className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
+                  item.level === 1
+                    ? "bg-indigo-500"
+                    : item.level === 2
+                      ? "bg-slate-400"
+                      : "bg-slate-300"
+                }`}
+              />
+              <span
+                className={`break-words leading-snug ${
+                  item.level === 1
+                    ? "text-indigo-900 font-semibold group-hover:text-indigo-700"
+                    : item.level === 2
+                      ? "text-slate-700 font-medium group-hover:text-slate-900"
+                      : "text-slate-600 group-hover:text-slate-800"
+                }`}
+              >
+                {item.text}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
 }
 
 export default function AdminLearningPathLessonViewPage() {
@@ -300,12 +354,11 @@ export default function AdminLearningPathLessonViewPage() {
   const [contentHtml, setContentHtml] = useState("");
   const editorWrapperRef = useRef(null);
   const [editorMountKey, setEditorMountKey] = useState(0);
-  const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [thumbnailFileList, setThumbnailFileList] = useState([]);
   const [manageImagesOpen, setManageImagesOpen] = useState(false);
   const [removingImageSrc, setRemovingImageSrc] = useState(null);
   const [deletingImageUrl, setDeletingImageUrl] = useState(null);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+  const [initialImageUrls, setInitialImageUrls] = useState([]);
 
   const load = useCallback(async () => {
     if (!lessonId) return;
@@ -367,8 +420,6 @@ export default function AdminLearningPathLessonViewPage() {
     setContentInitial(c);
     setContentHtml(c);
     setEditorMountKey((k) => k + 1);
-    setThumbnailFile(null);
-    setThumbnailFileList([]);
     setIsEditing(true);
   }, [form, lesson]);
 
@@ -376,26 +427,27 @@ export default function AdminLearningPathLessonViewPage() {
     setIsEditing(false);
     form.resetFields();
     setContentInitial("");
-    setContentHtml("");
+    setContentHtml(lesson?.content ?? "");
     setEditorMountKey((k) => k + 1);
-    setThumbnailFile(null);
-    setThumbnailFileList([]);
     if (contentSyncTimerRef.current) {
       clearTimeout(contentSyncTimerRef.current);
     }
-  }, [form]);
+  }, [form, lesson]);
 
   // Safety: if we enter edit mode but the editor mounts empty, force a remount with lesson content.
   useEffect(() => {
-    if (!isEditing) return;
-    const c = lesson?.content ?? "";
-    if (c && !contentInitial) {
-      contentRef.current = c;
-      setContentInitial(c);
+    if (lesson) {
+      const c = lesson.content ?? "";
       setContentHtml(c);
-      setEditorMountKey((k) => k + 1);
+
+      const existingUrls = extractImageUrlsFromHtml(c);
+      setInitialImageUrls(existingUrls);
     }
-  }, [isEditing, lesson?.content, contentInitial]);
+
+    if (autoEdit && !loading && !isEditing) {
+      beginEdit();
+    }
+  }, [lesson, autoEdit, loading, isEditing, beginEdit]);
 
   const submitEdit = useCallback(async () => {
     if (!lessonId || !lesson) return;
@@ -411,21 +463,17 @@ export default function AdminLearningPathLessonViewPage() {
       setSaving(true);
       const values = form.getFieldsValue();
       const videoUrl = String(values.videoUrl ?? "").trim();
-      await updateAdminLesson(
-        lessonId,
-        {
-          title: (values.title || "").trim(),
-          slug: (values.slug ?? "").trim(),
-          practice: values.practice ?? "",
-          ...(videoUrl ? { videoUrl } : {}),
-          topic: values.topic,
-          level: values.level,
-          content: latestContent || values.content || "",
-          isActive: values.isActive,
-          orderIndex: Number(values.orderIndex),
-        },
-        thumbnailFile ? { thumbnail: thumbnailFile } : undefined,
-      );
+      await updateAdminLesson(lessonId, {
+        title: (values.title || "").trim(),
+        slug: (values.slug ?? "").trim(),
+        practice: values.practice ?? "",
+        ...(videoUrl ? { videoUrl } : {}),
+        topic: values.topic,
+        level: values.level,
+        content: latestContent || values.content || "",
+        isActive: values.isActive,
+        orderIndex: Number(values.orderIndex),
+      });
       message.success("Lesson saved");
       cancelEdit();
       await load();
@@ -436,7 +484,7 @@ export default function AdminLearningPathLessonViewPage() {
     } finally {
       setSaving(false);
     }
-  }, [cancelEdit, form, lesson, lessonId, load, thumbnailFile]);
+  }, [cancelEdit, form, lesson, lessonId, load]);
 
   const videoUrlLive = Form.useWatch("videoUrl", form);
   const videoUrlDisplay = useMemo(() => {
@@ -458,39 +506,6 @@ export default function AdminLearningPathLessonViewPage() {
     () => extractImageUrlsFromHtml(contentHtml),
     [contentHtml],
   );
-
-  const beforeThumbnailUpload = useCallback((file) => {
-    if (!isValidImageExtension(file?.name)) {
-      message.error("Use an image file (jpg, png, gif, bmp, webp)");
-      return Upload.LIST_IGNORE;
-    }
-    if (!isValidBlogPostThumbnailSize(file?.size)) {
-      message.error(
-        `Image must be ${BLOG_POST_THUMBNAIL_MAX_SIZE / (1024 * 1024)}MB or smaller`,
-      );
-      return Upload.LIST_IGNORE;
-    }
-
-    setThumbnailFile(file);
-    const url = URL.createObjectURL(file);
-    setThumbnailFileList([
-      {
-        uid: file.uid,
-        name: file.name,
-        status: "done",
-        originFileObj: file,
-        url,
-      },
-    ]);
-    return false;
-  }, []);
-
-  const handleRemoveThumbnail = useCallback((file) => {
-    const url = file?.url;
-    if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
-    setThumbnailFile(null);
-    setThumbnailFileList([]);
-  }, []);
 
   const handleImageUploaded = useCallback((url) => {
     if (!url) return;
@@ -536,6 +551,36 @@ export default function AdminLearningPathLessonViewPage() {
     if (!url || typeof url !== "string") return "";
     // Backend may return absolute URLs; editor usage check should ignore query params.
     return url.split("#")[0].split("?")[0].trim();
+  };
+
+  const handleRemoveImageFromEditor = (imageUrl) => {
+    if (!editorInstanceRef.current || !imageUrl) return;
+
+    const editor = editorInstanceRef.current;
+    const currentData = editor.getData();
+
+    // Tạo DOM giả lập để tìm và xóa chính xác thẻ img có src trùng khớp
+    const doc = new DOMParser().parseFromString(currentData, "text/html");
+    const imgs = doc.querySelectorAll("img");
+
+    let removed = false;
+    imgs.forEach((img) => {
+      if (
+        normalizeImageUrl(img.getAttribute("src")) ===
+        normalizeImageUrl(imageUrl)
+      ) {
+        img.remove();
+        removed = true;
+      }
+    });
+
+    if (removed) {
+      const updatedHtml = doc.body.innerHTML;
+      editor.setData(updatedHtml);
+      contentRef.current = updatedHtml;
+      setContentHtml(updatedHtml);
+      message.success("Removed image from editor content");
+    }
   };
 
   const blogPostEditorConfiguration = useMemo(
@@ -619,7 +664,23 @@ export default function AdminLearningPathLessonViewPage() {
       table: {
         contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"],
       },
-      extraPlugins: [createImageUploadAdapterPlugin(handleImageUploaded)],
+      extraPlugins: [
+        function CustomUploadAndErrorHandlingPlugin(editor) {
+          const fileRepository = editor.plugins.get("FileRepository");
+          fileRepository.on(
+            "error",
+            (evt) => {
+              evt.stop();
+            },
+            { priority: "highest" },
+          );
+
+          fileRepository.createUploadAdapter = (loader) => {
+            const adapter = new ImageUploadAdapter(loader, handleImageUploaded);
+            return adapter;
+          };
+        },
+      ],
     }),
     [handleImageUploaded],
   );
@@ -668,11 +729,26 @@ export default function AdminLearningPathLessonViewPage() {
                           margin: 0,
                           padding: "4px 12px",
                           borderRadius: 9999,
-                          border: "1px solid #bbf7d0",
-                          background: "#f0fdf4",
-                          color: "#15803d",
                           fontSize: 12,
                           fontWeight: 600,
+                          border:
+                            lesson.isActive === undefined
+                              ? "1px solid #e2e8f0"
+                              : lesson.isActive
+                                ? "1px solid #bbf7d0"
+                                : "1px solid #fecaca",
+                          backgroundColor:
+                            lesson.isActive === undefined
+                              ? "#f8fafc"
+                              : lesson.isActive
+                                ? "#f0fdf4"
+                                : "#fef2f2",
+                          color:
+                            lesson.isActive === undefined
+                              ? "#64748b"
+                              : lesson.isActive
+                                ? "#15803d"
+                                : "#dc2626",
                         }}
                       >
                         {lesson.isActive !== undefined
@@ -711,7 +787,8 @@ export default function AdminLearningPathLessonViewPage() {
                     </Title>
                   )}
                   <Text type="secondary" className="text-sm">
-                    Learning path #{String(lesson.learningPathId ?? "—")} · Lesson
+                    Learning path #{String(lesson.learningPathId ?? "—")} ·
+                    Lesson
                   </Text>
                 </div>
                 <Space wrap className="shrink-0">
@@ -792,10 +869,7 @@ export default function AdminLearningPathLessonViewPage() {
                         {lesson.level || "—"}
                       </MetaTile>
                       <div className="sm:col-span-2">
-                        <MetaTile
-                          label="Practice"
-                          icon={<FileTextOutlined />}
-                        >
+                        <MetaTile label="Practice" icon={<FileTextOutlined />}>
                           <span className="whitespace-pre-wrap font-normal">
                             {lesson.practice ?? "—"}
                           </span>
@@ -827,7 +901,8 @@ export default function AdminLearningPathLessonViewPage() {
                         rules={[
                           {
                             pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
-                            message: "Slug only allows letters, numbers, and hyphens (-)",
+                            message:
+                              "Slug only allows letters, numbers, and hyphens (-)",
                           },
                         ]}
                       >
@@ -843,7 +918,7 @@ export default function AdminLearningPathLessonViewPage() {
                           },
                         ]}
                       >
-                        <InputNumber min={1} className="!w-full" />
+                        <InputNumber disabled min={1} className="!w-full" />
                       </Form.Item>
                       <Form.Item
                         name="topic"
@@ -988,30 +1063,31 @@ export default function AdminLearningPathLessonViewPage() {
               icon={<FileTextOutlined />}
               className="shadow-md"
             >
-              {isEditing ? (
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                  <div className="lg:col-span-9">
-                    <div className="mb-2">
-                      <Text type="secondary" className="text-sm">
-                        Use <strong>Heading 1-3</strong> to create sections
-                        for the outline on the right. You can upload images
-                        from the toolbar.
-                      </Text>
-                    </div>
-                    <div className="flex items-center justify-end mb-2">
-                      <Button
-                        size="small"
-                        onClick={() => setManageImagesOpen(true)}
-                        disabled={uploadedImageUrls.length === 0}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                <div className="lg:col-span-9">
+                  {isEditing ? (
+                    <>
+                      <div className="mb-2">
+                        <Text type="secondary" className="text-sm">
+                          Use <strong>Heading 1-3</strong> to create sections
+                          for the outline on the right. You can upload images
+                          from the toolbar.
+                        </Text>
+                      </div>
+                      <div className="flex items-center justify-end mb-2">
+                        <Button
+                          size="small"
+                          onClick={() => setManageImagesOpen(true)}
+                          disabled={imageUrls.length === 0}
+                        >
+                          Manage images ({imageUrls.length})
+                        </Button>
+                      </div>
+                      <div
+                        ref={editorWrapperRef}
+                        className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white"
                       >
-                        Manage images ({uploadedImageUrls.length})
-                      </Button>
-                    </div>
-                    <div
-                      ref={editorWrapperRef}
-                      className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white"
-                    >
-                      <style>{`
+                        <style>{`
                         .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
                         .ckeditor-wrapper .ck-editor { min-height: 480px; }
                         .ckeditor-wrapper .ck-content h1,
@@ -1089,178 +1165,98 @@ export default function AdminLearningPathLessonViewPage() {
                           font-size: inherit;
                         }
                       `}</style>
-                      <CKEditor
-                        key={`${lesson.id}-${lessonId}-ck-${editorMountKey}`}
-                        editor={ClassicEditor}
-                        data={contentInitial}
-                        config={blogPostEditorConfiguration}
-                        onReady={(editorEd) => {
-                          editorInstanceRef.current = editorEd;
-                          const next = editorEd.getData() || "";
-                          contentRef.current = next;
-                          setContentHtml(next);
-                        }}
-                        onChange={(_event, editorEd) => {
-                          const data = editorEd.getData();
-                          contentRef.current = data;
-                          setContentHtml(data);
-                          if (contentSyncTimerRef.current) {
-                            clearTimeout(contentSyncTimerRef.current);
-                          }
-                          contentSyncTimerRef.current = setTimeout(() => {
+                        <CKEditor
+                          key={`${lesson.id}-${lessonId}-ck-${editorMountKey}`}
+                          editor={ClassicEditor}
+                          data={contentInitial}
+                          config={blogPostEditorConfiguration}
+                          onReady={(editorEd) => {
+                            editorInstanceRef.current = editorEd;
+                            const next = editorEd.getData() || "";
+                            contentRef.current = next;
+                            setContentHtml(next);
+                          }}
+                          onChange={(_event, editorEd) => {
+                            const data = editorEd.getData();
+                            contentRef.current = data;
+                            setContentHtml(data);
+                            if (contentSyncTimerRef.current) {
+                              clearTimeout(contentSyncTimerRef.current);
+                            }
+                            contentSyncTimerRef.current = setTimeout(() => {
+                              form.setFieldValue(
+                                "content",
+                                contentRef.current || "",
+                              );
+                            }, 250);
+                          }}
+                          onBlur={() => {
+                            if (contentSyncTimerRef.current) {
+                              clearTimeout(contentSyncTimerRef.current);
+                            }
                             form.setFieldValue(
                               "content",
                               contentRef.current || "",
                             );
-                          }, 250);
-                        }}
-                        onBlur={() => {
-                          if (contentSyncTimerRef.current) {
-                            clearTimeout(contentSyncTimerRef.current);
-                          }
-                          form.setFieldValue(
-                            "content",
-                            contentRef.current || "",
-                          );
-                        }}
-                      />
-                    </div>
-                    <Form.Item name="content" hidden>
-                      <Input type="hidden" />
-                    </Form.Item>
-
-                    <div className="mt-5">
-                      <Form.Item
-                        label="Thumbnail"
-                        extra="Optional. jpg, png, gif, bmp, or webp."
-                      >
-                        <Upload.Dragger
-                          name="thumbnail"
-                          accept="image/*"
-                          maxCount={1}
-                          fileList={thumbnailFileList}
-                          beforeUpload={beforeThumbnailUpload}
-                          onRemove={handleRemoveThumbnail}
-                          listType="picture"
-                        >
-                          <p className="ant-upload-drag-icon">
-                            <InboxOutlined />
-                          </p>
-                          <p className="ant-upload-text">
-                            Click or drag thumbnail image here
-                          </p>
-                        </Upload.Dragger>
+                          }}
+                        />
+                      </div>
+                      <Form.Item name="content" hidden>
+                        <Input type="hidden" />
                       </Form.Item>
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-3">
-                    <Card
-                      className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
-                      title={
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-800">
-                            On this page
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {outline.length > 0
-                              ? `${outline.length} sections`
-                              : "—"}
-                          </span>
-                        </div>
-                      }
-                      styles={{
-                        header: {
-                          background:
-                            "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
-                          borderBottom: "1px solid #e2e8f0",
-                        },
-                        body: {
-                          maxHeight: "min(70vh, 520px)",
-                          overflowY: "auto",
-                          padding: "12px",
-                        },
-                      }}
-                    >
-                      {outline.length === 0 ? (
-                        <Text type="secondary" className="block text-sm">
-                          Add <strong>Heading 1</strong>,{" "}
-                          <strong>Heading 2</strong>, or{" "}
-                          <strong>Heading 3</strong> to show the outline.
-                        </Text>
-                      ) : (
-                        <nav aria-label="Table of contents">
-                          <ul className="list-none m-0 p-0 space-y-1.5">
-                            {outline.map((item) => (
-                              <li
-                                key={item.key}
-                                style={{ marginLeft: (item.level - 1) * 10 }}
-                                className="text-sm"
-                              >
-                                <button
-                                  type="button"
-                                  className={`group flex w-full items-start gap-2 rounded-lg px-2.5 py-2 border transition-all text-left hover:shadow-sm ${
-                                    item.level === 1
-                                      ? "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70"
-                                      : item.level === 2
-                                        ? "border-slate-200 bg-white hover:bg-slate-50"
-                                        : "border-transparent bg-transparent hover:bg-slate-50"
-                                  }`}
-                                  onClick={() => {
-                                    scrollToHeadingInCkEditor(
-                                      editorWrapperRef.current,
-                                      item.domIndex,
-                                    );
-                                  }}
-                                >
-                                  <span
-                                    className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
-                                      item.level === 1
-                                        ? "bg-indigo-500"
-                                        : item.level === 2
-                                          ? "bg-slate-400"
-                                          : "bg-slate-300"
-                                    }`}
-                                  />
-                                  <span
-                                    className={`break-words leading-snug ${
-                                      item.level === 1
-                                        ? "text-indigo-900 font-semibold group-hover:text-indigo-700"
-                                        : item.level === 2
-                                          ? "text-slate-700 font-medium group-hover:text-slate-900"
-                                          : "text-slate-600 group-hover:text-slate-800"
-                                    }`}
-                                  >
-                                    {item.text}
-                                  </span>
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </nav>
-                      )}
-                    </Card>
-                  </div>
-                </div>
-              ) : (
-                <div className="min-h-[280px] rounded-xl border border-slate-200/90 bg-slate-50/40 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:p-8">
-                  {lesson.content ? (
-                    <div
-                      className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-indigo-600"
-                      dangerouslySetInnerHTML={{
-                        __html: normalizeLessonHtml(lesson.content),
-                      }}
-                    />
+                    </>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <FileTextOutlined className="mb-2 text-3xl text-slate-300" />
-                      <Text type="secondary">
-                        This lesson has no content yet.
-                      </Text>
+                    <div className="min-h-[280px] rounded-xl border border-slate-200/90 bg-slate-50/40 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:p-8">
+                      {lesson.content ? (
+                        <div
+                          className="lesson-view-content prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-indigo-600"
+                          dangerouslySetInnerHTML={{
+                            __html: normalizeLessonHtml(lesson.content),
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <FileTextOutlined className="mb-2 text-3xl text-slate-300" />
+                          <Text type="secondary">
+                            This lesson has no content yet.
+                          </Text>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
+                <div className="lg:col-span-3">
+                  <Card
+                    className="rounded-2xl border-slate-200 shadow-sm lg:sticky lg:top-4 overflow-hidden"
+                    title={
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-800">
+                          On this page
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {outline.length > 0
+                            ? `${outline.length} sections`
+                            : "-"}
+                        </span>
+                      </div>
+                    }
+                    styles={{
+                      header: {
+                        background:
+                          "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                        borderBottom: "1px solid #e2e8f0",
+                      },
+                      body: {
+                        maxHeight: "min(70vh, 520px)",
+                        overflowY: "auto",
+                        padding: "12px",
+                      },
+                    }}
+                  >
+                    <TableOfContents outline={outline} isEditing={isEditing} />
+                  </Card>
+                </div>
+              </div>
             </SectionShell>
 
             <Modal
@@ -1269,105 +1265,64 @@ export default function AdminLearningPathLessonViewPage() {
               title="Manage images"
               footer={null}
               width={920}
-              destroyOnClose
+              destroyOnHidden
             >
               {imageUrls.length === 0 ? (
-                <Empty description="No images found in this lesson content." />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {imageUrls.map((url) => (
-                    <div
-                      key={url}
-                      className="border border-slate-200 rounded-xl overflow-hidden bg-white"
-                    >
-                      <div className="bg-slate-50">
-                        <img
-                          src={url}
-                          alt="Lesson content image"
-                          className="w-full h-36 object-cover"
-                        />
-                      </div>
-                      <div className="p-3">
-                        <div className="text-xs text-slate-500 line-clamp-2">
-                          {url}
-                        </div>
-                        <div className="mt-3 flex justify-end">
-                          <Popconfirm
-                            title="Remove this image from content?"
-                            okText="Remove"
-                            cancelText="Cancel"
-                            onConfirm={() => handleRemoveImageFromContent(url)}
-                            disabled={removingImageSrc === url}
-                          >
-                            <Button
-                              size="small"
-                              danger
-                              disabled={removingImageSrc === url}
-                              onMouseDown={(e) => e.preventDefault()}
-                            >
-                              {removingImageSrc === url
-                                ? "Removing..."
-                                : "Remove"}
-                            </Button>
-                          </Popconfirm>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Modal>
-            <Modal
-              open={manageImagesOpen}
-              onCancel={() => setManageImagesOpen(false)}
-              title="Manage uploaded images"
-              footer={null}
-              width={920}
-              destroyOnClose
-            >
-              {uploadedImageUrls.length === 0 ? (
                 <Empty description="No uploaded images in this editor session." />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {uploadedImageUrls.map((url) => (
-                    <div
-                      key={url}
-                      className="border border-slate-200 rounded-xl overflow-hidden bg-white"
-                    >
-                      <div className="bg-slate-50">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt=""
-                          className="w-full h-36 object-cover"
-                        />
-                      </div>
-                      <div className="p-3">
-                        <div className="text-xs text-slate-500 line-clamp-2">
-                          {url}
+                  {imageUrls.map((url) => {
+                    const isUsedInContent = true;
+                    const isUploadedThisSession = uploadedImageUrls.some(
+                      (u) => normalizeImageUrl(u) === normalizeImageUrl(url),
+                    );
+
+                    return (
+                      <div
+                        key={url}
+                        className="border border-slate-200 rounded-xl overflow-hidden bg-white"
+                      >
+                        <div className="bg-slate-50 relative">
+                          <img
+                            src={url}
+                            alt="Lesson content image"
+                            className="w-full h-36 object-cover"
+                          />
+                          {isUsedInContent && (
+                            <span className="absolute top-2 right-2 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5">
+                              In use
+                            </span>
+                          )}
                         </div>
-                        <div className="mt-3 flex justify-end">
-                          <Popconfirm
-                            title="Delete this image?"
-                            okText="Yes"
-                            cancelText="No"
-                            onConfirm={() => handleDeleteUploadedImage(url)}
-                            disabled={deletingImageUrl === url}
-                          >
+                        <div className="p-3 space-y-3">
+                          <div className="text-xs text-slate-500 line-clamp-2">
+                            {url}
+                          </div>
+                          <div className="flex justify-end gap-2">
                             <Button
                               size="small"
-                              danger
-                              disabled={deletingImageUrl === url}
+                              disabled={!isUsedInContent}
+                              onClick={() => handleRemoveImageFromEditor(url)}
                             >
-                              {deletingImageUrl === url
-                                ? "Deleting..."
-                                : "Delete"}
+                              Remove from content
                             </Button>
-                          </Popconfirm>
+                            <Popconfirm
+                              title="Delete this image?"
+                              description="Only allowed if the image is not used in the editor content."
+                              okText="Yes"
+                              cancelText="Cancel"
+                              onConfirm={() => handleDeleteUploadedImage(url)}
+                              disabled={
+                                isUsedInContent ||
+                                !isUploadedThisSession ||
+                                deletingImageUrl === url
+                              }
+                            ></Popconfirm>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </Modal>

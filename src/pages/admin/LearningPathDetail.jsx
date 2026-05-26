@@ -353,65 +353,73 @@ export default function AdminLearningPathDetailPage() {
     load();
   }, [learningPathSlug]);
 
-  const toggleLessonActive = useCallback(async (row, nextActive) => {
-    if (!row?.id) return;
+  const toggleLessonActive = useCallback(
+    async (row, nextActive) => {
+      if (!row?.id) return;
 
-    const ok = await new Promise((resolve) => {
-      Modal.confirm({
-        title: "Confirm status change",
-        content: `Set lesson #${row.id} to ${nextActive ? "Active" : "Inactive"}?`,
-        okText: "Confirm",
-        cancelText: "Cancel",
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false),
+      const ok = await new Promise((resolve) => {
+        Modal.confirm({
+          title: "Confirm status change",
+          content: `Set lesson #${row.id} to ${nextActive ? "Active" : "Inactive"}?`,
+          okText: "Confirm",
+          cancelText: "Cancel",
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        });
       });
-    });
-    if (!ok) return;
+      if (!ok) return;
 
-    setUpdatingIds((prev) => {
-      const next = new Set(prev);
-      next.add(row.id);
-      return next;
-    });
+      setUpdatingIds((prev) => {
+        const next = new Set(prev);
+        next.add(row.id);
+        return next;
+      });
 
-    // optimistic UI update
-    setDetail((prev) => {
-      if (!prev || !Array.isArray(prev.lessons)) return prev;
-      return {
-        ...prev,
-        lessons: prev.lessons.map((l) =>
-          String(l.id) === String(row.id) ? { ...l, isActive: nextActive } : l,
-        ),
-      };
-    });
-
-    try {
-      await setAdminLessonActive(row.id, nextActive);
-      message.success("Updated lesson status");
-    } catch (e) {
-      // revert on failure
+      // optimistic UI update
       setDetail((prev) => {
         if (!prev || !Array.isArray(prev.lessons)) return prev;
         return {
           ...prev,
           lessons: prev.lessons.map((l) =>
             String(l.id) === String(row.id)
-              ? { ...l, isActive: row.isActive }
+              ? { ...l, isActive: nextActive }
               : l,
           ),
         };
       });
-      message.error(
-        e?.response?.data?.message || e?.message || "Update failed",
-      );
-    } finally {
-      setUpdatingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(row.id);
-        return next;
-      });
-    }
-  }, []);
+
+      try {
+        await setAdminLessonActive(row.id, nextActive);
+        message.success("Updated lesson status");
+
+        const response = await getAdminLearningPathDetailBySlug(slug);
+        setDetail(response.data);
+      } catch (e) {
+        // revert on failure
+        setDetail((prev) => {
+          if (!prev || !Array.isArray(prev.lessons)) return prev;
+          return {
+            ...prev,
+            lessons: prev.lessons.map((l) =>
+              String(l.id) === String(row.id)
+                ? { ...l, isActive: row.isActive }
+                : l,
+            ),
+          };
+        });
+        message.error(
+          e?.response?.data?.message || e?.message || "Update failed",
+        );
+      } finally {
+        setUpdatingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(row.id);
+          return next;
+        });
+      }
+    },
+    [slug],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
