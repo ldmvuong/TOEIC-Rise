@@ -1040,8 +1040,10 @@ export const getLearningPaths = (params = {}) =>
 export const getLearningPathDetail = (learningPathSlug) =>
   api.get(`/learner/learning-paths/${learningPathSlug}`);
 
-export const getLearnerLesson = (lessonSlug) =>
-  api.get(`/learner/learning-paths/lessons/${lessonSlug}`);
+export const getLearnerLesson = (lessonSlug, learningPathSlug) =>
+  api.get(`/learner/learning-paths/lessons/${lessonSlug}`, {
+    params: { learningPathSlug },
+  });
 
 export const getLearningPathLessons = (learningPathSlug, params = {}) =>
   api.get(`/learner/learning-paths/${learningPathSlug}/lessons`, { params });
