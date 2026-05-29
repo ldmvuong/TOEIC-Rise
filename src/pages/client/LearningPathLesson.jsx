@@ -561,7 +561,7 @@ export default function LearningPathLessonPage() {
             resolvedRow.lesson.slug.trim()) ||
           (typeof lessonId === "string" ? lessonId : String(lessonId));
 
-        const res = await getLearnerLesson(apiLessonSlug);
+        const res = await getLearnerLesson(apiLessonSlug, learningPathId);
         if (cancelled) return;
         const pathRow =
           resolvedRow ?? findPathLessonRow(pathRes?.data?.lessons, lessonId);
