@@ -309,7 +309,7 @@ export default function AdminLayout() {
         <Layout style={{ minHeight: "120vh" }} className="layout-admin">
             <Sider theme="light" collapsible collapsed={collapsed} onCollapse={(v) => setCollapsed(v)}>
                 <div style={{ height: 32, margin: 16, textAlign: "center", fontWeight: 600 }}>
-                    <BugOutlined /> ADMIN
+                    <BugOutlined /> {currentRole === "STAFF" ? "STAFF" : "ADMIN"}
                 </div>
                 <Menu
                     selectedKeys={[activeMenu]}
