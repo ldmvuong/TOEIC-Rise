@@ -1,15 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  Button,
-  Card,
-  Col,
-  Image,
-  Row,
-  Space,
-  Tag,
-  Typography,
-} from "antd";
+import { Button, Card, Col, Image, Row, Space, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -433,13 +424,14 @@ const BlogPostDetailPage = () => {
         </Card>
 
         <Row gutter={[16, 16]}>
-          <Col xs={24} lg={18}>
+          <Col xs={24} lg={18} className="min-w-0">
             <Card title="Content" className="shadow-sm">
               <div
-                className="blog-post-detail-content text-slate-800 leading-relaxed overflow-x-hidden
+                className="blog-post-detail-content text-slate-800 leading-relaxed min-w-0
+                  [&_table]:w-full [&_table]:max-w-full [&_table]:table-auto
                   [&_table]:border-collapse [&_table]:border [&_table]:border-slate-200 [&_table]:my-4
-                  [&_td]:border [&_td]:border-slate-200 [&_td]:p-2
-                  [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50
+                  [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_td]:break-words [&_td]:text-left [&_td]:align-middle
+                  [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50 [&_th]:break-words [&_th]:text-left [&_th]:align-middle
                   [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded
                   [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:scroll-mt-24
                   [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:scroll-mt-24
