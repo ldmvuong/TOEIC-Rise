@@ -206,7 +206,7 @@ const FlashcardEditPage = () => {
                     .map((m) => m?.definition?.trim())
                     .filter(Boolean)
                 : [];
-            const combinedDefinition = allDefinitions.join('; ');
+            const combinedDefinition = allDefinitions.join('\n');
 
             const audioPath = firstResult.audio || '';
             const audioUrl =
@@ -535,12 +535,13 @@ const FlashcardEditPage = () => {
                                 <div className="space-y-3">
                                     <div className={`border-b-2 transition-colors pb-1 ${errors.items[index]?.definition ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'}`}>
                                         <label className="text-xs text-gray-400 uppercase font-semibold">Definition <span className="text-red-500">*</span></label>
-                                        <Input 
-                                            variant="borderless" 
+                                        <TextArea
+                                            variant="borderless"
                                             placeholder="Enter definition..."
                                             className="text-lg text-gray-800 px-0 py-1"
                                             value={item.definition}
                                             onChange={(e) => handleItemChange(index, 'definition', e.target.value)}
+                                            autoSize={{ minRows: 1, maxRows: 8 }}
                                         />
                                         {errors.items[index]?.definition && (
                                             <div className="text-red-500 text-xs mt-1">{errors.items[index].definition}</div>

@@ -371,7 +371,7 @@ const FlashcardViewPage = () => {
                                         {/* Cột Định nghĩa */}
                                         <div className="space-y-2">
                                             <span className="text-xs font-semibold text-gray-400 uppercase">Definition</span>
-                                            <p className="text-lg text-gray-800">
+                                            <p className="text-lg text-gray-800 whitespace-pre-line">
                                                 {item.definition || 'N/A'}
                                             </p>
                                         </div>
