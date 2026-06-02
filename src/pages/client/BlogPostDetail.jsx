@@ -234,7 +234,7 @@ const BlogPostDetailPublicPage = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-          <div className="lg:col-span-9">
+          <div className="lg:col-span-9 min-w-0">
             <Card
               className="rounded-2xl border-slate-200 shadow-sm overflow-hidden"
               title={
@@ -250,10 +250,11 @@ const BlogPostDetailPublicPage = () => {
               styles={{ body: { padding: 18 } }}
             >
               <div
-                className="blog-post-reader-content text-slate-800 leading-relaxed overflow-x-hidden
+                className="blog-post-reader-content text-slate-800 leading-relaxed min-w-0
+                  [&_table]:w-full [&_table]:max-w-full [&_table]:table-auto
                   [&_table]:border-collapse [&_table]:border [&_table]:border-slate-200 [&_table]:my-4
-                  [&_td]:border [&_td]:border-slate-200 [&_td]:p-2
-                  [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50
+                  [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_td]:break-words [&_td]:text-left [&_td]:align-middle
+                  [&_th]:border [&_th]:border-slate-200 [&_th]:p-2 [&_th]:bg-slate-50 [&_th]:break-words [&_th]:text-left [&_th]:align-middle
                   [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:border [&_img]:border-slate-200
                   [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:scroll-mt-24
                   [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:scroll-mt-24
@@ -349,9 +350,7 @@ const BlogPostDetailPublicPage = () => {
           className="rounded-2xl border-slate-200 shadow-sm mt-6 overflow-hidden"
           title={
             <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 px-4 py-3">
-              <div className="text-slate-900 font-semibold">
-                Related Posts
-              </div>
+              <div className="text-slate-900 font-semibold">Related Posts</div>
               <div className="text-xs text-slate-500 mt-0.5">
                 Similar content suggestions for your next read
               </div>
