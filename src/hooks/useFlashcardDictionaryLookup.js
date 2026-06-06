@@ -53,6 +53,7 @@ export const parseDictionaryLookupResponse = (data, baseUrl = DICT_API_BASE_URL)
 const useFlashcardDictionaryLookup = (items, setItems) => {
     const lookupTimeoutsRef = useRef({});
     const lookupSeqRef = useRef({});
+    const resolvedVocabRef = useRef({});
     const itemsRef = useRef(items);
     const [lookupSuggestions, setLookupSuggestions] = useState({});
     const [lookupLoadingByIndex, setLookupLoadingByIndex] = useState({});
@@ -96,6 +97,15 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
     const handleLookupFromDictionary = useCallback(async (index, vocabOverride) => {
         const vocab = (vocabOverride ?? itemsRef.current[index]?.vocabulary ?? '').trim();
         if (!vocab) {
+            delete resolvedVocabRef.current[index];
+            clearSuggestions(index);
+            return;
+        }
+
+        const normalizedVocab = vocab.toLowerCase();
+        const currentDefinition = (itemsRef.current[index]?.definition ?? '').trim();
+        const resolvedVocab = resolvedVocabRef.current[index];
+        if (resolvedVocab === normalizedVocab && currentDefinition) {
             clearSuggestions(index);
             return;
         }
@@ -106,13 +116,13 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
 
         try {
             const response = await fetch(
-                `${DICT_API_BASE_URL}/api/v1/lookup?word=${encodeURIComponent(vocab.toLowerCase())}`
+                `${DICT_API_BASE_URL}/api/v1/lookup?lang=en&word=${encodeURIComponent(normalizedVocab)}`
             );
 
             const latestSeq = lookupSeqRef.current[index];
             const stillLatest = latestSeq === seq;
             const currentVocab = (itemsRef.current[index]?.vocabulary ?? '').trim().toLowerCase();
-            const stillSameVocab = currentVocab === vocab.toLowerCase();
+            const stillSameVocab = currentVocab === normalizedVocab;
 
             if (!stillLatest || !stillSameVocab) return;
 
@@ -151,6 +161,7 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
     const scheduleLookup = useCallback((index, vocabValue) => {
         const trimmed = (vocabValue ?? '').trim();
         if (!trimmed) {
+            delete resolvedVocabRef.current[index];
             const existing = lookupTimeoutsRef.current[index];
             if (existing) {
                 clearTimeout(existing);
@@ -158,6 +169,11 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
             }
             clearSuggestions(index);
             return;
+        }
+
+        const normalizedVocab = trimmed.toLowerCase();
+        if (resolvedVocabRef.current[index] !== normalizedVocab) {
+            delete resolvedVocabRef.current[index];
         }
 
         const existing = lookupTimeoutsRef.current[index];
@@ -178,6 +194,10 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
     }, [handleLookupFromDictionary]);
 
     const applySuggestion = useCallback((index, option) => {
+        const currentVocab = (itemsRef.current[index]?.vocabulary ?? '').trim().toLowerCase();
+        if (currentVocab) {
+            resolvedVocabRef.current[index] = currentVocab;
+        }
         setItems((prevItems) => {
             const newItems = [...prevItems];
             const current = { ...newItems[index] };
@@ -200,6 +220,7 @@ const useFlashcardDictionaryLookup = (items, setItems) => {
             clearTimeout(existing);
             delete lookupTimeoutsRef.current[index];
         }
+        delete resolvedVocabRef.current[index];
         clearSuggestions(index);
     }, [clearSuggestions]);
 
