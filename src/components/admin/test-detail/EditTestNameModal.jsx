@@ -52,7 +52,7 @@ const EditTestNameModal = ({ open, onClose, test, onSuccess, updateTestFn = defa
                 name="name"
                 rules={[
                     { required: true, message: "Please enter test name" },
-                    { pattern: TEST_NAME_REGEX, message: "Invalid test name" },
+                    { pattern: TEST_NAME_REGEX, message: "Test name can only contain letters, numbers, spaces and parentheses" },
                 ]}
                 placeholder="Enter test name"
             />
