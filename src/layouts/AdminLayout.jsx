@@ -33,9 +33,9 @@ const { Content, Sider } = Layout;
 const TEST_SETS_SUBMENU_KEY = "admin-test-sets-submenu";
 
 const TEST_SET_ROUTES = [
-    "/admin/test-sets",
-    "/admin/speaking-test-sets",
-    "/admin/writing-test-sets",
+  "/admin/test-sets",
+  "/admin/speaking-test-sets",
+  "/admin/writing-test-sets",
 ];
 
 /** Submenu for system prompts — open for list + detail URLs under this prefix */
@@ -65,8 +65,10 @@ const STATIC_MENU = [
     children: [
       {
         key: "/admin/test-sets",
-        label: <Link to="/admin/test-sets">Test Sets</Link>,
-        icon: <BankOutlined />,
+        label: (
+          <Link to="/admin/test-sets">Reading and Listening Test Sets</Link>
+        ),
+        icon: <BookOutlined />,
       },
       {
         key: "/admin/speaking-test-sets",
@@ -205,169 +207,192 @@ const STATIC_MENU = [
 ];
 
 export default function AdminLayout() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const dispatch = useAppDispatch();
-    const [collapsed, setCollapsed] = useState(false);
-    const [activeMenu, setActiveMenu] = useState("/admin");
-    const [openKeys, setOpenKeys] = useState([]);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
-    
-    // Redux state
-    const isAuthenticated = useAppSelector(state => state.account.isAuthenticated);
-    const user = useAppSelector(state => state.account.user);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [collapsed, setCollapsed] = useState(false);
+  const [activeMenu, setActiveMenu] = useState("/admin");
+  const [openKeys, setOpenKeys] = useState([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    useEffect(() => {
-        const path = location.pathname.startsWith("/admin") ? location.pathname : "/admin";
-        setActiveMenu(path);
-        setOpenKeys((prev) => {
-            let next = [...prev];
-            if (TEST_SET_ROUTES.includes(path)) {
-                if (!next.includes(TEST_SETS_SUBMENU_KEY)) next.push(TEST_SETS_SUBMENU_KEY);
-            } else {
-                next = next.filter((k) => k !== TEST_SETS_SUBMENU_KEY);
-            }
-            if (path.startsWith(PROMPT_ROUTE_PREFIX)) {
-                if (!next.includes(PROMPTS_SUBMENU_KEY)) next.push(PROMPTS_SUBMENU_KEY);
-            } else {
-                next = next.filter((k) => k !== PROMPTS_SUBMENU_KEY);
-            }
-            const inTestsSection =
-                path === "/admin/tests" ||
-                path.startsWith("/admin/tests/") ||
-                path === "/admin/speaking-tests" ||
-                path.startsWith("/admin/speaking-tests/") ||
-                path === "/admin/writing-tests" ||
-                path.startsWith("/admin/writing-tests/");
-            if (inTestsSection) {
-                if (!next.includes(TESTS_SUBMENU_KEY)) next.push(TESTS_SUBMENU_KEY);
-            } else {
-                next = next.filter((k) => k !== TESTS_SUBMENU_KEY);
-            }
-            return next;
-        });
-    }, [location.pathname]);
+  // Redux state
+  const isAuthenticated = useAppSelector(
+    (state) => state.account.isAuthenticated,
+  );
+  const user = useAppSelector((state) => state.account.user);
 
-    const handleLogout = async () => {
-        setIsLoggingOut(true);
-        try {
-            await logoutApi();
-            message.success('Logged out successfully!');
-        } catch (error) {
-            message.warning('Logout failed on the server, but you have been logged out locally');
-        } finally {
-            dispatch(setLogoutAction());
-            navigate('/');
-            setIsLoggingOut(false);
-        }
-    };
+  useEffect(() => {
+    const path = location.pathname.startsWith("/admin")
+      ? location.pathname
+      : "/admin";
+    setActiveMenu(path);
+    setOpenKeys((prev) => {
+      let next = [...prev];
+      if (TEST_SET_ROUTES.includes(path)) {
+        if (!next.includes(TEST_SETS_SUBMENU_KEY))
+          next.push(TEST_SETS_SUBMENU_KEY);
+      } else {
+        next = next.filter((k) => k !== TEST_SETS_SUBMENU_KEY);
+      }
+      if (path.startsWith(PROMPT_ROUTE_PREFIX)) {
+        if (!next.includes(PROMPTS_SUBMENU_KEY)) next.push(PROMPTS_SUBMENU_KEY);
+      } else {
+        next = next.filter((k) => k !== PROMPTS_SUBMENU_KEY);
+      }
+      const inTestsSection =
+        path === "/admin/tests" ||
+        path.startsWith("/admin/tests/") ||
+        path === "/admin/speaking-tests" ||
+        path.startsWith("/admin/speaking-tests/") ||
+        path === "/admin/writing-tests" ||
+        path.startsWith("/admin/writing-tests/");
+      if (inTestsSection) {
+        if (!next.includes(TESTS_SUBMENU_KEY)) next.push(TESTS_SUBMENU_KEY);
+      } else {
+        next = next.filter((k) => k !== TESTS_SUBMENU_KEY);
+      }
+      return next;
+    });
+  }, [location.pathname]);
 
-    const handleMenuClick = ({ key }) => {
-        switch (key) {
-            case 'profile':
-                navigate('/admin/profile');
-                break;
-            case 'home':
-                navigate('/');
-                break;
-            case 'logout':
-                handleLogout();
-                break;
-            default:
-                break;
-        }
-    };
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logoutApi();
+      message.success("Logged out successfully!");
+    } catch (error) {
+      message.warning(
+        "Logout failed on the server, but you have been logged out locally",
+      );
+    } finally {
+      dispatch(setLogoutAction());
+      navigate("/");
+      setIsLoggingOut(false);
+    }
+  };
 
-    const itemsDropdown = [
-        { 
-            label: "Profile", 
-            key: "profile",
-            icon: <UserOutlined />
-        },
-        { 
-            label: "User Page", 
-            key: "home",
-            icon: <HomeOutlined />
-        },
-        { type: 'divider' },
-        { 
-            label: "Logout", 
-            key: "logout",
-            icon: <LogoutOutlined />,
-            disabled: isLoggingOut
-        },
-    ];
+  const handleMenuClick = ({ key }) => {
+    switch (key) {
+      case "profile":
+        navigate("/admin/profile");
+        break;
+      case "home":
+        navigate("/");
+        break;
+      case "logout":
+        handleLogout();
+        break;
+      default:
+        break;
+    }
+  };
 
-    const currentRole = user?.role;
+  const itemsDropdown = [
+    {
+      label: "Profile",
+      key: "profile",
+      icon: <UserOutlined />,
+    },
+    {
+      label: "User Page",
+      key: "home",
+      icon: <HomeOutlined />,
+    },
+    { type: "divider" },
+    {
+      label: "Logout",
+      key: "logout",
+      icon: <LogoutOutlined />,
+      disabled: isLoggingOut,
+    },
+  ];
 
-    const filteredMenu = useMemo(() => {
-        if (!currentRole) return STATIC_MENU;
-        return STATIC_MENU.filter(item => !item.roles || item.roles.includes(currentRole));
-    }, [currentRole]);
+  const currentRole = user?.role;
 
-    return (
-        <Layout style={{ minHeight: "120vh" }} className="layout-admin">
-            <Sider theme="light" collapsible collapsed={collapsed} onCollapse={(v) => setCollapsed(v)}>
-                <div style={{ height: 32, margin: 16, textAlign: "center", fontWeight: 600 }}>
-                    <BugOutlined /> {currentRole === "STAFF" ? "STAFF" : "ADMIN"}
-                </div>
-                <Menu
-                    selectedKeys={[activeMenu]}
-                    openKeys={openKeys}
-                    onOpenChange={setOpenKeys}
-                    mode="inline"
-                    items={filteredMenu}
-                    onClick={(e) => {
-                        const { key } = e;
-                        if (key === "/admin" || key.startsWith("/admin/")) {
-                            setActiveMenu(key);
-                        }
-                    }}
-                />
-            </Sider>
-
-            <Layout>
-                <div
-                    className="admin-header"
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginRight: 20 }}
-                >
-                    <Button
-                        type="text"
-                        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        onClick={() => setCollapsed((s) => !s)}
-                        style={{ fontSize: 16, width: 64, height: 64 }}
-                    />
-                    <Dropdown 
-                        menu={{ 
-                            items: itemsDropdown, 
-                            onClick: handleMenuClick 
-                        }} 
-                        trigger={["click"]}
-                    >
-                        <Space style={{ cursor: "pointer", paddingRight: 8 }}>
-                            <div style={{ textAlign: "right" }}>
-                                <div style={{ fontWeight: 600, fontSize: 14 }}>
-                                    {user?.fullName || 'Admin'}
-                                </div>
-                                <div style={{ fontSize: 12, color: "#666" }}>
-                                    {user?.email || 'admin@toeic-rise.com'}
-                                </div>
-                            </div>
-                            <Avatar 
-                                src={user?.avatar} 
-                                style={{ backgroundColor: '#1890ff' }}
-                            >
-                                {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
-                            </Avatar>
-                        </Space>
-                    </Dropdown>
-                </div>
-
-                <Content style={{ padding: 15 }}>
-                    {/* Nội dung trang con sẽ render ở đây */}
-                    <Outlet />
-                </Content>
-            </Layout>
-        </Layout>
+  const filteredMenu = useMemo(() => {
+    if (!currentRole) return STATIC_MENU;
+    return STATIC_MENU.filter(
+      (item) => !item.roles || item.roles.includes(currentRole),
     );
+  }, [currentRole]);
+
+  return (
+    <Layout style={{ minHeight: "120vh" }} className="layout-admin">
+      <Sider
+        theme="light"
+        collapsible
+        collapsed={collapsed}
+        onCollapse={(v) => setCollapsed(v)}
+      >
+        <div
+          style={{
+            height: 32,
+            margin: 16,
+            textAlign: "center",
+            fontWeight: 600,
+          }}
+        >
+          <BugOutlined /> {currentRole === "STAFF" ? "STAFF" : "ADMIN"}
+        </div>
+        <Menu
+          selectedKeys={[activeMenu]}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
+          mode="inline"
+          items={filteredMenu}
+          onClick={(e) => {
+            const { key } = e;
+            if (key === "/admin" || key.startsWith("/admin/")) {
+              setActiveMenu(key);
+            }
+          }}
+        />
+      </Sider>
+
+      <Layout>
+        <div
+          className="admin-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginRight: 20,
+          }}
+        >
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed((s) => !s)}
+            style={{ fontSize: 16, width: 64, height: 64 }}
+          />
+          <Dropdown
+            menu={{
+              items: itemsDropdown,
+              onClick: handleMenuClick,
+            }}
+            trigger={["click"]}
+          >
+            <Space style={{ cursor: "pointer", paddingRight: 8 }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>
+                  {user?.fullName || "Admin"}
+                </div>
+                <div style={{ fontSize: 12, color: "#666" }}>
+                  {user?.email || "admin@toeic-rise.com"}
+                </div>
+              </div>
+              <Avatar src={user?.avatar} style={{ backgroundColor: "#1890ff" }}>
+                {user?.fullName?.charAt(0)?.toUpperCase() || "A"}
+              </Avatar>
+            </Space>
+          </Dropdown>
+        </div>
+
+        <Content style={{ padding: 15 }}>
+          {/* Nội dung trang con sẽ render ở đây */}
+          <Outlet />
+        </Content>
+      </Layout>
+    </Layout>
+  );
 }

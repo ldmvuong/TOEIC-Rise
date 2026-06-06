@@ -8,7 +8,7 @@ import {
   SparklesIcon,
   WrenchScrewdriverIcon,
   ChatBubbleLeftRightIcon,
-} from "@heroicons/react/24/outline";   
+} from "@heroicons/react/24/outline";
 import {
   callFetchFlashcardReview,
   evaluateFlashcardSentenceStream,
@@ -56,47 +56,67 @@ const FlashcardSentencePracticePage = () => {
     const text = (evaluationText ?? "").replace(/\r\n/g, "\n").trim();
     if (!text) return null;
 
-    const tryParseJsonFromMarkdownFence = () => {
-      // Match ```json ... ``` (or ``` ... ```)
+    const formatParsedObject = (obj) => {
+      if (!obj || typeof obj !== "object") return null;
+
+      const suggestionText = (obj.suggestion ?? "").toString().trim();
+      const improveText = (obj.improvement ?? "").toString().trim();
+      const commentText = (obj.remark ?? "").toString().trim();
+      const score =
+        obj.score !== undefined && obj.score !== null
+          ? Number(obj.score)
+          : null;
+
+      const improvements = improveText
+        ? improveText
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .flatMap((l) => l.split("•").map((x) => x.trim()))
+            .map((l) => l.replace(/^[-*•]\s+/, ""))
+            .filter(Boolean)
+        : [];
+
+      return {
+        score: Number.isFinite(score) ? score : null,
+        suggestionText,
+        improvements,
+        commentText,
+      };
+    };
+
+    const tryParseMarkdownFence = () => {
       const fence =
         text.match(/```json\s*([\s\S]*?)\s*```/i) ||
         text.match(/```\s*([\s\S]*?)\s*```/);
       if (!fence?.[1]) return null;
-      const raw = fence[1].trim();
       try {
-        const obj = JSON.parse(raw);
-        if (!obj || typeof obj !== "object") return null;
-        const suggestionText = (obj.suggestion ?? "").toString().trim();
-        const improveText = (obj.improvement ?? "").toString().trim();
-        const commentText = (obj.remark ?? "").toString().trim();
-        const score =
-          obj.score !== undefined && obj.score !== null
-            ? Number(obj.score)
-            : null;
-
-        const improvements = improveText
-          ? improveText
-              .split("\n")
-              .map((l) => l.trim())
-              .filter(Boolean)
-              .flatMap((l) => l.split("•").map((x) => x.trim()))
-              .map((l) => l.replace(/^[-*•]\s+/, ""))
-              .filter(Boolean)
-          : [];
-
-        return {
-          score: Number.isFinite(score) ? score : null,
-          suggestionText,
-          improvements,
-          commentText,
-        };
+        return formatParsedObject(JSON.parse(fence[1].trim()));
       } catch {
         return null;
       }
     };
 
-    const parsedJson = tryParseJsonFromMarkdownFence();
-    if (parsedJson) return parsedJson;
+    const tryParseDirectJson = () => {
+      // Tìm vị trí dấu { đầu tiên và dấu } cuối cùng để tránh tạp chất văn bản bên ngoài nếu có
+      const startIdx = text.indexOf("{");
+      const endIdx = text.lastIndexOf("}");
+      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        const jsonRaw = text.slice(startIdx, endIdx + 1);
+        try {
+          return formatParsedObject(JSON.parse(jsonRaw));
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    };
+
+    const parsedMarkdown = tryParseMarkdownFence();
+    if (parsedMarkdown) return parsedMarkdown;
+
+    const parsedDirect = tryParseDirectJson();
+    if (parsedDirect) return parsedDirect;
 
     const findIndex = (re) => {
       const m = text.match(re);
@@ -130,7 +150,10 @@ const FlashcardSentencePracticePage = () => {
       return raw.slice((m.index ?? 0) + m[0].length).trim();
     };
 
-    const suggestionText = extractAfterLabel(suggestionRaw, /Suggestion\s*:\s*/i);
+    const suggestionText = extractAfterLabel(
+      suggestionRaw,
+      /Suggestion\s*:\s*/i,
+    );
     const improveText = extractAfterLabel(
       improveRaw,
       /(?:CẢI\s*THIỆN|CAI\s*THIEN)\s*:\s*/i,
@@ -197,7 +220,10 @@ const FlashcardSentencePracticePage = () => {
         },
         onError: (err) => {
           setEvaluating(false);
-          message.error(err?.message || "Unable to evaluate the sentence. Please try again.");
+          message.error(
+            err?.message ||
+              "Unable to evaluate the sentence. Please try again.",
+          );
         },
       },
     );
@@ -215,7 +241,9 @@ const FlashcardSentencePracticePage = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="text-center text-gray-600">
-          <p className="mb-4">No vocabulary terms available for sentence practice.</p>
+          <p className="mb-4">
+            No vocabulary terms available for sentence practice.
+          </p>
           <button
             onClick={() => navigate(`/flashcards/${id}`)}
             className="px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600"
@@ -236,34 +264,34 @@ const FlashcardSentencePracticePage = () => {
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate(`/flashcards/${id}`)}
-              className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
+            className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
           >
             <ArrowLeftIcon className="w-6 h-6" />
-              <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline">Back</span>
           </button>
           <span className="text-gray-600 font-medium">
             {currentIndex + 1} / {total}
           </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePrev}
-                disabled={currentIndex <= 0}
-                className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">Previous</span>
-                <ArrowLeftIcon className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={currentIndex >= total - 1}
-                className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ArrowRightIcon className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={currentIndex <= 0}
+              className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+            >
+              <span className="hidden sm:inline">Previous</span>
+              <ArrowLeftIcon className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={currentIndex >= total - 1}
+              className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ArrowRightIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Instruction */}
@@ -384,6 +412,15 @@ const FlashcardSentencePracticePage = () => {
                       {evaluationText}
                     </p>
                   )}
+
+                {evaluationSections.score !== null && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold text-gray-950">Score:</span>
+                    <span className="px-2.5 py-0.5 bg-orange-100 text-orange-700 rounded-full font-bold text-sm">
+                      {evaluationSections.score} / 10
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
