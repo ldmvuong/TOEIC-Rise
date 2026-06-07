@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAppSelector } from "@/redux/hooks";
 import {
   getReportById,
@@ -77,11 +77,53 @@ const statusColor = {
 };
 
 /** @returns {"listeningReading" | "speaking" | "writing"} */
-const getReportTestType = (partName) => {
+const getReportTestType = (testType, partName) => {
+  const normalizedType = String(testType || "")
+    .trim()
+    .toUpperCase();
+  if (normalizedType === "SPEAKING") return "speaking";
+  if (normalizedType === "WRITING") return "writing";
+  if (normalizedType === "LISTENING_AND_READING") return "listeningReading";
+
   const name = String(partName || "").trim();
   if (/^speaking\s+part/i.test(name)) return "speaking";
   if (/^writing\s+part/i.test(name)) return "writing";
   return "listeningReading";
+};
+
+const getReportTestTypeLabel = (testType) => {
+  switch (
+    String(testType || "")
+      .trim()
+      .toUpperCase()
+  ) {
+    case "SPEAKING":
+      return "Speaking";
+    case "WRITING":
+      return "Writing";
+    case "LISTENING_AND_READING":
+      return "Listening and Reading";
+    default:
+      return testType || "-";
+  }
+};
+
+const getReportTestDetailPath = (testType, testId) => {
+  if (testId == null) return null;
+
+  switch (
+    String(testType || "")
+      .trim()
+      .toUpperCase()
+  ) {
+    case "SPEAKING":
+      return `/admin/speaking-tests/${testId}`;
+    case "WRITING":
+      return `/admin/writing-tests/${testId}`;
+    case "LISTENING_AND_READING":
+    default:
+      return `/admin/tests/${testId}`;
+  }
 };
 
 const formatApiErrorMessage = (err, fallback = "Unable to update report") => {
@@ -226,8 +268,18 @@ const ReportDetailPage = () => {
   }, [id, isAdmin]);
 
   const reportTestType = useMemo(
-    () => getReportTestType(report?.partName),
-    [report?.partName],
+    () => getReportTestType(report?.testType, report?.partName),
+    [report?.testType, report?.partName],
+  );
+
+  const reportTestTypeLabel = useMemo(
+    () => getReportTestTypeLabel(report?.testType),
+    [report?.testType],
+  );
+
+  const reportTestDetailPath = useMemo(
+    () => getReportTestDetailPath(report?.testType, report?.testId),
+    [report?.testType, report?.testId],
   );
 
   const partNumber = useMemo(() => {
@@ -839,6 +891,9 @@ const ReportDetailPage = () => {
     status: reportStatus,
     description,
     reasons,
+    testId,
+    testName,
+    testType,
     partName,
     questionId,
     questionPosition,
@@ -984,6 +1039,34 @@ const ReportDetailPage = () => {
           <div className="mt-1 text-sm text-gray-500">
             ID: {questionReportId || id} • Part: {partName || "N/A"}
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900">Test</h2>
+        </div>
+        <div className="p-6">
+          <Descriptions column={1} size="middle" bordered>
+            <Descriptions.Item label="Test ID">
+              {testId ?? "-"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Test Name">
+              {reportTestDetailPath ? (
+                <RouterLink
+                  to={reportTestDetailPath}
+                  className="text-blue-600 hover:underline"
+                >
+                  {testName || "-"}
+                </RouterLink>
+              ) : (
+                testName || "-"
+              )}
+            </Descriptions.Item>
+            <Descriptions.Item label="Test Type">
+              <Tag color="blue">{reportTestTypeLabel}</Tag>
+            </Descriptions.Item>
+          </Descriptions>
         </div>
       </div>
 
