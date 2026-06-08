@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, message, notification, Space, Switch } from "antd";
+import { Button, message, Modal, notification, Space, Switch } from "antd";
 import { EditOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
 import {
   getAllBlogCategories,
-  inactiveBlogCategory,
+  changeBlogCategoryStatus,
   updateBlogCategory,
 } from "@/api/api";
 import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
@@ -29,34 +29,50 @@ const BlogCategoriesPage = () => {
     const id = record?.id;
     if (id == null) return;
 
-    setTogglingId(id);
-    try {
-      if (!checked) {
-        await inactiveBlogCategory(id);
-        message.success("Blog category set to inactive");
-      } else {
-        await updateBlogCategory(id, {
-          name: record.name?.trim(),
-          slug: String(record.slug ?? "")
-            .trim()
-            .toLowerCase(),
-          active: true,
-        });
-        message.success("Blog category set to active");
-      }
-      reloadTable();
-    } catch (e) {
-      const errorMessage =
-        e?.message ||
-        e?.response?.data?.message ||
-        "Could not update active status";
-      notification.error({
-        message: "Update failed",
-        description: errorMessage,
-      });
-    } finally {
-      setTogglingId(null);
-    }
+    const nextStatusText = checked ? "active" : "inactive";
+
+    Modal.confirm({
+      title: "Confirm status change",
+      content: (
+        <div>
+          Are you sure you want to set <strong>{record.name}</strong> to{" "}
+          <strong>{nextStatusText}</strong>?
+        </div>
+      ),
+      okText: "Confirm",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          if (!checked) {
+            setTogglingId(id);
+            await changeBlogCategoryStatus(id);
+            message.success("Blog category set to inactive");
+          } else {
+            await updateBlogCategory(id, {
+              name: record.name?.trim(),
+              slug: String(record.slug ?? "")
+                .trim()
+                .toLowerCase(),
+              active: true,
+            });
+            message.success("Blog category set to active");
+          }
+          reloadTable();
+        } catch (e) {
+          const errorMessage =
+            e?.message ||
+            e?.response?.data?.message ||
+            "Could not update active status";
+          notification.error({
+            message: "Update failed",
+            description: errorMessage,
+          });
+          throw e;
+        } finally {
+          setTogglingId(null);
+        }
+      },
+    });
   };
 
   const columns = [

@@ -289,7 +289,7 @@ export const createBlogCategory = (payload) =>
 export const updateBlogCategory = (id, payload) =>
   api.put(`/staff/blog-categories/${id}`, payload);
 
-export const inactiveBlogCategory = (id) =>
+export const changeBlogCategoryStatus = (id) =>
   api.patch(`/staff/blog-categories/${id}`);
 
 export const getBlogCategoryById = (id) =>
