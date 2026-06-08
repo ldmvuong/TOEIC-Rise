@@ -4,11 +4,7 @@ import { Button, message, Modal, notification, Space, Switch } from "antd";
 import { EditOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import DataTable from "@/components/admin/data-table";
 import queryString from "query-string";
-import {
-  getAllBlogCategories,
-  changeBlogCategoryStatus,
-  updateBlogCategory,
-} from "@/api/api";
+import { getAllBlogCategories, changeBlogCategoryStatus } from "@/api/api";
 import ModalCreateBlogCategory from "@/components/admin/blog-category/create.blog-category.jsx";
 import ModalUpdateBlogCategory from "@/components/admin/blog-category/update.blog-category.jsx";
 
@@ -42,21 +38,10 @@ const BlogCategoriesPage = () => {
       okText: "Confirm",
       cancelText: "Cancel",
       onOk: async () => {
+        setTogglingId(id);
         try {
-          if (!checked) {
-            setTogglingId(id);
-            await changeBlogCategoryStatus(id);
-            message.success("Blog category set to inactive");
-          } else {
-            await updateBlogCategory(id, {
-              name: record.name?.trim(),
-              slug: String(record.slug ?? "")
-                .trim()
-                .toLowerCase(),
-              active: true,
-            });
-            message.success("Blog category set to active");
-          }
+          await changeBlogCategoryStatus(id);
+          message.success(`Blog category set to ${nextStatusText}`);
           reloadTable();
         } catch (e) {
           const errorMessage =
