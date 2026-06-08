@@ -1,5 +1,9 @@
-import { ModalForm, ProFormSwitch, ProFormText } from "@ant-design/pro-components";
-import { ConfigProvider, Form, message, notification } from "antd";
+import {
+  ModalForm,
+  ProFormSwitch,
+  ProFormText,
+} from "@ant-design/pro-components";
+import { ConfigProvider, Form, message, Modal, notification } from "antd";
 import { useEffect } from "react";
 import { updateBlogCategory } from "@/api/api";
 import {
@@ -14,10 +18,7 @@ const ModalUpdateBlogCategory = (props) => {
 
   useEffect(() => {
     if (openModal && categoryData) {
-      const active =
-        categoryData.active ??
-        categoryData.isActive ??
-        true;
+      const active = categoryData.active ?? categoryData.isActive ?? true;
       form.setFieldsValue({
         name: categoryData.name ?? "",
         slug: categoryData.slug ?? "",
@@ -37,21 +38,39 @@ const ModalUpdateBlogCategory = (props) => {
       active: values.active,
     };
 
-    try {
-      await updateBlogCategory(categoryData.id, payload);
-      message.success("Blog category updated successfully");
-      handleReset();
-      reloadTable?.();
-    } catch (e) {
-      const errorMessage =
-        e?.message ||
-        e?.response?.data?.message ||
-        "Failed to update blog category";
-      notification.error({
-        message: "Failed to update blog category",
-        description: errorMessage,
+    return new Promise((resolve, reject) => {
+      Modal.confirm({
+        title: "Confirm blog category update",
+        content: (
+          <div>
+            Are you sure you want to update <strong>{payload.name}</strong>?
+          </div>
+        ),
+        okText: "Update",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            await updateBlogCategory(categoryData.id, payload);
+            message.success("Blog category updated successfully");
+            handleReset();
+            reloadTable?.();
+            resolve(true);
+          } catch (e) {
+            const errorMessage =
+              e?.message ||
+              e?.response?.data?.message ||
+              "Failed to update blog category";
+            notification.error({
+              message: "Failed to update blog category",
+              description: errorMessage,
+            });
+            reject(e);
+            throw e;
+          }
+        },
+        onCancel: () => resolve(false),
       });
-    }
+    });
   };
 
   const handleReset = () => {
