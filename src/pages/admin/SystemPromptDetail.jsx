@@ -19,6 +19,7 @@ import SystemPromptTestModal from "@/components/admin/system-prompts/SystemPromp
 import SystemPromptQAndATestModal from "@/components/admin/system-prompts/SystemPromptQAndATestModal";
 import SystemPromptExplanationTestModal from "@/components/admin/system-prompts/SystemPromptExplanationTestModal";
 import SystemPromptBlogSummarizationTestModal from "@/components/admin/system-prompts/SystemPromptBlogSummarizationTestModal";
+import SystemPromptWritingAssessmentTestModal from "@/components/admin/system-prompts/SystemPromptWritingAssessmentTestModal";
 
 const typeToEnumMap = {
   chatbot: "CHATBOT",
@@ -54,6 +55,8 @@ const SystemPromptDetailPage = () => {
   const [qnaTestModalOpen, setQnaTestModalOpen] = useState(false);
   const [explainTestModalOpen, setExplainTestModalOpen] = useState(false);
   const [blogSummaryTestModalOpen, setBlogSummaryTestModalOpen] =
+    useState(false);
+  const [writingAssessmentTestModalOpen, setWritingAssessmentTestModalOpen] =
     useState(false);
 
   const featureTypeEnum = useMemo(() => {
@@ -242,6 +245,11 @@ const SystemPromptDetailPage = () => {
               Test Blog Summary
             </Button>
           )}
+          {featureTypeEnum === "WRITING_ASSESSMENT" && (
+            <Button onClick={() => setWritingAssessmentTestModalOpen(true)}>
+              Test Writing Assessment
+            </Button>
+          )}
           <Button type="primary" onClick={handleStartEdit}>
             Edit
           </Button>
@@ -307,6 +315,14 @@ const SystemPromptDetailPage = () => {
         <SystemPromptBlogSummarizationTestModal
           open={blogSummaryTestModalOpen}
           onClose={() => setBlogSummaryTestModalOpen(false)}
+          systemPromptContent={prompt.content || ""}
+        />
+      )}
+
+      {featureTypeEnum === "WRITING_ASSESSMENT" && (
+        <SystemPromptWritingAssessmentTestModal
+          open={writingAssessmentTestModalOpen}
+          onClose={() => setWritingAssessmentTestModalOpen(false)}
           systemPromptContent={prompt.content || ""}
         />
       )}
