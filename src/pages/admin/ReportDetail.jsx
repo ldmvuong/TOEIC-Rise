@@ -977,24 +977,14 @@ const ReportDetailPage = () => {
     let correctOpt = isEditingQuestion
       ? qCorrect
       : getDisplayQuestionCorrectOption();
-    const opts = isEditingQuestion ? qOptions : getDisplayQuestionOptions();
-    const optionsList = Array.isArray(opts)
-      ? opts.map((o) => (o != null ? String(o) : ""))
-      : [];
-    const content = isEditingQuestion
-      ? (qContent ?? "")
-      : (getDisplayQuestionContent() ?? "");
-    const payload = {
-      passage: groupPassage ?? report?.questionGroupPassage ?? "",
-      transcript: groupTranscript ?? report?.questionGroupTranscript ?? "",
-      content,
-      options: optionsList,
-      correctOption: correctOpt.trim(),
-    };
+    if (!questionId) {
+      message.error("Unable to generate explanation without a question ID");
+      return;
+    }
     setGeneratedExplanationText("");
     setGenerateExplanationModalOpen(true);
     setGeneratingExplanation(true);
-    generateExplanationStream(payload, {
+    generateExplanationStream(questionId, {
       onChunk: (text) => setGeneratedExplanationText((prev) => prev + text),
       onDone: () => setGeneratingExplanation(false),
       onError: (err) => {

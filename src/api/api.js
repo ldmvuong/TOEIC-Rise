@@ -360,7 +360,7 @@ export const updateQuestionReport = (id, payload) =>
   api.put(`/staff/question-reports/${id}`, payload);
 
 export const generateExplanationStream = (
-  payload,
+  questionId,
   { onChunk, onDone, onError },
 ) => {
   const backendUrl =
@@ -369,16 +369,13 @@ export const generateExplanationStream = (
     window.location.origin;
   const token = localStorage.getItem("access_token");
 
-  const formData = new FormData();
-  formData.append("passage", payload.passage ?? "");
-  formData.append("transcript", payload.transcript ?? "");
-  formData.append("content", payload.content ?? "");
-  if (Array.isArray(payload.options)) {
-    payload.options.forEach((option, index) => {
-      formData.append(`options[${index}]`, option);
-    });
+  if (questionId == null || questionId === "") {
+    onError?.(new Error("Question ID is required"));
+    return;
   }
-  formData.append("correctOption", payload.correctOption);
+
+  const formData = new FormData();
+  formData.append("questionId", String(questionId));
 
   fetch(`${backendUrl}/staff/chatbot/generate-explanation`, {
     method: "POST",
