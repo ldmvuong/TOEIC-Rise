@@ -3,9 +3,10 @@ import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { Modal, Spin, message } from "antd";
 import MicRecorder from "mic-recorder-to-mp3";
 import {
-  buildSpeakingTestSubmissionFormData,
   getSpeakingExam,
   submitSpeakingTestExam,
+  uploadCloudinaryAudio,
+  deleteCloudinaryAudio,
 } from "../../api/api";
 import { buildTestResultPath } from "../../utils/testResultNavigation";
 import PassageDisplay from "../../components/exam/PassageDisplay";
@@ -121,12 +122,19 @@ const DoSpeakingTest = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [sessionStartedAt, setSessionStartedAt] = useState(null);
+  const [practiceTimeSpent, setPracticeTimeSpent] = useState(0);
 
   const answerRecorderRef = useRef(null);
   const answerRecordingTargetIdRef = useRef(null);
   const answerRecordingRef = useRef(false);
   const answerAudioByQuestionIdRef = useRef({});
+
+  const [answerUrlByQuestionId, setAnswerUrlByQuestionId] = useState({});
+  const answerUrlByQuestionIdRef = useRef({});
+  const needsUploadRef = useRef({});
+  const uploadPromiseRef = useRef({});
+  const [uploadingQids, setUploadingQids] = useState({});
+
   const isSubmittedRef = useRef(false);
   const prevPhaseTypeRef = useRef(phaseType);
 
@@ -134,6 +142,20 @@ const DoSpeakingTest = () => {
   const allowNavigationRef = useRef(false);
   const finishedRef = useRef(false);
   const fullTestProgressRef = useRef(null);
+
+  const parts = testData?.partResponses || [];
+  const currentPart = parts[currentPartIndex];
+  const currentGroup = currentPart?.questionGroupResponses?.[currentGroupIndex];
+  const questions = currentGroup?.questionDetailResponses || [];
+  const currentQuestion = questions[currentQuestionIndex];
+  const partNumber = parsePartNumber(currentPart?.partName);
+  const questionPosition = currentQuestion?.position || 0;
+
+  const currentQuestionRef = useRef(currentQuestion);
+
+  useEffect(() => {
+    currentQuestionRef.current = currentQuestion;
+  }, [currentQuestion]);
 
   const shouldBlockNav =
     !!isFullTest &&
@@ -171,13 +193,25 @@ const DoSpeakingTest = () => {
   }, [answerAudioByQuestionId]);
 
   useEffect(() => {
-    if (micCheckComplete && sessionStartedAt == null) {
-      setSessionStartedAt(Date.now());
-    }
-  }, [micCheckComplete, sessionStartedAt]);
+    if (isFullTest || finished || isSubmitted || !micCheckComplete) return;
+    const timer = setInterval(() => {
+      setPracticeTimeSpent((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isFullTest, finished, isSubmitted, micCheckComplete]);
 
   const handleConfirmLeave = () => {
     setShowLeaveConfirm(false);
+
+    const uploadedUrls = Object.values(answerUrlByQuestionIdRef.current).filter(Boolean);
+    uploadedUrls.forEach((url) => {
+      deleteCloudinaryAudio({ audioUrl: url }).catch((e) =>
+        console.error("Failed to delete audio on leave", e),
+      );
+    });
+    answerUrlByQuestionIdRef.current = {};
+    setAnswerUrlByQuestionId({});
+
     if (isFullTest && testId && testData) {
       const key = getFullTestStorageKey(testId, learnerTestType);
       const payload = {
@@ -365,14 +399,6 @@ const DoSpeakingTest = () => {
     init();
   }, [testId, navigate, partIds.join(",")]);
 
-  const parts = testData?.partResponses || [];
-  const currentPart = parts[currentPartIndex];
-  const currentGroup = currentPart?.questionGroupResponses?.[currentGroupIndex];
-  const questions = currentGroup?.questionDetailResponses || [];
-  const currentQuestion = questions[currentQuestionIndex];
-  const partNumber = parsePartNumber(currentPart?.partName);
-  const questionPosition = currentQuestion?.position || 0;
-
   const currentTiming = useMemo(
     () => getQuestionTiming(partNumber, questionPosition),
     [partNumber, questionPosition],
@@ -465,7 +491,14 @@ const DoSpeakingTest = () => {
           return currentTiming.answer;
         }
 
+        const prevQid = currentQuestionRef.current?.id;
         const hasNext = moveToNextQuestion();
+        if (prevQid) {
+          void (async () => {
+            await flushAnswerRecording();
+            handleUploadAnswer(prevQid);
+          })();
+        }
         if (!hasNext) {
           setFinished(true);
           return 0;
@@ -488,7 +521,13 @@ const DoSpeakingTest = () => {
   const flushAnswerRecording = useCallback(async () => {
     const recorder = answerRecorderRef.current;
     const qid = answerRecordingTargetIdRef.current;
+    
     if (!recorder || !answerRecordingRef.current || qid == null) return;
+
+    answerRecorderRef.current = null;
+    answerRecordingTargetIdRef.current = null;
+    setAnswerRecording(false);
+
     try {
       setAnswerEncoding(true);
       const [, blob] = await recorder.stop().getMp3();
@@ -496,16 +535,56 @@ const DoSpeakingTest = () => {
         const next = { ...answerAudioByQuestionIdRef.current, [qid]: blob };
         answerAudioByQuestionIdRef.current = next;
         setAnswerAudioByQuestionId(next);
+        needsUploadRef.current[qid] = true;
       }
     } catch (e) {
       console.error(e);
       message.error(e?.message || "Unable to save the recording.");
     } finally {
-      answerRecorderRef.current = null;
-      answerRecordingTargetIdRef.current = null;
-      setAnswerRecording(false);
       setAnswerEncoding(false);
     }
+  }, []);
+
+  const handleUploadAnswer = useCallback(async (qid) => {
+    if (!needsUploadRef.current[qid]) return;
+
+    if (uploadPromiseRef.current[qid]) {
+      return uploadPromiseRef.current[qid];
+    }
+
+    const blob = answerAudioByQuestionIdRef.current[qid];
+    if (!blob) return;
+
+    const uploadTask = async () => {
+      try {
+        setUploadingQids((prev) => ({ ...prev, [qid]: true }));
+        const oldUrl = answerUrlByQuestionIdRef.current[qid];
+        if (oldUrl) {
+          await deleteCloudinaryAudio({ audioUrl: oldUrl });
+        }
+
+        const fd = new FormData();
+        fd.append("audio", blob, `speaking-q${qid}.mp3`);
+        const res = await uploadCloudinaryAudio(fd);
+        const newUrl = res?.data;
+
+        if (newUrl) {
+          const nextMap = { ...answerUrlByQuestionIdRef.current, [qid]: newUrl };
+          answerUrlByQuestionIdRef.current = nextMap;
+          setAnswerUrlByQuestionId(nextMap);
+        }
+        needsUploadRef.current[qid] = false;
+      } catch (err) {
+        console.error("Upload failed", err);
+        message.error("Failed to upload audio to cloud.");
+      } finally {
+        setUploadingQids((prev) => ({ ...prev, [qid]: false }));
+        delete uploadPromiseRef.current[qid];
+      }
+    };
+
+    uploadPromiseRef.current[qid] = uploadTask();
+    return uploadPromiseRef.current[qid];
   }, []);
 
   useEffect(() => {
@@ -523,34 +602,36 @@ const DoSpeakingTest = () => {
   const submitSpeaking = useCallback(async () => {
     if (!testData || !testId || isSubmitting || isSubmitted) return;
 
-    const orderedQuestions = collectSpeakingQuestionsInOrder(testData);
-    const map = answerAudioByQuestionIdRef.current;
+    await flushAnswerRecording();
+    const qid = currentQuestionRef.current?.id;
+    if (qid && needsUploadRef.current[qid]) {
+      handleUploadAnswer(qid);
+    }
 
-    const timeSpent = isFullTest
-      ? Math.max(1, FULL_TEST_SECONDS - fullRemaining)
-      : Math.max(
-          1,
-          sessionStartedAt
-            ? Math.round((Date.now() - sessionStartedAt) / 1000)
-            : 1,
-        );
-
-    const fd = buildSpeakingTestSubmissionFormData({
-      testId: Number(testId),
-      timeSpent,
-      parts: isFullTest
-        ? null
-        : (testData.partResponses || []).map((p) => p.partName),
-      answers: orderedQuestions.map((q) => ({
-        questionId: q.id,
-        blob: map[q.id],
-        filename: `speaking-q${q.id}.mp3`,
-      })),
-    });
-
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      const res = await submitSpeakingTestExam(fd);
+      await Promise.all(Object.values(uploadPromiseRef.current));
+      
+      const orderedQuestions = collectSpeakingQuestionsInOrder(testData);
+      const urlMap = answerUrlByQuestionIdRef.current;
+
+      const timeSpent = isFullTest
+        ? Math.max(1, FULL_TEST_SECONDS - fullRemaining)
+        : Math.max(1, practiceTimeSpent);
+
+      const payload = {
+        testId: Number(testId),
+        timeSpent,
+        parts: isFullTest
+          ? null
+          : (testData.partResponses || []).map((p) => p.partName),
+        answers: orderedQuestions.map((q) => ({
+          questionId: q.id,
+          audioUrl: urlMap[q.id] || "",
+        })),
+      };
+
+      const res = await submitSpeakingTestExam(payload);
       if (res?.data) {
         setIsSubmitted(true);
         setTestResult(res.data);
@@ -564,7 +645,6 @@ const DoSpeakingTest = () => {
       }
     } catch (err) {
       message.error(err?.message || "Unable to submit the Speaking test");
-    } finally {
       setIsSubmitting(false);
     }
   }, [
@@ -574,8 +654,9 @@ const DoSpeakingTest = () => {
     isSubmitted,
     isFullTest,
     fullRemaining,
-    sessionStartedAt,
+    practiceTimeSpent,
     learnerTestType,
+    handleUploadAnswer,
   ]);
 
   useEffect(() => {
@@ -597,43 +678,55 @@ const DoSpeakingTest = () => {
   const handlePrevious = () => {
     if (isFullTest) return;
     if (!currentPart) return;
-    void (async () => {
-      await flushAnswerRecording();
-      const groups = currentPart.questionGroupResponses || [];
-      if (currentQuestionIndex > 0) {
-        setCurrentQuestionIndex((v) => v - 1);
-        return;
-      }
-      if (currentGroupIndex > 0) {
-        const prevGroupIndex = currentGroupIndex - 1;
-        const prevQuestions =
-          groups[prevGroupIndex]?.questionDetailResponses?.length || 0;
-        setCurrentGroupIndex(prevGroupIndex);
-        setCurrentQuestionIndex(Math.max(0, prevQuestions - 1));
-        return;
-      }
-      if (currentPartIndex > 0) {
-        const prevPartIndex = currentPartIndex - 1;
-        const prevGroups = parts[prevPartIndex]?.questionGroupResponses || [];
-        const lastGroupIndex = Math.max(0, prevGroups.length - 1);
-        const lastQuestionIndex = Math.max(
-          0,
-          (prevGroups[lastGroupIndex]?.questionDetailResponses?.length || 1) - 1,
-        );
-        setCurrentPartIndex(prevPartIndex);
-        setCurrentGroupIndex(lastGroupIndex);
-        setCurrentQuestionIndex(lastQuestionIndex);
-      }
-    })();
+    
+    const qid = currentQuestion?.id;
+    if (qid) {
+      void (async () => {
+        await flushAnswerRecording();
+        handleUploadAnswer(qid);
+      })();
+    }
+
+    const groups = currentPart.questionGroupResponses || [];
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((v) => v - 1);
+      return;
+    }
+    if (currentGroupIndex > 0) {
+      const prevGroupIndex = currentGroupIndex - 1;
+      const prevQuestions =
+        groups[prevGroupIndex]?.questionDetailResponses?.length || 0;
+      setCurrentGroupIndex(prevGroupIndex);
+      setCurrentQuestionIndex(Math.max(0, prevQuestions - 1));
+      return;
+    }
+    if (currentPartIndex > 0) {
+      const prevPartIndex = currentPartIndex - 1;
+      const prevGroups = parts[prevPartIndex]?.questionGroupResponses || [];
+      const lastGroupIndex = Math.max(0, prevGroups.length - 1);
+      const lastQuestionIndex = Math.max(
+        0,
+        (prevGroups[lastGroupIndex]?.questionDetailResponses?.length || 1) - 1,
+      );
+      setCurrentPartIndex(prevPartIndex);
+      setCurrentGroupIndex(lastGroupIndex);
+      setCurrentQuestionIndex(lastQuestionIndex);
+    }
   };
 
   const handleNext = () => {
     if (isFullTest) return;
-    void (async () => {
-      await flushAnswerRecording();
-      const hasNext = moveToNextQuestion();
-      if (!hasNext) setFinished(true);
-    })();
+    
+    const qid = currentQuestion?.id;
+    if (qid) {
+      void (async () => {
+        await flushAnswerRecording();
+        handleUploadAnswer(qid);
+      })();
+    }
+
+    const hasNext = moveToNextQuestion();
+    if (!hasNext) setFinished(true);
   };
 
   const currentQuestionNote = currentQuestion?.id
@@ -686,15 +779,33 @@ const DoSpeakingTest = () => {
     await flushAnswerRecording();
   };
 
-  const handleAnswerRecordClear = () => {
+  const handleAnswerRecordClear = async () => {
     if (answerRecording || answerEncoding) return;
     if (!currentQuestion?.id) return;
+    const qid = currentQuestion.id;
+
     setAnswerAudioByQuestionId((prev) => {
       const next = { ...prev };
-      delete next[currentQuestion.id];
+      delete next[qid];
       answerAudioByQuestionIdRef.current = next;
       return next;
     });
+
+    const oldUrl = answerUrlByQuestionIdRef.current[qid];
+    if (oldUrl) {
+      try {
+        await deleteCloudinaryAudio({ audioUrl: oldUrl });
+      } catch (err) {
+        console.error("Failed to delete audio from cloud", err);
+      }
+      setAnswerUrlByQuestionId((prev) => {
+        const next = { ...prev };
+        delete next[qid];
+        answerUrlByQuestionIdRef.current = next;
+        return next;
+      });
+    }
+    needsUploadRef.current[qid] = false;
   };
 
   const handleMicCheckStart = async () => {
@@ -877,9 +988,12 @@ const DoSpeakingTest = () => {
                   </div>
                 </>
               ) : (
-                <div className="text-sm text-gray-600">
-                  Practice: Speaking timer does not apply
+              <>
+                <div className="text-xs text-gray-500">Elapsed time</div>
+                <div className="text-lg font-semibold text-emerald-600">
+                  {formatTime(practiceTimeSpent)}
                 </div>
+              </>
               )}
             </div>
           </div>
@@ -977,11 +1091,16 @@ const DoSpeakingTest = () => {
                   answerRecording ||
                   answerEncoding ||
                   isSubmitting ||
-                  isSubmitted
+                  isSubmitted ||
+                  uploadingQids[currentQuestion?.id]
                 }
                 className="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {answerRecording ? "Recording..." : "Start recording"}
+                {uploadingQids[currentQuestion?.id]
+                  ? "Uploading..."
+                  : answerRecording
+                    ? "Recording..."
+                    : "Start recording"}
               </button>
               <button
                 type="button"
@@ -1001,7 +1120,8 @@ const DoSpeakingTest = () => {
                   answerEncoding ||
                   !currentAnswerBlob ||
                   isSubmitting ||
-                  isSubmitted
+                  isSubmitted ||
+                  uploadingQids[currentQuestion?.id]
                 }
                 className="px-4 py-2 rounded-lg border border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
