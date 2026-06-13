@@ -589,38 +589,8 @@ export const submitTestExam = (payload) =>
 export const submitWritingTestExam = (payload) =>
   api.post("/learner/user-tests/submit-writing-test", payload);
 
-/**
- * Multipart body for POST /learner/user-tests/submit-speaking-test
- * (Spring @ModelAttribute SpeakingTestSubmissionRequest).
- * Omit `parts` fields when parts is null/undefined (full test).
- */
-export function buildSpeakingTestSubmissionFormData({
-  testId,
-  timeSpent,
-  parts,
-  answers,
-}) {
-  const fd = new FormData();
-  fd.append("testId", String(testId));
-  fd.append("timeSpent", String(Math.max(1, Number(timeSpent) || 0)));
-  if (parts != null && Array.isArray(parts)) {
-    parts.forEach((p) => fd.append("parts", String(p)));
-  }
-  answers.forEach((a, i) => {
-    fd.append(`answers[${i}].questionId`, String(a.questionId));
-    if (a.blob instanceof Blob && a.blob.size > 0) {
-      fd.append(
-        `answers[${i}].answerAudio`,
-        a.blob,
-        a.filename || `speaking-q${a.questionId}.mp3`,
-      );
-    }
-  });
-  return fd;
-}
-
-export const submitSpeakingTestExam = (formData) =>
-  api.post("/learner/user-tests/submit-speaking-test", formData);
+export const submitSpeakingTestExam = (payload) =>
+  api.post("/learner/user-tests/submit-speaking-test", payload);
 
 export const getUserTestStatisticsResult = (userTestId) =>
   api.get(`/learner/user-tests/${userTestId}`);
@@ -1082,3 +1052,11 @@ export const createUserLearningPath = (slug, level) =>
     null,
     { params: { level } },
   );
+
+export const uploadCloudinaryAudio = (formData) =>
+  api.post("/learner/cloudinary/upload-audio", formData);
+
+export const deleteCloudinaryAudio = (payload) =>
+  api.delete("/learner/cloudinary/delete-audio", {
+    data: payload,
+  });
