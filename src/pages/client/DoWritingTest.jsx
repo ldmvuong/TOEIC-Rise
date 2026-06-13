@@ -71,6 +71,7 @@ const DoWritingTest = () => {
   const [partRemaining, setPartRemaining] = useState(0);
   const [partStartDone, setPartStartDone] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [practiceTimeSpent, setPracticeTimeSpent] = useState(0);
 
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [questionNotes, setQuestionNotes] = useState({});
@@ -86,8 +87,7 @@ const DoWritingTest = () => {
   const isSubmittedRef = useRef(false);
   const fullTestProgressRef = useRef(null);
 
-  const shouldBlockNav =
-    !!isFullTest && !!testData && !isSubmitted;
+  const shouldBlockNav = !!isFullTest && !!testData && !isSubmitted;
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       shouldBlockNav && currentLocation.pathname !== nextLocation.pathname,
@@ -104,6 +104,14 @@ const DoWritingTest = () => {
   useEffect(() => {
     isSubmittedRef.current = isSubmitted;
   }, [isSubmitted]);
+
+  useEffect(() => {
+    if (isFullTest || finished || isSubmitted) return;
+    const timer = setInterval(() => {
+      setPracticeTimeSpent((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isFullTest, finished, isSubmitted]);
 
   const handleConfirmLeave = () => {
     setShowLeaveConfirm(false);
@@ -287,7 +295,8 @@ const DoWritingTest = () => {
   const questions = currentGroup?.questionDetailResponses || [];
   const currentQuestion = questions[currentQuestionIndex];
   const currentPartNumber = parsePartNumber(currentPart?.partName);
-  const canSwapWithinPart = isFullTest && (currentPartNumber === 1 || currentPartNumber === 2);
+  const canSwapWithinPart =
+    isFullTest && (currentPartNumber === 1 || currentPartNumber === 2);
 
   const currentPartQuestionMap = useMemo(() => {
     if (!currentPart) return [];
@@ -387,7 +396,14 @@ const DoWritingTest = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isFullTest, finished, isSubmitted, partStartDone, currentPartIndex, parts.length]);
+  }, [
+    isFullTest,
+    finished,
+    isSubmitted,
+    partStartDone,
+    currentPartIndex,
+    parts.length,
+  ]);
 
   const submitWriting = useCallback(async () => {
     if (!testData || !testId || isSubmitting || isSubmitted) return;
@@ -406,7 +422,9 @@ const DoWritingTest = () => {
 
     const payload = {
       testId: Number(testId),
-      timeSpent: isFullTest ? FULL_TEST_SECONDS - fullRemaining : 1,
+      timeSpent: isFullTest
+        ? FULL_TEST_SECONDS - fullRemaining
+        : practiceTimeSpent,
       parts: isFullTest ? null : testData.partResponses.map((p) => p.partName),
       answers: allAnswers,
     };
@@ -420,7 +438,9 @@ const DoWritingTest = () => {
       }
     } catch (error) {
       message.error(
-        error?.response?.data?.message || error?.message || "Unable to submit the Writing test",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to submit the Writing test",
       );
     } finally {
       setIsSubmitting(false);
@@ -433,6 +453,7 @@ const DoWritingTest = () => {
     questionAnswers,
     isFullTest,
     fullRemaining,
+    practiceTimeSpent,
   ]);
 
   useEffect(() => {
@@ -530,9 +551,7 @@ const DoWritingTest = () => {
                   <div className="text-lg font-semibold text-red-600">
                     {formatTime(fullRemaining)}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    Current part time
-                  </div>
+                  <div className="text-xs text-gray-500">Current part time</div>
                   <div className="text-lg font-semibold text-blue-700">
                     {formatTime(partRemaining)}
                   </div>
@@ -556,7 +575,9 @@ const DoWritingTest = () => {
                     item.questionIndex === currentQuestionIndex;
                   return (
                     <button
-                      key={item.id || `${item.groupIndex}-${item.questionIndex}`}
+                      key={
+                        item.id || `${item.groupIndex}-${item.questionIndex}`
+                      }
                       type="button"
                       onClick={() => {
                         setCurrentGroupIndex(item.groupIndex);
@@ -580,7 +601,9 @@ const DoWritingTest = () => {
         <div className="bg-white border rounded-xl p-5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 min-h-[420px]">
-              <div className="text-sm font-medium text-amber-800 mb-2">Passage</div>
+              <div className="text-sm font-medium text-amber-800 mb-2">
+                Passage
+              </div>
               {currentGroup.passage ? (
                 <PassageDisplay
                   passage={sanitizeHtml(currentGroup.passage)}
@@ -703,7 +726,11 @@ const DoWritingTest = () => {
             disabled={isSubmitting || isSubmitted}
             className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
           >
-            {isSubmitting ? "Submitting..." : isSubmitted ? "Submitted" : "Submit"}
+            {isSubmitting
+              ? "Submitting..."
+              : isSubmitted
+                ? "Submitted"
+                : "Submit"}
           </button>
         </div>
       </div>
@@ -734,7 +761,9 @@ const DoWritingTest = () => {
           <div className="py-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <span className="text-gray-700 font-medium">Total questions:</span>
+                <span className="text-gray-700 font-medium">
+                  Total questions:
+                </span>
                 <span className="text-lg font-semibold text-blue-600">
                   {testResult.totalQuestions}
                 </span>
@@ -750,9 +779,7 @@ const DoWritingTest = () => {
               </div>
 
               <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <span className="text-gray-700 font-medium">
-                  Time spent:
-                </span>
+                <span className="text-gray-700 font-medium">Time spent:</span>
                 <span className="text-lg font-semibold text-orange-600">
                   {formatTime(testResult.timeSpent)}
                 </span>
@@ -765,9 +792,7 @@ const DoWritingTest = () => {
                       ? `${Math.round((testResult.totalAnswers / testResult.totalQuestions) * 100)}%`
                       : "0%"}
                   </div>
-                  <div className="text-sm text-gray-600">
-                    Completion rate
-                  </div>
+                  <div className="text-sm text-gray-600">Completion rate</div>
                 </div>
               </div>
             </div>
@@ -787,8 +812,8 @@ const DoWritingTest = () => {
         <p>Are you sure you want to leave the test page?</p>
         {isFullTest ? (
           <p className="text-blue-600 font-medium mt-2">
-            Your progress will be saved. You can continue the test when you return by choosing
-            the same full test again.
+            Your progress will be saved. You can continue the test when you
+            return by choosing the same full test again.
           </p>
         ) : (
           <p className="text-red-600 font-medium mt-2">
