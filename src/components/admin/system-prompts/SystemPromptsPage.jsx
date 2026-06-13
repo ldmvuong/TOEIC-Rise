@@ -53,16 +53,6 @@ const SystemPromptsPage = ({ featureType, title }) => {
 
   const columns = [
     {
-      title: "No.",
-      key: "index",
-      width: 60,
-      align: "center",
-      render: (_text, _record, index) => (
-        <>{index + 1 + meta.page * meta.pageSize}</>
-      ),
-      hideInSearch: true,
-    },
-    {
       title: "Version",
       dataIndex: "version",
       width: 80,

@@ -148,11 +148,6 @@ const STATIC_MENU = [
     roles: ["ADMIN"],
     children: [
       {
-        key: "/admin/system-prompts/chatbot",
-        label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>,
-        icon: <ApiOutlined />,
-      },
-      {
         key: "/admin/system-prompts/q-and-a",
         label: <Link to="/admin/system-prompts/q-and-a">Q & A Prompts</Link>,
         icon: <ApiOutlined />,
@@ -162,15 +157,6 @@ const STATIC_MENU = [
         label: (
           <Link to="/admin/system-prompts/explanation">
             Explanation Prompts
-          </Link>
-        ),
-        icon: <ApiOutlined />,
-      },
-      {
-        key: "/admin/system-prompts/sentence-assessment",
-        label: (
-          <Link to="/admin/system-prompts/sentence-assessment">
-            Sentence Assessment Prompts
           </Link>
         ),
         icon: <ApiOutlined />,
@@ -200,6 +186,20 @@ const STATIC_MENU = [
             Blog Summarization Prompts
           </Link>
         ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/sentence-assessment",
+        label: (
+          <Link to="/admin/system-prompts/sentence-assessment">
+            Sentence Assessment Prompts
+          </Link>
+        ),
+        icon: <ApiOutlined />,
+      },
+      {
+        key: "/admin/system-prompts/chatbot",
+        label: <Link to="/admin/system-prompts/chatbot">Chatbot Prompts</Link>,
         icon: <ApiOutlined />,
       },
     ],

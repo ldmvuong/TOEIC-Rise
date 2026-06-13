@@ -379,18 +379,15 @@ const QuestionGroupPage = () => {
     };
 
     const handleGenerateExplanation = () => {
-        const optionsList = Array.isArray(questionOptions) ? questionOptions.map((o) => (o != null ? String(o) : "")) : [];
-        const payload = {
-            passage: passage ?? "",
-            transcript: transcript ?? "",
-            content: questionContent ?? "",
-            options: optionsList,
-            correctOption: questionCorrectOption,
-        };
+        const questionId = editingQuestion?.id;
+        if (!questionId) {
+            message.error("Unable to generate explanation without a question ID");
+            return;
+        }
         setGeneratedExplanationText("");
         setGenerateExplanationModalOpen(true);
         setGeneratingExplanation(true);
-        generateExplanationStream(payload, {
+        generateExplanationStream(questionId, {
             onChunk: (text) => setGeneratedExplanationText((prev) => prev + text),
             onDone: () => setGeneratingExplanation(false),
             onError: (err) => {
