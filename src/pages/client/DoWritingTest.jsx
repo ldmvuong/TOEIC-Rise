@@ -557,9 +557,12 @@ const DoWritingTest = () => {
                   </div>
                 </>
               ) : (
-                <div className="text-sm text-gray-600">
-                  Practice: Writing timer does not apply
-                </div>
+                <>
+                  <div className="text-xs text-gray-500">Elapsed time</div>
+                  <div className="text-lg font-semibold text-emerald-600">
+                    {formatTime(practiceTimeSpent)}
+                  </div>
+                </>
               )}
             </div>
           </div>
