@@ -1,12 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Modal,
-  Input,
-  Button,
-  Spin,
-  Select,
-  message as antdMessage,
-} from "antd";
+import { Modal, Button, Spin, Select, message as antdMessage } from "antd";
 import { marked } from "marked";
 import parse from "html-react-parser";
 import api from "@/api/axios-customize";
@@ -15,8 +8,6 @@ marked.setOptions({
   breaks: true,
   gfm: true,
 });
-
-const { TextArea } = Input;
 
 const formatPartLabel = (partName = "") => {
   const raw = String(partName || "").trim();
@@ -44,14 +35,6 @@ const normalizePartOption = (item) => {
     label: item.label ?? formatPartLabel(value),
     value: String(value),
   };
-};
-
-const truncateText = (text = "", maxLength = 140) => {
-  const normalized = String(text || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, maxLength).trimEnd()}...`;
 };
 
 const normalizeQuestionOptions = (options) => {
@@ -104,39 +87,48 @@ const renderRichContent = (text = "") => {
   );
 };
 
-const renderPlainText = (text = "") => {
-  if (!text) return null;
-  const segments = text.split("\n");
-  return segments.map((segment, index) => (
-    <span key={`segment-${index}`}>
-      {segment}
-      {index < segments.length - 1 && <br />}
-    </span>
-  ));
-};
-
-const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const [conversationId, setConversationId] = useState("");
+const SystemPromptSpeakingAssessmentTestModal = ({
+  open,
+  onClose,
+  systemPromptContent,
+}) => {
   const [selectedPart, setSelectedPart] = useState(null);
   const [partOptions, setPartOptions] = useState([]);
   const [partsLoading, setPartsLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questionLoading, setQuestionLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const conversationIdRef = useRef("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [generatedText, setGeneratedText] = useState("");
+
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+
+  const stopRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
+      setIsRecording(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
-      setMessages([]);
-      setInputMessage("");
-      setConversationId("");
       setSelectedPart(null);
       setSelectedQuestion(null);
       setPartOptions([]);
-      conversationIdRef.current = "";
+      setAudioBlob(null);
+      setIsRecording(false);
+      setGeneratedText("");
+      setGenerating(false);
+    } else {
+      stopRecording();
     }
   }, [open]);
 
@@ -161,7 +153,10 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
 
         const nextOptions = rawPartNames
           .map(normalizePartOption)
-          .filter(Boolean);
+          .filter(Boolean)
+          .filter((opt) =>
+            String(opt.value).toUpperCase().includes("SPEAKING"),
+          );
 
         setPartOptions(nextOptions);
       } catch (error) {
@@ -170,7 +165,7 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
         console.error(error);
         setPartOptions([]);
         antdMessage.error(
-          error?.message || "Không thể tải danh sách Part để test Q&A.",
+          error?.message || "Cannot load part list to test assessment.",
         );
       } finally {
         if (!ignore) {
@@ -218,8 +213,7 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
         console.error(error);
         setSelectedQuestion(null);
         antdMessage.error(
-          error?.message ||
-            "Không thể tải câu hỏi ngẫu nhiên cho Part đã chọn.",
+          error?.message || "Cannot load random question for selected Part.",
         );
       } finally {
         if (!ignore) {
@@ -235,20 +229,72 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
     };
   }, [open, selectedPart]);
 
-  useEffect(() => {
-    conversationIdRef.current = conversationId;
-  }, [conversationId]);
+  const startRecording = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        antdMessage.error(
+          "Microphone access is not supported by this browser.",
+        );
+        return;
+      }
+      // If a recorder is already active, stop it first
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          // ignore
+        }
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Prefer a widely supported mimeType if available
+      let options = {};
+      if (typeof MediaRecorder !== "undefined") {
+        const supports =
+          typeof MediaRecorder.isTypeSupported === "function"
+            ? MediaRecorder.isTypeSupported
+            : null;
+        if (supports && supports("audio/webm;codecs=opus")) {
+          options = { mimeType: "audio/webm;codecs=opus" };
+        } else if (supports && supports("audio/webm")) {
+          options = { mimeType: "audio/webm" };
+        }
+      }
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      chunksRef.current = [];
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || sending) return;
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setAudioBlob(null);
+    } catch (err) {
+      console.error(err);
+      antdMessage.error("Could not access microphone.");
+    }
+  };
+
+  const handleAssess = async () => {
+    if (!audioBlob) {
+      antdMessage.warning("Please record an answer to assess.");
+      return;
+    }
 
     if (!selectedQuestion?.id) {
       antdMessage.warning(
-        "Please select a part and wait for a question to load before chatting.",
+        "Please select a part and wait for a question to load before assessing.",
       );
       return;
     }
@@ -260,156 +306,36 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
       return;
     }
 
-    const userMessage = {
-      id: Date.now(),
-      role: "user",
-      content: inputMessage.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setSending(true);
-
-    const assistantMessageId = `assistant-${Date.now()}`;
-    const backendUrl =
-      api?.defaults?.baseURL ||
-      import.meta.env.VITE_BACKEND_URL ||
-      window.location.origin;
-    const token = localStorage.getItem("access_token");
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: assistantMessageId,
-        role: "assistant",
-        content: "",
-        timestamp: new Date(),
-      },
-    ]);
+    setGeneratedText("");
+    setGenerating(true);
 
     const formData = new FormData();
-    formData.append("message", userMessage.content);
-    formData.append("systemPromptContent", systemPromptContent);
+    formData.append("audio", audioBlob, "recording.webm");
     formData.append("questionId", String(selectedQuestion.id));
-    if (conversationIdRef.current) {
-      formData.append("conversationId", conversationIdRef.current);
-    }
-
-    let aggregatedContent = "";
+    formData.append("systemPromptContent", systemPromptContent);
 
     try {
-      const response = await fetch(
-        `${backendUrl}/staff/chatbot/testing-system-prompt-q-and-a`,
+      const response = await api.post(
+        "/staff/chatbot/testing-system-prompt-speaking-assessment",
+        formData,
         {
-          method: "POST",
-          body: formData,
-          credentials: "include",
           headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            Accept: "text/event-stream, application/json",
+            "Content-Type": "multipart/form-data",
           },
         },
       );
 
-      if (!response.ok || !response.body) {
-        throw new Error("Không nhận được phản hồi từ AI.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-
-      const processBuffer = () => {
-        const findBoundary = () => {
-          const doubleNewLine = buffer.indexOf("\n\n");
-          const doubleCarriage = buffer.indexOf("\r\n\r\n");
-          if (doubleNewLine === -1 && doubleCarriage === -1) return null;
-          if (doubleNewLine === -1) return { index: doubleCarriage, length: 4 };
-          if (doubleCarriage === -1) return { index: doubleNewLine, length: 2 };
-          return doubleNewLine < doubleCarriage
-            ? { index: doubleNewLine, length: 2 }
-            : { index: doubleCarriage, length: 4 };
-        };
-
-        let boundary;
-        // eslint-disable-next-line no-cond-assign
-        while ((boundary = findBoundary()) !== null) {
-          const rawEvent = buffer.slice(0, boundary.index).trim();
-          buffer = buffer.slice(boundary.index + boundary.length);
-
-          if (!rawEvent.startsWith("data:")) continue;
-          const payloadStr = rawEvent.replace(/^data:\s*/, "");
-          if (!payloadStr || payloadStr === "[DONE]") continue;
-
-          try {
-            const payload = JSON.parse(payloadStr);
-            if (payload.conversationId && !conversationIdRef.current) {
-              conversationIdRef.current = payload.conversationId;
-              setConversationId(payload.conversationId);
-            }
-
-            if (payload.content) {
-              aggregatedContent += payload.content;
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === assistantMessageId
-                    ? {
-                        ...msg,
-                        content: aggregatedContent,
-                        messageType: payload.messageType,
-                        timestamp: new Date(),
-                      }
-                    : msg,
-                ),
-              );
-            }
-          } catch (err) {
-            console.error("Không parse được dữ liệu AI:", err);
-          }
-        }
-      };
-
-      while (true) {
-        let readResult;
-        try {
-          readResult = await reader.read();
-        } catch (readError) {
-          console.warn("Stream closed unexpectedly:", readError);
-          break;
-        }
-        const { value, done } = readResult;
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        processBuffer();
-      }
-
-      buffer += decoder.decode();
-      processBuffer();
+      const result = response?.data;
+      setGeneratedText(result || "");
     } catch (error) {
       console.error(error);
-      if (!aggregatedContent) {
-        antdMessage.error(
-          error.message ||
-            "Không thể gửi tin nhắn tới AI để test system prompt Q&A.",
-        );
-        setMessages((prev) =>
-          prev.filter((msg) => msg.id !== assistantMessageId),
-        );
-      } else {
-        console.warn(
-          "AI stream ended with warning after delivering content (testing Q&A system prompt).",
-        );
-      }
+      antdMessage.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to call AI to test the speaking assessment system prompt.",
+      );
     } finally {
-      setSending(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+      setGenerating(false);
     }
   };
 
@@ -418,14 +344,8 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
   const selectedPartLabel =
     partOptions.find((p) => p.value === selectedPart)?.label ||
     formatPartLabel(selectedPart) ||
-    "Chọn Part";
+    "Select Part";
 
-  const questionSummary = selectedQuestion
-    ? truncateText(
-        selectedQuestion.content || selectedQuestion.passage || "",
-        180,
-      )
-    : "";
   const questionOptions = normalizeQuestionOptions(selectedQuestion?.options);
 
   return (
@@ -436,19 +356,19 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
       width={1100}
       centered
       closable
-      title="Test Q&A System Prompt"
+      title="Test Speaking Assessment System Prompt"
       bodyStyle={{ padding: 0 }}
     >
       <div className="flex flex-col h-[80vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-sky-50 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 flex items-center justify-between shrink-0">
           <div className="pr-4">
             <div className="text-base font-semibold text-gray-900">
-              Q&A Chatbot Tester
+              Speaking Assessment Tester
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              Select a part to load a random question, then chat to test the
-              prompt.
+              Select a part to load a random question, record an answer, then
+              assess to test the prompt.
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5 min-w-[220px]">
@@ -625,132 +545,127 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
             </div>
           </div>
 
-          {/* Right Pane - Chat */}
+          {/* Right Pane - Assessment */}
           <div className="flex flex-col min-h-0 bg-white">
-            <div
-              className="flex-1 overflow-y-auto p-6 space-y-5"
-              style={{ scrollBehavior: "smooth" }}
-            >
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 space-y-4">
-                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-blue-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">
-                      Start the conversation
-                    </p>
-                    <p className="text-xs mt-1 max-w-xs mx-auto">
-                      Test the Q&A system prompt by asking questions about the
-                      loaded context.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-sm ${
-                        msg.role === "user"
-                          ? "bg-blue-600 text-white rounded-tr-sm"
-                          : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
-                      }`}
-                    >
-                      <div
-                        className={
-                          msg.role === "assistant"
-                            ? "text-sm leading-relaxed [&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:mt-0.5 [&_strong]:font-semibold [&_em]:italic [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-slate-800 [&_pre]:text-slate-100 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre_code]:bg-transparent [&_pre_code]:p-0"
-                            : "text-sm leading-relaxed whitespace-pre-wrap"
-                        }
-                      >
-                        {msg.role === "assistant"
-                          ? parse(
-                              marked.parse(msg.content || "", {
-                                breaks: true,
-                              }),
-                            )
-                          : renderPlainText(msg.content || "")}
-                      </div>
-                      <div
-                        className={`text-[10px] mt-2 text-right ${
-                          msg.role === "user"
-                            ? "text-blue-200"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {msg.timestamp.toLocaleTimeString("vi-VN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
+            <div className="px-6 py-3 border-b border-gray-200 bg-slate-50 shrink-0 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700">
+                Answer & Assessment
+              </h3>
             </div>
-
-            <div className="p-4 border-t border-gray-200 bg-white shrink-0">
-              <div className="flex items-end gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400 transition-all">
-                <TextArea
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder={
-                    selectedQuestion?.id
-                      ? "Type your message here..."
-                      : "Load a question first..."
-                  }
-                  autoSize={{ minRows: 1, maxRows: 5 }}
-                  disabled={sending || !selectedQuestion}
-                  className="flex-1 !border-none !bg-transparent !shadow-none focus:!ring-0 resize-none py-2"
-                />
-                <Button
-                  type="primary"
-                  onClick={handleSendMessage}
-                  loading={sending}
-                  disabled={
-                    !inputMessage.trim() || sending || !selectedQuestion
-                  }
-                  className="mb-1 px-5 rounded-lg h-9 bg-blue-600 hover:bg-blue-500 border-none shadow-sm"
-                  icon={
-                    !sending && (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                        />
-                      </svg>
-                    )
-                  }
-                >
-                  Send
-                </Button>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  User Audio Answer <span className="text-red-500">*</span>
+                </div>
+                <div className="flex items-center gap-3 mb-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  {!isRecording ? (
+                    <Button
+                      type="primary"
+                      onClick={startRecording}
+                      disabled={generating}
+                      className="bg-red-500 hover:bg-red-600 border-none shadow-sm"
+                      icon={
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                          />
+                        </svg>
+                      }
+                    >
+                      Record Audio
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={stopRecording}
+                      disabled={generating}
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                      icon={
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <rect x="5" y="5" width="10" height="10" />
+                        </svg>
+                      }
+                    >
+                      Stop Recording
+                    </Button>
+                  )}
+                  {isRecording && (
+                    <span className="text-red-500 animate-pulse flex items-center gap-2 text-sm font-medium">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                      Recording...
+                    </span>
+                  )}
+                </div>
+                {audioBlob && (
+                  <div className="mt-3">
+                    <audio
+                      src={URL.createObjectURL(audioBlob)}
+                      controls
+                      className="w-full h-10 outline-none"
+                    />
+                  </div>
+                )}
               </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-sm font-medium text-gray-700">
+                    Assessment Result
+                  </div>
+                  <Button
+                    type="primary"
+                    onClick={handleAssess}
+                    loading={generating}
+                    disabled={!selectedQuestion || generating || !audioBlob}
+                    className="h-8 px-4 rounded-md shadow-sm"
+                  >
+                    Assess Answer
+                  </Button>
+                </div>
+                <div className="min-h-[160px] bg-slate-50 border border-slate-200 rounded-lg p-4">
+                  {generating ? (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
+                      <Spin />
+                      <span className="text-xs">Assessing...</span>
+                    </div>
+                  ) : generatedText ? (
+                    <div className="prose prose-sm max-w-none [&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:mt-0.5 [&_strong]:font-semibold [&_em]:italic [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-slate-800 [&_pre]:text-slate-100 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre_code]:bg-transparent [&_pre_code]:p-0 text-sm leading-relaxed text-slate-800">
+                      {parse(
+                        marked.parse(generatedText, {
+                          breaks: true,
+                        }),
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                      <p className="text-sm">No assessment yet.</p>
+                      <p className="text-xs mt-1">
+                        Record an answer and click &quot;Assess Answer&quot;.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 bg-white shrink-0 flex justify-end gap-3">
+              <Button
+                onClick={onClose}
+                disabled={generating}
+                className="h-9 px-5 rounded-lg border-slate-300"
+              >
+                Close
+              </Button>
             </div>
           </div>
         </div>
@@ -759,4 +674,4 @@ const SystemPromptQAndATestModal = ({ open, onClose, systemPromptContent }) => {
   );
 };
 
-export default SystemPromptQAndATestModal;
+export default SystemPromptSpeakingAssessmentTestModal;
