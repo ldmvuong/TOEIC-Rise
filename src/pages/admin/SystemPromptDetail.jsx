@@ -152,14 +152,13 @@ const SystemPromptDetailPage = () => {
 
       if (!SYSTEM_PROMPT_CONTENT_REGEX.test(trimmed)) {
         throw new Error(
-          "Content can only contain letters, digits, spaces, and allowed punctuation (!#%&*()[]_+;:'\",.<>?/{}- and new lines)"
+          "Content can only contain letters, digits, spaces, and allowed punctuation (!#%&*()[]_+;:'\",.<>?/{}- and new lines)",
         );
       }
 
       setSaving(true);
       await updateSystemPrompt(featureTypeEnum, id, {
         content: trimmed,
-        isActive: !!values.isActive,
       });
 
       message.success("System prompt updated successfully");
@@ -170,9 +169,7 @@ const SystemPromptDetailPage = () => {
         return;
       }
       const desc =
-        err?.message ||
-        err?.data?.message ||
-        "Failed to update system prompt";
+        err?.message || err?.data?.message || "Failed to update system prompt";
       notification.error({
         message: "Failed to update system prompt",
         description: desc,
@@ -229,14 +226,10 @@ const SystemPromptDetailPage = () => {
         </div>
         <div className="ml-auto flex items-center gap-3">
           {featureTypeEnum === "CHATBOT" && (
-            <Button onClick={() => setTestModalOpen(true)}>
-              Test Chatbot
-            </Button>
+            <Button onClick={() => setTestModalOpen(true)}>Test Chatbot</Button>
           )}
           {featureTypeEnum === "Q_AND_A" && (
-            <Button onClick={() => setQnaTestModalOpen(true)}>
-              Test Q&A
-            </Button>
+            <Button onClick={() => setQnaTestModalOpen(true)}>Test Q&A</Button>
           )}
           {featureTypeEnum === "EXPLANATION_GENERATION" && (
             <Button onClick={() => setExplainTestModalOpen(true)}>
@@ -366,16 +359,14 @@ const SystemPromptDetailPage = () => {
                       const trimmed = (value || "").trim();
                       if (!trimmed || trimmed.length < 20) {
                         return Promise.reject(
-                          new Error(
-                            "Content must be at least 20 characters"
-                          )
+                          new Error("Content must be at least 20 characters"),
                         );
                       }
                       if (!SYSTEM_PROMPT_CONTENT_REGEX.test(trimmed)) {
                         return Promise.reject(
                           new Error(
-                            "Content can only contain letters, digits, spaces, and allowed punctuation (!#%&*()[]_+;:'\",.<>?/{}- and new lines)"
-                          )
+                            "Content can only contain letters, digits, spaces, and allowed punctuation (!#%&*()[]_+;:'\",.<>?/{}- and new lines)",
+                          ),
                         );
                       }
                       return Promise.resolve();
@@ -391,29 +382,11 @@ const SystemPromptDetailPage = () => {
                 />
               </Form.Item>
 
-              <Form.Item
-                label="Active"
-                name="isActive"
-                valuePropName="checked"
-                rules={[
-                  {
-                    required: true,
-                    message: "isActive must not be null",
-                  },
-                ]}
-              >
-                <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-              </Form.Item>
-
               <div className="flex justify-end gap-2 pt-2">
                 <Button onClick={handleCancelEdit} disabled={saving}>
                   Cancel
                 </Button>
-                <Button
-                  type="primary"
-                  onClick={handleSave}
-                  loading={saving}
-                >
+                <Button type="primary" onClick={handleSave} loading={saving}>
                   Save
                 </Button>
               </div>
@@ -426,4 +399,3 @@ const SystemPromptDetailPage = () => {
 };
 
 export default SystemPromptDetailPage;
-
