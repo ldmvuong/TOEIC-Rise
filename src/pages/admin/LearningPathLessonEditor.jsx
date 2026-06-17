@@ -524,7 +524,7 @@ export default function AdminLearningPathLessonEditorPage() {
             name="title"
             rules={[{ required: true, message: "Title is required" }]}
           >
-            <Input placeholder="Lesson title" />
+            <Input placeholder="Lesson title" showCount maxLength={255} />
           </Form.Item>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -532,14 +532,23 @@ export default function AdminLearningPathLessonEditorPage() {
               label="Slug"
               name="slug"
               rules={[
-                { required: true, message: "Slug is required" },
                 {
-                  pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
-                  message: "Slug only allows letters, digits, and '-'",
+                  required: true,
+                  whitespace: true,
+                  message: "Slug is required",
+                },
+                {
+                  pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                  message:
+                    "Slug can only contain lowercase letters, digits, and hyphens (cannot start/end with a hyphen).",
+                },
+                {
+                  max: 255,
+                  message: "Slug must be between 1 and 255 characters long.",
                 },
               ]}
             >
-              <Input placeholder="lesson-7" />
+              <Input placeholder="lesson-7" showCount maxLength={255} />
             </Form.Item>
             <Form.Item label="Practice" name="practice">
               <StaffTagPaginatedSelect placeholder="Select practice tag" />
