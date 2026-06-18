@@ -39,6 +39,8 @@ const FlashcardEditPage = () => {
     items: [],
   });
 
+  const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
+
   const {
     lookupSuggestions,
     lookupLoadingByIndex,
@@ -421,15 +423,28 @@ const FlashcardEditPage = () => {
                         handleItemChange(index, "vocabulary", e.target.value)
                       }
                       onBlur={(e) => flushLookup(index, e.target.value)}
+                      onFocus={() => setActiveDropdownIndex(index)}
                     />
                     <DictionaryDefinitionDropdown
-                      visible={Boolean(
-                        lookupSuggestions[index]?.options?.length,
-                      )}
-                      loading={Boolean(lookupLoadingByIndex[index])}
+                      visible={
+                        activeDropdownIndex === index &&
+                        Boolean(lookupSuggestions[index]?.options?.length)
+                      }
+                      loading={
+                        activeDropdownIndex === index &&
+                        Boolean(lookupLoadingByIndex[index])
+                      }
                       word={lookupSuggestions[index]?.word}
                       options={lookupSuggestions[index]?.options}
-                      onSelect={(option) => applySuggestion(index, option)}
+                      onSelect={(option) => {
+                        applySuggestion(index, option);
+                        setActiveDropdownIndex(null);
+                      }}
+                      onClose={() => {
+                        if (activeDropdownIndex === index) {
+                          setActiveDropdownIndex(null);
+                        }
+                      }}
                     />
                     {errors.items[index]?.vocabulary && (
                       <div className="text-red-500 text-xs mt-1">
@@ -471,6 +486,7 @@ const FlashcardEditPage = () => {
                         handleItemChange(index, "definition", e.target.value)
                       }
                       autoSize={{ minRows: 1, maxRows: 8 }}
+                      onFocus={() => setActiveDropdownIndex(null)}
                     />
                     {errors.items[index]?.definition && (
                       <div className="text-red-500 text-xs mt-1">
