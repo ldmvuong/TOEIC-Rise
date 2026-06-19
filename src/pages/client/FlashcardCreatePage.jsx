@@ -314,17 +314,38 @@ const FlashcardCreatePage = () => {
                     <label className="text-xs text-gray-400 uppercase font-semibold">
                       Term <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      variant="borderless"
-                      placeholder="Enter vocabulary..."
-                      className="text-lg font-bold text-blue-900 px-0 py-1"
-                      value={item.vocabulary}
-                      onChange={(e) =>
-                        handleItemChange(index, "vocabulary", e.target.value)
-                      }
-                      onBlur={(e) => flushLookup(index, e.target.value)}
-                      onFocus={() => setActiveDropdownIndex(index)}
-                    />
+                    <div className="flex items-center gap-2 min-h-[2.25rem]">
+                      <div className="flex-1 min-w-0">
+                        <Input
+                          variant="borderless"
+                          placeholder="Enter vocabulary..."
+                          className="text-lg font-bold text-blue-900 px-0 py-1"
+                          value={item.vocabulary}
+                          onChange={(e) =>
+                            handleItemChange(index, "vocabulary", e.target.value)
+                          }
+                          onBlur={(e) => flushLookup(index, e.target.value)}
+                          onFocus={() => setActiveDropdownIndex(index)}
+                        />
+                      </div>
+                      {(item.pronunciation || item.audioUrl) && (
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {item.pronunciation && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs text-gray-500 bg-gray-50 border border-gray-200 whitespace-nowrap">
+                              /{item.pronunciation}/
+                            </span>
+                          )}
+                          {item.audioUrl && (
+                            <div className="[&>div]:mb-0 [&_button]:w-7 [&_button]:h-7 [&_svg]:w-3 [&_svg]:h-3">
+                              <AudioPlayerUI
+                                audioUrl={item.audioUrl}
+                                playButtonOnly
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <DictionaryDefinitionDropdown
                       visible={
                         activeDropdownIndex === index &&
@@ -384,25 +405,6 @@ const FlashcardCreatePage = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Nếu có audioUrl thì hiển thị player xem trước */}
-                {item.audioUrl && (
-                  <div className="md:col-span-2 mt-2 max-w-md">
-                    <AudioPlayerUI audioUrl={item.audioUrl} playButtonOnly />
-                  </div>
-                )}
-
-                {/* Pronunciation (display-only, only if exists) */}
-                {item.pronunciation && (
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-semibold">
-                      Pronunciation
-                    </label>
-                    <div className="inline-flex items-center px-3 py-1 rounded-full text-sm text-gray-700 bg-gray-50 border border-gray-200 w-fit">
-                      /{item.pronunciation}/
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           ))}
