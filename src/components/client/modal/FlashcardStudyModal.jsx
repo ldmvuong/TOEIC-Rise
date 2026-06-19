@@ -4,6 +4,9 @@ import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, ArrowPathIcon } from '@he
 import AudioPlayerUI from './AudioPlayerUI';
 import './FlashcardStudy.css';
 
+const stripPronunciationSlashes = (value) =>
+    String(value || '').replace(/^\/+|\/+$/g, '').trim();
+
 const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
     const [details, setDetails] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -81,7 +84,7 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                 </div>
 
                 {/* Body - Nơi hiển thị thẻ */}
-                <div className="flex-1 bg-gray-100 flex items-center justify-center p-4 relative overflow-y-auto min-h-0">
+                <div className="flex-1 bg-gray-100 flex items-center justify-center p-4 relative overflow-hidden min-h-0">
                     {loading ? (
                         <div className="flex flex-col items-center gap-4">
                             <ArrowPathIcon className="w-10 h-10 animate-spin text-blue-600" />
@@ -106,26 +109,35 @@ const FlashcardStudyModal = ({ isOpen, setIsOpen, flashcardId }) => {
                                 </div>
 
                                 {/* Mặt sau (Back) */}
-                                <div className="absolute inset-0 backface-hidden rotate-y-180 bg-blue-50 rounded-2xl flex flex-col items-center justify-center p-8 border-2 border-blue-200 overflow-y-auto">
+                                <div className="absolute inset-0 backface-hidden rotate-y-180 bg-blue-50 rounded-2xl flex flex-col items-center justify-center p-6 border-2 border-blue-200 overflow-hidden">
                                     <span className="text-sm uppercase tracking-widest text-blue-400 font-semibold mb-2">Definition</span>
-                                    <p className="text-xl md:text-2xl font-medium text-blue-900 text-center mb-4">
+                                    <p className="text-xl md:text-2xl font-medium text-blue-900 text-center mb-4 px-2">
                                         {currentItem?.definition || "Definition"}
                                     </p>
                                     
-                                    {currentItem?.pronunciation && (
-                                        <div className="bg-white px-3 py-1 rounded-full text-sm text-gray-600 border border-gray-200 mb-3">
-                                            /{currentItem?.pronunciation}/
-                                        </div>
-                                    )}
-
-                                    {currentItem?.audioUrl && (
-                                        <div className="w-full max-w-md mb-3">
-                                            <AudioPlayerUI audioUrl={currentItem.audioUrl} />
+                                    {(currentItem?.pronunciation || currentItem?.audioUrl) && (
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm text-gray-600 bg-white border border-gray-200 mb-3 max-w-full">
+                                            {currentItem?.pronunciation && (
+                                                <span className="leading-none truncate">
+                                                    /{stripPronunciationSlashes(currentItem.pronunciation)}/
+                                                </span>
+                                            )}
+                                            {currentItem?.audioUrl && (
+                                                <div
+                                                    className="flex items-center shrink-0 [&>div]:mb-0 [&_button]:w-6 [&_button]:h-6 [&_button]:min-w-6 [&_button]:bg-transparent [&_button]:text-blue-600 [&_button]:hover:bg-blue-50 [&_button]:hover:text-blue-700 [&_button]:shadow-none [&_svg]:w-3 [&_svg]:h-3"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <AudioPlayerUI
+                                                        audioUrl={currentItem.audioUrl}
+                                                        playButtonOnly
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
                                     {currentItem?.example && (
-                                        <div className="mt-2 text-center px-4">
+                                        <div className="mt-2 text-center px-4 max-w-full">
                                             <p className="text-sm font-semibold text-gray-500 mb-2">Example:</p>
                                             <p className="text-gray-700 italic">"{currentItem?.example}"</p>
                                         </div>

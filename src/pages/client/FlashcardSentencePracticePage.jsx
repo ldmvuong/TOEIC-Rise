@@ -14,6 +14,9 @@ import {
   evaluateFlashcardSentenceStream,
 } from "../../api/api";
 
+const normalizePronunciation = (value) =>
+  String(value || "").replace(/^\/+|\/+$/g, "").trim();
+
 const FlashcardSentencePracticePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ const FlashcardSentencePracticePage = () => {
   const [items, setItems] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sentence, setSentence] = useState("");
+  const [sentenceError, setSentenceError] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [evaluationText, setEvaluationText] = useState("");
 
@@ -36,6 +40,7 @@ const FlashcardSentencePracticePage = () => {
         setItems(list);
         setCurrentIndex(0);
         setSentence("");
+        setSentenceError("");
       } catch (err) {
         message.error(err?.message || "Unable to load practice data");
       } finally {
@@ -189,6 +194,7 @@ const FlashcardSentencePracticePage = () => {
   const handleNext = () => {
     setEvaluating(false);
     setSentence("");
+    setSentenceError("");
     setEvaluationText("");
     if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
   };
@@ -196,6 +202,7 @@ const FlashcardSentencePracticePage = () => {
   const handlePrev = () => {
     setEvaluating(false);
     setSentence("");
+    setSentenceError("");
     setEvaluationText("");
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
@@ -203,9 +210,10 @@ const FlashcardSentencePracticePage = () => {
   const handleEvaluate = () => {
     const trimmed = sentence.trim();
     if (!trimmed) {
-      message.warning("Please enter your sentence.");
+      setSentenceError("Please enter your sentence.");
       return;
     }
+    setSentenceError("");
     setEvaluating(true);
     setEvaluationText("");
 
@@ -256,189 +264,203 @@ const FlashcardSentencePracticePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 px-4">
+    <div className="h-[calc(100dvh-5rem)] bg-gray-50 text-gray-900 flex flex-col overflow-hidden">
       {audioUrl && <audio ref={audioRef} src={audioUrl} />}
 
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sm:p-8">
-        {/* Header: Back | 1/25 | Next */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => navigate(`/flashcards/${id}`)}
-            className="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
-          >
-            <ArrowLeftIcon className="w-6 h-6" />
-            <span className="hidden sm:inline">Back</span>
-          </button>
-          <span className="text-gray-600 font-medium">
-            {currentIndex + 1} / {total}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentIndex <= 0}
-              className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
-            >
-              <span className="hidden sm:inline">Previous</span>
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={currentIndex >= total - 1}
-              className="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ArrowRightIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+      {/* Header */}
+      <div className="flex-shrink-0 grid grid-cols-3 items-center px-4 py-3 border-b border-gray-200 bg-white">
+        <button
+          onClick={() => navigate(`/flashcards/${id}`)}
+          className="justify-self-start p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition inline-flex items-center gap-2"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          <span className="hidden sm:inline">Back</span>
+        </button>
+        <span className="justify-self-center text-sm font-medium text-gray-600">
+          {currentIndex + 1} / {total}
+        </span>
+        <span />
+      </div>
 
-        {/* Instruction */}
-        <p className="text-gray-800 font-medium mb-4">
-          Create a complete sentence using the following vocabulary word:
-        </p>
+      {/* Main content */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5">
+        <div className="max-w-2xl mx-auto w-full">
+          <p className="text-gray-700 font-medium mb-5">
+            Create a complete sentence using the following vocabulary:
+          </p>
 
-        {/* Vocabulary + pronunciation + meaning */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {vocabulary || "—"}
-            </span>
-            {audioUrl && (
-              <button
-                type="button"
-                onClick={handlePlayAudio}
-                className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 transition flex-shrink-0"
-              >
-                <SpeakerWaveIcon className="w-5 h-5" />
-              </button>
+          <div className="mb-5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                {vocabulary || "—"}
+              </span>
+              {audioUrl && (
+                <button
+                  type="button"
+                  onClick={handlePlayAudio}
+                  className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 transition shrink-0"
+                  aria-label="Play pronunciation"
+                >
+                  <SpeakerWaveIcon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {pronunciation && (
+              <p className="text-gray-500 text-sm mt-1">
+                /{normalizePronunciation(pronunciation)}/
+              </p>
+            )}
+            {definition && (
+              <p className="text-gray-800 mt-2">{definition}</p>
             )}
           </div>
-          {pronunciation && (
-            <p className="text-gray-500 italic text-sm mt-1">
-              /{pronunciation}/
-            </p>
+
+          <textarea
+            value={sentence}
+            onChange={(e) => {
+              setSentence(e.target.value);
+              if (sentenceError) setSentenceError("");
+            }}
+            placeholder="Enter your sentence here..."
+            rows={4}
+            className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 outline-none transition text-gray-900 placeholder-gray-400 resize-none ${
+              sentenceError
+                ? "border-red-300 focus:border-red-400 focus:ring-red-200"
+                : "border-gray-300 focus:border-teal-500 focus:ring-teal-200"
+            }`}
+          />
+          {sentenceError && (
+            <p className="text-sm text-red-600 mt-2">{sentenceError}</p>
           )}
-          {definition && <p className="text-gray-800 mt-2">{definition}</p>}
-        </div>
 
-        {/* Input */}
-        <textarea
-          value={sentence}
-          onChange={(e) => setSentence(e.target.value)}
-          placeholder="Enter your sentence here..."
-          rows={4}
-          className="w-full px-4 py-3 rounded-xl border-2 border-orange-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition text-gray-900 placeholder-gray-400 resize-y mb-6"
-        />
+          {(evaluating || !!evaluationText) && (
+            <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-sm font-semibold text-gray-800">
+                  Evaluation result
+                </p>
+                {evaluating && (
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Spin size="small" />
+                    <span>Evaluating...</span>
+                  </div>
+                )}
+              </div>
 
-        {(evaluating || !!evaluationText) && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <p className="text-sm font-semibold text-gray-800">
-                Evaluation result
-              </p>
-              {evaluating && (
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <Spin size="small" />
-                  <span>Evaluating...</span>
+              {!evaluationSections ? (
+                <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-gray-600">
+                  <div className="flex items-center gap-3">
+                    <Spin />
+                    <span>Receiving results from the system...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {!!evaluationSections.suggestionText && (
+                    <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+                      <span className="font-semibold text-gray-900">
+                        Suggestion:&nbsp;
+                      </span>
+                      <span className="text-gray-900">
+                        {evaluationSections.suggestionText}
+                      </span>
+                      {vocabulary &&
+                        new RegExp(
+                          `\\(\\s*${vocabulary.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\s*\\)`,
+                          "i",
+                        ).test(evaluationSections.suggestionText) && (
+                          <span className="ml-1 text-red-500 line-through">
+                            ({vocabulary})
+                          </span>
+                        )}
+                    </div>
+                  )}
+
+                  {!!evaluationSections.improvements?.length && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <WrenchScrewdriverIcon className="w-5 h-5 text-gray-500" />
+                        <p className="text-xs font-semibold tracking-wide text-gray-600">
+                          IMPROVEMENTS:
+                        </p>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-2 text-gray-800">
+                        {evaluationSections.improvements.map((it, idx) => (
+                          <li key={idx}>{it}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!!evaluationSections.commentText && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-500" />
+                        <p className="text-xs font-semibold tracking-wide text-gray-600">
+                          COMMENTS:
+                        </p>
+                      </div>
+                      <p className="whitespace-pre-wrap text-gray-800">
+                        {evaluationSections.commentText}
+                      </p>
+                    </div>
+                  )}
+
+                  {!evaluationSections.suggestionText &&
+                    !evaluationSections.improvements?.length &&
+                    !evaluationSections.commentText && (
+                      <p className="whitespace-pre-wrap text-gray-900">
+                        {evaluationText}
+                      </p>
+                    )}
+
+                  {evaluationSections.score !== null && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold text-gray-950">Score:</span>
+                      <span className="px-2.5 py-0.5 bg-teal-100 text-teal-700 rounded-full font-bold text-sm">
+                        {evaluationSections.score} / 10
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-
-            {!evaluationSections ? (
-              <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-gray-600">
-                <div className="flex items-center gap-3">
-                  <Spin />
-                  <span>Receiving results from the system...</span>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {!!evaluationSections.suggestionText && (
-                  <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
-                    <span className="font-semibold text-gray-900">
-                      Suggestion:&nbsp;
-                    </span>
-                    <span className="text-gray-900">
-                      {evaluationSections.suggestionText}
-                    </span>
-                    {vocabulary &&
-                      new RegExp(
-                        `\\(\\s*${vocabulary.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\s*\\)`,
-                        "i",
-                      ).test(evaluationSections.suggestionText) && (
-                        <span className="ml-1 text-red-500 line-through">
-                          ({vocabulary})
-                        </span>
-                      )}
-                  </div>
-                )}
-
-                {!!evaluationSections.improvements?.length && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <WrenchScrewdriverIcon className="w-5 h-5 text-gray-500" />
-                      <p className="text-xs font-semibold tracking-wide text-gray-600">
-                        IMPROVEMENTS:
-                      </p>
-                    </div>
-                    <ul className="list-disc pl-5 space-y-2 text-gray-800">
-                      {evaluationSections.improvements.map((it, idx) => (
-                        <li key={idx}>{it}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {!!evaluationSections.commentText && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-500" />
-                      <p className="text-xs font-semibold tracking-wide text-gray-600">
-                        COMMENTS:
-                      </p>
-                    </div>
-                    <p className="whitespace-pre-wrap text-gray-800">
-                      {evaluationSections.commentText}
-                    </p>
-                  </div>
-                )}
-
-                {!evaluationSections.suggestionText &&
-                  !evaluationSections.improvements?.length &&
-                  !evaluationSections.commentText && (
-                    <p className="whitespace-pre-wrap text-gray-900">
-                      {evaluationText}
-                    </p>
-                  )}
-
-                {evaluationSections.score !== null && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-gray-950">Score:</span>
-                    <span className="px-2.5 py-0.5 bg-orange-100 text-orange-700 rounded-full font-bold text-sm">
-                      {evaluationSections.score} / 10
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {!evaluationText && (
-            <button
-              type="button"
-              onClick={handleEvaluate}
-              disabled={evaluating}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 disabled:opacity-70 transition"
-            >
-              <SparklesIcon className="w-5 h-5" />
-              {evaluating ? "Evaluating..." : "Evaluate"}
-            </button>
           )}
+        </div>
+      </div>
+
+      {/* Footer navigation */}
+      <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3">
+        <div className="max-w-2xl mx-auto w-full flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handlePrev}
+            disabled={currentIndex <= 0}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+            <span className="hidden sm:inline">Previous</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleEvaluate}
+            disabled={evaluating}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-70 transition shadow-sm"
+          >
+            <SparklesIcon className="w-5 h-5" />
+            {evaluating ? "Evaluating..." : "Evaluate"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={currentIndex >= total - 1}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ArrowRightIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

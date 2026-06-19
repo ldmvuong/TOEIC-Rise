@@ -16,13 +16,11 @@ function shuffleArray(arr) {
 function buildOptions(currentItem, allItems) {
     const correct = {
         vocabulary: currentItem.vocabulary || currentItem.word || '',
-        pronunciation: currentItem.pronunciation || null,
         isCorrect: true,
     };
     const others = allItems.filter((item) => item.id !== currentItem.id);
     const wrongPool = others.map((item) => ({
         vocabulary: item.vocabulary || item.word || '',
-        pronunciation: item.pronunciation || null,
         isCorrect: false,
     }));
     let wrong = [];
@@ -260,8 +258,8 @@ const FlashcardQuizPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="h-[calc(100dvh-5rem)] bg-gray-50 text-gray-900 flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
                 <button
                     onClick={handleExit}
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
@@ -273,7 +271,7 @@ const FlashcardQuizPage = () => {
             </div>
 
             {/* Progress bar: đỏ khi chọn sai */}
-            <div className="px-4 pt-4">
+            <div className="flex-shrink-0 px-4 pt-3 pb-2">
                 <div className="flex items-center gap-1 overflow-hidden rounded-full bg-gray-200">
                     {items.map((_, i) => {
                         const isWrong = results[i] === 'wrong';
@@ -297,18 +295,21 @@ const FlashcardQuizPage = () => {
                 </div>
             </div>
 
-            <div className="px-4 py-6 flex-1">
-                <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                    Definition
-                </h2>
-                <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-                    {currentItem?.definition || '—'}
-                </p>
+            <div className="flex-1 min-h-0 flex flex-col px-4 pb-4 overflow-hidden">
+                <div className="flex-shrink-0 pt-2">
+                    <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                        Definition
+                    </h2>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 line-clamp-3">
+                        {currentItem?.definition || '—'}
+                    </p>
+                </div>
 
-                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
-                    Choose the correct answer
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex-1 min-h-0 flex flex-col justify-center">
+                    <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
+                        Choose the correct answer
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {options.map((opt, idx) => {
                         const selected = selectedKey === opt.vocabulary;
                         const showCorrect = revealed && opt.isCorrect;
@@ -332,17 +333,13 @@ const FlashcardQuizPage = () => {
                                 }`}
                             >
                                 <span className="font-medium text-gray-900 block">{opt.vocabulary}</span>
-                                {opt.pronunciation && (
-                                    <span className="text-sm text-gray-600 mt-1">
-                                        /{opt.pronunciation}/
-                                    </span>
-                                )}
                             </button>
                         );
                     })}
+                    </div>
                 </div>
 
-                <div className="mt-8 flex justify-end">
+                <div className="flex-shrink-0 pt-4 flex justify-end">
                     {!revealed ? (
                         <button
                             type="button"
