@@ -145,6 +145,59 @@ const FlashcardViewPage = () => {
     const { name, description, accessType, authorFullName, items = [] } = flashcardData;
     const isPublic = accessType === 'PUBLIC';
 
+    const practiceModes = [
+        {
+            key: 'flashcard',
+            title: 'Flashcard',
+            description: 'Practice with memory cards, flip cards to view meanings and examples',
+            icon: BookmarkSolid,
+            accentBorder: 'border-l-emerald-500',
+            iconWrap: 'bg-emerald-50 text-emerald-600',
+            colSpan: 'md:col-span-2',
+            onClick: () => setIsStudyModalOpen(true),
+        },
+        {
+            key: 'match',
+            title: 'Match words with meanings',
+            description: 'Drag and drop or select matching word-definition pairs',
+            icon: ArrowsRightLeftIcon,
+            accentBorder: 'border-l-blue-600',
+            iconWrap: 'bg-blue-50 text-blue-600',
+            colSpan: 'md:col-span-2',
+            onClick: () => navigate(`/flashcards/${id}/match`),
+        },
+        {
+            key: 'quiz',
+            title: 'Multiple-choice quiz',
+            description: 'A 4-option quiz where you choose the correct answer for each word',
+            icon: ClipboardDocumentCheckIcon,
+            accentBorder: 'border-l-violet-600',
+            iconWrap: 'bg-violet-50 text-violet-600',
+            colSpan: 'md:col-span-2',
+            onClick: () => navigate(`/flashcards/${id}/quiz`),
+        },
+        {
+            key: 'type',
+            title: 'See the meaning, type the English word',
+            description: 'View the meaning and type the matching English vocabulary term',
+            icon: LanguageIcon,
+            accentBorder: 'border-l-amber-500',
+            iconWrap: 'bg-amber-50 text-amber-600',
+            colSpan: 'md:col-span-3',
+            onClick: () => navigate(`/flashcards/${id}/type`),
+        },
+        {
+            key: 'sentence',
+            title: 'Sentence practice with AI',
+            description: 'Create sentences with vocabulary and receive AI feedback',
+            icon: PencilSquareIcon,
+            accentBorder: 'border-l-rose-500',
+            iconWrap: 'bg-rose-50 text-rose-600',
+            colSpan: 'md:col-span-3',
+            onClick: () => navigate(`/flashcards/${id}/sentence-practice`),
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* --- BODY --- */}
@@ -258,81 +311,30 @@ const FlashcardViewPage = () => {
                         <AcademicCapIcon className="w-6 h-6 text-gray-700" />
                         <h3 className="text-lg font-bold text-gray-800">Practice modes</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Card Thẻ ghi nhớ (Flashcard) */}
-                        <button 
-                            onClick={() => setIsStudyModalOpen(true)}
-                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
-                            style={{ background: '#22c55e' }}
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
-                                    <BookmarkSolid className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-bold text-white">Flashcard</h4>
-                            </div>
-                            <p className="text-sm text-white/90">Practice with memory cards, flip cards to view meanings and examples</p>
-                        </button>
-
-                        {/* Nối từ với nghĩa */}
-                        <button 
-                            onClick={() => navigate(`/flashcards/${id}/match`)}
-                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
-                            style={{ background: '#3b82f6' }}
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
-                                    <ArrowsRightLeftIcon className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-bold text-white">Match words with meanings</h4>
-                            </div>
-                            <p className="text-sm text-white/90">Drag and drop or select matching word-definition pairs</p>
-                        </button>
-
-                        {/* Trắc nghiệm lựa chọn */}
-                        <button 
-                            onClick={() => navigate(`/flashcards/${id}/quiz`)}
-                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
-                            style={{ background: '#8b5cf6' }}
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
-                                    <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-bold text-white">Multiple-choice quiz</h4>
-                            </div>
-                            <p className="text-sm text-white/90">A 4-option quiz where you choose the correct answer for each word</p>
-                        </button>
-
-                        {/* Hiển thị tiếng Việt, nhập từ tiếng Anh */}
-                        <button 
-                            onClick={() => navigate(`/flashcards/${id}/type`)}
-                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white"
-                            style={{ background: '#f97316' }}
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
-                                    <LanguageIcon className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-bold text-white">See the meaning, type the English word</h4>
-                            </div>
-                            <p className="text-sm text-white/90">View the meaning and type the matching English vocabulary term</p>
-                        </button>
-
-                        {/* Luyện câu với AI */}
-                        <button 
-                            onClick={() => navigate(`/flashcards/${id}/sentence-practice`)}
-                            className="p-6 rounded-xl hover:shadow-md transition-all text-left border-0 text-white md:col-span-2"
-                            style={{ background: '#ec4899' }}
-                        >
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20">
-                                    <PencilSquareIcon className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-bold text-white">Sentence practice with AI</h4>
-                            </div>
-                            <p className="text-sm text-white/90">Create sentences with vocabulary and receive AI feedback</p>
-                        </button>
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        {practiceModes.map((mode) => {
+                            const Icon = mode.icon;
+                            return (
+                                <button
+                                    key={mode.key}
+                                    type="button"
+                                    onClick={mode.onClick}
+                                    className={`p-4 rounded-xl text-left bg-white border border-gray-200 border-l-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all ${mode.accentBorder} ${mode.colSpan}`}
+                                >
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${mode.iconWrap}`}>
+                                            <Icon className="w-5 h-5" />
+                                        </div>
+                                        <h4 className="font-semibold text-gray-800 leading-snug">
+                                            {mode.title}
+                                        </h4>
+                                    </div>
+                                    <p className="text-sm text-gray-500 leading-relaxed">
+                                        {mode.description}
+                                    </p>
+                                </button>
+                            );
+                        })}
                     </div>
                 </Card>
 
