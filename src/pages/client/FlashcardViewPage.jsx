@@ -347,31 +347,40 @@ const FlashcardViewPage = () => {
                             items.map((item, index) => (
                                 <div 
                                     key={index} 
-                                    className="bg-white rounded-lg border border-gray-200 p-6 hover:border-blue-300 transition-all"
+                                    className="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 transition-all"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {/* Cột Từ vựng */}
-                                        <div className="space-y-2">
-                                            <div className="mb-2">
-                                                <span className="text-xs font-semibold text-gray-400 uppercase">Term</span>
+                                        <div className="space-y-1">
+                                            <span className="text-xs font-semibold text-gray-400 uppercase">Term</span>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="text-lg font-bold text-blue-900">
+                                                    {item.vocabulary || item.word || 'N/A'}
+                                                </h4>
+                                                {(item.pronunciation || item.audioUrl) && (
+                                                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-500 bg-gray-50 border border-gray-200 max-w-full">
+                                                        {item.pronunciation && (
+                                                            <span className="leading-none truncate">
+                                                                /{item.pronunciation}/
+                                                            </span>
+                                                        )}
+                                                        {item.audioUrl && (
+                                                            <div className="flex items-center shrink-0 [&>div]:mb-0 [&_button]:w-5 [&_button]:h-5 [&_button]:min-w-5 [&_button]:bg-transparent [&_button]:text-blue-600 [&_button]:hover:bg-blue-50 [&_button]:hover:text-blue-700 [&_button]:shadow-none [&_svg]:w-2.5 [&_svg]:h-2.5">
+                                                                <AudioPlayerUI
+                                                                    audioUrl={item.audioUrl}
+                                                                    playButtonOnly
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <h4 className="text-xl font-bold text-blue-900">
-                                                {item.vocabulary || item.word || 'N/A'}
-                                            </h4>
-                                            {item.pronunciation && (
-                                                <p className="text-sm text-gray-500">/{item.pronunciation}/</p>
-                                            )}
-                                            {item.audioUrl && (
-                                                <div className="mt-3 max-w-md">
-                                                    <AudioPlayerUI audioUrl={item.audioUrl} playButtonOnly />
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* Cột Định nghĩa */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
                                             <span className="text-xs font-semibold text-gray-400 uppercase">Definition</span>
-                                            <p className="text-lg text-gray-800 whitespace-pre-line">
+                                            <p className="text-base text-gray-800 whitespace-pre-line">
                                                 {item.definition || 'N/A'}
                                             </p>
                                         </div>
