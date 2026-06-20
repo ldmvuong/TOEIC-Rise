@@ -245,7 +245,7 @@ export const searchPublicBlogs = ({ keyword, page = 0, size = 10 }) => {
   return api.get(`/blog-posts/search?${params.toString()}`);
 };
 
-export const getPublicRelatedBlogPosts = (id, limit = 5) => {
+export const getPublicRelatedBlogPosts = (id, limit = 6) => {
   const params = new URLSearchParams({ limit: String(limit) });
   return api.get(`/blog-posts/relate/${id}?${params.toString()}`);
 };
