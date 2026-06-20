@@ -160,15 +160,17 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                         </button>
                         {showTranscript && (
                             <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <DictionaryText className="text-gray-800 text-sm leading-relaxed">
-                                    {transcript}
-                                </DictionaryText>
+                                <div
+                                    className="text-gray-800 text-sm leading-relaxed prose prose-sm max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: transcript }}
+                                />
                             </div>
                         )}
                     </div>
                 )}
 
                 {/* Question Section */}
+                {(content || maxOptions > 0) && (
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -227,6 +229,7 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* Explanation Section (Collapsible) */}
                 {explanation && (
@@ -254,9 +257,10 @@ const QuestionModal = ({ open, onClose, questionId }) => {
                         </button>
                         {showExplanation && (
                             <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                                    {explanation}
-                                </div>
+                                <div
+                                    className="text-gray-800 text-sm leading-relaxed prose prose-sm max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: explanation }}
+                                />
                             </div>
                         )}
                     </div>
