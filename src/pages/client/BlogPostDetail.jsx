@@ -114,7 +114,7 @@ const BlogPostDetailPublicPage = () => {
     const run = async () => {
       setRelatedLoading(true);
       try {
-        const res = await getPublicRelatedBlogPosts(postId, 5);
+        const res = await getPublicRelatedBlogPosts(postId, 6);
         const data = res?.data;
         if (!mounted) return;
         setRelatedPosts(Array.isArray(data) ? data : []);
