@@ -86,7 +86,6 @@ export default function CreateLearningPathModal({
           label="Description"
           name="description"
           rules={[
-            { required: true, message: "Please input description" },
             { max: 2000, message: "Description cannot exceed 2000 characters" },
           ]}
         >
