@@ -6,12 +6,7 @@ const PAGE_SIZE = 10;
 const DEBOUNCE_MS = 300;
 
 function normalizeTagList(body) {
-  const raw =
-    body?.result ??
-    body?.items ??
-    body?.content ??
-    body?.data ??
-    [];
+  const raw = body?.result ?? body?.items ?? body?.content ?? body?.data ?? [];
   return Array.isArray(raw) ? raw : [];
 }
 
@@ -123,9 +118,7 @@ export default function StaffTagPaginatedSelect({
           setTags(chunk);
         } else {
           setTags((prev) => {
-            const map = new Map(
-              prev.map((x) => [x.name, x]),
-            );
+            const map = new Map(prev.map((x) => [x.name, x]));
             for (const item of chunk) {
               map.set(item.name, item);
             }
@@ -167,17 +160,14 @@ export default function StaffTagPaginatedSelect({
     fetchSlice(page + 1, { append: true });
   }, [open, loadingMore, loadingInitial, hasMore, page, fetchSlice]);
 
-  const selectedSnap = tags.find((t) => t.name === value);
+  const selectedSnap = tags.find((t) => t.id === value);
 
   const options = useMemo(() => {
     const base = tags.map((t) => ({
-      value: t.name,
+      value: t.id,
       label: t.name,
     }));
-    if (
-      value != null &&
-      !base.some((o) => o.value === value)
-    ) {
+    if (value != null && !base.some((o) => o.value === value)) {
       return [
         {
           value,
@@ -252,9 +242,7 @@ export default function StaffTagPaginatedSelect({
                   </div>
                 ) : (
                   <div className="py-6 px-4 text-center text-xs text-slate-500">
-                    {searchApplied
-                      ? "No matching tags found."
-                      : "No tags yet."}
+                    {searchApplied ? "No matching tags found." : "No tags yet."}
                   </div>
                 )}
               </div>
@@ -272,4 +260,3 @@ export default function StaffTagPaginatedSelect({
     />
   );
 }
-
