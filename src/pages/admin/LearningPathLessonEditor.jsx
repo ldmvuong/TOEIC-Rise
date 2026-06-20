@@ -281,6 +281,18 @@ export default function AdminLearningPathLessonEditorPage() {
       setLoading(true);
       const values = form.getFieldsValue();
       const videoUrl = (values.videoUrl || "").trim();
+      const content = (values.content || "").trim();
+      const isVideoEmpty = !videoUrl;
+      const isContentEmpty =
+        !content || content === "<p>&nbsp;</p>" || content === "";
+
+      if (isVideoEmpty && isContentEmpty) {
+        message.error(
+          "Both Video URL and Content cannot be empty. Please fill in at least one.",
+        );
+        setLoading(false);
+        return;
+      }
 
       const detailRes = await getAdminLearningPathDetail(learningPathId);
       const detail = detailRes?.data ?? {};

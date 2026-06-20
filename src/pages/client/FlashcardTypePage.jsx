@@ -24,6 +24,7 @@ const FlashcardTypePage = () => {
     const [items, setItems] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [inputValue, setInputValue] = useState('');
+    const [inputError, setInputError] = useState('');
     const [feedback, setFeedback] = useState(null); // null | 'correct' | { status: 'wrong' | 'hint-wrong', userAnswer: string, correctWord: string }
     const [progressMap, setProgressMap] = useState({}); // { [flashcardItemId]: { isCorrect: boolean } }
     const [submittingExit, setSubmittingExit] = useState(false);
@@ -39,6 +40,7 @@ const FlashcardTypePage = () => {
                     setItems(list);
                     setCurrentIndex(0);
                     setInputValue('');
+                    setInputError('');
                     setFeedback(null);
                     setProgressMap({});
                 } catch (err) {
@@ -60,6 +62,7 @@ const FlashcardTypePage = () => {
                 setItems(list);
                 setCurrentIndex(0);
                 setInputValue('');
+                setInputError('');
                 setFeedback(null);
                 setProgressMap({});
             } catch (err) {
@@ -106,9 +109,10 @@ const FlashcardTypePage = () => {
         const user = normalizeAnswer(inputValue);
         const correct = normalizeAnswer(correctWord);
         if (!user) {
-            message.info('Please enter the English word');
+            setInputError('Please enter the English word');
             return;
         }
+        setInputError('');
         if (user === correct) {
             setFeedback('correct');
             markCorrect(currentItemId);
@@ -127,6 +131,7 @@ const FlashcardTypePage = () => {
 
     const goNext = () => {
         setInputValue('');
+        setInputError('');
         setFeedback(null);
         setCurrentIndex((i) => (i < total - 1 ? i + 1 : total));
     };
@@ -175,6 +180,7 @@ const FlashcardTypePage = () => {
         // Bỏ qua từ hiện tại và chuyển sang từ tiếp theo
         setFeedback(null);
         setInputValue('');
+        setInputError('');
         goNext();
     };
 
@@ -239,8 +245,16 @@ const FlashcardTypePage = () => {
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') handleCheck();
+        if (e.key !== 'Enter') return;
+        if (feedback?.status === 'wrong') {
+            goNext();
+            return;
+        }
+        handleCheck();
     };
+
+    const isRevealedWrong = feedback?.status === 'wrong';
+    const isLastItem = currentIndex >= total - 1;
 
     if (loading) {
         return (
@@ -274,9 +288,9 @@ const FlashcardTypePage = () => {
         feedback && (feedback.status === 'wrong' || feedback.status === 'hint-wrong');
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
+        <div className="h-[calc(100dvh-5rem)] bg-gray-50 text-gray-900 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
                 <button
                     onClick={handleExit}
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
@@ -284,10 +298,13 @@ const FlashcardTypePage = () => {
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span className="hidden sm:inline">Back</span>
                 </button>
+                <span className="text-sm font-medium text-gray-600">
+                    {Math.min(currentIndex + 1, total)} / {total}
+                </span>
             </div>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full">
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-4 sm:p-6 max-w-2xl mx-auto w-full overflow-hidden">
                 {currentIndex >= total ? (
                     <div className="text-center">
                         <p className="text-xl font-semibold text-teal-700 mb-4">Completed!</p>
@@ -302,7 +319,7 @@ const FlashcardTypePage = () => {
                 ) : (
                     <>
                         {/* Vietnamese word - luôn hiển thị */}
-                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-4 line-clamp-3">
                             {currentItem?.definition || '—'}
                         </h1>
 
@@ -344,11 +361,23 @@ const FlashcardTypePage = () => {
                                 <input
                                     type="text"
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onChange={(e) => {
+                                        setInputValue(e.target.value);
+                                        if (inputError) setInputError('');
+                                    }}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Type the English word..."
-                                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 text-lg mb-4"
+                                    className={`w-full px-4 py-3 rounded-xl bg-white border text-gray-900 placeholder-gray-400 focus:outline-none text-lg ${
+                                        inputError
+                                            ? 'border-red-300 focus:ring-2 focus:ring-red-200 focus:border-red-400'
+                                            : 'border-gray-200 focus:ring-2 focus:ring-teal-200 focus:border-teal-400'
+                                    }`}
                                 />
+                                {inputError && (
+                                    <p className="w-full text-sm text-red-600 mt-2 mb-2">
+                                        {inputError}
+                                    </p>
+                                )}
                                 {/* hint-wrong: chỉ dòng gạch đỏ */}
                                 {isWrong && (
                                     <div className="w-full mb-2">
@@ -361,7 +390,7 @@ const FlashcardTypePage = () => {
                         )}
 
                         {/* Buttons */}
-                        <div className="flex items-center gap-3 mt-8 w-full">
+                        <div className="flex items-center gap-3 mt-6 w-full">
                             <button
                                 type="button"
                                 onClick={handleHint}
@@ -385,21 +414,26 @@ const FlashcardTypePage = () => {
                             </button>
                             <button
                                 type="button"
-                                onClick={handleCheck}
+                                onClick={() => {
+                                    if (isRevealedWrong) {
+                                        goNext();
+                                    } else {
+                                        handleCheck();
+                                    }
+                                }}
                                 disabled={feedback === 'correct'}
                                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white font-medium transition"
                             >
-                                <CheckCircleIcon className="w-5 h-5" />
-                                Check
+                                {isRevealedWrong ? (
+                                    <ArrowRightCircleIcon className="w-5 h-5" />
+                                ) : (
+                                    <CheckCircleIcon className="w-5 h-5" />
+                                )}
+                                {isRevealedWrong ? (isLastItem ? 'Finish' : 'Next') : 'Check'}
                             </button>
                         </div>
                     </>
                 )}
-            </div>
-
-            {/* Progress */}
-            <div className="p-4 text-center text-sm text-gray-500">
-                {Math.min(currentIndex + 1, total)} / {total}
             </div>
         </div>
     );

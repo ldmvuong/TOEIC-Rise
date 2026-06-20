@@ -767,15 +767,14 @@ export default function AdminLearningPathLessonViewPage() {
                           Title
                         </span>
                       }
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter a title",
-                        },
-                      ]}
+                      rules={[{ required: true, message: "Title is required" }]}
                       className="!mb-0"
                     >
-                      <Input placeholder="Lesson title" size="large" />
+                      <Input
+                        placeholder="Lesson title"
+                        showCount
+                        maxLength={255}
+                      />
                     </Form.Item>
                   ) : (
                     <Title
@@ -900,13 +899,27 @@ export default function AdminLearningPathLessonViewPage() {
                         label="Slug"
                         rules={[
                           {
-                            pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
+                            required: true,
+                            whitespace: true,
+                            message: "Slug is required",
+                          },
+                          {
+                            pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
                             message:
-                              "Slug only allows letters, numbers, and hyphens (-)",
+                              "Slug can only contain lowercase letters, digits, and hyphens (cannot start/end with a hyphen).",
+                          },
+                          {
+                            max: 255,
+                            message:
+                              "Slug must be between 1 and 255 characters long.",
                           },
                         ]}
                       >
-                        <Input placeholder="lesson-my-slug" />
+                        <Input
+                          placeholder="lesson-7"
+                          showCount
+                          maxLength={255}
+                        />
                       </Form.Item>
                       <Form.Item
                         name="orderIndex"

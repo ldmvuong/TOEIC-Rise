@@ -1,13 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin, message } from 'antd';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Spin, message, Card } from 'antd';
+import { ArrowLeftIcon, ArrowsRightLeftIcon, ClipboardDocumentCheckIcon, LanguageIcon } from '@heroicons/react/24/outline';
 import { callFetchFlashcardDueItems } from '../../api/api';
 
 const GAMES = [
-    { key: 'match', label: 'Match words with meanings', path: '/flashcards/due/match', color: '#3b82f6' },
-    { key: 'quiz', label: 'Multiple-choice quiz', path: '/flashcards/due/quiz', color: '#8b5cf6' },
-    { key: 'type', label: 'See the meaning, type the English word', path: '/flashcards/due/type', color: '#f97316' },
+    {
+        key: 'match',
+        title: 'Match words with meanings',
+        description: 'Drag and drop or select matching word-definition pairs',
+        path: '/flashcards/due/match',
+        icon: ArrowsRightLeftIcon,
+        accentBorder: 'border-l-blue-600',
+        iconWrap: 'bg-blue-50 text-blue-600',
+        colSpan: 'md:col-span-2',
+    },
+    {
+        key: 'quiz',
+        title: 'Multiple-choice quiz',
+        description: 'A 4-option quiz where you choose the correct answer for each word',
+        path: '/flashcards/due/quiz',
+        icon: ClipboardDocumentCheckIcon,
+        accentBorder: 'border-l-violet-600',
+        iconWrap: 'bg-violet-50 text-violet-600',
+        colSpan: 'md:col-span-2',
+    },
+    {
+        key: 'type',
+        title: 'See the meaning, type the English word',
+        description: 'View the meaning and type the matching English vocabulary term',
+        path: '/flashcards/due/type',
+        icon: LanguageIcon,
+        accentBorder: 'border-l-amber-500',
+        iconWrap: 'bg-amber-50 text-amber-600',
+        colSpan: 'md:col-span-2',
+    },
 ];
 
 const FlashcardDueChoosePage = () => {
@@ -60,33 +87,55 @@ const FlashcardDueChoosePage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-            <div className="container mx-auto max-w-2xl">
+        <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 <button
                     type="button"
                     onClick={() => navigate('/flashcards', { state: { activeTab: 'review' } })}
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2 transition"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
-                    Back to Review
+                    <span>Back to Review</span>
                 </button>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Choose a practice mode</h1>
-                <p className="text-gray-500 mb-8">
-                    You have <span className="font-semibold text-gray-700">{dueItems.length}</span> words due for review. Choose a game below to begin.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {GAMES.map((game) => (
-                        <button
-                            key={game.key}
-                            type="button"
-                            onClick={() => navigate(game.path)}
-                            className="rounded-2xl p-6 text-left text-white font-medium shadow-md hover:shadow-lg transition flex flex-col items-center justify-center min-h-[120px]"
-                            style={{ backgroundColor: game.color }}
-                        >
-                            <span className="text-center">{game.label}</span>
-                        </button>
-                    ))}
-                </div>
+
+                <Card className="shadow-md rounded-xl border-gray-200 bg-white">
+                    <div className="space-y-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Words due for review</h1>
+                            <p className="text-gray-600">
+                                You have <span className="font-semibold text-gray-800">{dueItems.length}</span> vocabulary terms due for review. Choose a practice mode below to begin.
+                            </p>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="shadow-sm rounded-xl border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        {GAMES.map((game) => {
+                            const Icon = game.icon;
+                            return (
+                                <button
+                                    key={game.key}
+                                    type="button"
+                                    onClick={() => navigate(game.path)}
+                                    className={`p-4 rounded-xl text-left bg-white border border-gray-200 border-l-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all ${game.accentBorder} ${game.colSpan}`}
+                                >
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${game.iconWrap}`}>
+                                            <Icon className="w-5 h-5" />
+                                        </div>
+                                        <h4 className="font-semibold text-gray-800 leading-snug">
+                                            {game.title}
+                                        </h4>
+                                    </div>
+                                    <p className="text-sm text-gray-500 leading-relaxed">
+                                        {game.description}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </Card>
             </div>
         </div>
     );

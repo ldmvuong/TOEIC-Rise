@@ -42,7 +42,7 @@ const FlashcardMatchPage = () => {
             const voc = item.vocabulary || item.word || '';
             return [
                 { pairId, type: 'definition', text: def },
-                { pairId, type: 'vocabulary', text: voc, pronunciation: item.pronunciation || null },
+                { pairId, type: 'vocabulary', text: voc },
             ];
         });
         return shuffleArray(list.flat());
@@ -272,8 +272,8 @@ const FlashcardMatchPage = () => {
     const totalMatchedSoFar = batchIndex * PAIRS_PER_BATCH + matchedPairIds.size;
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="h-[calc(100dvh-5rem)] bg-gray-50 text-gray-900 flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
                 <button
                     onClick={handleExit}
                     className="p-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 text-gray-600 hover:text-gray-900"
@@ -286,9 +286,9 @@ const FlashcardMatchPage = () => {
                 </span>
             </div>
 
-            <div className="flex-1 p-4 overflow-auto flex flex-col min-h-0">
+            <div className="flex-1 min-h-0 overflow-hidden p-4 sm:p-5">
                 {allDone ? (
-                    <div className="flex flex-col items-center justify-center py-16 flex-1">
+                    <div className="flex flex-col items-center justify-center h-full">
                         <p className="text-xl font-semibold text-green-700 mb-4">Completed!</p>
                         <p className="text-gray-600 mb-6">You matched all word pairs correctly.</p>
                         <button
@@ -300,7 +300,7 @@ const FlashcardMatchPage = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-3 flex-1 w-full min-h-[50vh] gap-3 sm:gap-4">
+                    <div className="h-full w-full max-w-[1400px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-fr">
                         {cards.map((card, indexInVisible) => {
                             const isAlreadyMatched = matchedPairIds.has(card.pairId);
                             const selected = isSelected(card);
@@ -312,28 +312,23 @@ const FlashcardMatchPage = () => {
                                     type="button"
                                     onClick={() => handleCardClick(card)}
                                     disabled={isAlreadyMatched}
-                                    className={`p-4 sm:p-5 rounded-xl text-left transition min-h-[80px] sm:min-h-[120px] flex flex-col justify-center flex-1 md:min-h-0 md:h-full ${
+                                    className={`h-full min-h-0 p-4 sm:p-5 rounded-2xl text-center transition shadow-sm flex items-center justify-center ${
                                         isAlreadyMatched
-                                            ? 'opacity-0 border border-transparent bg-transparent pointer-events-none'
+                                            ? 'opacity-0 border border-transparent bg-transparent shadow-none pointer-events-none'
                                             : ''
                                     } ${
                                         isCorrectFeedback
-                                            ? 'bg-green-100 border-2 border-green-300'
+                                            ? 'bg-green-100 border-2 border-green-400 shadow-md'
                                             : isWrongFeedback
-                                                ? 'bg-red-100 border-2 border-red-300'
+                                                ? 'bg-red-100 border-2 border-red-400 shadow-md'
                                                 : selected
-                                                    ? 'bg-blue-50 border-2 border-blue-200'
-                                                    : 'bg-white border border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                                                    ? 'bg-blue-50 border-2 border-blue-300 shadow-md'
+                                                    : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-md'
                                     }`}
                                 >
-                                    <span className="text-gray-900 font-medium text-base sm:text-lg leading-snug break-words">
+                                    <span className="text-gray-900 font-semibold text-base sm:text-lg leading-snug break-words line-clamp-4 px-1">
                                         {card.text || '—'}
                                     </span>
-                                    {card.pronunciation && (
-                                        <span className="text-gray-600 text-sm mt-1">
-                                            /{card.pronunciation}/
-                                        </span>
-                                    )}
                                 </button>
                             );
                         })}
