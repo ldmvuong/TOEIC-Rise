@@ -106,8 +106,6 @@ function createImageUploadAdapterPlugin(onUploaded) {
 
 function normalizeLessonHtml(html) {
   const raw = String(html ?? "");
-  // Some contents are stored with escaped quotes like: src=\"https://...png\"
-  // Browsers treat that backslash as part of the attribute value, breaking images.
   return raw.replace(/\\"/g, '"');
 }
 
@@ -177,6 +175,14 @@ export default function AdminLearningPathLessonEditorPage() {
   const [editorMountKey, setEditorMountKey] = useState(0);
   const editorInstanceRef = useRef(null);
 
+  const isContentHtmlEmpty = (html) => {
+    if (!html) return true;
+    const trimmed = html.trim();
+    return (
+      trimmed === "" || trimmed === "<p>&nbsp;</p>" || trimmed === "<p></p>"
+    );
+  };
+
   const loadForEdit = useCallback(async () => {
     if (!learningPathId) return;
     if (!isEdit) {
@@ -243,7 +249,7 @@ export default function AdminLearningPathLessonEditorPage() {
       form.setFieldsValue({
         title: lesson?.title ?? "",
         slug: lesson?.slug ?? "",
-        practice: lesson?.practice ?? "",
+        practice: lesson?.practice ? String(lesson.practice) : undefined,
         videoUrl: lesson?.videoUrl ?? "",
         topic: lesson?.topic ?? "",
         level: lesson?.level ?? "",
@@ -269,11 +275,19 @@ export default function AdminLearningPathLessonEditorPage() {
   const onSubmit = useCallback(async () => {
     if (!learningPathId) return;
 
-    // Ensure form has latest editor HTML before validation/submission.
     form.setFieldValue("content", contentRef.current || "");
     try {
       await form.validateFields();
-    } catch {
+    } catch (errorInfo) {
+      const hasVideoOrContentError = errorInfo.errorFields.some(
+        (field) =>
+          field.name.includes("videoUrl") || field.name.includes("content"),
+      );
+      if (hasVideoOrContentError) {
+        message.error(
+          "Either Video URL or Content must be provided. Please fill in at least one!",
+        );
+      }
       return;
     }
 
@@ -281,37 +295,33 @@ export default function AdminLearningPathLessonEditorPage() {
       setLoading(true);
       const values = form.getFieldsValue();
       const videoUrl = (values.videoUrl || "").trim();
-
       const detailRes = await getAdminLearningPathDetail(learningPathId);
       const detail = detailRes?.data ?? {};
       const finalSlug = detail?.slug || learningPathId;
 
+      const payload = {
+        title: values.title,
+        slug: (values.slug || "").trim(),
+        practice: values.practice ? String(values.practice) : undefined,
+        videoUrl: videoUrl || null,
+        topic: values.topic,
+        level: values.level,
+        content: values.content,
+        isActive: values.isActive,
+        orderIndex: Number(values.orderIndex),
+      };
+
       if (isEdit) {
-        await updateAdminLesson(lessonId, {
-          title: values.title,
-          slug: (values.slug || "").trim(),
-          practice: values.practice ?? "",
-          ...(videoUrl ? { videoUrl } : {}),
-          topic: values.topic,
-          level: values.level,
-          content: values.content,
-          isActive: values.isActive,
-          orderIndex: Number(values.orderIndex),
-        });
+        await updateAdminLesson(lessonId, payload);
         message.success("Updated lesson");
         navigate(`/admin/lessons/${lessonId}`);
       } else {
         const formData = new FormData();
-        formData.append("title", values.title);
-        formData.append("slug", (values.slug || "").trim());
-        formData.append("practice", values.practice ?? "");
-        formData.append("content", values.content ?? "");
-        if (videoUrl) {
-          formData.append("videoUrl", videoUrl);
-        }
-        formData.append("topic", values.topic);
-        formData.append("level", values.level);
-        formData.append("isActive", values.isActive);
+        Object.keys(payload).forEach((key) => {
+          if (payload[key] !== undefined && payload[key] !== null) {
+            formData.append(key, payload[key]);
+          }
+        });
         await createLearningPathLesson(finalSlug, formData);
         message.success("Created lesson");
         navigate(`/admin/learning-paths/${finalSlug}`);
@@ -353,7 +363,6 @@ export default function AdminLearningPathLessonEditorPage() {
         const currentData = editor.getData();
         const parser = new DOMParser();
         const doc = parser.parseFromString(currentData, "text/html");
-
         const images = doc.querySelectorAll("img");
         let isEditorUpdated = false;
 
@@ -401,7 +410,6 @@ export default function AdminLearningPathLessonEditorPage() {
 
   const normalizeImageUrl = (url) => {
     if (!url || typeof url !== "string") return "";
-    // Backend may return absolute URLs; editor usage check should ignore query params.
     return url.split("#")[0].split("?")[0].trim();
   };
 
@@ -524,7 +532,7 @@ export default function AdminLearningPathLessonEditorPage() {
             name="title"
             rules={[{ required: true, message: "Title is required" }]}
           >
-            <Input placeholder="Lesson title" />
+            <Input placeholder="Lesson title" showCount maxLength={255} />
           </Form.Item>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -532,24 +540,55 @@ export default function AdminLearningPathLessonEditorPage() {
               label="Slug"
               name="slug"
               rules={[
-                { required: true, message: "Slug is required" },
                 {
-                  pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
-                  message: "Slug only allows letters, digits, and '-'",
+                  required: true,
+                  whitespace: true,
+                  message: "Slug is required",
+                },
+                {
+                  pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                  message:
+                    "Slug can only contain lowercase letters, digits, and hyphens (cannot start/end with a hyphen).",
+                },
+                {
+                  max: 255,
+                  message: "Slug must be between 1 and 255 characters long.",
                 },
               ]}
             >
-              <Input placeholder="lesson-7" />
+              <Input placeholder="lesson-7" showCount maxLength={255} />
             </Form.Item>
             <Form.Item label="Practice" name="practice">
               <StaffTagPaginatedSelect placeholder="Select practice tag" />
             </Form.Item>
           </div>
 
-          <Form.Item name="videoUrl">
+          <Form.Item
+            label="Video URL"
+            name="videoUrl"
+            dependencies={["content"]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const contentValue = getFieldValue("content");
+                  if (!value?.trim() && isContentHtmlEmpty(contentValue)) {
+                    return Promise.reject(
+                      new Error(
+                        "Either Video URL or Content must be provided.",
+                      ),
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+          >
             <LessonVideoUrlField
               value={form.getFieldValue("videoUrl")}
-              onChange={(url) => form.setFieldValue("videoUrl", url)}
+              onChange={(url) => {
+                form.setFieldValue("videoUrl", url);
+                form.validateFields(["content"]);
+              }}
             />
           </Form.Item>
 
@@ -559,12 +598,7 @@ export default function AdminLearningPathLessonEditorPage() {
               name="topic"
               rules={[{ required: true, message: "Topic is required" }]}
             >
-              <Select
-                placeholder="Select topic"
-                options={TOPIC_OPTIONS}
-                showSearch
-                optionFilterProp="label"
-              />
+              <Select placeholder="Select topic" options={TOPIC_OPTIONS} />
             </Form.Item>
             <Form.Item
               label="Level"
@@ -584,149 +618,168 @@ export default function AdminLearningPathLessonEditorPage() {
               Session uploaded ({uploadedImageUrls.length})
             </Button>
           </div>
-          <Form.Item label="Content">
+          <Form.Item
+            label="Content"
+            name="content"
+            dependencies={["videoUrl"]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const videoUrlValue = getFieldValue("videoUrl");
+                  if (isContentHtmlEmpty(value) && !videoUrlValue?.trim()) {
+                    return Promise.reject(
+                      new Error(
+                        "Either Content or Video URL must be provided.",
+                      ),
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+          >
             <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               <div
                 ref={editorWrapperRef}
                 className="lg:col-span-9 ckeditor-wrapper lesson-view-content rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-200"
               >
                 <style>{`
-  .lesson-view-content .ck-editor__editable {
-    min-height: 520px !important;
-    padding: 24px 28px;
-    font-size: 16px;
-    line-height: 1.8;
-    color: #0f172a;
-  }
+                    .lesson-view-content .ck-editor__editable {
+                      min-height: 520px !important;
+                      padding: 24px 28px;
+                      font-size: 16px;
+                      line-height: 1.8;
+                      color: #0f172a;
+                    }
 
-  .lesson-view-content .ck-content {
-    font-family:
-      Inter,
-      ui-sans-serif,
-      system-ui,
-      sans-serif;
-  }
+                    .lesson-view-content .ck-content {
+                      font-family:
+                        Inter,
+                        ui-sans-serif,
+                        system-ui,
+                        sans-serif;
+                    }
 
-  .lesson-view-content .ck-content h1,
-  .lesson-view-content .ck-content h2,
-  .lesson-view-content .ck-content h3 {
-    margin: 1.4em 0 0.7em;
-    font-weight: 800;
-    line-height: 1.25;
-    color: #0f172a;
-  }
+                    .lesson-view-content .ck-content h1,
+                    .lesson-view-content .ck-content h2,
+                    .lesson-view-content .ck-content h3 {
+                      margin: 1.4em 0 0.7em;
+                      font-weight: 800;
+                      line-height: 1.25;
+                      color: #0f172a;
+                    }
 
-  .lesson-view-content .ck-content h1 {
-    font-size: 34px;
-  }
+                    .lesson-view-content .ck-content h1 {
+                      font-size: 34px;
+                    }
 
-  .lesson-view-content .ck-content h2 {
-    font-size: 28px;
-  }
+                    .lesson-view-content .ck-content h2 {
+                      font-size: 28px;
+                    }
 
-  .lesson-view-content .ck-content h3 {
-    font-size: 22px;
-  }
+                    .lesson-view-content .ck-content h3 {
+                      font-size: 22px;
+                    }
 
-  .lesson-view-content .ck-content p {
-    margin: 0.85rem 0;
-    color: #334155;
-  }
+                    .lesson-view-content .ck-content p {
+                      margin: 0.85rem 0;
+                      color: #334155;
+                    }
 
-  .lesson-view-content .ck-content ul,
-  .lesson-view-content .ck-content ol {
-    padding-left: 1.7rem;
-    margin: 0.8rem 0 1rem;
-  }
+                    .lesson-view-content .ck-content ul,
+                    .lesson-view-content .ck-content ol {
+                      padding-left: 1.7rem;
+                      margin: 0.8rem 0 1rem;
+                    }
 
-  .lesson-view-content .ck-content li {
-    margin: 0.35rem 0;
-  }
+                    .lesson-view-content .ck-content li {
+                      margin: 0.35rem 0;
+                    }
 
-  .lesson-view-content .ck-content img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    margin: 24px auto;
-    display: block;
-    box-shadow:
-      0 1px 2px rgba(0,0,0,0.04),
-      0 8px 24px rgba(15,23,42,0.06);
-  }
+                    .lesson-view-content .ck-content img {
+                      max-width: 100%;
+                      height: auto;
+                      border-radius: 16px;
+                      border: 1px solid #e2e8f0;
+                      margin: 24px auto;
+                      display: block;
+                      box-shadow:
+                        0 1px 2px rgba(0,0,0,0.04),
+                        0 8px 24px rgba(15,23,42,0.06);
+                    }
 
-  .lesson-view-content .ck-content blockquote {
-    margin: 1.25rem 0;
-    padding: 1rem 1.25rem;
-    border-left: 4px solid #6366f1;
-    background: #eef2ff;
-    border-radius: 12px;
-    color: #334155;
-    font-style: italic;
-  }
+                    .lesson-view-content .ck-content blockquote {
+                      margin: 1.25rem 0;
+                      padding: 1rem 1.25rem;
+                      border-left: 4px solid #6366f1;
+                      background: #eef2ff;
+                      border-radius: 12px;
+                      color: #334155;
+                      font-style: italic;
+                    }
 
-  .lesson-view-content .ck-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.2rem 0;
-    overflow: hidden;
-    border-radius: 12px;
-  }
+                    .lesson-view-content .ck-content table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin: 1.2rem 0;
+                      overflow: hidden;
+                      border-radius: 12px;
+                    }
 
-  .lesson-view-content .ck-content table th {
-    background: #f8fafc;
-    font-weight: 700;
-    color: #0f172a;
-  }
+                    .lesson-view-content .ck-content table th {
+                      background: #f8fafc;
+                      font-weight: 700;
+                      color: #0f172a;
+                    }
 
-  .lesson-view-content .ck-content table td,
-  .lesson-view-content .ck-content table th {
-    border: 1px solid #e2e8f0;
-    padding: 12px 14px;
-    vertical-align: top;
-  }
+                    .lesson-view-content .ck-content table td,
+                    .lesson-view-content .ck-content table th {
+                      border: 1px solid #e2e8f0;
+                      padding: 12px 14px;
+                      vertical-align: top;
+                    }
 
-  .lesson-view-content .ck-content pre {
-    background: #0f172a;
-    color: #e2e8f0;
-    padding: 18px;
-    border-radius: 16px;
-    overflow-x: auto;
-    margin: 1.2rem 0;
-  }
+                    .lesson-view-content .ck-content pre {
+                      background: #0f172a;
+                      color: #e2e8f0;
+                      padding: 18px;
+                      border-radius: 16px;
+                      overflow-x: auto;
+                      margin: 1.2rem 0;
+                    }
 
-  .lesson-view-content .ck-content code {
-    background: #f1f5f9;
-    color: #0f172a;
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-family:
-      ui-monospace,
-      SFMono-Regular,
-      Menlo,
-      Monaco,
-      Consolas,
-      monospace;
-  }
+                    .lesson-view-content .ck-content code {
+                      background: #f1f5f9;
+                      color: #0f172a;
+                      padding: 2px 6px;
+                      border-radius: 6px;
+                      font-size: 13px;
+                      font-family:
+                        ui-monospace,
+                        SFMono-Regular,
+                        Menlo,
+                        Monaco,
+                        Consolas,
+                        monospace;
+                    }
 
-  .lesson-view-content .ck-content pre code {
-    background: transparent;
-    padding: 0;
-    color: inherit;
-  }
+                    .lesson-view-content .ck-content pre code {
+                      background: transparent;
+                      padding: 0;
+                      color: inherit;
+                    }
 
-  .lesson-view-content .ck-toolbar {
-    border: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    background: #ffffff !important;
-    padding: 8px !important;
-  }
+                    .lesson-view-content .ck-toolbar {
+                      border: none !important;
+                      border-bottom: 1px solid #e2e8f0 !important;
+                      background: #ffffff !important;
+                      padding: 8px !important;
+                    }
 
-  .lesson-view-content .ck-editor__main {
-    background: #ffffff;
-  }
-`}</style>
+                    .lesson-view-content .ck-editor__main {
+                      background: #ffffff;
+                    }
+                  `}</style>
                 <CKEditor
                   key={`${"new"}-${lessonId || "new"}-ck-${editorMountKey}`}
                   editor={ClassicEditor}
@@ -747,6 +800,7 @@ export default function AdminLearningPathLessonEditorPage() {
                     }
                     contentSyncTimerRef.current = setTimeout(() => {
                       form.setFieldValue("content", contentRef.current || "");
+                      form.validateFields(["videoUrl"]);
                     }, 250);
                   }}
                   onBlur={() => {
@@ -754,6 +808,7 @@ export default function AdminLearningPathLessonEditorPage() {
                       clearTimeout(contentSyncTimerRef.current);
                     }
                     form.setFieldValue("content", contentRef.current || "");
+                    form.validateFields(["videoUrl"]);
                   }}
                 />
               </div>

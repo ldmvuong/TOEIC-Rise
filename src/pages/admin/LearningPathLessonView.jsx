@@ -78,8 +78,6 @@ const LEVEL_OPTIONS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"].map((v) => ({
 
 function normalizeLessonHtml(html) {
   const raw = String(html ?? "");
-  // Some contents are stored with escaped quotes like: src=\"https://...png\"
-  // Browsers treat that backslash as part of the attribute value, breaking images.
   return raw.replace(/\\"/g, '"');
 }
 
@@ -147,7 +145,6 @@ function extractImageUrlsFromHtml(html) {
   }
 }
 
-/** @param {string} url */
 function getYoutubeVideoId(url) {
   const raw = (url || "").trim();
   if (!raw) return null;
@@ -298,7 +295,7 @@ function TableOfContents({ outline, isEditing }) {
               }`}
               onClick={() =>
                 scrollToHeadingInCkEditor(item.domIndex, isEditing)
-              } // Gọi hàm scroll dùng chung
+              }
             >
               <span
                 className={`mt-[6px] h-1.5 w-1.5 rounded-full shrink-0 ${
@@ -360,6 +357,14 @@ export default function AdminLearningPathLessonViewPage() {
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [initialImageUrls, setInitialImageUrls] = useState([]);
 
+  const isContentHtmlEmpty = (html) => {
+    if (!html) return true;
+    const trimmed = html.trim();
+    return (
+      trimmed === "" || trimmed === "<p>&nbsp;</p>" || trimmed === "<p></p>"
+    );
+  };
+
   const load = useCallback(async () => {
     if (!lessonId) return;
     setLoading(true);
@@ -382,14 +387,12 @@ export default function AdminLearningPathLessonViewPage() {
     load();
   }, [load]);
 
-  // If navigated from list "Edit" icon, auto-enter edit mode after detail is loaded.
   useEffect(() => {
     if (!autoEdit) return;
     if (loading) return;
     if (!lesson) return;
     if (isEditing) return;
     beginEdit();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoEdit, loading, lesson, isEditing]);
 
   useEffect(
@@ -407,7 +410,9 @@ export default function AdminLearningPathLessonViewPage() {
     form.setFieldsValue({
       title: lesson.title ?? "",
       slug: lesson.slug ?? "",
-      practice: lesson.practice ?? "",
+      practice: lesson?.practice
+        ? String(lesson.practice?.id || lesson.practice)
+        : undefined,
       videoUrl: lesson.videoUrl ?? "",
       topic: lesson.topic ?? undefined,
       level: lesson.level ?? undefined,
@@ -434,12 +439,10 @@ export default function AdminLearningPathLessonViewPage() {
     }
   }, [form, lesson]);
 
-  // Safety: if we enter edit mode but the editor mounts empty, force a remount with lesson content.
   useEffect(() => {
     if (lesson) {
       const c = lesson.content ?? "";
       setContentHtml(c);
-
       const existingUrls = extractImageUrlsFromHtml(c);
       setInitialImageUrls(existingUrls);
     }
@@ -453,9 +456,19 @@ export default function AdminLearningPathLessonViewPage() {
     if (!lessonId || !lesson) return;
     const latestContent = contentRef.current || "";
     form.setFieldValue("content", latestContent);
+
     try {
       await form.validateFields();
-    } catch {
+    } catch (errorInfo) {
+      const hasMediaError = errorInfo.errorFields.some(
+        (field) =>
+          field.name.includes("videoUrl") || field.name.includes("content"),
+      );
+      if (hasMediaError) {
+        message.error(
+          "Either Video URL or Content must be provided. Please fill in at least one!",
+        );
+      }
       return;
     }
 
@@ -463,10 +476,11 @@ export default function AdminLearningPathLessonViewPage() {
       setSaving(true);
       const values = form.getFieldsValue();
       const videoUrl = String(values.videoUrl ?? "").trim();
+
       await updateAdminLesson(lessonId, {
         title: (values.title || "").trim(),
         slug: (values.slug ?? "").trim(),
-        practice: values.practice ?? "",
+        practice: values.practice ? String(values.practice) : "",
         ...(videoUrl ? { videoUrl } : {}),
         topic: values.topic,
         level: values.level,
@@ -549,7 +563,6 @@ export default function AdminLearningPathLessonViewPage() {
 
   const normalizeImageUrl = (url) => {
     if (!url || typeof url !== "string") return "";
-    // Backend may return absolute URLs; editor usage check should ignore query params.
     return url.split("#")[0].split("?")[0].trim();
   };
 
@@ -559,7 +572,6 @@ export default function AdminLearningPathLessonViewPage() {
     const editor = editorInstanceRef.current;
     const currentData = editor.getData();
 
-    // Tạo DOM giả lập để tìm và xóa chính xác thẻ img có src trùng khớp
     const doc = new DOMParser().parseFromString(currentData, "text/html");
     const imgs = doc.querySelectorAll("img");
 
@@ -767,15 +779,14 @@ export default function AdminLearningPathLessonViewPage() {
                           Title
                         </span>
                       }
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter a title",
-                        },
-                      ]}
+                      rules={[{ required: true, message: "Title is required" }]}
                       className="!mb-0"
                     >
-                      <Input placeholder="Lesson title" size="large" />
+                      <Input
+                        placeholder="Lesson title"
+                        showCount
+                        maxLength={255}
+                      />
                     </Form.Item>
                   ) : (
                     <Title
@@ -900,13 +911,27 @@ export default function AdminLearningPathLessonViewPage() {
                         label="Slug"
                         rules={[
                           {
-                            pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
+                            required: true,
+                            whitespace: true,
+                            message: "Slug is required",
+                          },
+                          {
+                            pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
                             message:
-                              "Slug only allows letters, numbers, and hyphens (-)",
+                              "Slug can only contain lowercase letters, digits, and hyphens (cannot start/end with a hyphen).",
+                          },
+                          {
+                            max: 255,
+                            message:
+                              "Slug must be between 1 and 255 characters long.",
                           },
                         ]}
                       >
-                        <Input placeholder="lesson-my-slug" />
+                        <Input
+                          placeholder="lesson-7"
+                          showCount
+                          maxLength={255}
+                        />
                       </Form.Item>
                       <Form.Item
                         name="orderIndex"
@@ -927,11 +952,10 @@ export default function AdminLearningPathLessonViewPage() {
                       >
                         <Select
                           options={TOPIC_OPTIONS}
-                          showSearch
-                          optionFilterProp="label"
                           placeholder="Select a topic"
                         />
                       </Form.Item>
+
                       <Form.Item
                         name="level"
                         label="Level"
@@ -944,7 +968,7 @@ export default function AdminLearningPathLessonViewPage() {
                       </Form.Item>
                       <div className="sm:col-span-2">
                         <Form.Item name="practice" label="Practice">
-                          <StaffTagPaginatedSelect placeholder="Select a practice tag" />
+                          <StaffTagPaginatedSelect placeholder="Select practice tag" />
                         </Form.Item>
                       </div>
                       <div className="sm:col-span-2">
@@ -965,12 +989,31 @@ export default function AdminLearningPathLessonViewPage() {
                   icon={<VideoCameraOutlined />}
                 >
                   {isEditing ? (
-                    <Form.Item name="videoUrl" className="!mb-0">
+                    <Form.Item
+                      name="videoUrl"
+                      className="!mb-0"
+                      dependencies={["content"]}
+                      rules={[
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const contentValue = getFieldValue("content");
+                            if (
+                              !value?.trim() &&
+                              isContentHtmlEmpty(contentValue)
+                            ) {
+                              return Promise.reject(new Error(""));
+                            }
+                            return Promise.resolve();
+                          },
+                        }),
+                      ]}
+                    >
                       <LessonVideoUrlField
                         value={form.getFieldValue("videoUrl") ?? ""}
-                        onChange={(url) =>
-                          form.setFieldValue("videoUrl", url ?? "")
-                        }
+                        onChange={(url) => {
+                          form.setFieldValue("videoUrl", url ?? "");
+                          form.validateFields(["content"]);
+                        }}
                       />
                     </Form.Item>
                   ) : !videoUrlDisplay ? (
@@ -1083,13 +1126,36 @@ export default function AdminLearningPathLessonViewPage() {
                           Manage images ({imageUrls.length})
                         </Button>
                       </div>
-                      <div
-                        ref={editorWrapperRef}
-                        className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white"
+
+                      <Form.Item
+                        name="content"
+                        dependencies={["videoUrl"]}
+                        rules={[
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const videoUrlValue = getFieldValue("videoUrl");
+                              if (
+                                isContentHtmlEmpty(value) &&
+                                !videoUrlValue?.trim()
+                              ) {
+                                return Promise.reject(
+                                  new Error(
+                                    "Please enter either content or a video URL.",
+                                  ),
+                                );
+                              }
+                              return Promise.resolve();
+                            },
+                          }),
+                        ]}
                       >
-                        <style>{`
-                        .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
-                        .ckeditor-wrapper .ck-editor { min-height: 480px; }
+                        <div
+                          ref={editorWrapperRef}
+                          className="ckeditor-wrapper rounded border border-slate-200 overflow-hidden bg-white"
+                        >
+                          <style>{`
+                          .ckeditor-wrapper .ck-editor__editable { min-height: 420px !important; padding: 18px 20px; }
+                          .ckeditor-wrapper .ck-editor { min-height: 480px; }
                         .ckeditor-wrapper .ck-content h1,
                         .ckeditor-wrapper .ck-content h2,
                         .ckeditor-wrapper .ck-content h3 {
@@ -1106,103 +1172,106 @@ export default function AdminLearningPathLessonViewPage() {
                           padding-left: 1.5rem;
                           margin: 0.5rem 0 0.75rem;
                         }
-                        .ckeditor-wrapper .ck-content li { margin: 0.25rem 0; }
-                        .ckeditor-wrapper .ck-content img {
-                          max-width: 100%;
-                          height: auto;
-                          border-radius: 10px;
-                          border: 1px solid #e5e7eb;
-                        }
-                        .ckeditor-wrapper .ck-content hr {
-                          border: 0;
-                          border-top: 1px solid #e5e7eb;
-                          margin: 1rem 0;
-                        }
-                        .ckeditor-wrapper .ck-content blockquote {
-                          margin: 1rem 0;
-                          padding: 0.75rem 1rem;
-                          border-left: 4px solid #818cf8;
-                          background: #eef2ff;
-                          border-radius: 10px;
-                          color: #334155;
-                        }
-                        .ckeditor-wrapper .ck-content table {
-                          width: 100%;
-                          border-collapse: separate;
-                          border-spacing: 0;
-                          margin: 1rem 0;
-                        }
-                        .ckeditor-wrapper .ck-content table th {
-                          background: #f8fafc;
-                          font-weight: 700;
-                          color: #0f172a;
-                        }
-                        .ckeditor-wrapper .ck-content table td,
-                        .ckeditor-wrapper .ck-content table th {
-                          border: 1px solid #e5e7eb;
-                          padding: 10px 12px;
-                          vertical-align: top;
-                        }
-                        .ckeditor-wrapper .ck-content pre {
-                          background: #0b1220;
-                          color: #e5e7eb;
-                          padding: 14px;
-                          border-radius: 12px;
-                          overflow: auto;
-                        }
-                        .ckeditor-wrapper .ck-content code {
-                          background: #f1f5f9;
-                          padding: 0 6px;
-                          border-radius: 6px;
-                          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-                            "Courier New", monospace;
-                          font-size: 12.5px;
-                        }
-                        .ckeditor-wrapper .ck-content pre code {
-                          background: transparent;
-                          padding: 0;
-                          border-radius: 0;
-                          font-size: inherit;
-                        }
-                      `}</style>
-                        <CKEditor
-                          key={`${lesson.id}-${lessonId}-ck-${editorMountKey}`}
-                          editor={ClassicEditor}
-                          data={contentInitial}
-                          config={blogPostEditorConfiguration}
-                          onReady={(editorEd) => {
-                            editorInstanceRef.current = editorEd;
-                            const next = editorEd.getData() || "";
-                            contentRef.current = next;
-                            setContentHtml(next);
-                          }}
-                          onChange={(_event, editorEd) => {
-                            const data = editorEd.getData();
-                            contentRef.current = data;
-                            setContentHtml(data);
-                            if (contentSyncTimerRef.current) {
-                              clearTimeout(contentSyncTimerRef.current);
-                            }
-                            contentSyncTimerRef.current = setTimeout(() => {
+                          .ckeditor-wrapper .ck-content li { margin: 0.25rem 0; }
+                          .ckeditor-wrapper .ck-content img {
+                            max-width: 100%;
+                            height: auto;
+                            border-radius: 10px;
+                            border: 1px solid #e5e7eb;
+                          }
+                          .ckeditor-wrapper .ck-content hr {
+                            border: 0;
+                            border-top: 1px solid #e5e7eb;
+                            margin: 1rem 0;
+                          }
+                          .ckeditor-wrapper .ck-content blockquote {
+                            margin: 1rem 0;
+                            padding: 0.75rem 1rem;
+                            border-left: 4px solid #818cf8;
+                            background: #eef2ff;
+                            border-radius: 10px;
+                            color: #334155;
+                          }
+                          .ckeditor-wrapper .ck-content table {
+                            width: 100%;
+                            border-collapse: separate;
+                            border-spacing: 0;
+                            margin: 1rem 0;
+                          }
+                          .ckeditor-wrapper .ck-content table th {
+                            background: #f8fafc;
+                            font-weight: 700;
+                            color: #0f172a;
+                          }
+                          .ckeditor-wrapper .ck-content table td,
+                          .ckeditor-wrapper .ck-content table th {
+                            border: 1px solid #e5e7eb;
+                            padding: 10px 12px;
+                            vertical-align: top;
+                          }
+                          .ckeditor-wrapper .ck-content pre {
+                            background: #0b1220;
+                            color: #e5e7eb;
+                            padding: 14px;
+                            border-radius: 12px;
+                            overflow: auto;
+                          }
+                          .ckeditor-wrapper .ck-content code {
+                            background: #f1f5f9;
+                            padding: 0 6px;
+                            border-radius: 6px;
+                            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+                              "Courier New", monospace;
+                            font-size: 12.5px;
+                          }
+                          .ckeditor-wrapper .ck-content pre code {
+                            background: transparent;
+                            padding: 0;
+                            border-radius: 0;
+                            font-size: inherit;
+                          }
+                        `}</style>
+                          <CKEditor
+                            key={`${lesson.id}-${lessonId}-ck-${editorMountKey}`}
+                            editor={ClassicEditor}
+                            data={contentInitial}
+                            config={blogPostEditorConfiguration}
+                            onReady={(editorEd) => {
+                              editorInstanceRef.current = editorEd;
+                              const next = editorEd.getData() || "";
+                              contentRef.current = next;
+                              setContentHtml(next);
+                            }}
+                            onChange={(_event, editorEd) => {
+                              const data = editorEd.getData();
+                              contentRef.current = data;
+                              setContentHtml(data);
+                              if (contentSyncTimerRef.current) {
+                                clearTimeout(contentSyncTimerRef.current);
+                              }
+                              contentSyncTimerRef.current = setTimeout(() => {
+                                form.setFieldValue(
+                                  "content",
+                                  contentRef.current || "",
+                                );
+                                form.validateFields(["videoUrl"]);
+                              }, 250);
+                            }}
+                            onBlur={() => {
+                              if (contentSyncTimerRef.current) {
+                                clearTimeout(contentSyncTimerRef.current);
+                              }
                               form.setFieldValue(
                                 "content",
                                 contentRef.current || "",
                               );
-                            }, 250);
-                          }}
-                          onBlur={() => {
-                            if (contentSyncTimerRef.current) {
-                              clearTimeout(contentSyncTimerRef.current);
-                            }
-                            form.setFieldValue(
-                              "content",
-                              contentRef.current || "",
-                            );
-                          }}
-                        />
-                      </div>
-                      <Form.Item name="content" hidden>
-                        <Input type="hidden" />
+                              form.validateFields(["videoUrl"]);
+                            }}
+                          />
+                        </div>
+                        <Form.Item name="content" hidden>
+                          <Input type="hidden" />
+                        </Form.Item>
                       </Form.Item>
                     </>
                   ) : (
