@@ -82,8 +82,14 @@ export default function CreateLearningPathModal({
             ]}
           />
         </Form.Item>
-        <Form.Item label="Description" name="description">
-          <Input.TextArea rows={4} />
+        <Form.Item
+          label="Description"
+          name="description"
+          rules={[
+            { max: 2000, message: "Description cannot exceed 2000 characters" },
+          ]}
+        >
+          <Input.TextArea rows={4} maxLength={2000} showCount />
         </Form.Item>
       </Form>
     </Modal>

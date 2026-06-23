@@ -351,7 +351,7 @@ export default function AdminLearningPathDetailPage() {
 
   useEffect(() => {
     load();
-  }, [learningPathSlug]);
+  }, [learningPathSlug, load]);
 
   const toggleLessonActive = useCallback(
     async (row, nextActive) => {
@@ -375,7 +375,6 @@ export default function AdminLearningPathDetailPage() {
         return next;
       });
 
-      // optimistic UI update
       setDetail((prev) => {
         if (!prev || !Array.isArray(prev.lessons)) return prev;
         return {
@@ -395,7 +394,6 @@ export default function AdminLearningPathDetailPage() {
         const response = await getAdminLearningPathDetailBySlug(slug);
         setDetail(response.data);
       } catch (e) {
-        // revert on failure
         setDetail((prev) => {
           if (!prev || !Array.isArray(prev.lessons)) return prev;
           return {
@@ -432,11 +430,8 @@ export default function AdminLearningPathDetailPage() {
       if (!over || !active?.id || active.id === over.id) return;
       if (!learningPathId) return;
 
-      const effectiveSortBy = query.sortBy ?? "orderIndex";
-      if (query.name || query.level || effectiveSortBy !== "orderIndex") {
-        message.info(
-          "Reordering is only available without filters while sorting by Index",
-        );
+      if (query.name) {
+        message.info("Reordering is only available without text filters.");
         return;
       }
 
@@ -451,39 +446,42 @@ export default function AdminLearningPathDetailPage() {
       );
       if (oldIndex < 0 || newIndex < 0) return;
 
-      const page = Number(query.page ?? 0);
-      const pageSize = Number(query.size ?? 10);
-      const indexOffset = page * pageSize;
+      const movedRows = arrayMove(prevRows, oldIndex, newIndex);
+      const sortedOriginalIndexes = [...prevRows]
+        .map((l) => l.orderIndex)
+        .sort((a, b) => a - b);
+      const nextRows = movedRows.map((l) => {
+        if (String(l.id) === String(active.id)) {
+          return { ...l, orderIndex: prevRows[newIndex].orderIndex };
+        }
+        if (String(l.id) === String(over.id)) {
+          return { ...l, orderIndex: prevRows[oldIndex].orderIndex };
+        }
+        return l;
+      });
 
-      const nextRows = arrayMove(prevRows, oldIndex, newIndex).map(
-        (l, idx) => ({
-          ...l,
-          orderIndex: indexOffset + idx + 1,
-        }),
-      );
-
-      const oldIndexMap = new Map(
-        prevRows.map((l, idx) => [String(l.id), idx]),
-      );
-      const changed = nextRows
-        .map((l, idx) => ({
-          lessonId: Number(l.id),
-          orderIndex: indexOffset + idx + 1,
-          _changed: oldIndexMap.get(String(l.id)) !== idx,
-        }))
-        .filter((x) => x._changed)
-        .map(({ lessonId, orderIndex }) => ({ lessonId, orderIndex }));
-
+      const changed = [
+        {
+          lessonId: Number(active.id),
+          orderIndex: prevRows[newIndex].orderIndex,
+        },
+        {
+          lessonId: Number(over.id),
+          orderIndex: prevRows[oldIndex].orderIndex,
+        },
+      ];
       const prevSnapshot = prevRows.map((l) => ({ ...l }));
-
       setDetail((prev) => mergeLessonsIntoDetail(prev, nextRows));
-
       if (changed.length === 0) return;
 
       try {
         setReordering(true);
-        await reorderAdminLessons({ items: changed });
+        await reorderAdminLessons({
+          items: changed,
+          learningPathSlug: learningPathSlug,
+        });
         message.success("Reordered lessons");
+        load({ page: query.page });
       } catch (e) {
         setDetail((prev) => mergeLessonsIntoDetail(prev, prevSnapshot));
         message.error(
@@ -496,11 +494,10 @@ export default function AdminLearningPathDetailPage() {
     [
       detail?.lessons,
       learningPathId,
-      query.level,
+      learningPathSlug,
       query.name,
       query.page,
-      query.size,
-      query.sortBy,
+      load,
     ],
   );
 
@@ -514,23 +511,15 @@ export default function AdminLearningPathDetailPage() {
         render: () => <DragHandle />,
       },
       {
-        title: "Index",
-        dataIndex: "orderIndex",
-        key: "orderIndex",
-        width: 90,
+        title: "STT",
+        key: "stt",
+        width: 70,
         align: "center",
-        sorter: true,
-        sortOrder:
-          query.sortBy === "orderIndex"
-            ? query.direction === "ASC"
-              ? "ascend"
-              : "descend"
-            : null,
-        render: (v) => (
-          <span style={{ whiteSpace: "nowrap" }}>
-            {v == null ? "—" : String(v)}
-          </span>
-        ),
+        render: (_, __, index) => {
+          const page = query.page ?? 0;
+          const size = query.size ?? 10;
+          return <span>{page * size + index + 1}</span>;
+        },
       },
       {
         title: "Title",
@@ -632,6 +621,8 @@ export default function AdminLearningPathDetailPage() {
       navigate,
       query.direction,
       query.sortBy,
+      query.page,
+      query.size,
       toggleLessonActive,
       updatingIds,
     ],
