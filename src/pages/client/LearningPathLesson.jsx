@@ -347,6 +347,32 @@ export default function LearningPathLessonPage() {
   const showVideoMini = isVideoMini && !videoMiniForcedInline;
 
   useEffect(() => {
+    if (loading || error || !learningPathId) return;
+    window.history.pushState(null, null, window.location.pathname);
+
+    const handleBackButton = async (event) => {
+      event.preventDefault();
+      const buildProgress = lastLoadedProgressFlushRef.current;
+      if (buildProgress) {
+        const payload = buildProgress();
+        if (payload?.lessonId) {
+          try {
+            await upsertUserLessonProgress(payload);
+          } catch (err) {
+            console.error("Failed to save progress on back button:", err);
+          }
+        }
+      }
+      navigate(`/learning-paths/${learningPathId}`);
+    };
+    window.addEventListener("popstate", handleBackButton);
+
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+    };
+  }, [learningPathId, navigate, loading, error]);
+
+  useEffect(() => {
     if (!lesson?.videoUrl || loading || error) {
       setIsVideoMini(false);
       setVideoMiniForcedInline(false);
@@ -361,8 +387,7 @@ export default function LearningPathLessonPage() {
       ([entry]) => {
         if (!entry) return;
         // Thu nhỏ khi khối video gần hết khỏi vùng xem (tương tự YouTube mobile).
-        const mini =
-          !entry.isIntersecting || entry.intersectionRatio < 0.12;
+        const mini = !entry.isIntersecting || entry.intersectionRatio < 0.12;
         setIsVideoMini(mini);
       },
       {
@@ -478,11 +503,7 @@ export default function LearningPathLessonPage() {
           MINI_PLAYER_W_MAX,
           typeof window !== "undefined" ? window.innerWidth - 24 : MINI_PLAYER_W_MAX,
         );
-        const nw = clampNumber(
-          Math.round(w0 + dw),
-          MINI_PLAYER_W_MIN,
-          maxW,
-        );
+        const nw = clampNumber(Math.round(w0 + dw), MINI_PLAYER_W_MIN, maxW);
         setMiniPlayerWidthPx(nw);
         setMiniPlayerInset((prev) => {
           const c = clampMiniPlayerInsets(prev.right, prev.bottom, nw);
@@ -597,9 +618,7 @@ export default function LearningPathLessonPage() {
       } catch (e) {
         if (!cancelled) {
           const msg =
-            e?.response?.data?.message ||
-            e?.message ||
-            "Unable to load lesson";
+            e?.response?.data?.message || e?.message || "Unable to load lesson";
           setError(msg);
           message.error(msg);
           setLesson(null);
@@ -806,8 +825,7 @@ export default function LearningPathLessonPage() {
     if (!lesson || loading || error) return;
     const key = String(lesson.id ?? lessonId ?? "");
     const rs = lessonResumeSecondsFromPayload(lesson);
-    const resumeSec =
-      rs != null && Number.isFinite(rs) ? Math.max(0, rs) : 0;
+    const resumeSec = rs != null && Number.isFinite(rs) ? Math.max(0, rs) : 0;
     if (lessonVideoFenceLessonKeyRef.current !== key) {
       lessonVideoFenceLessonKeyRef.current = key;
       lessonVideoMaxProgressRef.current = resumeSec;
@@ -998,9 +1016,7 @@ export default function LearningPathLessonPage() {
       navigate(`/learning-paths/${learningPathId}`);
     } catch (e) {
       message.error(
-        e?.response?.data?.message ||
-          e?.message ||
-          "Unable to update progress",
+        e?.response?.data?.message || e?.message || "Unable to update progress",
       );
     } finally {
       setCompleteSubmitting(false);
@@ -1022,8 +1038,7 @@ export default function LearningPathLessonPage() {
 
   const practiceTagName = useMemo(() => {
     if (!lesson || typeof lesson !== "object") return "";
-    const fromFields =
-      lesson.practice;
+    const fromFields = lesson.practice;
     if (fromFields != null && String(fromFields).trim() !== "") {
       return String(fromFields).trim();
     }
@@ -1069,13 +1084,6 @@ export default function LearningPathLessonPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to={`/learning-paths/${learningPathId}`}
-              className="text-sm font-semibold text-emerald-700 hover:underline"
-            >
-              ← Learning Path
-            </Link>
-
             {lesson?.topic ? (
               <Tag
                 style={{ marginInlineEnd: 0 }}
