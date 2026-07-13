@@ -15,7 +15,9 @@ import {
 } from "../../api/api";
 
 const normalizePronunciation = (value) =>
-  String(value || "").replace(/^\/+|\/+$/g, "").trim();
+  String(value || "")
+    .replace(/^\/+|\/+$/g, "")
+    .trim();
 
 const FlashcardSentencePracticePage = () => {
   const { id } = useParams();
@@ -310,9 +312,7 @@ const FlashcardSentencePracticePage = () => {
                 /{normalizePronunciation(pronunciation)}/
               </p>
             )}
-            {definition && (
-              <p className="text-gray-800 mt-2">{definition}</p>
-            )}
+            {definition && <p className="text-gray-800 mt-2">{definition}</p>}
           </div>
 
           <textarea
@@ -414,14 +414,14 @@ const FlashcardSentencePracticePage = () => {
                       </p>
                     )}
 
-                  {evaluationSections.score !== null && (
+                  {/* {evaluationSections.score !== null && (
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-semibold text-gray-950">Score:</span>
                       <span className="px-2.5 py-0.5 bg-teal-100 text-teal-700 rounded-full font-bold text-sm">
                         {evaluationSections.score} / 10
                       </span>
                     </div>
-                  )}
+                  )} */}
                 </div>
               )}
             </div>
