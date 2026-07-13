@@ -874,13 +874,13 @@ export default function DictationPractice() {
                                         return "border-gray-200 bg-white hover:bg-gray-50/60";
                                       }
                                       if (isPicked && isCorrect) {
-                                        return "border-emerald-200 bg-emerald-50/60";
+                                        return "border-emerald-300 bg-emerald-50/80";
                                       }
                                       if (isPicked && !isCorrect) {
-                                        return "border-rose-200 bg-rose-50/60";
+                                        return "border-rose-300 bg-rose-50/80";
                                       }
                                       if (showCorrect) {
-                                        return "border-emerald-200/70 bg-emerald-50/30";
+                                        return "border-emerald-300 bg-emerald-50/70";
                                       }
                                       return "border-gray-200 bg-white opacity-70";
                                     })();
@@ -1017,20 +1017,29 @@ export default function DictationPractice() {
                               const showResult = !!selected;
                               const locked = showResult;
 
-                              // Keep badge neutral (no red/green circle), but still show correctness feedback on the row.
-                              const badgeTone = isSelected
-                                ? "border-blue-300 text-blue-700 bg-blue-50"
-                                : "border-gray-200 text-slate-500 bg-white";
+                              const badgeTone = (() => {
+                                if (!locked) {
+                                  return isSelected
+                                    ? "border-blue-300 text-blue-700 bg-blue-50"
+                                    : "border-gray-200 text-slate-500 bg-white";
+                                }
+                                if (isSelected && isCorrect) {
+                                  return "border-emerald-300 text-emerald-700 bg-emerald-50";
+                                }
+                                if (isSelected && !isCorrect) {
+                                  return "border-rose-300 text-rose-700 bg-rose-50";
+                                }
+                                if (isCorrect) {
+                                  return "border-emerald-300 text-emerald-700 bg-emerald-50";
+                                }
+                                return "border-gray-200 text-slate-400 bg-white";
+                              })();
 
                               const rowTone = (() => {
                                 if (!locked) return isSelected ? "bg-white border border-blue-200" : "";
-                                // Locked:
-                                // - Selected row: show green/red (correctness)
-                                // - Also highlight the correct row subtly when user chose wrong
-                                if (isSelected && isCorrect) return "bg-emerald-50/60 border border-emerald-200";
-                                if (isSelected && !isCorrect) return "bg-rose-50/60 border border-rose-200";
-                                if (!isSelected && correct && letter === correct)
-                                  return "bg-emerald-50/30 border border-emerald-200/60";
+                                if (isSelected && isCorrect) return "bg-emerald-50/70 border border-emerald-200";
+                                if (isSelected && !isCorrect) return "bg-rose-50/70 border border-rose-200";
+                                if (isCorrect) return "bg-emerald-50/50 border border-emerald-200";
                                 return "opacity-70 cursor-not-allowed";
                               })();
 
